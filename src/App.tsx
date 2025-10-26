@@ -11,6 +11,15 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UsersManagement from "./pages/admin/UsersManagement";
+import CoursesManagement from "./pages/admin/CoursesManagement";
+import TransactionsManagement from "./pages/admin/TransactionsManagement";
+import ApplicationsManagement from "./pages/admin/ApplicationsManagement";
+import ReportsManagement from "./pages/admin/ReportsManagement";
+import NotificationsManagement from "./pages/admin/NotificationsManagement";
+import SubscriptionPlansManagement from "./pages/admin/SubscriptionPlansManagement";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +37,19 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/blog" element={<Blog />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="courses" element={<CoursesManagement />} />
+            <Route path="transactions" element={<TransactionsManagement />} />
+            <Route path="applications" element={<ApplicationsManagement />} />
+            <Route path="reports" element={<ReportsManagement />} />
+            <Route path="notifications" element={<NotificationsManagement />} />
+            <Route path="subscription-plans" element={<SubscriptionPlansManagement />} />
+          </Route>
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
