@@ -318,7 +318,7 @@ export const mockTransactions: Transaction[] = [
     id: 't1',
     amount: 2500000,
     status: 'SUCCESS',
-    createdAt: '2024-10-20T15:30:00.000Z',
+    createdAt: '2024-10-25T15:30:00.000Z',
     description: 'Course purchase: Business English Mastery Pro',
     walletId: 'w2',
     transactionType: 'PAYMENT',
@@ -327,17 +327,105 @@ export const mockTransactions: Transaction[] = [
   },
   {
     id: 't2',
-    amount: 1000000,
+    amount: 3200000,
     status: 'SUCCESS',
-    createdAt: '2024-10-19T10:15:00.000Z',
-    description: 'Wallet top-up via MOMO',
-    walletId: 'w2',
-    transactionType: 'DEPOSIT',
-    wallet: mockUsers[1].wallet!,
-    topupOrderId: 'to2'
+    createdAt: '2024-10-24T14:20:00.000Z',
+    description: 'Course purchase: IELTS 8.5+ Guarantee Course',
+    walletId: 'w4',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[3].wallet!
   },
   {
     id: 't3',
+    amount: 2800000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-23T11:15:00.000Z',
+    description: 'Course purchase: Medical English for Healthcare',
+    walletId: 'w6',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[5].wallet!
+  },
+  {
+    id: 't4',
+    amount: 1850000,
+    status: 'FAILED',
+    createdAt: '2024-10-22T16:45:00.000Z',
+    description: 'Course purchase: Legal English Professional - Payment failed',
+    walletId: 'w2',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[1].wallet!
+  },
+  {
+    id: 't5',
+    amount: 2100000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-21T09:30:00.000Z',
+    description: 'Course purchase: Technical Writing for Engineers',
+    walletId: 'w3',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[2].wallet!
+  },
+
+  // DEPOSIT transactions - Wallet top-ups
+  {
+    id: 't6',
+    amount: 5000000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-20T10:15:00.000Z',
+    description: 'Wallet top-up via MOMO',
+    walletId: 'w1',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[0].wallet!,
+    topupOrderId: 'to2'
+  },
+  {
+    id: 't7',
+    amount: 3000000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-19T14:45:00.000Z',
+    description: 'Wallet top-up via ZALOPAY',
+    walletId: 'w2',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[1].wallet!,
+    topupOrderId: 'to3'
+  },
+  {
+    id: 't8',
+    amount: 2000000,
+    status: 'PENDING',
+    createdAt: '2024-10-25T16:20:00.000Z',
+    description: 'Wallet top-up via BANKING - Processing',
+    walletId: 'w4',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[3].wallet!,
+    topupOrderId: 'to4'
+  },
+  {
+    id: 't9',
+    amount: 1500000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-18T08:30:00.000Z',
+    description: 'Wallet top-up via APPLEPAY',
+    walletId: 'w5',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[4].wallet!,
+    topupOrderId: 'to5'
+  },
+  {
+    id: 't10',
+    amount: 4500000,
+    status: 'FAILED',
+    createdAt: '2024-10-17T13:25:00.000Z',
+    description: 'Wallet top-up via MOMO - Payment gateway error',
+    walletId: 'w3',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[2].wallet!,
+    topupOrderId: 'to6'
+  },
+
+  // MONTHLYFEE transactions - Subscription fees
+  {
+    id: 't11',
     amount: 399000,
     status: 'SUCCESS',
     createdAt: '2024-10-01T00:00:00.000Z',
@@ -346,6 +434,317 @@ export const mockTransactions: Transaction[] = [
     transactionType: 'MONTHLYFEE',
     wallet: mockUsers[0].wallet!,
     subscriptionContractId: 'sc1'
+  },
+  {
+    id: 't12',
+    amount: 699000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-01T00:05:00.000Z',
+    description: 'Monthly subscription fee - Professional Plan',
+    walletId: 'w3',
+    transactionType: 'MONTHLYFEE',
+    wallet: mockUsers[2].wallet!,
+    subscriptionContractId: 'sc2'
+  },
+  {
+    id: 't13',
+    amount: 199000,
+    status: 'FAILED',
+    createdAt: '2024-10-01T00:10:00.000Z',
+    description: 'Monthly subscription fee - Starter Plan - Insufficient funds',
+    walletId: 'w5',
+    transactionType: 'MONTHLYFEE',
+    wallet: mockUsers[4].wallet!,
+    subscriptionContractId: 'sc3'
+  },
+  {
+    id: 't14',
+    amount: 1299000,
+    status: 'SUCCESS',
+    createdAt: '2024-09-01T00:00:00.000Z',
+    description: 'Monthly subscription fee - Enterprise Plan',
+    walletId: 'w7',
+    transactionType: 'MONTHLYFEE',
+    wallet: mockUsers[6].wallet!,
+    subscriptionContractId: 'sc4'
+  },
+  {
+    id: 't15',
+    amount: 399000,
+    status: 'SUCCESS',
+    createdAt: '2024-09-01T00:15:00.000Z',
+    description: 'Monthly subscription fee - Basic Plan',
+    walletId: 'w1',
+    transactionType: 'MONTHLYFEE',
+    wallet: mockUsers[0].wallet!,
+    subscriptionContractId: 'sc1'
+  },
+
+  // WITHDRAW transactions - Instructor earnings withdrawal
+  {
+    id: 't16',
+    amount: 1250000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-20T11:30:00.000Z',
+    description: 'Earnings withdrawal to bank account',
+    walletId: 'w1',
+    transactionType: 'WITHDRAW',
+    wallet: mockUsers[0].wallet!
+  },
+  {
+    id: 't17',
+    amount: 2100000,
+    status: 'PENDING',
+    createdAt: '2024-10-19T15:45:00.000Z',
+    description: 'Earnings withdrawal to MOMO wallet - Processing',
+    walletId: 'w3',
+    transactionType: 'WITHDRAW',
+    wallet: mockUsers[2].wallet!
+  },
+  {
+    id: 't18',
+    amount: 850000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-18T09:20:00.000Z',
+    description: 'Earnings withdrawal to bank account',
+    walletId: 'w5',
+    transactionType: 'WITHDRAW',
+    wallet: mockUsers[4].wallet!
+  },
+  {
+    id: 't19',
+    amount: 1750000,
+    status: 'FAILED',
+    createdAt: '2024-10-17T14:10:00.000Z',
+    description: 'Earnings withdrawal failed - Invalid bank details',
+    walletId: 'w7',
+    transactionType: 'WITHDRAW',
+    wallet: mockUsers[6].wallet!
+  },
+
+  // More PAYMENT transactions
+  {
+    id: 't20',
+    amount: 1650000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-16T10:25:00.000Z',
+    description: 'Course purchase: Grammar Mastery Complete',
+    walletId: 'w2',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[1].wallet!
+  },
+  {
+    id: 't21',
+    amount: 2250000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-15T13:40:00.000Z',
+    description: 'Course purchase: Advanced Academic Writing',
+    walletId: 'w4',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[3].wallet!
+  },
+  {
+    id: 't22',
+    amount: 1950000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-14T16:55:00.000Z',
+    description: 'Course purchase: Conversation Confidence Builder',
+    walletId: 'w6',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[5].wallet!
+  },
+  {
+    id: 't23',
+    amount: 2750000,
+    status: 'PENDING',
+    createdAt: '2024-10-25T17:30:00.000Z',
+    description: 'Course purchase: Executive Business English - Processing',
+    walletId: 'w3',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[2].wallet!
+  },
+  {
+    id: 't24',
+    amount: 1450000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-13T08:15:00.000Z',
+    description: 'Course purchase: Pronunciation Perfect Course',
+    walletId: 'w1',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[0].wallet!
+  },
+
+  // More DEPOSIT transactions
+  {
+    id: 't25',
+    amount: 2500000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-12T12:20:00.000Z',
+    description: 'Wallet top-up via ZALOPAY',
+    walletId: 'w7',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[6].wallet!,
+    topupOrderId: 'to7'
+  },
+  {
+    id: 't26',
+    amount: 1800000,
+    status: 'SUCCESS',
+    createdAt: '2024-10-11T14:35:00.000Z',
+    description: 'Wallet top-up via BANKING',
+    walletId: 'w2',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[1].wallet!,
+    topupOrderId: 'to8'
+  },
+  {
+    id: 't27',
+    amount: 3500000,
+    status: 'FAILED',
+    createdAt: '2024-10-10T09:45:00.000Z',
+    description: 'Wallet top-up via MOMO - Transaction timeout',
+    walletId: 'w4',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[3].wallet!,
+    topupOrderId: 'to9'
+  },
+  {
+    id: 't28',
+    amount: 1200000,
+    status: 'SUCCESS',
+    createdAt: '2025-10-09T11:10:00.000Z',
+    description: 'Wallet top-up via APPLEPAY',
+    walletId: 'w6',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[5].wallet!,
+    topupOrderId: 'to10'
+  },
+
+  // Historical transactions (August-September)
+  {
+    id: 't29',
+    amount: 2200000,
+    status: 'SUCCESS',
+    createdAt: '2024-09-28T15:20:00.000Z',
+    description: 'Course purchase: TOEFL 110+ Preparation',
+    walletId: 'w1',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[0].wallet!
+  },
+  {
+    id: 't30',
+    amount: 399000,
+    status: 'SUCCESS',
+    createdAt: '2024-09-01T00:20:00.000Z',
+    description: 'Monthly subscription fee - Basic Plan',
+    walletId: 'w1',
+    transactionType: 'MONTHLYFEE',
+    wallet: mockUsers[0].wallet!,
+    subscriptionContractId: 'sc1'
+  },
+  {
+    id: 't31',
+    amount: 1850000,
+    status: 'SUCCESS',
+    createdAt: '2025-09-25T10:30:00.000Z',
+    description: 'Course purchase: Job Interview Champion',
+    walletId: 'w3',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[2].wallet!
+  },
+  {
+    id: 't32',
+    amount: 4000000,
+    status: 'SUCCESS',
+    createdAt: '2024-09-20T13:45:00.000Z',
+    description: 'Wallet top-up via MOMO',
+    walletId: 'w5',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[4].wallet!,
+    topupOrderId: 'to11'
+  },
+  {
+    id: 't33',
+    amount: 1600000,
+    status: 'SUCCESS',
+    createdAt: '2025-09-15T16:25:00.000Z',
+    description: 'Earnings withdrawal to bank account',
+    walletId: 'w7',
+    transactionType: 'WITHDRAW',
+    wallet: mockUsers[6].wallet!
+  },
+  {
+    id: 't34',
+    amount: 2450000,
+    status: 'SUCCESS',
+    createdAt: '2024-08-30T11:55:00.000Z',
+    description: 'Course purchase: Scientific English for Researchers',
+    walletId: 'w2',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[1].wallet!
+  },
+  {
+    id: 't35',
+    amount: 699000,
+    status: 'SUCCESS',
+    createdAt: '2025-08-01T00:00:00.000Z',
+    description: 'Monthly subscription fee - Professional Plan',
+    walletId: 'w3',
+    transactionType: 'MONTHLYFEE',
+    wallet: mockUsers[2].wallet!,
+    subscriptionContractId: 'sc2'
+  },
+  {
+    id: 't36',
+    amount: 1350000,
+    status: 'SUCCESS',
+    createdAt: '2024-08-25T14:20:00.000Z',
+    description: 'Course purchase: English for Hotel Management',
+    walletId: 'w4',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[3].wallet!
+  },
+  {
+    id: 't37',
+    amount: 2800000,
+    status: 'SUCCESS',
+    createdAt: '2024-08-20T09:40:00.000Z',
+    description: 'Wallet top-up via ZALOPAY',
+    walletId: 'w6',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[5].wallet!,
+    topupOrderId: 'to12'
+  },
+  {
+    id: 't38',
+    amount: 950000,
+    status: 'SUCCESS',
+    createdAt: '2024-08-15T12:15:00.000Z',
+    description: 'Earnings withdrawal to MOMO wallet',
+    walletId: 'w1',
+    transactionType: 'WITHDRAW',
+    wallet: mockUsers[0].wallet!
+  },
+  {
+    id: 't39',
+    amount: 1750000,
+    status: 'SUCCESS',
+    createdAt: '2025-08-10T15:30:00.000Z',
+    description: 'Course purchase: Professional Email Writing',
+    walletId: 'w7',
+    transactionType: 'PAYMENT',
+    wallet: mockUsers[6].wallet!
+  },
+  {
+    id: 't40',
+    amount: 3200000,
+    status: 'FAILED',
+    createdAt: '2025-08-05T10:45:00.000Z',
+    description: 'Wallet top-up via BANKING - Bank maintenance',
+    walletId: 'w2',
+    transactionType: 'DEPOSIT',
+    wallet: mockUsers[1].wallet!,
+    topupOrderId: 'to13'
   }
 ];
 

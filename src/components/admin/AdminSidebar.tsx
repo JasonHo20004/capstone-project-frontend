@@ -30,6 +30,11 @@ const sidebarItems = [
     icon: BookOpen,
   },
   {
+    title: 'Doanh thu',
+    href: '/admin/revenue',
+    icon: FileText,
+  },
+  {
     title: 'Giao dịch',
     href: '/admin/transactions',
     icon: CreditCard,
