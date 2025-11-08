@@ -281,12 +281,6 @@ export default function ApplicationsManagement() {
                       {new Date(selectedApplication.createdAt).toLocaleDateString('vi-VN')}
                     </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Cập nhật lần cuối</label>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(selectedApplication.updatedAt).toLocaleDateString('vi-VN')}
-                    </p>
-                  </div>
                 </div>
               </div>
 

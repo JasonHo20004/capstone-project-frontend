@@ -20,6 +20,7 @@ import ApplicationsManagement from "./pages/admin/ApplicationsManagement";
 import ReportsManagement from "./pages/admin/ReportsManagement";
 import NotificationsManagement from "./pages/admin/NotificationsManagement";
 import SubscriptionPlansManagement from "./pages/admin/SubscriptionPlansManagement";
+import SubscriptionContractsManagement from "./pages/admin/SubscriptionContractsManagement";
 import RevenueManagement from "./pages/admin/RevenueManagement";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="reports" element={<ReportsManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
             <Route path="subscription-plans" element={<SubscriptionPlansManagement />} />
+            <Route path="subscription-contracts" element={<SubscriptionContractsManagement />} />
             <Route path="revenue" element={<RevenueManagement />} />
           </Route>
           

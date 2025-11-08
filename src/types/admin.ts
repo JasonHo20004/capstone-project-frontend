@@ -88,7 +88,6 @@ export interface CourseSellerApplication {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   rejectionReason?: string;
   createdAt: string; // DateTime as ISO string
-  updatedAt: string; // DateTime as ISO string
   user: User;
 }
 
@@ -142,6 +141,7 @@ export interface Notification {
   seen: boolean;
   notificationTypeId: string;
   notificationType: NotificationType;
+  userIds: string[]; // Array of user IDs who will receive this notification
 }
 
 // Interface cho Test system từ schema  

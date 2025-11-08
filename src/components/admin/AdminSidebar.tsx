@@ -10,7 +10,8 @@ import {
   Settings,
   UserCheck,
   AlertTriangle,
-  Package
+  Package,
+  ScrollText
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -58,6 +59,11 @@ const sidebarItems = [
     title: 'Gói đăng ký',
     href: '/admin/subscription-plans',
     icon: Package,
+  },
+  {
+    title: 'Hợp đồng',
+    href: '/admin/subscription-contracts',
+    icon: ScrollText,
   },
   {
     title: 'Cài đặt',
