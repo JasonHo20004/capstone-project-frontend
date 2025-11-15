@@ -8,6 +8,8 @@ export { courseService } from './course.service';
 export type {
   LoginRequest,
   LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
 } from './auth.service';

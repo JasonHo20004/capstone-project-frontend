@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { authService, type LoginRequest } from '@/lib/api/services';
+import { authService, type LoginRequest, type RegisterRequest } from '@/lib/api/services';
 
 /**
  * Custom hook cho Authentication với React Query
@@ -39,6 +39,34 @@ export const useAuth = () => {
     },
   });
 
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: (data: RegisterRequest) => authService.register(data),
+    onSuccess: (response) => {
+      const { accessToken, refreshToken, user } = response.data;
+
+      // Lưu tokens vào localStorage
+      localStorage.setItem('accessToken', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+
+      // Lưu user info vào query cache
+      queryClient.setQueryData(['user'], user);
+
+      toast.success('Đăng ký thành công!', {
+        description: `Chào mừng ${user.name} đến với SkillBoost!`,
+      });
+
+      // Redirect về trang chủ
+      navigate('/');
+    },
+    onError: (error) => {
+      // Error đã được xử lý trong interceptor
+      console.error('Register error:', error);
+    },
+  });
+
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: () => authService.logout(),
@@ -64,8 +92,10 @@ export const useAuth = () => {
 
   return {
     login: loginMutation.mutate,
+    register: registerMutation.mutate,
     logout: logoutMutation.mutate,
     isLoggingIn: loginMutation.isPending,
+    isRegistering: registerMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
   };
 };

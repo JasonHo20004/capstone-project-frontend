@@ -30,6 +30,23 @@ export interface RefreshTokenResponse {
   accessToken: string;
 }
 
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterResponse {
+  accessToken: string;
+  refreshToken?: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+  };
+}
+
 class AuthService {
   /**
    * Đăng nhập
@@ -50,6 +67,17 @@ class AuthService {
   ): Promise<ApiResponse<RefreshTokenResponse>> {
     const response = await apiClient.post<ApiResponse<RefreshTokenResponse>>(
       '/auth/refresh',
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Đăng ký
+   */
+  async register(data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> {
+    const response = await apiClient.post<ApiResponse<RegisterResponse>>(
+      '/auth/register',
       data
     );
     return response.data;

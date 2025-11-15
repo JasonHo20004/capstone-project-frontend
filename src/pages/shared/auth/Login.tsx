@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Mail, Lock, User } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/api';
+import { InlineLoading } from '@/components/ui/loading-spinner';
 
 const Login = () => {
-  const { toast } = useToast();
+  const { login, register, isLoggingIn, isRegistering } = useAuth();
   const location = useLocation();
 
-  const computeIsLoginFromLocation = () => {
+  const computeIsLoginFromLocation = useCallback(() => {
     const params = new URLSearchParams(location.search);
     const registerParam = params.get('register');
     const modeParam = params.get('mode');
@@ -21,12 +22,12 @@ const Login = () => {
       hashLower.includes('register')
     );
     return !wantsRegister;
-  };
+  }, [location.search, location.hash]);
 
   const [isLogin, setIsLogin] = useState(computeIsLoginFromLocation());
   useEffect(() => {
     setIsLogin(computeIsLoginFromLocation());
-  }, [location.search, location.hash]);
+  }, [computeIsLoginFromLocation]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -35,10 +36,21 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: isLogin ? "Chào mừng bạn quay lại!" : "Tạo tài khoản thành công!",
-      description: isLogin ? "Bạn đã đăng nhập thành công." : "Tài khoản của bạn đã được tạo thành công.",
-    });
+    
+    if (isLogin) {
+      // Gọi API login
+      login({
+        email: formData.email,
+        password: formData.password,
+      });
+    } else {
+      // Gọi API register
+      register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,8 +196,20 @@ const Login = () => {
               </div>
             )}
 
-            <Button type="submit" size="lg" className="w-full bg-gradient-primary shadow-accent text-lg h-12">
-              {isLogin ? 'Đăng nhập' : 'Tạo tài khoản'}
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full bg-gradient-primary shadow-accent text-lg h-12"
+              disabled={isLoggingIn || isRegistering}
+            >
+              {(isLoggingIn || isRegistering) ? (
+                <>
+                  <InlineLoading />
+                  <span className="ml-2">{isLogin ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...'}</span>
+                </>
+              ) : (
+                isLogin ? 'Đăng nhập' : 'Tạo tài khoản'
+              )}
             </Button>
           </form>
 
