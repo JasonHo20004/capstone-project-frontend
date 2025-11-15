@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { authService, type LoginRequest, type RegisterRequest } from '@/lib/api/services';
+import { authService, type LoginRequest, type RegisterRequest, type LoginResponse } from '@/lib/api/services';
 
 /**
  * Custom hook cho Authentication với React Query
@@ -15,22 +15,15 @@ export const useAuth = () => {
   const loginMutation = useMutation({
     mutationFn: (data: LoginRequest) => authService.login(data),
     onSuccess: (response) => {
-      const { accessToken, refreshToken, user } = response.data;
-
+      const data = (typeof (response as any)?.data !== 'undefined')
+        ? (response as { data: LoginResponse }).data
+        : (response as unknown as LoginResponse);
+        
+      const { accessToken } = data;
+      
       // Lưu tokens vào localStorage
       localStorage.setItem('accessToken', accessToken);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-      }
 
-      // Lưu user info vào query cache
-      queryClient.setQueryData(['user'], user);
-
-      toast.success('Đăng nhập thành công!', {
-        description: `Chào mừng ${user.name}`,
-      });
-
-      // Redirect về trang chủ
       navigate('/');
     },
     onError: (error) => {
