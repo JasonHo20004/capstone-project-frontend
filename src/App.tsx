@@ -39,6 +39,14 @@ import NotFound from "./pages/shared/NotFound";
 
 // Layouts
 import AdminLayout from "./components/admin/AdminLayout";
+import SellerLayout from "./components/seller/SellerLayout";
+import SellerDashboard from "./pages/seller/dashboard/SellerDashboard";
+import SellerCourses from "./pages/seller/courses/SellerCourses";
+import SellerMonthlyFees from "./pages/seller/finance/SellerMonthlyFees";
+import SellerComments from "./pages/seller/interactions/SellerComments";
+import SellerLearners from "./pages/seller/learners/SellerLearners";
+import SellerProfile from "./pages/seller/account/SellerProfile";
+import SellerCourseDetail from "./pages/seller/courses/SellerCourseDetail";
 
 // Cấu hình QueryClient với default options
 const queryClient = new QueryClient({
@@ -102,6 +110,17 @@ const App = () => (
             <Route path="revenue" element={<RevenueManagement />} />
           </Route>
 
+          {/* Seller Routes */}
+          <Route path="/seller" element={<SellerLayout />}>
+            <Route index element={<SellerDashboard />} />
+            <Route path="courses" element={<SellerCourses />} />
+            <Route path="courses/:id" element={<SellerCourseDetail />} />
+            <Route path="fees" element={<SellerMonthlyFees />} />
+            <Route path="comments" element={<SellerComments />} />
+            <Route path="learners" element={<SellerLearners />} />
+            <Route path="profile" element={<SellerProfile />} />
+          </Route>
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

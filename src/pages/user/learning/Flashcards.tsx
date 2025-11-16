@@ -22,9 +22,9 @@ import {
   mockFlashcardDecks,
   mockFlashcards,
 } from '@/data/mock';
-import DeckList from '@/components/flashcards/DeckList';
-import CardList from '@/components/flashcards/CardList';
-import StudyMode from '@/components/flashcards/StudyMode';
+import DeckList from '@/components/user/flashcards/DeckList';
+import CardList from '@/components/user/flashcards/CardList';
+import StudyMode from '@/components/user/flashcards/StudyMode';
 
 const currentUserId = (typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null) ?? '1';
 
