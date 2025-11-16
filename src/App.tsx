@@ -30,6 +30,9 @@ import RevenueManagement from "./pages/admin/finance/RevenueManagement";
 import SubscriptionPlansManagement from "./pages/admin/finance/SubscriptionPlansManagement";
 import SubscriptionContractsManagement from "./pages/admin/finance/SubscriptionContractsManagement";
 
+// Protected Routes
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
@@ -58,21 +61,28 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+
+          {/* public routes */}
           <Route path="/" element={<Index />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
-          <Route path="/my-courses" element={<MyCourses />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/wallet" element={<Wallet />} />
-          <Route path="/flashcards" element={<Flashcards />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/notifications" element={<Notifications />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/blog" element={<Blog />} />
-          
-          {/* Admin Routes */}
+
+          {/* protected routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/my-courses" element={<MyCourses />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/flashcards" element={<Flashcards />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/notifications" element={<Notifications />} />
+
+            <Route path="/blog" element={<Blog />} />
+          </Route>
+        {/* admin Routes */}
+        
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UsersManagement />} />
@@ -81,11 +91,17 @@ const App = () => (
             <Route path="applications" element={<ApplicationsManagement />} />
             <Route path="reports" element={<ReportsManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
-            <Route path="subscription-plans" element={<SubscriptionPlansManagement />} />
-            <Route path="subscription-contracts" element={<SubscriptionContractsManagement />} />
+            <Route
+              path="subscription-plans"
+              element={<SubscriptionPlansManagement />}
+            />
+            <Route
+              path="subscription-contracts"
+              element={<SubscriptionContractsManagement />}
+            />
             <Route path="revenue" element={<RevenueManagement />} />
           </Route>
-          
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -87,7 +87,7 @@ class AuthService {
    */
   async logout(): Promise<ApiResponse<EmptyResponse>> {
     const response = await apiClient.post<ApiResponse<EmptyResponse>>(
-      '/auth/logout'
+      '/auth/logout',
     );
     return response.data;
   }
