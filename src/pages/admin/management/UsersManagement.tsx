@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -41,15 +41,16 @@ import {
   Save,
   X as XIcon
 } from 'lucide-react';
-import { mockUsers } from '@/data/mock';
 import { User } from '@/types/type';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import StatCard from '@/components/admin/StatCard';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { adminService } from '@/lib/api/services';
 
 export default function UsersManagement() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -69,6 +70,17 @@ export default function UsersManagement() {
     expertise: [] as string[],
     walletAllowance: 0
   });
+
+  const { data: usersResp } = useQuery({
+    queryKey: ['adminUsers'],
+    queryFn: () => adminService.getUsers(),
+  });
+
+  useEffect(() => {
+    if (usersResp?.data) {
+      setUsers(usersResp.data);
+    }
+  }, [usersResp]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||

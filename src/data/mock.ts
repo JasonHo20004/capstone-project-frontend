@@ -3646,6 +3646,157 @@ export const mockRatings: Rating[] = [
     createdAt: '2024-10-20T10:20:00.000Z',
     user: mockUsers[3],
     course: mockCourses[1]
+  },
+  // Additional ratings for Course c1 - Business English Mastery Pro
+  {
+    id: 'rat3',
+    score: 5.0,
+    userId: '6',
+    courseId: 'c1',
+    content: 'Outstanding course! The instructor explains business concepts very clearly. I use what I learned in my job every day.',
+    createdAt: '2024-10-25T09:30:00.000Z',
+    user: mockUsers[5],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat4',
+    score: 4.7,
+    userId: '8',
+    courseId: 'c1',
+    content: 'Great content for professionals. The email writing section was particularly useful for my work.',
+    createdAt: '2024-10-24T14:15:00.000Z',
+    user: mockUsers[7],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat5',
+    score: 4.9,
+    userId: '10',
+    courseId: 'c1',
+    content: 'Very practical examples from real business situations. Worth every penny!',
+    createdAt: '2024-10-23T11:20:00.000Z',
+    user: mockUsers[9],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat6',
+    score: 4.6,
+    userId: '14',
+    courseId: 'c1',
+    content: 'Good course overall. Would appreciate more practice exercises though.',
+    createdAt: '2024-10-22T08:45:00.000Z',
+    user: mockUsers[13],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat7',
+    score: 5.0,
+    userId: '15',
+    courseId: 'c1',
+    content: 'Perfect for IT professionals working with international clients. The technical vocabulary section is brilliant!',
+    createdAt: '2024-10-21T15:30:00.000Z',
+    user: mockUsers[14],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat8',
+    score: 4.8,
+    userId: '16',
+    courseId: 'c1',
+    content: 'Excellent for finance professionals. The course helped me communicate better with overseas partners.',
+    createdAt: '2024-10-20T13:10:00.000Z',
+    user: mockUsers[15],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat9',
+    score: 4.5,
+    userId: '17',
+    courseId: 'c1',
+    content: 'Good course for hospitality professionals. Helped me improve my customer service English.',
+    createdAt: '2024-10-19T10:25:00.000Z',
+    user: mockUsers[16],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat10',
+    score: 4.9,
+    userId: '20',
+    courseId: 'c1',
+    content: 'As a startup founder, this course gave me the confidence to pitch in English. Highly valuable!',
+    createdAt: '2024-10-18T16:40:00.000Z',
+    user: mockUsers[19],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat11',
+    score: 4.7,
+    userId: '21',
+    courseId: 'c1',
+    content: 'Great for marketing professionals! The social media English section was exactly what I needed.',
+    createdAt: '2024-10-17T12:15:00.000Z',
+    user: mockUsers[20],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat12',
+    score: 5.0,
+    userId: '22',
+    courseId: 'c1',
+    content: 'Perfect for export business! The international trade vocabulary is comprehensive and practical.',
+    createdAt: '2024-10-16T09:50:00.000Z',
+    user: mockUsers[21],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat13',
+    score: 4.8,
+    userId: '27',
+    courseId: 'c1',
+    content: 'Excellent for consultants! Client communication skills improved significantly after this course.',
+    createdAt: '2024-10-15T14:30:00.000Z',
+    user: mockUsers[26],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat14',
+    score: 4.6,
+    userId: '28',
+    courseId: 'c1',
+    content: 'Good content for real estate agents. The negotiation English section was very helpful.',
+    createdAt: '2024-10-14T11:20:00.000Z',
+    user: mockUsers[27],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat15',
+    score: 4.9,
+    userId: '31',
+    courseId: 'c1',
+    content: 'As a logistics manager, this course helped me communicate better with international shipping partners.',
+    createdAt: '2024-10-13T08:45:00.000Z',
+    user: mockUsers[30],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat16',
+    score: 4.7,
+    userId: '32',
+    courseId: 'c1',
+    content: 'Valuable course for pharmaceutical professionals. Scientific communication section is excellent.',
+    createdAt: '2024-10-12T15:10:00.000Z',
+    user: mockUsers[31],
+    course: mockCourses[0]
+  },
+  {
+    id: 'rat17',
+    score: 5.0,
+    userId: '35',
+    courseId: 'c1',
+    content: 'Outstanding! This course transformed my business communication skills. Best investment I made this year!',
+    createdAt: '2024-10-11T10:30:00.000Z',
+    user: mockUsers[34],
+    course: mockCourses[0]
   }
 ];
 
