@@ -17,7 +17,7 @@ export interface LoginResponse {
   user: {
     id: string;
     email: string;
-    name: string;
+    fullname: string;
     role: string;
   };
 }
@@ -31,7 +31,7 @@ export interface RefreshTokenResponse {
 }
 
 export interface RegisterRequest {
-  name: string;
+  fullname: string;
   email: string;
   password: string;
 }

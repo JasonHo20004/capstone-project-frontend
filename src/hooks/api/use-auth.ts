@@ -26,10 +26,11 @@ export const useAuth = () => {
           : (response as unknown as LoginResponse);
 
       const { accessToken, user } = data;
-
+console.log(user)
       // Lưu tokens vào localStorage
       localStorage.setItem("accessToken", accessToken);
-      queryClient.invalidateQueries({ queryKey: ["user", "me"] });
+      localStorage.setItem("user",JSON.stringify(user))
+      queryClient.setQueryData(['user', 'me'], user);
       navigate("/");
     },
     onError: (error) => {
@@ -51,7 +52,8 @@ export const useAuth = () => {
       // }
 
       // Lưu user info vào query cache
-      queryClient.setQueryData(["user"], user);
+      localStorage.setItem("user",JSON.stringify(user))
+      queryClient.setQueryData(["user",'me'], user);
 
       toast.success("Đăng ký thành công!", {
         description: `Chào mừng ${user.name} đến với SkillBoost!`,
@@ -72,7 +74,7 @@ export const useAuth = () => {
     onSuccess: () => {
       // Xóa tokens
       localStorage.removeItem("accessToken");
-
+localStorage.removeItem("user");
       // Clear query cache
       queryClient.clear();
 
