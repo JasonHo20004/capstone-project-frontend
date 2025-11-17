@@ -15,6 +15,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Edit,
   Plus,
   Trash2,
@@ -34,6 +44,7 @@ import {
   useGetCards,
   useCreateDeck,
   useUpdateDeck,
+  useDeleteDeck,
 } from "@/hooks/api/use-flashcards";
 import { useGetTags } from "@/hooks/api/use-tags";
 import { DeckFormDTO } from "@/lib/api/services/flashcard.service";
@@ -79,9 +90,11 @@ const Flashcards = () => {
   const createDeckMutation = useCreateDeck(); // 👈 KHỞI TẠO MUTATION
   // Deck dialogs
   const updateDeckMutation = useUpdateDeck();
+  const deleteDeckMutation = useDeleteDeck(); // 👈 KHỞI TẠO
 
   const [creatingDeck, setCreatingDeck] = useState(false);
   const [editingDeck, setEditingDeck] = useState<FlashcardDeck | null>(null);
+  const [deletingDeck, setDeletingDeck] = useState<FlashcardDeck | null>(null);
   const [deckForm, setDeckForm] = useState({
     title: "",
     description: "",
@@ -161,13 +174,29 @@ const Flashcards = () => {
   };
 
   const deleteDeck = (deck: FlashcardDeck) => {
-    setDecks((prev) => prev.filter((d) => d.id !== deck.id));
-    setCards((prev) => prev.filter((c) => c.deckId !== deck.id));
-    if (selectedDeckId === deck.id) {
-      const next = decks.find((d) => d.id !== deck.id)?.id ?? null;
-      setSelectedDeckId(next);
-    }
-    toast.success("Đã xóa bộ thẻ và các thẻ liên quan!");
+    setDeletingDeck(deck); // 👈 Chỉ cần set state này
+  };
+
+  /**
+   * MỚI: Hàm xử lý khi người dùng BẤM NÚT XÓA THẬT
+   */
+  const handleConfirmDelete = () => {
+    if (!deletingDeck) return;
+
+    deleteDeckMutation.mutate(deletingDeck.id, {
+      onSuccess: () => {
+        if (selectedDeckId === deletingDeck.id) {
+          const firstDeckId =
+            decks.find((d) => d.id !== deletingDeck.id)?.id ?? null;
+          setSelectedDeckId(firstDeckId);
+        }
+        setDeletingDeck(null); // Đóng dialog sau khi xóa
+      },
+      onError: () => {
+        // (Hook đã tự toast lỗi, không cần làm gì thêm)
+        setDeletingDeck(null); // Đóng dialog dù có lỗi
+      },
+    });
   };
 
   // Card handlers
@@ -591,7 +620,41 @@ const Flashcards = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      {/* Alert Delete Deck */}
+      <AlertDialog
+        open={!!deletingDeck}
+        onOpenChange={(isOpen) => !isOpen && setDeletingDeck(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn bộ
+              thẻ
+              <strong className="text-foreground">
+                {" "}
+                {deletingDeck?.title}{" "}
+              </strong>
+              và tất cả các thẻ con bên trong.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingDeck(null)}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleConfirmDelete}
+              disabled={deleteDeckMutation.isPending} // 👈 Vô hiệu hóa khi đang xóa
+            >
+              {deleteDeckMutation.isPending && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
+              Tiếp tục xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Create Card Dialog */}
       <Dialog open={creatingCard} onOpenChange={setCreatingCard}>
         <DialogContent>

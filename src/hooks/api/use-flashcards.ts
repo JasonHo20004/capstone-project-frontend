@@ -52,7 +52,27 @@ export const useUpdateDeck = () => {
     },
   });
 };
-
+export const useDeleteDeck = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (deckId: string) => flashcardService.deleteDeck(deckId),
+    
+    onSuccess: (data, deckId) => { // Tham số thứ 2 là biến đã truyền vào mutationFn
+      // Fetch lại danh sách decks
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.allDecks });
+      
+      // QUAN TRỌNG: Xóa cache của các thẻ (cards) thuộc bộ thẻ đã bị xóa
+      queryClient.removeQueries({ queryKey: flashcardKeys.cardsByDeck(deckId) });
+      
+      toast.success('Đã xóa bộ thẻ!');
+    },
+    onError: (error:any) => {
+      
+      const message = error.response?.data?.message || "Xóa thất bại";
+      toast.error(message);
+    },
+  });
+};
 /**
  * Hook 2: Fetch các thẻ (cards) khi biết deckId
  */
