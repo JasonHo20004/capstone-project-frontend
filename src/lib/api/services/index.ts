@@ -3,7 +3,6 @@
  */
 export { authService } from './auth.service';
 export { courseService } from './course.service';
-export { adminService } from './admin/admin.service';
 
 // Export types
 export type {
