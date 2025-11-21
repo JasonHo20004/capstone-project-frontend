@@ -58,7 +58,8 @@ export default function StudyMode({  deckId, onClose }: StudyModeProps) {
   }, [queueData]);
 
   const currentCard = sessionQueue[idx];
-  const total = sessionQueue.length;
+  const totalInSession = sessionQueue.length; // Tổng số thẻ trong phiên này
+  const totalInQueue = queueData?.length ?? 0; // Tổng số thẻ ban đầu từ API
 
   const onGrade = (grade: 'again' | 'hard' | 'good' | 'easy') => {
     if (!currentCard || submitReviewMutation.isPending) return;
@@ -67,12 +68,12 @@ export default function StudyMode({  deckId, onClose }: StudyModeProps) {
     if (!quality) return;
 
     // 1. Gửi kết quả lên server (chạy ngầm)
-    submitReviewMutation.mutate({
+   submitReviewMutation.mutate({
       flashcardId: currentCard.id,
+      deckId: deckId, // 👈 THÊM DÒNG NÀY
       data: { quality },
     });
-
-    // 2. Quản lý UI của session (giống logic cũ của bạn)
+    // 2. Quản lý UI của session (Optimistic Update)
     // Nếu "again", xếp lại thẻ vào cuối hàng đợi của *phiên này*
     if (grade === 'again') {
       setSessionQueue((q) => {
@@ -83,11 +84,12 @@ export default function StudyMode({  deckId, onClose }: StudyModeProps) {
     }
 
     // 3. Chuyển thẻ tiếp theo
-    setShowBack(false);
-    setIdx((i) => i + 1); // Luôn di chuyển tới, vì thẻ "again" đã ở cuối
+    setShowBack(false); // Tự động lật về mặt trước
+    setIdx((i) => i + 1); // Luôn di chuyển tới (vì thẻ "again" đã ở cuối)
   };
 
-  const finished = !currentCard || idx >= sessionQueue.length; // Sửa logic finished
+  // SỬA: finished là khi `idx` vượt qua độ dài của `sessionQueue`
+  const finished = !currentCard || idx >= sessionQueue.length;
 
   if (isLoadingQueue) {
     return (
@@ -103,11 +105,11 @@ export default function StudyMode({  deckId, onClose }: StudyModeProps) {
         <div>
           <h3 className="text-xl font-semibold">Chế độ học flashcard</h3>
           <p className="text-sm text-muted-foreground">
-            {finished ? "Đã hoàn thành phiên học" : `Thẻ ${idx + 1} / ${total}`}
+            {finished ? "Đã hoàn thành phiên học" : `Thẻ${Math.min(idx + 1, totalInSession)} / ${totalInSession}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline">Đến hạn: {total}</Badge>
+          <Badge variant="outline">Đến hạn: {totalInQueue}</Badge>
           <Button variant="outline" onClick={onClose}>
             Đóng
           </Button>

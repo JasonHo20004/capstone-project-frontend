@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 export const flashcardKeys = {
   allDecks: ['flashcardDecks', 'me'] as const,
   cardsByDeck: (deckId: string) => ['flashcards', 'byDeck', deckId] as const,
-  progressByDeck: (deckId: string) => ['flashcardProgress', 'byDeck', deckId] as const,
+  // 🔽 THÊM key mới
+  reviewQueue: (deckId: string) => ['flashcardQueue', 'byDeck', deckId] as const,
 };
 
 /**
@@ -147,26 +148,37 @@ export const useDeleteCard = () => {
  */
 export const useGetReviewQueue = (deckId: string | null) => {
   return useQuery({
-    // Dùng key mới
-    queryKey: ['flashcardQueue', deckId],
+    queryKey: flashcardKeys.reviewQueue(deckId!), // 👈 Dùng key mới
     queryFn: async () => (await flashcardService.getReviewQueue(deckId!)).data,
     enabled: !!deckId,
+    staleTime: 0, // Hàng đợi học tập nên được fetch mới mỗi lần
+    gcTime: 0,
   });
 };
 
 export const useSubmitReview = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ flashcardId, data }: { flashcardId: string; data: SubmitReviewDTO }) =>
+    // SỬA: mutationFn giờ sẽ nhận { flashcardId, deckId, data }
+    mutationFn: ({ flashcardId, deckId, data }: { 
+      flashcardId: string; 
+      deckId: string; // 👈 Cần deckId
+      data: SubmitReviewDTO;
+    }) =>
       flashcardService.submitReview(flashcardId, data),
-    onSuccess: (response) => {
-      // Khi nộp bài thành công, chúng ta cần báo cho hàng đợi (queue)
-      // biết là data đã cũ, để nó fetch lại (nếu cần)
-      // (response.data.deckId giả sử API trả về deckId)
-      // queryClient.invalidateQueries({ queryKey: ['flashcardQueue', response.data.deckId] });
-      
-      // Không cần làm gì cả, vì component sẽ tự quản lý session
+    
+    // SỬA: Dùng `deckId` từ `variables`
+    onSuccess: (response, variables) => {
+      // `variables` chính là object { flashcardId, deckId, data }
+      const { deckId } = variables;
+
+      // Bây giờ chúng ta có thể làm mới hàng đợi (queue)
+      // cho đúng bộ thẻ này!
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
     },
-    onError: (error) => toast.error('Lưu tiến độ thất bại: ' + error.message),
+    onError: (error: any) => {
+
+      toast.error('Lưu tiến độ thất bại: ' + error.response?.data?.message);
+    },
   });
 };
