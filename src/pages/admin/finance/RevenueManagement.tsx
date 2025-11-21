@@ -70,13 +70,6 @@ export default function RevenueManagement() {
 
   const columns = [
     {
-      key: 'id',
-      header: 'Mã giao dịch',
-      render: (transaction: Transaction) => (
-        <div className="font-mono text-sm">{transaction.id.substring(0, 8)}...</div>
-      )
-    },
-    {
       key: 'type',
       header: 'Loại',
       render: (transaction: Transaction) => getTypeBadge(transaction.transactionType)
@@ -84,8 +77,9 @@ export default function RevenueManagement() {
     {
       key: 'amount',
       header: 'Số tiền',
+      className: 'text-right',
       render: (transaction: Transaction) => (
-        <div className="font-medium text-right">{formatCurrency(Number(transaction.amount))}</div>
+        <div className="font-medium">{formatCurrency(Number(transaction.amount))}</div>
       )
     },
     {
