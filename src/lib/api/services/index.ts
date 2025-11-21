@@ -6,6 +6,7 @@ export { courseService } from './course.service';
 export { userManagementService } from './admin/user-management.service';
 export { courseManagementService } from './admin/course-management.service';
 export { dashboardService } from './admin/dashboard.service';
+export { revenueManagementService } from './admin/revenue-management.service';
 
 // Export types
 export type {
