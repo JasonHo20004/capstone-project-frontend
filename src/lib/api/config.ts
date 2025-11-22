@@ -166,7 +166,7 @@ const handleApiError = (error: AxiosError) => {
       toast.error("Không tìm thấy", { description: message });
       break;
     case 500:
-      toast.error("Lỗi máy chủ", { description: "Vui lòng thử lại sau." });
+      toast.error("Lỗi máy chủ", { description:message });
       break;
     default:
       toast.error("Đã xảy ra lỗi", { description: message });

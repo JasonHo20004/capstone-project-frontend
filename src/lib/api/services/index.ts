@@ -21,3 +21,6 @@ export type {
   GetCoursesParams,
 } from './course.service';
 
+
+export type { };
+

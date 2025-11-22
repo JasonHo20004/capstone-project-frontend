@@ -34,9 +34,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { FlashcardDeck, Flashcard, Tag } from "@/types/type";
-import DeckList from "@/components/flashcards/DeckList";
-import CardList from "@/components/flashcards/CardList";
-import StudyMode from "@/components/flashcards/StudyMode";
+import DeckList from "@/components/user/flashcards/DeckList";
+import CardList from "@/components/user/flashcards/CardList";
+import StudyMode from "@/components/user/flashcards/StudyMode";
 import { formatDate, formatDateForInput } from "@/lib/utils";
 
 import {

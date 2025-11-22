@@ -22,6 +22,13 @@ export interface LoginResponse {
   };
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  fullName: string;       // Thay cho 'name'
+  phoneNumber?: string;   // Mới
+  dateOfBirth?: string;   // Mới (ISO String)
+}
 export interface RefreshTokenRequest {
   refreshToken: string;
 }
@@ -76,7 +83,7 @@ class AuthService {
    */
   async register(data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> {
     const response = await apiClient.post<ApiResponse<RegisterResponse>>(
-      '/auth/register',
+      '/users/register',
       data
     );
     return response.data;

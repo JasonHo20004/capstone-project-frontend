@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -9,36 +11,47 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { 
   MoreHorizontal, 
   Eye, 
   Check, 
   X,
-  Star
+  Star,
+  Pencil
 } from 'lucide-react';
-import { mockCourses } from '@/data/mock';
-import { Course } from '@/types/type';
+import { Course, CourseWithStats, CourseStatus } from '@/types/type';
+import { courseManagementService } from '@/lib/api/services/admin';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 
 export default function CoursesManagement() {
-  const [courses] = useState<Course[]>(mockCourses);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: coursesResp } = useQuery({
+    queryKey: ['adminCourses'],
+    queryFn: () => courseManagementService.getCourses(),
+  });
+
+  const courses = coursesResp?.data || [];
 
   const filteredCourses = courses.filter(course => {
+    const sellerName = (((course as any).user?.fullName) || '').toLowerCase();
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.courseSeller.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+      sellerName.includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
     return matchesSearch && matchesStatus;
+  });
+
+
+  const updateCourseMutation = useMutation({
+    mutationFn: (vars: { id: string; data: { status?: Course['status'] } }) =>
+      courseManagementService.updateCourse(vars.id, vars.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminCourses'] });
+    },
   });
 
   const formatCurrency = (value: number) => {
@@ -50,6 +63,8 @@ export default function CoursesManagement() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'PUBLISHED':
+        return <Badge variant="default">Đã xuất bản</Badge>;
       case 'ACTIVE':
         return <Badge variant="default">Hoạt động</Badge>;
       case 'PENDING':
@@ -71,7 +86,7 @@ export default function CoursesManagement() {
         <div>
           <div className="font-medium">{course.title}</div>
           <div className="text-sm text-muted-foreground">
-            Giảng viên: {course.courseSeller.fullName}
+            Giảng viên: {(course as any).user?.fullName || 'N/A'}
           </div>
         </div>
       )
@@ -96,7 +111,7 @@ export default function CoursesManagement() {
       render: (course: Course) => (
         <div className="flex items-center space-x-1">
           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-          <span>{course.averageRating?.toFixed(1) || 'N/A'}</span>
+          <span>{(course as CourseWithStats).averageRating?.toFixed(1) || 'N/A'}</span>
           <span className="text-muted-foreground">({course.ratingCount || 0})</span>
         </div>
       )
@@ -124,18 +139,22 @@ export default function CoursesManagement() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setSelectedCourse(course)}>
+            <DropdownMenuItem onClick={() => navigate(`/admin/courses/${course.id}`)}>
               <Eye className="mr-2 h-4 w-4" />
               Xem chi tiết
             </DropdownMenuItem>
-            {course.status === 'PENDING' && (
+            <DropdownMenuItem onClick={() => navigate(`/admin/courses/${course.id}?tab=edit`)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Chỉnh sửa
+            </DropdownMenuItem>
+            {course.status === CourseStatus.PENDING && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-green-600">
+                <DropdownMenuItem className="text-green-600" onClick={() => updateCourseMutation.mutate({ id: course.id, data: { status: CourseStatus.ACTIVE } })}>
                   <Check className="mr-2 h-4 w-4" />
                   Duyệt khóa học
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-600" onClick={() => updateCourseMutation.mutate({ id: course.id, data: { status: CourseStatus.REFUSE } })}>
                   <X className="mr-2 h-4 w-4" />
                   Từ chối
                 </DropdownMenuItem>
@@ -149,6 +168,7 @@ export default function CoursesManagement() {
 
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
+    { value: 'PUBLISHED', label: 'Đã xuất bản' },
     { value: 'ACTIVE', label: 'Hoạt động' },
     { value: 'PENDING', label: 'Chờ duyệt' },
     { value: 'REFUSE', label: 'Từ chối' },
@@ -186,70 +206,6 @@ export default function CoursesManagement() {
         emptyMessage="Không tìm thấy khóa học nào"
       />
 
-      {/* Course Detail Dialog */}
-      <Dialog open={!!selectedCourse} onOpenChange={() => setSelectedCourse(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Chi tiết khóa học</DialogTitle>
-            <DialogDescription>
-              Thông tin chi tiết về khóa học
-            </DialogDescription>
-          </DialogHeader>
-          {selectedCourse && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold">{selectedCourse.title}</h3>
-                <p className="text-muted-foreground">
-                  Giảng viên: {selectedCourse.courseSeller.fullName}
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Giá</label>
-                  <p className="text-lg">{formatCurrency(selectedCourse.price)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Trình độ</label>
-                  <p className="text-lg">{selectedCourse.courseLevel || 'Chưa xác định'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Trạng thái</label>
-                  <div className="mt-1">{getStatusBadge(selectedCourse.status)}</div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Đánh giá</label>
-                  <div className="flex items-center space-x-1 mt-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span>{selectedCourse.averageRating?.toFixed(1) || 'N/A'}</span>
-                    <span className="text-muted-foreground">({selectedCourse.ratingCount || 0} đánh giá)</span>
-                  </div>
-                </div>
-              </div>
-              
-              {selectedCourse.description && (
-                <div>
-                  <label className="text-sm font-medium">Mô tả</label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedCourse.description}
-                  </p>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Ngày tạo</label>
-                  <p className="text-sm">{new Date(selectedCourse.createdAt).toLocaleDateString('vi-VN')}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Cập nhật lần cuối</label>
-                  <p className="text-sm">{new Date(selectedCourse.updatedAt).toLocaleDateString('vi-VN')}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

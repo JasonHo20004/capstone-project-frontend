@@ -19,16 +19,18 @@ import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
 
 // Admin pages
-import AdminDashboard from "./pages/admin/dashboard/AdminDashboard";
-import UsersManagement from "./pages/admin/management/UsersManagement";
-import CoursesManagement from "./pages/admin/management/CoursesManagement";
-import ApplicationsManagement from "./pages/admin/management/ApplicationsManagement";
-import ReportsManagement from "./pages/admin/management/ReportsManagement";
-import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
-import TransactionsManagement from "./pages/admin/finance/TransactionsManagement";
-import RevenueManagement from "./pages/admin/finance/RevenueManagement";
-import SubscriptionPlansManagement from "./pages/admin/finance/SubscriptionPlansManagement";
-import SubscriptionContractsManagement from "./pages/admin/finance/SubscriptionContractsManagement";
+import AdminDashboard from "./pages/admin/dashboard/Dashboard";
+import UsersManagement from "./pages/admin/user-management/Users";
+import CoursesManagement from "./pages/admin/course-management/Courses";
+import ApplicationsManagement from "./pages/admin/management[notDone]/ApplicationsManagement";
+import ReportsManagement from "./pages/admin/management[notDone]/ReportsManagement";
+import NotificationsManagement from "./pages/admin/management[notDone]/NotificationsManagement";
+import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
+import RevenueManagement from "./pages/admin/revenue-management/Revenues";
+import SubscriptionPlansManagement from "./pages/admin/management[notDone]/SubscriptionPlansManagement";
+import SubscriptionContractsManagement from "./pages/admin/management[notDone]/SubscriptionContractsManagement";
+import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
+import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -36,9 +38,18 @@ import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
+import Register from "./pages/shared/auth/Register";
 
 // Layouts
 import AdminLayout from "./components/admin/AdminLayout";
+import SellerLayout from "./components/seller/SellerLayout";
+import SellerDashboard from "./pages/seller/dashboard/SellerDashboard";
+import SellerCourses from "./pages/seller/courses/SellerCourses";
+import SellerMonthlyFees from "./pages/seller/finance/SellerMonthlyFees";
+import SellerComments from "./pages/seller/interactions/SellerComments";
+import SellerLearners from "./pages/seller/learners/SellerLearners";
+import SellerProfile from "./pages/seller/account/SellerProfile";
+import SellerCourseDetail from "./pages/seller/courses/SellerCourseDetail";
 
 // Cấu hình QueryClient với default options
 const queryClient = new QueryClient({
@@ -61,7 +72,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-
           {/* public routes */}
           <Route path="/" element={<Index />} />
           <Route path="/courses" element={<Courses />} />
@@ -69,7 +79,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
-
+          <Route path="/register" element={<Register />} />
           {/* protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/my-courses" element={<MyCourses />} />
@@ -81,12 +91,14 @@ const App = () => (
 
             <Route path="/blog" element={<Blog />} />
           </Route>
-        {/* admin Routes */}
-        
+          {/* admin Routes */}
+
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UsersManagement />} />
             <Route path="courses" element={<CoursesManagement />} />
+            <Route path="courses/:id" element={<AdminCourseDetail />} />
+            <Route path="lessons/:lessonId" element={<AdminLessonDetail />} />
             <Route path="transactions" element={<TransactionsManagement />} />
             <Route path="applications" element={<ApplicationsManagement />} />
             <Route path="reports" element={<ReportsManagement />} />
@@ -102,6 +114,17 @@ const App = () => (
             <Route path="revenue" element={<RevenueManagement />} />
           </Route>
 
+          {/* Seller Routes */}
+          <Route path="/seller" element={<SellerLayout />}>
+            <Route index element={<SellerDashboard />} />
+            <Route path="courses" element={<SellerCourses />} />
+            <Route path="courses/:id" element={<SellerCourseDetail />} />
+            <Route path="fees" element={<SellerMonthlyFees />} />
+            <Route path="comments" element={<SellerComments />} />
+            <Route path="learners" element={<SellerLearners />} />
+            <Route path="profile" element={<SellerProfile />} />
+          </Route>
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

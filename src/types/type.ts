@@ -1,25 +1,186 @@
-// Admin Types based on Prisma Schema
+// Enums
+export enum UserRole {
+  ADMINISTRATOR = 'ADMINISTRATOR',
+  COURSESELLER = 'COURSESELLER'
+}
+
+export enum PaymentMethod {
+  MOMO = 'MOMO',
+  ZALOPAY = 'ZALOPAY',
+  BANKING = 'BANKING',
+  APPLEPAY = 'APPLEPAY'
+}
+
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED'
+}
+
+export enum TransactionType {
+  DEPOSIT = 'DEPOSIT',
+  PAYMENT = 'PAYMENT',
+  MONTHLYFEE = 'MONTHLYFEE',
+  WITHDRAW = 'WITHDRAW'
+}
+
+export enum TransactionStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED'
+}
+
+export enum CourseStatus {
+  PENDING = 'PENDING',
+  ACTIVE = 'ACTIVE',
+  REFUSE = 'REFUSE',
+  INACTIVE = 'INACTIVE',
+  DELETE = 'DELETE',
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED'
+}
+
+export enum CourseLevel {
+  A1 = 'A1',
+  A2 = 'A2',
+  B1 = 'B1',
+  B2 = 'B2',
+  C1 = 'C1',
+  C2 = 'C2'
+}
+
+export enum SessionStatus {
+  ONGOING = 'ONGOING',
+  COMPLETED = 'COMPLETED'
+}
+
+export enum QuestionType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  ESSAY = 'ESSAY',
+  FILL_IN_THE_BLANK = 'FILL_IN_THE_BLANK'
+}
+
+export enum SkillType {
+  READING = 'READING',
+  LISTENING = 'LISTENING',
+  WRITING = 'WRITING',
+  SPEAKING = 'SPEAKING'
+}
+
+export enum MediaType {
+  AUDIO = 'AUDIO',
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO'
+}
+
+export enum ApplicationStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
 
 export enum FlashcardStatus {
   LEARNING = 'LEARNING',
-  REVIEW = 'REVIEW',
+  REVIEW = 'REVIEW'
 }
+
+export enum TestType {
+  FINAL = 'FINAL'
+}
+
+export enum EReasonType {
+  INAPPROPRIATE_CONTENT = 'INAPPROPRIATE_CONTENT',
+  COPYRIGHT_VIOLATION = 'COPYRIGHT_VIOLATION',
+  NOT_AS_DESCRIBED = 'NOT_AS_DESCRIBED',
+  UNRESPONSIVE_INSTRUCTOR = 'UNRESPONSIVE_INSTRUCTOR',
+  INCOMPLETE_CONTENT = 'INCOMPLETE_CONTENT'
+}
+
+// Base Interfaces
 export interface User {
   id: string;
   email: string;
-  password?: string; // Không hiển thị trong admin UI nhưng có trong DB
+  password: string;
   fullName: string;
   phoneNumber?: string;
   profilePicture?: string;
   dateOfBirth: string; // DateTime as ISO string
-  createdAt: string; // DateTime as ISO string  
+  createdAt: string; // DateTime as ISO string
   englishLevel?: string;
   learningGoals: string[];
-  role?: 'ADMINISTRATOR' | 'COURSESELLER';
-  wallet?: Wallet|null;
-  courseSellerApplication?: CourseSellerApplication | null;
-  courseSellerProfile?: CourseSellerProfile|null;
+  role?: UserRole;
+  
+  // Relations (optional)
+  refreshTokens?: RefreshToken[];
   administratorProfile?: AdministratorProfile;
+  comments?: Comment[];
+  courseSellerApplication?: CourseSellerApplication;
+  courseSellerProfile?: CourseSellerProfile;
+  courses?: Course[];
+  flashcardDecks?: FlashcardDeck[];
+  inAppNotifications?: InAppNotification[];
+  policy?: Policy;
+  practiceSessions?: PracticeSession[];
+  ratings?: Rating[];
+  reports?: Report[];
+  subscriptionContracts?: SubscriptionContract[];
+  topupOrders?: TopupOrder[];
+  userActivities?: UserActivity[];
+  userAnswers?: UserAnswer[];
+  userFlashcardProgress?: UserFlashcardProgress[];
+  userLessons?: UserLesson[];
+  userNotifications?: UserNotification[];
+  wallet?: Wallet;
+  order?: Order[];
+  cart?: Cart;
+}
+
+export interface RefreshToken {
+  id: string;
+  hashedToken: string;
+  userId: string;
+  revoked: boolean;
+  createdAt: string;
+  
+  // Relations
+  user?: User;
+}
+
+export interface NotificationType {
+  id: string;
+  name: string;
+  isLocked: boolean;
+  
+  // Relations
+  notifications?: Notification[];
+}
+
+export interface EnglishTestType {
+  id: string;
+  name: string;
+  
+  // Relations
+  scoreConversions?: ScoreConversion[];
+  tests?: Test[];
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  
+  // Relations
+  deckTags?: DeckTag[];
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description?: string;
+  maxCourses: number;
+  monthlyFee: number; // Decimal as number
+  
+  // Relations
+  subscriptionContracts?: SubscriptionContract[];
 }
 
 export interface CourseSellerProfile {
@@ -28,60 +189,17 @@ export interface CourseSellerProfile {
   expertise: string[];
   isActive: boolean;
   userId: string;
+  
+  // Relations
+  user?: User;
 }
 
 export interface AdministratorProfile {
   id: string;
   userId: string;
-}
-
-export interface Wallet {
-  id: string;
-  allowance: number; // Decimal trong DB, number trong FE
-  userId: string;
-}
-
-export interface Course {
-  id: string;
-  title: string;
-  description?: string;
-  price: number; // Decimal trong DB, number trong FE
-  courseLevel?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
-  courseSellerId: string;
-  ratingCount?: number;
-  status: 'PENDING' | 'ACTIVE' | 'REFUSE' | 'INACTIVE' | 'DELETE';
-  createdAt: string; // DateTime as ISO string
-  updatedAt: string; // DateTime as ISO string
-  courseSeller: User;
-  averageRating?: number;
-}
-
-export interface Transaction {
-  id: string;
-  amount: number; // Decimal trong DB, number trong FE
-  status: 'PENDING' | 'SUCCESS' | 'FAILED';
-  createdAt: string; // DateTime as ISO string
-  description?: string;
-  walletId: string;
-  transactionType: 'DEPOSIT' | 'PAYMENT' | 'MONTHLYFEE' | 'WITHDRAW';
-  topupOrderId?: string;
-  subscriptionContractId?: string;
-  wallet: Wallet;
-  topupOrder?: TopupOrder;
-  subscriptionContract?: SubscriptionContract;
-}
-
-export interface TopupOrder {
-  id: string;
-  userId: string;
-  realMoney: number; // Decimal trong DB, number trong FE
-  realAmount?: number; // Decimal trong DB, number trong FE
-  currency: string;
-  paymentMethod: 'MOMO' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
-  status: 'PENDING' | 'SUCCESS' | 'FAILED';
-  createdAt: string; // DateTime as ISO string
-  updatedAt: string; // DateTime as ISO string
-  user: User;
+  
+  // Relations
+  user?: User;
 }
 
 export interface CourseSellerApplication {
@@ -90,153 +208,85 @@ export interface CourseSellerApplication {
   certification: string[];
   expertise: string[];
   message?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: ApplicationStatus;
   rejectionReason?: string;
-  createdAt: string; // DateTime as ISO string
-  user: User;
+  createdAt: string;
+  
+  // Relations
+  user?: User;
 }
 
-export interface Report {
+export interface Wallet {
   id: string;
-  content: string; // Thay đổi từ description thành content
-  reasonType: 'INAPPROPRIATE_CONTENT' | 'COPYRIGHT_VIOLATION' | 'NOT_AS_DESCRIBED' | 'UNRESPONSIVE_INSTRUCTOR' | 'INCOMPLETE_CONTENT'; // Thay đổi từ reason thành reasonType
-  createdAt: string; // DateTime as ISO string
+  allowance: number; // Decimal as number
   userId: string;
-  courseId: string;
-  user: User;
-  course: Course;
-}
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description?: string;
-  maxCourses: number;
-  monthlyFee: number; // Decimal trong DB, number trong FE
-}
-
-export interface SubscriptionContract {
-  id: string;
-  courseSellerId: string;
-  status: boolean; // Thay đổi từ string thành boolean
-  subscriptionPlanId: string;
-  createdAt: string; // DateTime as ISO string
-  expiresAt: string; // DateTime as ISO string
-  updatedAt: string; // DateTime as ISO string
-  renewalCount: number;
-  lastRenewalAt?: string; // DateTime as ISO string
-  notes?: string;
-  lastNotificationAt?: string; // DateTime as ISO string
-  user: User;
-  subscriptionPlan: SubscriptionPlan;
-}
-
-// Các interface cho Notification system từ schema
-export interface NotificationType {
-  id: string;
-  name: string;
-  isLocked: boolean;
+  
+  // Relations
+  transactions?: Transaction[];
+  user?: User;
 }
 
 export interface Notification {
   id: string;
   title: string;
   content: string;
-  createdAt: string; // DateTime as ISO string
+  createdAt: string;
   seen: boolean;
   notificationTypeId: string;
-  notificationType: NotificationType;
-  userIds: string[]; // Array of user IDs who will receive this notification
+  
+  // Relations
+  notificationType?: NotificationType;
+  userNotifications?: UserNotification[];
 }
 
-// Interface cho Test system từ schema  
-export interface EnglishTestType {
+export interface InAppNotification {
   id: string;
-  name: string;
+  userId: string;
+  title: string;
+  content: string;
+  type: string;
+  isRead: boolean;
+  isArchived: boolean;
+  createdAt: string;
+  readAt?: string;
+  archivedAt?: string;
+  contractId?: string;
+  courseId?: string;
+  metadata?: Record<string, unknown>; // Json type
+  
+  // Relations
+  user?: User;
 }
 
 export interface Test {
   id: string;
-  name: string;
-  description?: string;
-  testTypeId: string;
-  createdAt: string;
-  updatedAt: string;
-  sections: Section[];
-  testType: EnglishTestType;
-}
-
-export interface Section {
-  id: string;
   title: string;
-  description?: string;
-  skillType: 'READING' | 'LISTENING' | 'WRITING' | 'SPEAKING';
-  testId: string;
-  sectionOrder?: number;
-  timeLimit?: number;
-}
-
-export interface PracticeSession {
-  id: string;
-  userId: string;
-  testId: string;
-  selectedSections: string[];
-  status: 'ONGOING' | 'COMPLETED';
+  durationInMinutes?: number;
+  totalScore?: number;
+  passingScore?: number;
+  englishTestTypeId: string;
+  practiceCount?: number;
   createdAt: string;
-  completedAt?: string;
-  user: User;
-  test: Test;
+  maxAttempts?: number;
+  testType?: TestType;
+  updatedAt?: string;
+  
+  // Relations
+  courseTests?: CourseTest[];
+  courses?: Course[];
+  practiceSessions?: PracticeSession[];
+  questions?: Question[];
+  sections?: Section[];
+  englishTestType?: EnglishTestType;
 }
 
-// Rating system
-export interface Rating {
-  id: string;
-  score: number; // Float trong DB
-  userId: string;
+export interface CourseTest {
   courseId: string;
-  content?: string;
-  createdAt: string;
-  user: User;
-  course: Course;
-}
-
-// Dashboard Statistics
-export interface DashboardStats {
-  totalUsers: number;
-  totalCourses: number;
-  totalRevenue: number;
-  pendingApplications: number;
-  activeSubscriptions: number;
-  monthlyGrowth: {
-    users: number;
-    courses: number;
-    revenue: number;
-  };
-}
-
-export interface ChartData {
-  name: string;
-  value: number;
-  date?: string;
-}
-
-export interface RevenueData {
-  month: string;
-  revenue: number;
-  subscriptions: number;
-  courses: number;
-}
-
-// User Activity tracking
-export interface UserActivity {
-  id: string;
-  userId: string;
-  transactionId: string;
-  courseId: string;
-  createdAt: string;
-  expiresAt?: string;
-  user: User;
-  transaction: Transaction;
+  testId: string;
+  
+  // Relations
+  course?: Course;
+  test?: Test;
 }
 
 export interface FlashcardDeck {
@@ -246,7 +296,85 @@ export interface FlashcardDeck {
   description?: string;
   isPublic: boolean;
   userId: string;
-  deckTags: DeckTag[];
+  
+  // Relations
+  deckTags?: DeckTag[];
+  user?: User;
+  flashcards?: Flashcard[];
+}
+
+export interface TopupOrder {
+  id: string;
+  userId: string;
+  realMoney: number; // Decimal as number
+  realAmount?: number; // Decimal as number
+  currency: string;
+  paymentMethod: PaymentMethod;
+  status: OrderStatus;
+  createdAt: string;
+  
+  // Relations
+  user?: User;
+  transactions?: Transaction[];
+}
+
+export interface ScoreConversion {
+  id: string;
+  englishTestTypeId: string;
+  skill: SkillType;
+  rawScore: number;
+  scaledScore: number;
+  
+  // Relations
+  englishTestType?: EnglishTestType;
+}
+
+export interface UserNotification {
+  notificationId: string;
+  userId: string;
+  
+  // Relations
+  notification?: Notification;
+  user?: User;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description?: string;
+  price: number; // Decimal as number
+  category?: string;
+  courseLevel?: CourseLevel;
+  courseSellerId: string;
+  finalTestId?: string;
+  ratingCount?: number;
+  status: CourseStatus;
+  createdAt: string;
+  
+  // Relations
+  user?: User;
+  test?: Test;
+  courseTests?: CourseTest[];
+  ratings?: Rating[];
+  lessons?: Lesson[];
+  reports?: Report[];
+  cartItems?: CartItem[];
+  userActivities?: UserActivity[];
+}
+
+export interface Section {
+  id: string;
+  title: string;
+  testId?: string;
+  skill?: SkillType;
+  durationInSeconds?: number;
+  totalQuestions?: number;
+  totalScore?: number;
+  
+  // Relations
+  passage?: Passage[];
+  questions?: Question[];
+  test?: Test;
 }
 
 export interface Flashcard {
@@ -256,22 +384,312 @@ export interface Flashcard {
   exampleSentence?: string;
   audioUrl?: string;
   deckId: string;
+  
+  // Relations
+  deck?: FlashcardDeck;
+  userProgress?: UserFlashcardProgress[];
 }
-export interface Tag {
-  id: string;
-  name: string;
-}
+
 export interface DeckTag {
-  tag: Tag;
- 
+  tagId: string;
+  deckId: string;
+  
+  // Relations
+  deck?: FlashcardDeck;
+  tag?: Tag;
 }
+
 export interface UserFlashcardProgress {
   userId: string;
   flashcardId: string;
-  status: FlashcardStatus; // ('LEARNING' | 'REVIEW')
-  nextReviewAt: string; // ISO String (DateTime)
-  repetitions: number; // int
-  easeFactor: number; // float
-  interval: number; // int (số ngày)
-  learningStep: number; // int
+  status: FlashcardStatus;
+  nextReviewAt: string;
+  repetitions: number;
+  easeFactor: number;
+  interval: number;
+  learningStep: number;
+  
+  // Relations
+  flashcard?: Flashcard;
+  user?: User;
+}
+
+export interface PracticeSession {
+  id: string;
+  userId: string;
+  testId: string;
+  selectedSections: string[];
+  status: SessionStatus;
+  createdAt: string;
+  completedAt?: string;
+  overallScaledScore?: number;
+  scoresBySkill?: Record<string, unknown>; // Json type
+  rawScoresBySkill?: Record<string, unknown>; // Json type
+  
+  // Relations
+  test?: Test;
+  user?: User;
+  userAnswers?: UserAnswer[];
+}
+
+export interface SubscriptionContract {
+  id: string;
+  courseSellerId: string;
+  status: boolean;
+  subscriptionPlanId: string;
+  createdAt: string;
+  expiresAt: string;
+  updatedAt?: string;
+  renewalCount: number;
+  lastRenewalAt?: string;
+  notes?: string;
+  lastNotificationAt?: string;
+  
+  // Relations
+  user?: User;
+  subscriptionPlan?: SubscriptionPlan;
+  transactions?: Transaction[];
+}
+
+export interface Rating {
+  id: string;
+  score: number;
+  userId: string;
+  courseId: string;
+  content?: string;
+  createdAt: string;
+  replyContent?: string;
+  repliedAt?: string;
+  isReported: boolean;
+  
+  // Relations
+  course?: Course;
+  user?: User;
+}
+
+export interface Transaction {
+  id: string;
+  amount: number; // Decimal as number
+  status: TransactionStatus;
+  createdAt: string;
+  description?: string;
+  walletId: string;
+  transactionType: TransactionType;
+  topupOrderId?: string;
+  subscriptionContractId?: string;
+  orderId?: string;
+  
+  // Relations
+  wallet?: Wallet;
+  topupOrder?: TopupOrder;
+  subscriptionContract?: SubscriptionContract;
+  userActivities?: UserActivity[];
+  order?: Order;
+}
+
+export interface CartItem {
+  id: string;
+  courseId: string;
+  addedAt: string;
+  priceAtTime: number;
+  cartId: string;
+  
+  // Relations
+  course?: Course;
+  cart?: Cart;
+}
+
+export interface Cart {
+  id: string;
+  userId?: string;
+  createdAt: string;
+  
+  // Relations
+  user?: User;
+  order?: Order[];
+  cartItems?: CartItem[];
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  totalAmount: number;
+  createdAt: string;
+  cartId: string;
+  transactionId?: string;
+  
+  // Relations
+  user?: User;
+  cart?: Cart;
+  transaction?: Transaction;
+}
+
+export interface UserLesson {
+  lessonId: string;
+  userId: string;
+  
+  // Relations
+  lesson?: Lesson;
+  user?: User;
+}
+
+export interface UserAnswer {
+  id: string;
+  practiceSessionId: string;
+  questionId: string;
+  userId: string;
+  answerText?: string;
+  selectedOptionIndex?: number;
+  isCorrect?: boolean;
+  
+  // Relations
+  practiceSession?: PracticeSession;
+  question?: Question;
+  user?: User;
+}
+
+export interface UserActivity {
+  id: string;
+  userId: string;
+  transactionId: string;
+  courseId: string;
+  createdAt: string;
+  expiresAt?: string;
+  
+  // Relations
+  transaction?: Transaction;
+  user?: User;
+  course?: Course;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  userId: string;
+  createdAt: string;
+  parentCommentId?: string;
+  lessonId: string;
+  
+  // Relations
+  lesson?: Lesson;
+  user?: User;
+}
+
+export interface Lesson {
+  id: string;
+  title: string;
+  description?: string;
+  durationInSeconds?: number;
+  lessonOrder?: number;
+  materials: string[];
+  commentCount?: number;
+  courseId: string;
+  
+  // Relations
+  comments?: Comment[];
+  course?: Course;
+  mediaAssets?: MediaAsset[];
+  userLessons?: UserLesson[];
+}
+
+export interface Passage {
+  id: string;
+  sectionId: string;
+  content: string;
+  passageOrder?: number;
+  
+  // Relations
+  section?: Section;
+  questions?: Question[];
+}
+
+export interface MediaAsset {
+  id: string;
+  assetType: MediaType;
+  assetUrl: string;
+  lessonId: string;
+  
+  // Relations
+  lesson?: Lesson;
+  questions?: Question[];
+}
+
+export interface Question {
+  id: string;
+  sectionId?: string;
+  questionText?: string;
+  imageUrl?: string;
+  questionType: QuestionType;
+  options: string[];
+  correctAnswerIndex?: number;
+  wordLimit?: number;
+  correctAnswer?: string;
+  passageId?: string;
+  mediaId?: string;
+  questionOrder?: number;
+  testId?: string;
+  
+  // Relations
+  mediaAsset?: MediaAsset;
+  passage?: Passage;
+  section?: Section;
+  test?: Test;
+  userAnswers?: UserAnswer[];
+}
+
+export interface Policy {
+  id: string;
+  content: string;
+  createdAt: string;
+  userId: string;
+  
+  // Relations
+  user?: User;
+}
+
+export interface Report {
+  id: string;
+  content: string;
+  reasonType: EReasonType;
+  userId: string;
+  courseId: string;
+  createdAt: string;
+  
+  // Relations
+  course?: Course;
+  user?: User;
+}
+
+// API Response types (commonly used)
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: string[];
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  meta: PaginationMeta;
+}
+
+// Course with computed fields (commonly needed)
+export interface CourseWithStats extends Course {
+  averageRating: number;
+  lessonsCount: number;
+  ratingsCount: number;
+  lessons: Lesson[];
+  courseSeller: User;
+}
+
+// User for authentication contexts
+export interface AuthUser extends Pick<User, 'id' | 'email' | 'fullName' | 'role' | 'profilePicture'> {
+  courseSellerProfile?: CourseSellerProfile;
+  administratorProfile?: AdministratorProfile;
 }

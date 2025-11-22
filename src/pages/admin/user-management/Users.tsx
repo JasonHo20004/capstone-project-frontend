@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -35,60 +35,107 @@ import {
   Trash2, 
   UserPlus,
   Users,
-  UserCheck,
-  UserX,
   DollarSign,
   Save,
   X as XIcon
 } from 'lucide-react';
-import { mockUsers } from '@/data/mock';
 import { User } from '@/types/type';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import StatCard from '@/components/admin/StatCard';
 import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { userManagementService } from '@/lib/api/services/admin';
 
 export default function UsersManagement() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
   const [editForm, setEditForm] = useState({
     fullName: '',
     email: '',
+    password: '',
     phoneNumber: '',
     dateOfBirth: '',
     englishLevel: '',
     learningGoals: [] as string[],
     role: '',
-    isActive: true,
     certification: [] as string[],
     expertise: [] as string[],
-    walletAllowance: 0
+    walletAllowance: '' as number | ''
   });
+
+  const { data: usersResp } = useQuery({
+    queryKey: ['userManagementUsers'],
+    queryFn: () => userManagementService.getUsers(),
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: (payload: Parameters<typeof userManagementService.createUser>[0]) =>
+      userManagementService.createUser(payload),
+    onSuccess: (resp) => {
+      queryClient.invalidateQueries({ queryKey: ['userManagementUsers'] });
+      setCreatingUser(false);
+      toast.success('Tạo người dùng mới thành công!');
+    },
+    onError: () => {
+      toast.error('Tạo người dùng thất bại');
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: (payload: Parameters<typeof userManagementService.updateUser>[0]) =>
+      userManagementService.updateUser(payload),
+    onSuccess: (resp) => {
+      queryClient.invalidateQueries({ queryKey: ['userManagementUsers'] });
+      if (resp?.data) {
+        setSelectedUser((prev) => (prev && prev.id === resp.data.id ? resp.data : prev));
+      }
+      setEditingUser(null);
+      toast.success('Cập nhật thông tin người dùng thành công!');
+    },
+    onError: () => {
+      toast.error('Cập nhật thông tin người dùng thất bại');
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: string) => userManagementService.deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userManagementUsers'] });
+      setDeletingUser(null);
+      setSelectedUser(null);
+      toast.success('Xóa người dùng thành công!');
+    },
+    onError: () => {
+      toast.error('Xóa người dùng thất bại');
+    },
+  });
+
+  useEffect(() => {
+    if (usersResp?.data) {
+      setUsers(usersResp.data);
+    }
+  }, [usersResp]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && user.courseSellerProfile?.isActive) ||
-      (statusFilter === 'inactive' && !user.courseSellerProfile?.isActive);
-    
     const matchesRole = roleFilter === 'all' || 
       (roleFilter === 'STUDENT' && user.role !== 'COURSESELLER' && user.role !== 'ADMINISTRATOR') ||
       (roleFilter !== 'STUDENT' && user.role === roleFilter);
     
-    return matchesSearch && matchesStatus && matchesRole;
+    return matchesSearch && matchesRole;
   });
 
   const stats = {
     totalUsers: users.length,
-    activeUsers: users.filter(user => user.courseSellerProfile?.isActive).length,
-    inactiveUsers: users.filter(user => !user.courseSellerProfile?.isActive).length,
     totalWalletBalance: users.reduce((sum, user) => sum + (user.wallet?.allowance || 0), 0)
   };
 
@@ -110,12 +157,7 @@ export default function UsersManagement() {
     }
   };
 
-  const getStatusBadge = (user: User) => {
-    const isActive = user.courseSellerProfile?.isActive;
-    return isActive ? 
-      <Badge className="bg-green-100 text-green-800">Hoạt động</Badge> :
-      <Badge className="bg-gray-100 text-gray-800">Không hoạt động</Badge>;
-  };
+  
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('vi-VN', {
@@ -134,12 +176,12 @@ export default function UsersManagement() {
     setEditForm({
       fullName: user.fullName,
       email: user.email,
+      password: '',
       phoneNumber: user.phoneNumber || '',
       dateOfBirth: formatDateForInput(user.dateOfBirth),
       englishLevel: user.englishLevel || '',
       learningGoals: user.learningGoals || [],
       role: user.role || 'STUDENT',
-      isActive: user.courseSellerProfile?.isActive ?? true,
       certification: user.courseSellerProfile?.certification || [],
       expertise: user.courseSellerProfile?.expertise || [],
       walletAllowance: user.wallet?.allowance || 0
@@ -149,35 +191,25 @@ export default function UsersManagement() {
   const handleSaveUser = () => {
     if (!editingUser) return;
 
-    const updatedUser: User = {
-      ...editingUser,
+    const payload = {
+      id: editingUser.id,
       fullName: editForm.fullName,
       email: editForm.email,
       phoneNumber: editForm.phoneNumber || undefined,
       dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
-      role: editForm.role === 'STUDENT' ? undefined : (editForm.role as 'ADMINISTRATOR' | 'COURSESELLER'),
-      wallet: editingUser.wallet ? {
-        ...editingUser.wallet,
-        allowance: editForm.walletAllowance
-      } : undefined,
+      ...(editForm.role !== 'STUDENT' ? { role: editForm.role as 'COURSESELLER' | 'ADMINISTRATOR' } : {}),
       courseSellerProfile: editForm.role === 'COURSESELLER' ? {
-        id: editingUser.courseSellerProfile?.id || `csp_${editingUser.id}`,
+        id: editingUser.courseSellerProfile?.id,
         certification: editForm.certification,
         expertise: editForm.expertise,
-        isActive: editForm.isActive,
-        userId: editingUser.id
+        isActive: editingUser.courseSellerProfile?.isActive ?? true,
       } : undefined,
-      administratorProfile: editForm.role === 'ADMINISTRATOR' ? {
-        id: editingUser.administratorProfile?.id || `ap_${editingUser.id}`,
-        userId: editingUser.id
-      } : undefined
+      walletAllowance: editForm.walletAllowance === '' ? undefined : editForm.walletAllowance,
     };
 
-    setUsers(users.map(user => user.id === editingUser.id ? updatedUser : user));
-    setEditingUser(null);
-    toast.success('Cập nhật thông tin người dùng thành công!');
+    updateUserMutation.mutate(payload);
   };
 
   const handleCancelEdit = () => {
@@ -185,15 +217,15 @@ export default function UsersManagement() {
     setEditForm({
       fullName: '',
       email: '',
+      password: '',
       phoneNumber: '',
       dateOfBirth: '',
       englishLevel: '',
       learningGoals: [],
       role: '',
-      isActive: true,
       certification: [],
       expertise: [],
-      walletAllowance: 0
+      walletAllowance: ''
     });
   };
 
@@ -217,53 +249,37 @@ export default function UsersManagement() {
     setEditForm({
       fullName: '',
       email: '',
+      password: '',
       phoneNumber: '',
       dateOfBirth: '',
       englishLevel: '',
       learningGoals: [],
       role: 'STUDENT',
-      isActive: true,
       certification: [],
       expertise: [],
-      walletAllowance: 0
+      walletAllowance: ''
     });
   };
 
   const handleSaveNewUser = () => {
-    // Generate new user ID
-    const newUserId = `user_${Date.now()}`;
-    
-    const newUser: User = {
-      id: newUserId,
-      email: editForm.email,
+    const payload = {
       fullName: editForm.fullName,
+      email: editForm.email,
+      password: editForm.password,
       phoneNumber: editForm.phoneNumber || undefined,
       dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
-      createdAt: new Date().toISOString(),
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
-      role: editForm.role === 'STUDENT' ? undefined : (editForm.role as 'ADMINISTRATOR' | 'COURSESELLER'),
-      wallet: editForm.walletAllowance > 0 ? {
-        id: `wallet_${newUserId}`,
-        allowance: editForm.walletAllowance,
-        userId: newUserId
-      } : undefined,
+      ...(editForm.role !== 'STUDENT' ? { role: editForm.role as 'COURSESELLER' | 'ADMINISTRATOR' } : {}),
       courseSellerProfile: editForm.role === 'COURSESELLER' ? {
-        id: `csp_${newUserId}`,
         certification: editForm.certification,
         expertise: editForm.expertise,
-        isActive: editForm.isActive,
-        userId: newUserId
+        isActive: true,
       } : undefined,
-      administratorProfile: editForm.role === 'ADMINISTRATOR' ? {
-        id: `ap_${newUserId}`,
-        userId: newUserId
-      } : undefined
+      walletAllowance: editForm.walletAllowance || undefined,
     };
 
-    setUsers([...users, newUser]);
-    setCreatingUser(false);
-    toast.success('Tạo người dùng mới thành công!');
+    createUserMutation.mutate(payload);
   };
 
   const handleCancelCreate = () => {
@@ -271,23 +287,18 @@ export default function UsersManagement() {
     setEditForm({
       fullName: '',
       email: '',
+      password: '',
       phoneNumber: '',
       dateOfBirth: '',
       englishLevel: '',
       learningGoals: [],
       role: '',
-      isActive: true,
       certification: [],
       expertise: [],
-      walletAllowance: 0
+      walletAllowance: ''
     });
   };
 
-  const statusOptions = [
-    { value: 'all', label: 'Tất cả trạng thái' },
-    { value: 'active', label: 'Hoạt động' },
-    { value: 'inactive', label: 'Không hoạt động' }
-  ];
 
   const roleOptions = [
     { value: 'all', label: 'Tất cả vai trò' },
@@ -317,11 +328,6 @@ export default function UsersManagement() {
       key: 'role',
       header: 'Vai trò',
       render: (user: User) => getRoleBadge(user.role)
-    },
-    {
-      key: 'status',
-      header: 'Trạng thái',
-      render: (user: User) => getStatusBadge(user)
     },
     {
       key: 'wallet',
@@ -361,7 +367,7 @@ export default function UsersManagement() {
               <Edit className="mr-2 h-4 w-4" />
               Chỉnh sửa
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={() => setDeletingUser(user)}>
               <Trash2 className="mr-2 h-4 w-4" />
               Xóa người dùng
             </DropdownMenuItem>
@@ -372,14 +378,6 @@ export default function UsersManagement() {
   ];
 
   const filters = [
-    {
-      key: 'status',
-      label: 'Trạng thái',
-      value: statusFilter,
-      onChange: setStatusFilter,
-      options: statusOptions,
-      placeholder: 'Chọn trạng thái'
-    },
     {
       key: 'role',
       label: 'Vai trò',
@@ -413,23 +411,7 @@ export default function UsersManagement() {
           description="Tất cả người dùng"
           icon={Users}
         />
-        <StatCard
-          title="Đang hoạt động"
-          value={stats.activeUsers.toString()}
-          description="Người dùng hoạt động"
-          icon={UserCheck}
-          trend={{
-            value: Math.round((stats.activeUsers / stats.totalUsers) * 100),
-            label: "% tổng số",
-            isPositive: true
-          }}
-        />
-        <StatCard
-          title="Không hoạt động"
-          value={stats.inactiveUsers.toString()}
-          description="Người dùng không hoạt động"
-          icon={UserX}
-        />
+        
         <StatCard
           title="Tổng số dư ví"
           value={formatCurrency(stats.totalWalletBalance)}
@@ -479,7 +461,6 @@ export default function UsersManagement() {
                   <p className="text-muted-foreground">{selectedUser.email}</p>
                   <div className="flex items-center space-x-2 mt-2">
                     {getRoleBadge(selectedUser.role)}
-                    {getStatusBadge(selectedUser)}
                   </div>
                 </div>
               </div>
@@ -536,7 +517,7 @@ export default function UsersManagement() {
                   <Edit className="mr-2 h-4 w-4" />
                   Chỉnh sửa
                 </Button>
-                <Button variant="destructive">
+                <Button variant="destructive" onClick={() => setDeletingUser(selectedUser)}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Xóa người dùng
                 </Button>
@@ -656,17 +637,6 @@ export default function UsersManagement() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Thông tin giảng viên</h3>
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="isActive"
-                        checked={editForm.isActive}
-                        onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                        className="rounded"
-                        title="Tài khoản hoạt động"
-                      />
-                      <Label htmlFor="isActive">Tài khoản hoạt động</Label>
-                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="certification">Chứng chỉ</Label>
                       <Textarea
@@ -717,7 +687,7 @@ export default function UsersManagement() {
                         id="walletAllowance"
                         type="number"
                         value={editForm.walletAllowance}
-                        onChange={(e) => setEditForm({ ...editForm, walletAllowance: Number(e.target.value) })}
+                        onChange={(e) => setEditForm({ ...editForm, walletAllowance: e.target.value === '' ? '' : Number(e.target.value) })}
                         placeholder="Nhập số dư"
                       />
                     </div>
@@ -732,7 +702,7 @@ export default function UsersManagement() {
               <XIcon className="mr-2 h-4 w-4" />
               Hủy
             </Button>
-            <Button onClick={handleSaveUser}>
+            <Button onClick={handleSaveUser} disabled={updateUserMutation.isPending}>
               <Save className="mr-2 h-4 w-4" />
               Lưu thay đổi
             </Button>
@@ -765,17 +735,28 @@ export default function UsersManagement() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newEmail">Email *</Label>
-                  <Input
-                    id="newEmail"
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    placeholder="Nhập email"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="newEmail">Email *</Label>
+                <Input
+                  id="newEmail"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  placeholder="Nhập email"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Mật khẩu *</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  placeholder="Nhập mật khẩu"
+                  required
+                />
+              </div>
                 <div className="space-y-2">
                   <Label htmlFor="newPhoneNumber">Số điện thoại</Label>
                   <Input
@@ -851,17 +832,6 @@ export default function UsersManagement() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Thông tin giảng viên</h3>
                 <div className="grid grid-cols-1 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="newIsActive"
-                      checked={editForm.isActive}
-                      onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                      className="rounded"
-                      title="Tài khoản đang hoạt động"
-                    />
-                    <Label htmlFor="newIsActive">Tài khoản đang hoạt động</Label>
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="newCertification">Chứng chỉ</Label>
                     <Textarea
@@ -917,12 +887,51 @@ export default function UsersManagement() {
               <XIcon className="mr-2 h-4 w-4" />
               Hủy
             </Button>
-            <Button 
+            <Button
               onClick={handleSaveNewUser}
-              disabled={!editForm.fullName || !editForm.email || !editForm.role}
+              disabled={!editForm.fullName || !editForm.email || !editForm.role || !editForm.password || createUserMutation.isPending}
             >
               <UserPlus className="mr-2 h-4 w-4" />
               Tạo người dùng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingUser} onOpenChange={(open) => !open && setDeletingUser(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa người dùng</DialogTitle>
+            <DialogDescription>
+              Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa người dùng này?
+            </DialogDescription>
+          </DialogHeader>
+          {deletingUser && (
+            <div className="py-4">
+              <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={deletingUser.profilePicture} />
+                  <AvatarFallback>{deletingUser.fullName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">{deletingUser.fullName}</div>
+                  <div className="text-sm text-muted-foreground">{deletingUser.email}</div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setDeletingUser(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deletingUser && deleteUserMutation.mutate(deletingUser.id)}
+              disabled={deleteUserMutation.isPending}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleteUserMutation.isPending ? 'Đang xóa...' : 'Xóa người dùng'}
             </Button>
           </DialogFooter>
         </DialogContent>
