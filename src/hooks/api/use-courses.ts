@@ -5,7 +5,7 @@ import {
   type GetCoursesParams,
   type Course,
   type CourseDetail,
-} from '@/lib/api/services';
+} from '@/lib/api/services/user';
 
 /**
  * Custom hooks cho Courses với React Query

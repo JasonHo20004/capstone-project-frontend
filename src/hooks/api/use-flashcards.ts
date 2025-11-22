@@ -1,5 +1,5 @@
 import { useQuery,useQueryClient,useMutation } from '@tanstack/react-query';
-import { flashcardService, type SubmitReviewDTO, type DeckFormDTO, type CardFormDTO, } from '@/lib/api/services/flashcard.service';
+import { flashcardService, type SubmitReviewDTO, type DeckFormDTO, type CardFormDTO, } from '@/lib/api/services/user';
 
 import { toast } from 'sonner';
 // Tạo key factory giúp quản lý key nhất quán

@@ -1,5 +1,5 @@
-import apiClient from '../config';
-import type { ApiResponse } from '../types';
+import apiClient from '@/lib/api/config';
+import type { ApiResponse } from '@/lib/api/types';
 import type { Tag } from '@/types/type'; // (Đảm bảo bạn đã thêm `Tag` vào `types.ts`)
 
 class TagService {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { tagService } from '@/lib/api/services/tag.service';
+import { tagService } from '@/lib/api/services/user';
 
 /**
  * Hook để fetch tất cả tags
