@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { userService } from '@/lib/api/services/user.service';
+import { useQuery,useMutation, useQueryClient } from '@tanstack/react-query';
+import { userService , type UpdateProfileDTO} from '@/lib/api/services/user.service';
 import { User } from '@/types/type';
 import { AxiosError } from 'axios';
 import type { ApiError } from '@/lib/api/types';
+import { toast } from 'sonner';
 
 export const useProfile = () => {
   const { data, isLoading, isError, error } = useQuery<User | null, AxiosError<ApiError>>({
@@ -62,4 +63,26 @@ export const useUser = () => {
     isError,
     error,
   };
+};
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateProfileDTO|FormData) => userService.updateProfile(data),
+    
+    onSuccess: () => {
+      
+      
+      // QUAN TRỌNG: Làm mới data để UI cập nhật ngay lập tức
+      // 1. Làm mới trang Profile
+      queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
+      // 2. Làm mới Navbar (nếu Navbar dùng key ['user', 'me'])
+      queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+    },
+    
+    onError: (error: AxiosError<ApiError>) => {
+      const message = error.response?.data?.message || 'Cập nhật thất bại';
+      toast.error(message);
+    },
+  });
 };
