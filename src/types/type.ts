@@ -384,7 +384,7 @@ export interface Flashcard {
   exampleSentence?: string;
   audioUrl?: string;
   deckId: string;
-  
+  queueType?: 'NEW' | 'LEARNING' | 'REVIEW';
   // Relations
   deck?: FlashcardDeck;
   userProgress?: UserFlashcardProgress[];
