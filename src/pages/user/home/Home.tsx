@@ -3,15 +3,31 @@ import Footer from '@/components/user/layout/Footer';
 import Hero from '@/components/user/home/Hero';
 import Features from '@/components/user/home/Features';
 import CourseCard from '@/components/user/course/CourseCard';
-import { mockCourses } from '@/data/mock';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCourses } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
 
 const Index = () => {
-  const popularCourses = [...mockCourses]
-    .sort((a, b) => (b.ratingCount ?? 0) - (a.ratingCount ?? 0))
-    .slice(0, 3);
+  const {
+    data: popularCoursesResponse,
+    isLoading: isLoadingCourses,
+    isError: isCoursesError,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useCourses({
+    page: 1,
+    limit: 6,
+    sortBy: 'ratingCount',
+    sortOrder: 'desc',
+    status: 'ACTIVE',
+  });
+
+  const popularCourses =
+    popularCoursesResponse?.data?.slice(0, 3) ??
+    [];
 
   return (
     <div className="min-h-screen">
@@ -33,10 +49,27 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              {popularCourses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 min-h-[220px]">
+              {isLoadingCourses && (
+                <LoadingSpinner className="col-span-full py-8" text="Đang tải khoá học nổi bật..." />
+              )}
+              {isCoursesError && (
+                <ErrorMessage
+                  className="col-span-full"
+                  message={coursesError instanceof Error ? coursesError.message : 'Không thể tải dữ liệu.'}
+                  onRetry={refetchCourses}
+                />
+              )}
+              {!isLoadingCourses && !isCoursesError && popularCourses.length === 0 && (
+                <p className="col-span-full text-center text-muted-foreground">
+                  Hiện chưa có khoá học nào phù hợp.
+                </p>
+              )}
+              {!isLoadingCourses &&
+                !isCoursesError &&
+                popularCourses.map((course) => (
+                  <CourseCard key={course.id} course={course} />
+                ))}
             </div>
 
             <div className="text-center">
@@ -151,26 +184,31 @@ const Index = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-gradient-primary">
-          <div className="container mx-auto px-4 text-center">
-            <div className="max-w-3xl mx-auto space-y-6">
-              <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground font-['Be Vietnam Pro']">
-                Sẵn sàng bắt đầu học?
+        <section className="py-20 bg-gradient-primary text-primary-foreground">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <h2 className="text-4xl md:text-5xl font-bold font-['Be Vietnam Pro']">
+                Bắt đầu hành trình học tập của bạn ngay hôm nay
               </h2>
-              <p className="text-xl text-primary-foreground/80">
-                Tham gia cùng hàng nghìn học viên và bắt đầu hành trình chinh phục tiếng Anh ngay hôm nay
+              <p className="text-lg text-primary-foreground/80">
+                Khám phá hàng trăm khoá học từ các chuyên gia và nâng cao kỹ năng tiếng Anh của bạn.
               </p>
-              <div className="flex flex-wrap gap-4 justify-center pt-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/courses">
-                  <Button size="lg" variant="secondary" className="shadow-accent text-lg h-14 px-8">
-                    Xem tất cả khóa học
+                  <Button size="lg" className="bg-primary-foreground text-primary font-semibold">
+                    Khám phá khoá học
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-2 border-primary-foreground/20 hover:bg-primary-foreground/10 text-primary-foreground text-lg h-14 px-8">
-                  <Play className="w-5 h-5 mr-2" />
-                  Xem demo
-                </Button>
+                <Link to="/seller/apply">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="bg-transparent border-primary-foreground text-primary-foreground"
+                  >
+                    Trở thành giảng viên
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

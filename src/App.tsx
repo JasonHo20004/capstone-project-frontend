@@ -33,6 +33,7 @@ import SubscriptionContractsManagement from "./pages/admin/finance/SubscriptionC
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
+import { SellerProtectedRoute } from "./components/auth/SellerProtectedRoute";
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
@@ -111,14 +112,16 @@ const App = () => (
           </Route>
 
           {/* Seller Routes */}
-          <Route path="/seller" element={<SellerLayout />}>
-            <Route index element={<SellerDashboard />} />
-            <Route path="courses" element={<SellerCourses />} />
-            <Route path="courses/:id" element={<SellerCourseDetail />} />
-            <Route path="fees" element={<SellerMonthlyFees />} />
-            <Route path="comments" element={<SellerComments />} />
-            <Route path="learners" element={<SellerLearners />} />
-            <Route path="profile" element={<SellerProfile />} />
+          <Route element={<SellerProtectedRoute />}>
+            <Route path="/seller" element={<SellerLayout />}>
+              <Route index element={<SellerDashboard />} />
+              <Route path="courses" element={<SellerCourses />} />
+              <Route path="courses/:id" element={<SellerCourseDetail />} />
+              <Route path="fees" element={<SellerMonthlyFees />} />
+              <Route path="comments" element={<SellerComments />} />
+              <Route path="learners" element={<SellerLearners />} />
+              <Route path="profile" element={<SellerProfile />} />
+            </Route>
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
