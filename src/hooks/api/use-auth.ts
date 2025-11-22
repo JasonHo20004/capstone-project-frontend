@@ -29,7 +29,6 @@ export const useAuth = () => {
           : (response as unknown as LoginResponse);
 
       const { accessToken, user } = data;
-      console.log(user);
       // Lưu tokens vào localStorage
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));

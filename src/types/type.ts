@@ -252,7 +252,7 @@ export interface InAppNotification {
   archivedAt?: string;
   contractId?: string;
   courseId?: string;
-  metadata?: any; // Json type
+  metadata?: Record<string, unknown>; // Json type
   
   // Relations
   user?: User;
@@ -423,8 +423,8 @@ export interface PracticeSession {
   createdAt: string;
   completedAt?: string;
   overallScaledScore?: number;
-  scoresBySkill?: any; // Json type
-  rawScoresBySkill?: any; // Json type
+  scoresBySkill?: Record<string, unknown>; // Json type
+  rawScoresBySkill?: Record<string, unknown>; // Json type
   
   // Relations
   test?: Test;
