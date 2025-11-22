@@ -7,6 +7,9 @@ import {
   type RegisterRequest,
   type LoginResponse,
 } from "@/lib/api/services";
+import { AxiosError } from "axios";
+import type { ApiError } from "@/lib/api/types";
+
 /**
  * Custom hook cho Authentication với React Query
  * Xử lý login, logout, và quản lý token
@@ -26,11 +29,11 @@ export const useAuth = () => {
           : (response as unknown as LoginResponse);
 
       const { accessToken, user } = data;
-console.log(user)
+      console.log(user);
       // Lưu tokens vào localStorage
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("user",JSON.stringify(user))
-      queryClient.setQueryData(['user', 'me'], user);
+      localStorage.setItem("user", JSON.stringify(user));
+      queryClient.setQueryData(["user", "me"], user);
       navigate("/");
     },
     onError: (error) => {
@@ -42,39 +45,33 @@ console.log(user)
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
-    onSuccess: (response) => {
-      const { accessToken, refreshToken, user } = response.data;
 
-      // Lưu tokens vào localStorage
-      localStorage.setItem("accessToken", accessToken);
-      // if (refreshToken) {
-      //   localStorage.setItem('refreshToken', refreshToken);
-      // }
+    onSuccess: (_response) => {
+      // Response bây giờ chỉ chứa thông tin user, KHÔNG có token
+      // const user = response.data;
 
-      // Lưu user info vào query cache
-      localStorage.setItem("user",JSON.stringify(user))
-      queryClient.setQueryData(["user",'me'], user);
-
+      // 1. Thông báo thành công
       toast.success("Đăng ký thành công!", {
-        description: `Chào mừng ${user.name} đến với SkillBoost!`,
+        description: "Vui lòng đăng nhập bằng tài khoản vừa tạo.",
       });
 
-      // Redirect về trang chủ
-      navigate("/");
+      // 2. Chuyển hướng về trang Login (Thay vì trang chủ)
+      navigate("/login");
     },
-    onError: (error) => {
-      // Error đã được xử lý trong interceptor
-      console.error("Register error:", error);
-    },
-  });
 
+    // onError: (_error: AxiosError<ApiError>) => {
+    //   const message =
+    //     "Đăng ký thất bại. Vui lòng thử lại.";
+    //   toast.error(message);
+    // },
+  });
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: () => authService.logout(),
     onSuccess: () => {
       // Xóa tokens
       localStorage.removeItem("accessToken");
-localStorage.removeItem("user");
+      localStorage.removeItem("user");
       // Clear query cache
       queryClient.clear();
 

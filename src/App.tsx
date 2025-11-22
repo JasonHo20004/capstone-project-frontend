@@ -36,6 +36,7 @@ import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
+import Register from "./pages/shared/auth/Register";
 
 // Layouts
 import AdminLayout from "./components/admin/AdminLayout";
@@ -61,7 +62,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-
           {/* public routes */}
           <Route path="/" element={<Index />} />
           <Route path="/courses" element={<Courses />} />
@@ -69,7 +69,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
-
+          <Route path="/register" element={<Register />} />
           {/* protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/my-courses" element={<MyCourses />} />
@@ -81,8 +81,8 @@ const App = () => (
 
             <Route path="/blog" element={<Blog />} />
           </Route>
-        {/* admin Routes */}
-        
+          {/* admin Routes */}
+
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UsersManagement />} />

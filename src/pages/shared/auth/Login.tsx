@@ -1,57 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { BookOpen, Mail, Lock, User } from 'lucide-react';
-import { useAuth } from '@/hooks/api';
+import { BookOpen, Mail, Lock } from 'lucide-react';
+import { useAuth } from '@/hooks/api/use-auth';
 import { InlineLoading } from '@/components/ui/loading-spinner';
 
 const Login = () => {
-  const { login, register, isLoggingIn, isRegistering } = useAuth();
-  const location = useLocation();
-
-  const computeIsLoginFromLocation = useCallback(() => {
-    const params = new URLSearchParams(location.search);
-    const registerParam = params.get('register');
-    const modeParam = params.get('mode');
-    const hashLower = (location.hash || '').toLowerCase();
-    const wantsRegister = (
-      (registerParam !== null && registerParam !== '0' && registerParam !== 'false') ||
-      modeParam === 'register' ||
-      hashLower.includes('register')
-    );
-    return !wantsRegister;
-  }, [location.search, location.hash]);
-
-  const [isLogin, setIsLogin] = useState(computeIsLoginFromLocation());
-  useEffect(() => {
-    setIsLogin(computeIsLoginFromLocation());
-  }, [computeIsLoginFromLocation]);
+  const { login, isLoggingIn } = useAuth();
+  
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
   });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isLogin) {
-      // Gọi API login
-      login({
-        email: formData.email,
-        password: formData.password,
-      });
-    } else {
-      // Gọi API register
-      register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      });
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -60,9 +22,18 @@ const Login = () => {
     }));
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Gọi API Login thông qua hook
+    login({
+      email: formData.email,
+      password: formData.password,
+    });
+  };
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left Side - Branding */}
+      {/* Left Side */}
       <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-hero text-primary-foreground p-12">
         <div className="max-w-md space-y-8">
           <Link to="/" className="flex items-center gap-3 group">
@@ -74,13 +45,14 @@ const Login = () => {
           
           <div className="space-y-4">
             <h1 className="text-4xl font-bold leading-tight font-['Be Vietnam Pro']">
-              Nâng cấp kỹ năng tiếng Anh của bạn
+              Chào mừng trở lại!
             </h1>
             <p className="text-xl text-primary-foreground/80">
-              Tham gia cùng hàng ngàn học viên chinh phục tiếng Anh với các khóa học chất lượng
+              Tiếp tục lộ trình học tập của bạn và chinh phục các thử thách mới.
             </p>
           </div>
 
+          {/* Stats */}
           <div className="grid grid-cols-3 gap-6 pt-8">
             <div className="space-y-2">
               <div className="text-3xl font-bold text-secondary">50K+</div>
@@ -92,13 +64,13 @@ const Login = () => {
             </div>
             <div className="space-y-2">
               <div className="text-3xl font-bold text-secondary">98%</div>
-              <div className="text-sm text-primary-foreground/70">Tỷ lệ thành công</div>
+              <div className="text-sm text-primary-foreground/70">Hài lòng</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Form */}
+      {/* Right Side */}
       <div className="flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
@@ -111,43 +83,15 @@ const Login = () => {
             </span>
           </Link>
 
-          {/* Form Header */}
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold font-['Be Vietnam Pro']">
-              {isLogin ? 'Chào mừng trở lại' : 'Tạo tài khoản'}
-            </h2>
-            <p className="text-muted-foreground">
-              {isLogin ? 'Đăng nhập để tiếp tục lộ trình học' : 'Bắt đầu hành trình chinh phục tiếng Anh'}
-            </p>
+            <h2 className="text-3xl font-bold font-['Be Vietnam Pro']">Đăng nhập</h2>
+            <p className="text-muted-foreground">Nhập email và mật khẩu của bạn</p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-2">
-                  Họ và tên
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required={!isLogin}
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Nguyễn Văn A"
-                    className="pl-10 h-12"
-                  />
-                </div>
-              </div>
-            )}
-
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Địa chỉ email
-              </label>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -163,10 +107,9 @@ const Login = () => {
               </div>
             </div>
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-2">
-                Mật khẩu
-              </label>
+              <label htmlFor="password" className="block text-sm font-medium mb-2">Mật khẩu</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -182,52 +125,43 @@ const Login = () => {
               </div>
             </div>
 
-            {isLogin && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Checkbox id="remember" />
-                  <label htmlFor="remember" className="text-sm cursor-pointer">
-                    Ghi nhớ đăng nhập
-                  </label>
-                </div>
-                <a href="#" className="text-sm text-primary hover:underline">
-                  Quên mật khẩu?
-                </a>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Checkbox id="remember" />
+                <label htmlFor="remember" className="text-sm cursor-pointer">
+                  Ghi nhớ
+                </label>
               </div>
-            )}
+              <a href="#" className="text-sm text-primary hover:underline">
+                Quên mật khẩu?
+              </a>
+            </div>
 
             <Button 
               type="submit" 
               size="lg" 
               className="w-full bg-gradient-primary shadow-accent text-lg h-12"
-              disabled={isLoggingIn || isRegistering}
+              disabled={isLoggingIn}
             >
-              {(isLoggingIn || isRegistering) ? (
+              {isLoggingIn ? (
                 <>
                   <InlineLoading />
-                  <span className="ml-2">{isLogin ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...'}</span>
+                  <span className="ml-2">Đang đăng nhập...</span>
                 </>
               ) : (
-                isLogin ? 'Đăng nhập' : 'Tạo tài khoản'
+                'Đăng nhập'
               )}
             </Button>
           </form>
 
-          {/* Toggle Form */}
+          {/* Link chuyển qua Register */}
           <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              {isLogin ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
-              <span className="font-semibold text-primary">
-                {isLogin ? 'Đăng ký' : 'Đăng nhập'}
-              </span>
-            </button>
+            <span className="text-sm text-muted-foreground">Chưa có tài khoản? </span>
+            <Link to="/register" className="text-sm font-semibold text-primary hover:underline">
+              Đăng ký ngay
+            </Link>
           </div>
 
-          {/* Back to Home */}
           <div className="text-center pt-4">
             <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
               ← Về trang chủ
