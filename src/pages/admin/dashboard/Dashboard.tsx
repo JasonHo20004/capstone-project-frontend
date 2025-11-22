@@ -19,7 +19,7 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import { dashboardService } from '@/lib/api/services';
+import { dashboardService } from '@/lib/api/services/admin';
 import StatCard from '@/components/admin/StatCard';
 import ChartCard from '@/components/admin/ChartCard';
 

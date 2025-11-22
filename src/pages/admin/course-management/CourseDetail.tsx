@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
-import { courseManagementService } from "@/lib/api/services";
-import type { UpdateCourseRequest } from "@/lib/api/services";
+import { courseManagementService } from "@/lib/api/services/admin";
+import type { UpdateCourseRequest } from "@/lib/api/services/admin";
 import { CourseWithStats, CourseStatus, CourseLevel } from "@/types/type";
 import {
   Select,
@@ -18,6 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminCourseDetail() {
   const { id } = useParams();
@@ -29,6 +39,8 @@ export default function AdminCourseDetail() {
   const [newLesson, setNewLesson] = useState({ title: "", description: "" });
   const [replyText, setReplyText] = useState("");
   const [editCourse, setEditCourse] = useState<UpdateCourseRequest>({});
+  const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+  const [showDeleteCourseDialog, setShowDeleteCourseDialog] = useState(false);
 
   const { data: courseDetailResp } = useQuery({
     queryKey: ["adminCourseDetail", id],
@@ -61,9 +73,14 @@ export default function AdminCourseDetail() {
     mutationFn: () => courseManagementService.deleteCourse(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+      setShowDeleteCourseDialog(false); // Close dialog on success
       navigate("/admin/courses");
     },
   });
+
+  const handleDeleteCourse = () => {
+    deleteCourseMutation.mutate();
+  };
 
   const createLessonMutation = useMutation({
     mutationFn: (vars: { title: string; description?: string }) =>
@@ -87,8 +104,15 @@ export default function AdminCourseDetail() {
       courseManagementService.deleteLesson(id!, lessonId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminCourseDetail", id] });
+      setLessonToDelete(null); // Close dialog on success
     },
   });
+
+  const handleDeleteLesson = () => {
+    if (lessonToDelete) {
+      deleteLessonMutation.mutate(lessonToDelete);
+    }
+  };
 
   const deleteRatingMutation = useMutation({
     mutationFn: (ratingId: string) =>
@@ -198,7 +222,7 @@ export default function AdminCourseDetail() {
               <div className="flex space-x-2">
                 <Button
                   variant="destructive"
-                  onClick={() => deleteCourseMutation.mutate()}
+                  onClick={() => setShowDeleteCourseDialog(true)}
                 >
                   Xóa khóa học
                 </Button>
@@ -332,7 +356,7 @@ export default function AdminCourseDetail() {
                     >
                       Lưu thay đổi
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="outline"
                       onClick={() =>
                         setEditCourse({
@@ -345,7 +369,7 @@ export default function AdminCourseDetail() {
                       }
                     >
                       Hoàn nguyên
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               )}
@@ -376,7 +400,7 @@ export default function AdminCourseDetail() {
                       </Button>
                       <Button
                         variant="destructive"
-                        onClick={() => deleteLessonMutation.mutate(ls.id)}
+                        onClick={() => setLessonToDelete(ls.id)}
                       >
                         Xóa
                       </Button>
@@ -409,6 +433,36 @@ export default function AdminCourseDetail() {
           </Tabs>
         </>
       )}
+
+      <AlertDialog open={!!lessonToDelete} onOpenChange={(open) => !open && setLessonToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bài học</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa bài học này? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setLessonToDelete(null)}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteLesson}>Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteCourseDialog} onOpenChange={setShowDeleteCourseDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa khóa học</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa khóa học này? Tất cả bài học và dữ liệu liên quan sẽ bị xóa. Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteCourseDialog(false)}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCourse}>Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

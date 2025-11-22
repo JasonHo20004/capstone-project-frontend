@@ -1,11 +1,11 @@
-import apiClient from '../../config';
-import type { ApiResponse } from '../../types';
+import apiClient from '../../../config';
+import type { ApiResponse } from '../../../types';
 import type {
   TransactionFilters,
   TransactionListResponse,
   TransactionDetailResponse,
   TransactionStats
-} from '../../types/transaction.types';
+} from '../../../types/transaction.types';
 
 class TransactionManagementService {
   /**

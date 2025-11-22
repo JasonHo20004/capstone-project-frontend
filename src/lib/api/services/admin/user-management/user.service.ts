@@ -1,5 +1,5 @@
-import apiClient from '../../config';
-import type { ApiResponse } from '../../types';
+import apiClient from '../../../config';
+import type { ApiResponse } from '../../../types';
 import type { User } from '@/types/type';
 
 export interface CreateUserRequest {

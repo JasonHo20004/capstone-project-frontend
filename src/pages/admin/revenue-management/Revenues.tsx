@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, DollarSign, CreditCard, Calendar } from 'lucide-react';
-import { revenueManagementService } from '@/lib/api/services';
+import { revenueManagementService } from '@/lib/api/services/admin';
 import { Transaction } from '@/types/type';
 import type { RevenueFilters } from '@/lib/api/types/revenue.types';
 import StatCard from '@/components/admin/StatCard';

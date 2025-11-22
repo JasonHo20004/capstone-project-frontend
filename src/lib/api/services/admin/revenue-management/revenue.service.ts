@@ -1,11 +1,11 @@
-import apiClient from '../../config';
-import type { ApiResponse } from '../../types';
+import apiClient from '../../../config';
+import type { ApiResponse } from '../../../types';
 import type {
   RevenueData,
   RevenueStats,
   RevenueFilters,
   TransactionListResponse
-} from '../../types/revenue.types';
+} from '../../../types/revenue.types';
 
 class RevenueManagementService {
   /**

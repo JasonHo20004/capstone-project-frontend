@@ -20,17 +20,17 @@ import MyCourses from "./pages/user/courses/MyCourses";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
-import UsersManagement from "./pages/admin/management/user/Users";
-import CoursesManagement from "./pages/admin/management/course/Courses";
-import ApplicationsManagement from "./pages/admin/management/ApplicationsManagement";
-import ReportsManagement from "./pages/admin/management/ReportsManagement";
-import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
-import TransactionsManagement from "./pages/admin/finance/TransactionsManagement";
-import RevenueManagement from "./pages/admin/finance/RevenueManagement";
-import SubscriptionPlansManagement from "./pages/admin/finance/SubscriptionPlansManagement";
-import SubscriptionContractsManagement from "./pages/admin/finance/SubscriptionContractsManagement";
-import AdminCourseDetail from "./pages/admin/management/course/CourseDetail";
-import AdminLessonDetail from "./pages/admin/management/course/LessonDetail";
+import UsersManagement from "./pages/admin/user-management/Users";
+import CoursesManagement from "./pages/admin/course-management/Courses";
+import ApplicationsManagement from "./pages/admin/management[notDone]/ApplicationsManagement";
+import ReportsManagement from "./pages/admin/management[notDone]/ReportsManagement";
+import NotificationsManagement from "./pages/admin/management[notDone]/NotificationsManagement";
+import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
+import RevenueManagement from "./pages/admin/revenue-management/Revenues";
+import SubscriptionPlansManagement from "./pages/admin/management[notDone]/SubscriptionPlansManagement";
+import SubscriptionContractsManagement from "./pages/admin/management[notDone]/SubscriptionContractsManagement";
+import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
+import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";

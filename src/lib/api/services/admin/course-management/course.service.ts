@@ -1,5 +1,5 @@
-import apiClient from '../../config'
-import type { ApiResponse } from '../../types'
+import apiClient from '../../../config'
+import type { ApiResponse } from '../../../types'
 import type { Course, CourseLevel, CourseStatus } from '@/types/type'
 
 

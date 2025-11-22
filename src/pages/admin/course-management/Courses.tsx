@@ -20,7 +20,7 @@ import {
   Pencil
 } from 'lucide-react';
 import { Course, CourseWithStats, CourseStatus } from '@/types/type';
-import { courseManagementService } from '@/lib/api/services';
+import { courseManagementService } from '@/lib/api/services/admin';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 
@@ -86,7 +86,7 @@ export default function CoursesManagement() {
         <div>
           <div className="font-medium">{course.title}</div>
           <div className="text-sm text-muted-foreground">
-            Giảng viên: {(course as any).courseSeller?.fullName || 'N/A'}
+            Giảng viên: {(course as any).user?.fullName || 'N/A'}
           </div>
         </div>
       )

@@ -24,7 +24,7 @@ import {
   CreditCard,
   Wallet
 } from 'lucide-react';
-import { transactionManagementService } from '@/lib/api/services/admin/transaction-management.service';
+import { transactionManagementService } from '@/lib/api/services/admin';
 import type { TransactionFilters, TransactionWithRelations } from '@/lib/api/types/transaction.types';
 import DataTable from '@/components/admin/DataTable';
 

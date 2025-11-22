@@ -1,6 +1,6 @@
-import apiClient from '../../config';
-import type { ApiResponse } from '../../types';
-import type { DashboardData, DashboardStats } from '../../types/dashboard.types';
+import apiClient from '../../../config';
+import type { ApiResponse } from '../../../types';
+import type { DashboardData, DashboardStats } from '../../../types/dashboard.types';
 
 class DashboardService {
   /**
