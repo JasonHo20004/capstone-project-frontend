@@ -323,17 +323,6 @@ export default function Profile() {
                   )} */}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="avatar">Ảnh đại diện (URL)</Label>
-                  <Input
-                    id="avatar"
-                    value={form.profilePicture}
-                    disabled={!editing}
-                    onChange={(e) =>
-                      handleChange("profilePicture", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Trình độ tiếng Anh</Label>
                   <Select
                     value={form.englishLevel}

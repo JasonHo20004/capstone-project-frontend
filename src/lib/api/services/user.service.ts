@@ -24,7 +24,7 @@ class UserService {
         headers: {
           // Nếu là FormData, axios/browser sẽ tự set boundary, 
           // ta chỉ cần báo là multipart hoặc để auto (thường để auto tốt hơn)
-          ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+          'Content-Type': isFormData ? undefined : 'application/json',
         },
       });
     return response.data;
