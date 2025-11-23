@@ -16,9 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Edit, Save, X, Loader2,Camera } from "lucide-react"; // MỚI: Thêm Loader2
 import { toast } from "sonner";
-import { User } from "@/types/type";
 import CourseSellerApplicationDialog from "@/components/user/account/CourseSellerApplicationDialog";
-import type { CourseSellerApplication } from "@/types/type";
 import { formatVND, formatDate, formatDateForInput } from "@/lib/utils";
 import { useProfile, useUpdateProfile } from "@/hooks/api/use-user";
 import { useQueryClient } from "@tanstack/react-query"; // MỚI: Thêm Query Client

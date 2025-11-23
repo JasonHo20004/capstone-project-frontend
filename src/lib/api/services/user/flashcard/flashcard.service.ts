@@ -1,5 +1,5 @@
-import apiClient from "../config";
-import type { ApiResponse, EmptyResponse } from "../types";
+import apiClient from '@/lib/api/config';
+import type { ApiResponse, EmptyResponse } from '@/lib/api/types';
 import type {
   FlashcardDeck,
   Flashcard,

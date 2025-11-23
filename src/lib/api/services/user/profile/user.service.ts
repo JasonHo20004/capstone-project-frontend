@@ -1,6 +1,5 @@
-import apiClient from '../config';
-// Giả-định-ApiResponse-và-User-được-export-từ-file-types-chung
-import type { ApiResponse } from '../types'; 
+import apiClient from '@/lib/api/config';
+import type { ApiResponse } from '@/lib/api/types';
 import type {User} from '@/types/type'
 
 export interface UpdateProfileDTO {

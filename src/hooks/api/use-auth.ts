@@ -6,9 +6,9 @@ import {
   type LoginRequest,
   type RegisterRequest,
   type LoginResponse,
-} from "@/lib/api/services";
-import { AxiosError } from "axios";
-import type { ApiError } from "@/lib/api/types";
+} from "@/lib/api/services/user";
+// import { AxiosError } from "axios";
+// import type { ApiError } from "@/lib/api/types";
 
 /**
  * Custom hook cho Authentication với React Query
