@@ -1,12 +1,28 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   courseService,
   type GetCoursesParams,
   type Course,
   type CourseDetail,
-} from '@/lib/api/services/user';
+} from '@/lib/api/services/course.service';
 
+import  {courseServiceUser,type GetCoursesForUserParams} from '@/lib/api/services/user'
+export const courseKeys = {
+  // Key cache phụ thuộc vào tất cả params (bao gồm enrollmentStatus)
+  list: (params: GetCoursesForUserParams) => ['courses', 'list', params] as const,
+};
+
+export const useGetCourses = (params: GetCoursesForUserParams) => {
+  return useQuery({
+    queryKey: courseKeys.list(params),
+    queryFn: async () => {
+      const res = await courseServiceUser.getAllCourses(params);
+      return res.data;
+    },
+    placeholderData: keepPreviousData,
+  });
+};
 /**
  * Custom hooks cho Courses với React Query
  * Tự động quản lý loading states, caching, và error handling

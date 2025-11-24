@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Star, User } from 'lucide-react'; // Thêm icon User làm avatar fallback
 import { Badge } from '@/components/ui/badge';
 import { Course as AdminCourse } from '@/types/type';
 import { formatVND } from '@/lib/utils';
@@ -14,10 +14,20 @@ interface CourseCardProps {
 
 const CourseCard = ({ course, hideAddToCart = false, purchased = false }: CourseCardProps) => {
   const { addItem } = useCart();
+
+  // ✅ SỬA LỖI: Lấy thông tin giảng viên an toàn
+  // API trả về 'user', nhưng type có thể là 'courseSeller'. Chúng ta kiểm tra cả hai.
+  
+  const instructor = course.courseSeller || course.user || {};
+
   return (
     <Link to={`/courses/${course.id}`}>
       <div className="group bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-accent transition-all duration-300 border border-border hover:border-primary/20 h-full flex flex-col relative">
-        {/* Thumbnail removed: not available in admin mock */}
+        
+        {/* Placeholder cho Thumbnail (nếu chưa có ảnh bìa) */}
+        {/* <div className="h-48 bg-muted flex items-center justify-center text-muted-foreground">
+            <span className="text-sm">Course Thumbnail</span>
+        </div> */}
 
         {purchased && (
           <div className="absolute top-3 right-3">
@@ -37,9 +47,9 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
           )}
 
           {/* Title */}
-        <h3 className="text-xl font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors font-['Be Vietnam Pro']">
-          {course.title}
-        </h3>
+          <h3 className="text-xl font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors font-['Be Vietnam Pro']">
+            {course.title}
+          </h3>
 
           {/* Description */}
           <p className="text-muted-foreground text-sm mb-4 line-clamp-2 flex-1">
@@ -48,23 +58,29 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
 
           {/* Instructor */}
           <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
-            {course.courseSeller?.profilePicture && (
+            {instructor.profilePicture ? (
               <img
-                src={course.courseSeller.profilePicture}
-                alt={course.courseSeller.fullName}
+                src={instructor.profilePicture}
+                alt={instructor.fullName}
                 className="w-8 h-8 rounded-full object-cover"
               />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                 <User className="w-4 h-4 text-secondary" />
+              </div>
             )}
-            <span className="text-sm text-muted-foreground">{course.courseSeller.fullName}</span>
+            
+            {/* ✅ SỬA LỖI: Dùng optional chaining (?.) để tránh crash */}
+            <span className="text-sm text-muted-foreground">
+              {instructor.fullName || 'Unknown Instructor'}
+            </span>
           </div>
 
-          {/* Meta Info removed: fields not present in admin mock */}
-
           {/* Rating & Price */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-auto">
             <div className="flex items-center gap-1">
               <Star className="w-5 h-5 text-secondary fill-secondary" />
-              <span className="font-semibold">{course.averageRating ?? 'N/A'}</span>
+              <span className="font-semibold">{course.averageRating ?? 0}</span>
               <span className="text-sm text-muted-foreground">({course.ratingCount ?? 0})</span>
             </div>
             <div className="flex items-baseline gap-2">

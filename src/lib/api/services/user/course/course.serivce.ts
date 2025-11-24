@@ -1,32 +1,36 @@
 import apiClient from '@/lib/api/config';
-import type { ApiResponse } from '@/lib/api/types';
+import type { ApiResponse,PaginatedResponse } from '@/lib/api/types';
 import type { Course } from '@/types/type';
 
-export interface CourseFilterParams {
+export interface GetCoursesForUserParams {
+  page?: number;
+  limit?: number;
   search?: string;
-  level?: string; // 'A1', 'B1', etc.
+  level?: string;
+  enrollmentStatus?: 'enrolled' | 'not_enrolled';
 }
 
-class CourseService {
+class CourseServiceUser {
   /**
    * Lấy danh sách TẤT CẢ khóa học (Public)
    * Hỗ trợ tìm kiếm và lọc theo trình độ
    */
-  async getAllCourses(params?: CourseFilterParams): Promise<ApiResponse<Course[]>> {
-    // Tạo query string thủ công hoặc dùng thư viện qs
-    const queryParams = new URLSearchParams();
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.level && params.level !== 'all') queryParams.append('level', params.level);
+  async getAllCourses(params?: GetCoursesForUserParams): Promise<ApiResponse<PaginatedResponse<Course>>> {
+    const requestParams = {
+      page: params?.page || 1,
+      limit: params?.limit || 5,
+      search: params?.search,
+      // Map 'level' frontend -> 'courseLevel' backend
+      courseLevel: (params?.level && params.level !== 'all') ? params.level : undefined,
+      status: 'PUBLISHED',
+      
+      // 👇 Gửi status lọc mua/chưa mua
+      enrollmentStatus: params?.enrollmentStatus, 
+    };
 
-    const response = await apiClient.get<ApiResponse<Course[]>>(`/courses?${queryParams.toString()}`);
-    return response.data;
-  }
-
-  /**
-   * Lấy danh sách khóa học ĐÃ MUA của user hiện tại
-   */
-  async getMyCourses(): Promise<ApiResponse<Course[]>> {
-    const response = await apiClient.get<ApiResponse<Course[]>>('/users/me/courses');
+    const response = await apiClient.get<ApiResponse<PaginatedResponse<Course>>>('/courses', {
+      params: requestParams,
+    });
     return response.data;
   }
 
@@ -39,4 +43,4 @@ class CourseService {
   }
 }
 
-export const courseService = new CourseService();
+export const courseServiceUser = new CourseServiceUser();
