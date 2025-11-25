@@ -121,11 +121,10 @@ export default function AdminCourseDetail() {
       queryClient.invalidateQueries({ queryKey: ["adminCourseRatings", id] });
       queryClient.refetchQueries({
         queryKey: ["adminCourseRatings", id],
-        type: 'active'
+        type: "active",
       });
     },
   });
-
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -170,14 +169,12 @@ export default function AdminCourseDetail() {
             <div>
               <h2 className="text-2xl font-semibold">{course.title}</h2>
               <div className="text-sm text-muted-foreground">
-                Người bán: {(course as any).user?.fullName || "N/A"} •
-                Level: {course.courseLevel || "N/A"} • Giá:{" "}
+                Người bán: {(course as any).user?.fullName || "N/A"} • Level:{" "}
+                {course.courseLevel || "N/A"} • Giá:{" "}
                 {formatCurrency(course.price)}
               </div>
             </div>
-            <div>
-              {getStatusBadge(course.status)}
-            </div>
+            <div>{getStatusBadge(course.status)}</div>
           </div>
 
           <Tabs
@@ -206,14 +203,17 @@ export default function AdminCourseDetail() {
                   </div>
                 )}
                 <div className="text-sm">
-                  Đánh giá TB: {(course as CourseWithStats).averageRating ?? "N/A"} (
+                  Đánh giá TB:{" "}
+                  {(course as CourseWithStats).averageRating ?? "N/A"} (
                   {course.ratingCount ?? 0})
                 </div>
-                 <div className="text-sm">
-                  Tổng số bài học: {(course as CourseWithStats).lessonsCount ?? "N/A"}
+                <div className="text-sm">
+                  Tổng số bài học:{" "}
+                  {(course as CourseWithStats).lessonsCount ?? "N/A"}
                 </div>
-                 <div className="text-sm">
-                  Tổng số đánh giá: {(course as CourseWithStats).ratingsCount ?? "N/A"}
+                <div className="text-sm">
+                  Tổng số đánh giá:{" "}
+                  {(course as CourseWithStats).ratingsCount ?? "N/A"}
                 </div>
                 <div className="text-sm">
                   Ngày tạo: {new Date(course.createdAt).toLocaleString("vi-VN")}
@@ -262,7 +262,10 @@ export default function AdminCourseDetail() {
                         id="courseTitle"
                         value={editCourse.title ?? ""}
                         onChange={(e) =>
-                          setEditCourse({ ...editCourse, title: e.target.value })
+                          setEditCourse({
+                            ...editCourse,
+                            title: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -306,7 +309,8 @@ export default function AdminCourseDetail() {
                         onValueChange={(v) =>
                           setEditCourse({
                             ...editCourse,
-                            courseLevel: v as UpdateCourseRequest["courseLevel"],
+                            courseLevel:
+                              v as UpdateCourseRequest["courseLevel"],
                           })
                         }
                       >
@@ -342,7 +346,9 @@ export default function AdminCourseDetail() {
                           <SelectItem value="ACTIVE">Hoạt động</SelectItem>
                           <SelectItem value="PENDING">Chờ duyệt</SelectItem>
                           <SelectItem value="REFUSE">Từ chối</SelectItem>
-                          <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
+                          <SelectItem value="INACTIVE">
+                            Không hoạt động
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -352,7 +358,9 @@ export default function AdminCourseDetail() {
                       onClick={() =>
                         updateCourseMutation.mutate({ data: editCourse })
                       }
-                      disabled={!editCourse.title || editCourse.price === undefined}
+                      disabled={
+                        !editCourse.title || editCourse.price === undefined
+                      }
                     >
                       Lưu thay đổi
                     </Button>
@@ -394,7 +402,9 @@ export default function AdminCourseDetail() {
                     <div className="flex space-x-2">
                       <Button
                         variant="outline"
-                        onClick={() => navigate(`/admin/lessons/${ls.id}?courseId=${id}`)}
+                        onClick={() =>
+                          navigate(`/admin/lessons/${ls.id}?courseId=${id}`)
+                        }
                       >
                         Chi tiết
                       </Button>
@@ -425,7 +435,6 @@ export default function AdminCourseDetail() {
                         {rt.content}
                       </div>
                     )}
-                   
                   </div>
                 ))}
               </div>
@@ -434,32 +443,48 @@ export default function AdminCourseDetail() {
         </>
       )}
 
-      <AlertDialog open={!!lessonToDelete} onOpenChange={(open) => !open && setLessonToDelete(null)}>
+      <AlertDialog
+        open={!!lessonToDelete}
+        onOpenChange={(open) => !open && setLessonToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa bài học</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa bài học này? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa bài học này? Hành động này không thể
+              hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setLessonToDelete(null)}>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteLesson}>Xóa</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setLessonToDelete(null)}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteLesson}>
+              Xóa
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={showDeleteCourseDialog} onOpenChange={setShowDeleteCourseDialog}>
+      <AlertDialog
+        open={showDeleteCourseDialog}
+        onOpenChange={setShowDeleteCourseDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa khóa học</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa khóa học này? Tất cả bài học và dữ liệu liên quan sẽ bị xóa. Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa khóa học này? Tất cả bài học và dữ liệu
+              liên quan sẽ bị xóa. Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowDeleteCourseDialog(false)}>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteCourse}>Xóa</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setShowDeleteCourseDialog(false)}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCourse}>
+              Xóa
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

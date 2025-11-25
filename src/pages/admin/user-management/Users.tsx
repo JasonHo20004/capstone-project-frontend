@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +18,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -26,166 +26,195 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  MoreHorizontal, 
-  Eye, 
-  Edit, 
-  Trash2, 
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
   UserPlus,
   Users,
   DollarSign,
   Save,
-  X as XIcon
-} from 'lucide-react';
-import { User } from '@/types/type';
-import DataTable from '@/components/admin/DataTable';
-import FilterSection from '@/components/admin/FilterSection';
-import StatCard from '@/components/admin/StatCard';
-import { toast } from 'sonner';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userManagementService } from '@/lib/api/services/admin';
+  X as XIcon,
+} from "lucide-react";
+import { User } from "@/types/type";
+import DataTable from "@/components/admin/DataTable";
+import FilterSection from "@/components/admin/FilterSection";
+import StatCard from "@/components/admin/StatCard";
+import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { userManagementService } from "@/lib/api/services/admin";
 
 export default function UsersManagement() {
   const [users, setUsers] = useState<User[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
   const [editForm, setEditForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    phoneNumber: '',
-    dateOfBirth: '',
-    englishLevel: '',
+    fullName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    englishLevel: "",
     learningGoals: [] as string[],
-    role: '',
+    role: "",
     certification: [] as string[],
     expertise: [] as string[],
-    walletAllowance: '' as number | ''
+    walletAllowance: "" as number | "",
   });
 
   const { data: usersResp } = useQuery({
-    queryKey: ['userManagementUsers'],
+    queryKey: ["userManagementUsers"],
     queryFn: () => userManagementService.getUsers(),
   });
 
   const createUserMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof userManagementService.createUser>[0]) =>
-      userManagementService.createUser(payload),
+    mutationFn: (
+      payload: Parameters<typeof userManagementService.createUser>[0]
+    ) => userManagementService.createUser(payload),
     onSuccess: (resp) => {
-      queryClient.invalidateQueries({ queryKey: ['userManagementUsers'] });
+      queryClient.invalidateQueries({ queryKey: ["userManagementUsers"] });
       setCreatingUser(false);
-      toast.success('Tạo người dùng mới thành công!');
+      toast.success("Tạo người dùng mới thành công!");
     },
     onError: () => {
-      toast.error('Tạo người dùng thất bại');
+      toast.error("Tạo người dùng thất bại");
     },
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof userManagementService.updateUser>[0]) =>
-      userManagementService.updateUser(payload),
+    mutationFn: (
+      payload: Parameters<typeof userManagementService.updateUser>[0]
+    ) => userManagementService.updateUser(payload),
     onSuccess: (resp) => {
-      queryClient.invalidateQueries({ queryKey: ['userManagementUsers'] });
+      queryClient.invalidateQueries({ queryKey: ["userManagementUsers"] });
       if (resp?.data) {
-        setSelectedUser((prev) => (prev && prev.id === resp.data.id ? resp.data : prev));
+        setSelectedUser((prev) =>
+          prev && prev.id === resp.data.id ? resp.data : prev
+        );
       }
       setEditingUser(null);
-      toast.success('Cập nhật thông tin người dùng thành công!');
+      toast.success("Cập nhật thông tin người dùng thành công!");
     },
     onError: () => {
-      toast.error('Cập nhật thông tin người dùng thất bại');
+      toast.error("Cập nhật thông tin người dùng thất bại");
     },
   });
 
   const deleteUserMutation = useMutation({
     mutationFn: (userId: string) => userManagementService.deleteUser(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userManagementUsers'] });
+      queryClient.invalidateQueries({ queryKey: ["userManagementUsers"] });
       setDeletingUser(null);
       setSelectedUser(null);
-      toast.success('Xóa người dùng thành công!');
+      toast.success("Xóa người dùng thành công!");
     },
     onError: () => {
-      toast.error('Xóa người dùng thất bại');
+      toast.error("Xóa người dùng thất bại");
     },
   });
 
   useEffect(() => {
-    if (usersResp?.data) {
-      setUsers(usersResp.data);
+    if (usersResp?.data?.users) {
+      setUsers(usersResp.data.users);
     }
   }, [usersResp]);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || 
-      (roleFilter === 'STUDENT' && user.role !== 'COURSESELLER' && user.role !== 'ADMINISTRATOR') ||
-      (roleFilter !== 'STUDENT' && user.role === roleFilter);
-    
+
+    const matchesRole =
+      roleFilter === "all" ||
+      (roleFilter === "STUDENT" &&
+        user.role !== "COURSESELLER" &&
+        user.role !== "ADMINISTRATOR") ||
+      (roleFilter !== "STUDENT" && user.role === roleFilter);
+
     return matchesSearch && matchesRole;
   });
 
   const stats = {
-    totalUsers: users.length,
-    totalWalletBalance: users.reduce((sum, user) => sum + (user.wallet?.allowance || 0), 0)
+    totalUsers: usersResp?.data?.userCount || 0,
+    totalWalletBalance: usersResp?.data?.totalWallet || 0,
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(value);
   };
 
   const getRoleBadge = (role?: string) => {
     switch (role) {
-      case 'ADMINISTRATOR':
+      case "ADMINISTRATOR":
         return <Badge className="bg-red-100 text-red-800">Quản trị viên</Badge>;
-      case 'COURSESELLER':
+      case "COURSESELLER":
         return <Badge className="bg-blue-100 text-blue-800">Giảng viên</Badge>;
       default:
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Học viên</Badge>;
+        return (
+          <Badge variant="outline" className="bg-green-100 text-green-800">
+            Học viên
+          </Badge>
+        );
     }
   };
 
-  
-
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+    return new Date(date).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     });
   };
 
   const formatDateForInput = (date: string) => {
-    return new Date(date).toISOString().split('T')[0];
+    return new Date(date).toISOString().split("T")[0];
   };
 
-  const handleEditUser = (user: User) => {
-    setEditingUser(user);
-    setEditForm({
-      fullName: user.fullName,
-      email: user.email,
-      password: '',
-      phoneNumber: user.phoneNumber || '',
-      dateOfBirth: formatDateForInput(user.dateOfBirth),
-      englishLevel: user.englishLevel || '',
-      learningGoals: user.learningGoals || [],
-      role: user.role || 'STUDENT',
-      certification: user.courseSellerProfile?.certification || [],
-      expertise: user.courseSellerProfile?.expertise || [],
-      walletAllowance: user.wallet?.allowance || 0
-    });
+  const handleViewUser = async (userId: string) => {
+    try {
+      const response = await userManagementService.getUserById(userId);
+      if (response.data) {
+        setSelectedUser(response.data);
+      }
+    } catch (error) {
+      toast.error("Không thể tải thông tin người dùng");
+    }
+  };
+
+  const handleEditUser = async (userId: string) => {
+    try {
+      const response = await userManagementService.getUserById(userId);
+      if (response.data) {
+        const user = response.data;
+        setEditingUser(user);
+        setEditForm({
+          fullName: user.fullName,
+          email: user.email,
+          password: "",
+          phoneNumber: user.phoneNumber || "",
+          dateOfBirth: formatDateForInput(user.dateOfBirth),
+          englishLevel: user.englishLevel || "",
+          learningGoals: user.learningGoals || [],
+          role: user.role || "STUDENT",
+          certification: user.courseSellerProfile?.certification || [],
+          expertise: user.courseSellerProfile?.expertise || [],
+          walletAllowance: user.wallet?.allowance || 0,
+        });
+      }
+    } catch (error) {
+      toast.error("Không thể tải thông tin người dùng");
+    }
   };
 
   const handleSaveUser = () => {
@@ -199,14 +228,20 @@ export default function UsersManagement() {
       dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
-      ...(editForm.role !== 'STUDENT' ? { role: editForm.role as 'COURSESELLER' | 'ADMINISTRATOR' } : {}),
-      courseSellerProfile: editForm.role === 'COURSESELLER' ? {
-        id: editingUser.courseSellerProfile?.id,
-        certification: editForm.certification,
-        expertise: editForm.expertise,
-        isActive: editingUser.courseSellerProfile?.isActive ?? true,
-      } : undefined,
-      walletAllowance: editForm.walletAllowance === '' ? undefined : editForm.walletAllowance,
+      ...(editForm.role !== "STUDENT"
+        ? { role: editForm.role as "COURSESELLER" | "ADMINISTRATOR" }
+        : {}),
+      courseSellerProfile:
+        editForm.role === "COURSESELLER"
+          ? {
+              id: editingUser.courseSellerProfile?.id,
+              certification: editForm.certification,
+              expertise: editForm.expertise,
+              isActive: editingUser.courseSellerProfile?.isActive ?? true,
+            }
+          : undefined,
+      walletAllowance:
+        editForm.walletAllowance === "" ? undefined : editForm.walletAllowance,
     };
 
     updateUserMutation.mutate(payload);
@@ -215,49 +250,58 @@ export default function UsersManagement() {
   const handleCancelEdit = () => {
     setEditingUser(null);
     setEditForm({
-      fullName: '',
-      email: '',
-      password: '',
-      phoneNumber: '',
-      dateOfBirth: '',
-      englishLevel: '',
+      fullName: "",
+      email: "",
+      password: "",
+      phoneNumber: "",
+      dateOfBirth: "",
+      englishLevel: "",
       learningGoals: [],
-      role: '',
+      role: "",
       certification: [],
       expertise: [],
-      walletAllowance: ''
+      walletAllowance: "",
     });
   };
 
   const handleLearningGoalChange = (value: string) => {
-    const goals = value.split(',').map(goal => goal.trim()).filter(goal => goal.length > 0);
+    const goals = value
+      .split(",")
+      .map((goal) => goal.trim())
+      .filter((goal) => goal.length > 0);
     setEditForm({ ...editForm, learningGoals: goals });
   };
 
   const handleCertificationChange = (value: string) => {
-    const certs = value.split(',').map(cert => cert.trim()).filter(cert => cert.length > 0);
+    const certs = value
+      .split(",")
+      .map((cert) => cert.trim())
+      .filter((cert) => cert.length > 0);
     setEditForm({ ...editForm, certification: certs });
   };
 
   const handleExpertiseChange = (value: string) => {
-    const expertise = value.split(',').map(exp => exp.trim()).filter(exp => exp.length > 0);
+    const expertise = value
+      .split(",")
+      .map((exp) => exp.trim())
+      .filter((exp) => exp.length > 0);
     setEditForm({ ...editForm, expertise: expertise });
   };
 
   const handleCreateUser = () => {
     setCreatingUser(true);
     setEditForm({
-      fullName: '',
-      email: '',
-      password: '',
-      phoneNumber: '',
-      dateOfBirth: '',
-      englishLevel: '',
+      fullName: "",
+      email: "",
+      password: "",
+      phoneNumber: "",
+      dateOfBirth: "",
+      englishLevel: "",
       learningGoals: [],
-      role: 'STUDENT',
+      role: "STUDENT",
       certification: [],
       expertise: [],
-      walletAllowance: ''
+      walletAllowance: "",
     });
   };
 
@@ -270,12 +314,17 @@ export default function UsersManagement() {
       dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
-      ...(editForm.role !== 'STUDENT' ? { role: editForm.role as 'COURSESELLER' | 'ADMINISTRATOR' } : {}),
-      courseSellerProfile: editForm.role === 'COURSESELLER' ? {
-        certification: editForm.certification,
-        expertise: editForm.expertise,
-        isActive: true,
-      } : undefined,
+      ...(editForm.role !== "STUDENT"
+        ? { role: editForm.role as "COURSESELLER" | "ADMINISTRATOR" }
+        : {}),
+      courseSellerProfile:
+        editForm.role === "COURSESELLER"
+          ? {
+              certification: editForm.certification,
+              expertise: editForm.expertise,
+              isActive: true,
+            }
+          : undefined,
       walletAllowance: editForm.walletAllowance || undefined,
     };
 
@@ -285,32 +334,31 @@ export default function UsersManagement() {
   const handleCancelCreate = () => {
     setCreatingUser(false);
     setEditForm({
-      fullName: '',
-      email: '',
-      password: '',
-      phoneNumber: '',
-      dateOfBirth: '',
-      englishLevel: '',
+      fullName: "",
+      email: "",
+      password: "",
+      phoneNumber: "",
+      dateOfBirth: "",
+      englishLevel: "",
       learningGoals: [],
-      role: '',
+      role: "",
       certification: [],
       expertise: [],
-      walletAllowance: ''
+      walletAllowance: "",
     });
   };
 
-
   const roleOptions = [
-    { value: 'all', label: 'Tất cả vai trò' },
-    { value: 'STUDENT', label: 'Học viên' },
-    { value: 'COURSESELLER', label: 'Giảng viên' },
-    { value: 'ADMINISTRATOR', label: 'Admin' }
+    { value: "all", label: "Tất cả vai trò" },
+    { value: "STUDENT", label: "Học viên" },
+    { value: "COURSESELLER", label: "Giảng viên" },
+    { value: "ADMINISTRATOR", label: "Admin" },
   ];
 
   const columns = [
     {
-      key: 'user',
-      header: 'Người dùng',
+      key: "user",
+      header: "Người dùng",
       render: (user: User) => (
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
@@ -322,32 +370,32 @@ export default function UsersManagement() {
             <div className="text-sm text-muted-foreground">{user.email}</div>
           </div>
         </div>
-      )
+      ),
     },
     {
-      key: 'role',
-      header: 'Vai trò',
-      render: (user: User) => getRoleBadge(user.role)
+      key: "role",
+      header: "Vai trò",
+      render: (user: User) => getRoleBadge(user.role),
     },
     {
-      key: 'wallet',
-      header: 'Số dư ví',
+      key: "wallet",
+      header: "Số dư ví",
       render: (user: User) => (
         <div className="font-medium">
-          {user.wallet ? formatCurrency(user.wallet.allowance) : 'Chưa có ví'}
+          {user.wallet ? formatCurrency(user.wallet.allowance) : "Chưa có ví"}
         </div>
-      )
+      ),
     },
     {
-      key: 'createdAt',
-      header: 'Ngày tạo',
+      key: "createdAt",
+      header: "Ngày tạo",
       render: (user: User) => (
         <div className="text-sm">{formatDate(user.createdAt)}</div>
-      )
+      ),
     },
     {
-      key: 'actions',
-      header: 'Thao tác',
+      key: "actions",
+      header: "Thao tác",
       render: (user: User) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -358,46 +406,58 @@ export default function UsersManagement() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+            <DropdownMenuItem onClick={() => handleViewUser(user.id)}>
               <Eye className="mr-2 h-4 w-4" />
               Xem chi tiết
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleEditUser(user)}>
+            <DropdownMenuItem
+              onClick={() => handleEditUser(user.id)}
+              disabled={user.role === "ADMINISTRATOR"}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Chỉnh sửa
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600" onClick={() => setDeletingUser(user)}>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => setDeletingUser(user)}
+              disabled={user.role === "ADMINISTRATOR"}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Xóa người dùng
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
-    }
+      ),
+    },
   ];
 
   const filters = [
     {
-      key: 'role',
-      label: 'Vai trò',
+      key: "role",
+      label: "Vai trò",
       value: roleFilter,
       onChange: setRoleFilter,
       options: roleOptions,
-      placeholder: 'Chọn vai trò'
-    }
+      placeholder: "Chọn vai trò",
+    },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quản lý người dùng</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Quản lý người dùng
+          </h1>
           <p className="text-muted-foreground">
             Quản lý tất cả người dùng trong hệ thống
           </p>
         </div>
-        <Button onClick={handleCreateUser} className="bg-primary hover:bg-primary/90">
+        <Button
+          onClick={handleCreateUser}
+          className="bg-primary hover:bg-primary/90"
+        >
           <UserPlus className="mr-2 h-4 w-4" />
           Thêm người dùng
         </Button>
@@ -411,7 +471,7 @@ export default function UsersManagement() {
           description="Tất cả người dùng"
           icon={Users}
         />
-        
+
         <StatCard
           title="Tổng số dư ví"
           value={formatCurrency(stats.totalWalletBalance)}
@@ -457,7 +517,9 @@ export default function UsersManagement() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-lg font-semibold">{selectedUser.fullName}</h3>
+                  <h3 className="text-lg font-semibold">
+                    {selectedUser.fullName}
+                  </h3>
                   <p className="text-muted-foreground">{selectedUser.email}</p>
                   <div className="flex items-center space-x-2 mt-2">
                     {getRoleBadge(selectedUser.role)}
@@ -475,7 +537,7 @@ export default function UsersManagement() {
                 <div>
                   <label className="text-sm font-medium">Số điện thoại</label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {selectedUser.phoneNumber || 'Chưa cập nhật'}
+                    {selectedUser.phoneNumber || "Chưa cập nhật"}
                   </p>
                 </div>
                 <div>
@@ -499,7 +561,9 @@ export default function UsersManagement() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-muted-foreground">ID ví</p>
-                        <p className="text-sm font-mono">{selectedUser.wallet.id}</p>
+                        <p className="text-sm font-mono">
+                          {selectedUser.wallet.id}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Số dư</p>
@@ -513,11 +577,19 @@ export default function UsersManagement() {
               )}
 
               <div className="flex justify-end space-x-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => handleEditUser(selectedUser)}>
+                <Button
+                  variant="outline"
+                  onClick={() => handleEditUser(selectedUser.id)}
+                  disabled={selectedUser.role === "ADMINISTRATOR"}
+                >
                   <Edit className="mr-2 h-4 w-4" />
                   Chỉnh sửa
                 </Button>
-                <Button variant="destructive" onClick={() => setDeletingUser(selectedUser)}>
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeletingUser(selectedUser)}
+                  disabled={selectedUser.role === "ADMINISTRATOR"}
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Xóa người dùng
                 </Button>
@@ -528,7 +600,10 @@ export default function UsersManagement() {
       </Dialog>
 
       {/* Edit User Dialog */}
-      <Dialog open={!!editingUser} onOpenChange={(open) => !open && handleCancelEdit()}>
+      <Dialog
+        open={!!editingUser}
+        onOpenChange={(open) => !open && handleCancelEdit()}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa thông tin người dùng</DialogTitle>
@@ -548,7 +623,9 @@ export default function UsersManagement() {
                     <Input
                       id="fullName"
                       value={editForm.fullName}
-                      onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, fullName: e.target.value })
+                      }
                       placeholder="Nhập họ và tên"
                     />
                   </div>
@@ -558,7 +635,9 @@ export default function UsersManagement() {
                       id="email"
                       type="email"
                       value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, email: e.target.value })
+                      }
                       placeholder="Nhập email"
                     />
                   </div>
@@ -567,7 +646,12 @@ export default function UsersManagement() {
                     <Input
                       id="phoneNumber"
                       value={editForm.phoneNumber}
-                      onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          phoneNumber: e.target.value,
+                        })
+                      }
                       placeholder="Nhập số điện thoại"
                     />
                   </div>
@@ -577,7 +661,12 @@ export default function UsersManagement() {
                       id="dateOfBirth"
                       type="date"
                       value={editForm.dateOfBirth}
-                      onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          dateOfBirth: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -589,7 +678,12 @@ export default function UsersManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="englishLevel">Trình độ tiếng Anh</Label>
-                    <Select value={editForm.englishLevel} onValueChange={(value) => setEditForm({ ...editForm, englishLevel: value })}>
+                    <Select
+                      value={editForm.englishLevel}
+                      onValueChange={(value) =>
+                        setEditForm({ ...editForm, englishLevel: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn trình độ" />
                       </SelectTrigger>
@@ -605,14 +699,21 @@ export default function UsersManagement() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Vai trò</Label>
-                    <Select value={editForm.role} onValueChange={(value) => setEditForm({ ...editForm, role: value })}>
+                    <Select
+                      value={editForm.role}
+                      onValueChange={(value) =>
+                        setEditForm({ ...editForm, role: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="STUDENT">Học viên</SelectItem>
                         <SelectItem value="COURSESELLER">Giảng viên</SelectItem>
-                        <SelectItem value="ADMINISTRATOR">Quản trị viên</SelectItem>
+                        <SelectItem value="ADMINISTRATOR">
+                          Quản trị viên
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -621,7 +722,7 @@ export default function UsersManagement() {
                   <Label htmlFor="learningGoals">Mục tiêu học tập</Label>
                   <Textarea
                     id="learningGoals"
-                    value={editForm.learningGoals.join(', ')}
+                    value={editForm.learningGoals.join(", ")}
                     onChange={(e) => handleLearningGoalChange(e.target.value)}
                     placeholder="Nhập các mục tiêu học tập, cách nhau bằng dấu phẩy"
                     rows={3}
@@ -633,16 +734,20 @@ export default function UsersManagement() {
               </div>
 
               {/* Course Seller Information */}
-              {editForm.role === 'COURSESELLER' && (
+              {editForm.role === "COURSESELLER" && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Thông tin giảng viên</h3>
+                  <h3 className="text-lg font-semibold">
+                    Thông tin giảng viên
+                  </h3>
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="certification">Chứng chỉ</Label>
                       <Textarea
                         id="certification"
-                        value={editForm.certification.join(', ')}
-                        onChange={(e) => handleCertificationChange(e.target.value)}
+                        value={editForm.certification.join(", ")}
+                        onChange={(e) =>
+                          handleCertificationChange(e.target.value)
+                        }
                         placeholder="Nhập các chứng chỉ, cách nhau bằng dấu phẩy"
                         rows={2}
                       />
@@ -654,13 +759,14 @@ export default function UsersManagement() {
                       <Label htmlFor="expertise">Chuyên môn</Label>
                       <Textarea
                         id="expertise"
-                        value={editForm.expertise.join(', ')}
+                        value={editForm.expertise.join(", ")}
                         onChange={(e) => handleExpertiseChange(e.target.value)}
                         placeholder="Nhập các lĩnh vực chuyên môn, cách nhau bằng dấu phẩy"
                         rows={2}
                       />
                       <p className="text-sm text-muted-foreground">
-                        Ví dụ: Business English, IELTS Preparation, Academic Writing
+                        Ví dụ: Business English, IELTS Preparation, Academic
+                        Writing
                       </p>
                     </div>
                   </div>
@@ -671,26 +777,21 @@ export default function UsersManagement() {
               {editingUser.wallet && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Thông tin ví</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="walletId">ID ví</Label>
-                      <Input
-                        id="walletId"
-                        value={editingUser.wallet.id}
-                        disabled
-                        className="bg-muted"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="walletAllowance">Số dư (VND)</Label>
-                      <Input
-                        id="walletAllowance"
-                        type="number"
-                        value={editForm.walletAllowance}
-                        onChange={(e) => setEditForm({ ...editForm, walletAllowance: e.target.value === '' ? '' : Number(e.target.value) })}
-                        placeholder="Nhập số dư"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="walletAllowance">Số dư (VND)</Label>
+                    <Input
+                      id="walletAllowance"
+                      type="number"
+                      value={editForm.walletAllowance}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          walletAllowance:
+                            e.target.value === "" ? "" : Number(e.target.value),
+                        })
+                      }
+                      placeholder="Nhập số dư"
+                    />
                   </div>
                 </div>
               )}
@@ -702,7 +803,10 @@ export default function UsersManagement() {
               <XIcon className="mr-2 h-4 w-4" />
               Hủy
             </Button>
-            <Button onClick={handleSaveUser} disabled={updateUserMutation.isPending}>
+            <Button
+              onClick={handleSaveUser}
+              disabled={updateUserMutation.isPending}
+            >
               <Save className="mr-2 h-4 w-4" />
               Lưu thay đổi
             </Button>
@@ -711,7 +815,10 @@ export default function UsersManagement() {
       </Dialog>
 
       {/* Create User Dialog */}
-      <Dialog open={creatingUser} onOpenChange={(open) => !open && handleCancelCreate()}>
+      <Dialog
+        open={creatingUser}
+        onOpenChange={(open) => !open && handleCancelCreate()}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tạo người dùng mới</DialogTitle>
@@ -730,39 +837,47 @@ export default function UsersManagement() {
                   <Input
                     id="newFullName"
                     value={editForm.fullName}
-                    onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, fullName: e.target.value })
+                    }
                     placeholder="Nhập họ và tên"
                     required
                   />
                 </div>
-              <div className="space-y-2">
-                <Label htmlFor="newEmail">Email *</Label>
-                <Input
-                  id="newEmail"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  placeholder="Nhập email"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">Mật khẩu *</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={editForm.password}
-                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                  placeholder="Nhập mật khẩu"
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newEmail">Email *</Label>
+                  <Input
+                    id="newEmail"
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, email: e.target.value })
+                    }
+                    placeholder="Nhập email"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">Mật khẩu *</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={editForm.password}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, password: e.target.value })
+                    }
+                    placeholder="Nhập mật khẩu"
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="newPhoneNumber">Số điện thoại</Label>
                   <Input
                     id="newPhoneNumber"
                     value={editForm.phoneNumber}
-                    onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, phoneNumber: e.target.value })
+                    }
                     placeholder="Nhập số điện thoại"
                   />
                 </div>
@@ -772,7 +887,9 @@ export default function UsersManagement() {
                     id="newDateOfBirth"
                     type="date"
                     value={editForm.dateOfBirth}
-                    onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, dateOfBirth: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -784,7 +901,12 @@ export default function UsersManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="newEnglishLevel">Trình độ tiếng Anh</Label>
-                  <Select value={editForm.englishLevel} onValueChange={(value) => setEditForm({ ...editForm, englishLevel: value })}>
+                  <Select
+                    value={editForm.englishLevel}
+                    onValueChange={(value) =>
+                      setEditForm({ ...editForm, englishLevel: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn trình độ" />
                     </SelectTrigger>
@@ -800,14 +922,21 @@ export default function UsersManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="newRole">Vai trò *</Label>
-                  <Select value={editForm.role} onValueChange={(value) => setEditForm({ ...editForm, role: value })}>
+                  <Select
+                    value={editForm.role}
+                    onValueChange={(value) =>
+                      setEditForm({ ...editForm, role: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn vai trò" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="STUDENT">Học viên</SelectItem>
                       <SelectItem value="COURSESELLER">Giảng viên</SelectItem>
-                      <SelectItem value="ADMINISTRATOR">Quản trị viên</SelectItem>
+                      <SelectItem value="ADMINISTRATOR">
+                        Quản trị viên
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -816,7 +945,7 @@ export default function UsersManagement() {
                 <Label htmlFor="newLearningGoals">Mục tiêu học tập</Label>
                 <Textarea
                   id="newLearningGoals"
-                  value={editForm.learningGoals.join(', ')}
+                  value={editForm.learningGoals.join(", ")}
                   onChange={(e) => handleLearningGoalChange(e.target.value)}
                   placeholder="Nhập các mục tiêu học tập, cách nhau bằng dấu phẩy"
                   rows={3}
@@ -828,7 +957,7 @@ export default function UsersManagement() {
             </div>
 
             {/* Course Seller Information */}
-            {editForm.role === 'COURSESELLER' && (
+            {editForm.role === "COURSESELLER" && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Thông tin giảng viên</h3>
                 <div className="grid grid-cols-1 gap-4">
@@ -836,8 +965,10 @@ export default function UsersManagement() {
                     <Label htmlFor="newCertification">Chứng chỉ</Label>
                     <Textarea
                       id="newCertification"
-                      value={editForm.certification.join(', ')}
-                      onChange={(e) => handleCertificationChange(e.target.value)}
+                      value={editForm.certification.join(", ")}
+                      onChange={(e) =>
+                        handleCertificationChange(e.target.value)
+                      }
                       placeholder="Nhập các chứng chỉ, cách nhau bằng dấu phẩy"
                       rows={2}
                     />
@@ -849,13 +980,14 @@ export default function UsersManagement() {
                     <Label htmlFor="newExpertise">Chuyên môn</Label>
                     <Textarea
                       id="newExpertise"
-                      value={editForm.expertise.join(', ')}
+                      value={editForm.expertise.join(", ")}
                       onChange={(e) => handleExpertiseChange(e.target.value)}
                       placeholder="Nhập các lĩnh vực chuyên môn, cách nhau bằng dấu phẩy"
                       rows={2}
                     />
                     <p className="text-sm text-muted-foreground">
-                      Ví dụ: Business English, IELTS Preparation, Academic Writing
+                      Ví dụ: Business English, IELTS Preparation, Academic
+                      Writing
                     </p>
                   </div>
                 </div>
@@ -871,7 +1003,12 @@ export default function UsersManagement() {
                   id="newWalletAllowance"
                   type="number"
                   value={editForm.walletAllowance}
-                  onChange={(e) => setEditForm({ ...editForm, walletAllowance: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      walletAllowance: Number(e.target.value),
+                    })
+                  }
                   placeholder="Nhập số dư ban đầu (0 nếu không tạo ví)"
                   min="0"
                 />
@@ -889,7 +1026,13 @@ export default function UsersManagement() {
             </Button>
             <Button
               onClick={handleSaveNewUser}
-              disabled={!editForm.fullName || !editForm.email || !editForm.role || !editForm.password || createUserMutation.isPending}
+              disabled={
+                !editForm.fullName ||
+                !editForm.email ||
+                !editForm.role ||
+                !editForm.password ||
+                createUserMutation.isPending
+              }
             >
               <UserPlus className="mr-2 h-4 w-4" />
               Tạo người dùng
@@ -899,12 +1042,16 @@ export default function UsersManagement() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deletingUser} onOpenChange={(open) => !open && setDeletingUser(null)}>
+      <Dialog
+        open={!!deletingUser}
+        onOpenChange={(open) => !open && setDeletingUser(null)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Xác nhận xóa người dùng</DialogTitle>
             <DialogDescription>
-              Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa người dùng này?
+              Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa người
+              dùng này?
             </DialogDescription>
           </DialogHeader>
           {deletingUser && (
@@ -912,11 +1059,15 @@ export default function UsersManagement() {
               <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={deletingUser.profilePicture} />
-                  <AvatarFallback>{deletingUser.fullName.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>
+                    {deletingUser.fullName.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="font-medium">{deletingUser.fullName}</div>
-                  <div className="text-sm text-muted-foreground">{deletingUser.email}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {deletingUser.email}
+                  </div>
                 </div>
               </div>
             </div>
@@ -927,11 +1078,13 @@ export default function UsersManagement() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => deletingUser && deleteUserMutation.mutate(deletingUser.id)}
+              onClick={() =>
+                deletingUser && deleteUserMutation.mutate(deletingUser.id)
+              }
               disabled={deleteUserMutation.isPending}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              {deleteUserMutation.isPending ? 'Đang xóa...' : 'Xóa người dùng'}
+              {deleteUserMutation.isPending ? "Đang xóa..." : "Xóa người dùng"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,12 @@
-import apiClient from '../../../config';
-import type { ApiResponse } from '../../../types';
-import type { User } from '@/types/type';
+import apiClient from "../../../config";
+import type { ApiResponse } from "../../../types";
+import type { User } from "@/types/type";
+
+export interface GetUsersResponse {
+  users: User[];
+  totalWallet: number;
+  userCount: number;
+}
 
 export interface CreateUserRequest {
   fullName: string;
@@ -10,7 +16,7 @@ export interface CreateUserRequest {
   dateOfBirth: string;
   englishLevel?: string;
   learningGoals: string[];
-  role?: 'COURSESELLER' | 'ADMINISTRATOR';
+  role?: "COURSESELLER" | "ADMINISTRATOR";
   courseSellerProfile?: {
     certification: string[];
     expertise: string[];
@@ -27,7 +33,7 @@ export interface UpdateUserRequest {
   dateOfBirth?: string;
   englishLevel?: string;
   learningGoals?: string[];
-  role?: 'COURSESELLER' | 'ADMINISTRATOR';
+  role?: "COURSESELLER" | "ADMINISTRATOR";
   courseSellerProfile?: {
     id?: string;
     certification?: string[];
@@ -38,14 +44,23 @@ export interface UpdateUserRequest {
 }
 
 class UserManagementService {
-  async getUsers(): Promise<ApiResponse<User[]>> {
-    const response = await apiClient.get<ApiResponse<User[]>>('admin/users');
+  async getUsers(): Promise<ApiResponse<GetUsersResponse>> {
+    const response = await apiClient.get<ApiResponse<GetUsersResponse>>(
+      "admin/users"
+    );
+    return response.data;
+  }
+
+  async getUserById(userId: string): Promise<ApiResponse<User>> {
+    const response = await apiClient.get<ApiResponse<User>>(
+      `admin/users/${userId}`
+    );
     return response.data;
   }
 
   async createUser(data: CreateUserRequest): Promise<ApiResponse<User>> {
     const response = await apiClient.post<ApiResponse<User>>(
-      'admin/users/create',
+      "admin/users/create",
       data
     );
     return response.data;
@@ -68,4 +83,3 @@ class UserManagementService {
 }
 
 export const userManagementService = new UserManagementService();
-

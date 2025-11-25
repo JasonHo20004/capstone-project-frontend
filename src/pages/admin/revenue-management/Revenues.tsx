@@ -1,21 +1,30 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, DollarSign, CreditCard, Calendar } from 'lucide-react';
-import { revenueManagementService } from '@/lib/api/services/admin';
-import { Transaction } from '@/types/type';
-import type { RevenueFilters } from '@/lib/api/types/revenue.types';
-import StatCard from '@/components/admin/StatCard';
-import ChartCard from '@/components/admin/ChartCard';
-import DataTable from '@/components/admin/DataTable';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { TrendingUp, DollarSign, CreditCard, Calendar } from "lucide-react";
+import { revenueManagementService } from "@/lib/api/services/admin";
+import { Transaction } from "@/types/type";
+import type { RevenueFilters } from "@/lib/api/types/revenue.types";
+import StatCard from "@/components/admin/StatCard";
+import ChartCard from "@/components/admin/ChartCard";
+import DataTable from "@/components/admin/DataTable";
 
 export default function RevenueManagement() {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [period, setPeriod] = useState<RevenueFilters['period']>('all');
-  const [transactionType, setTransactionType] = useState<RevenueFilters['transactionType']>('all');
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [period, setPeriod] = useState<RevenueFilters["period"]>("all");
+  const [transactionType, setTransactionType] =
+    useState<RevenueFilters["transactionType"]>("all");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -26,12 +35,16 @@ export default function RevenueManagement() {
     period,
     transactionType,
     page,
-    limit
+    limit,
   };
 
   // Fetch revenue data from API
-  const { data: revenueData, isLoading, error } = useQuery({
-    queryKey: ['adminRevenue', filters],
+  const {
+    data: revenueData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["adminRevenue", filters],
     queryFn: () => revenueManagementService.getRevenueData(filters),
     refetchInterval: 30000, // Refetch every 30 seconds
   });
@@ -42,88 +55,101 @@ export default function RevenueManagement() {
   const pagination = revenueData?.data?.pagination;
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(value);
   };
 
   const getTypeBadge = (type: string) => {
     const typeMap = {
-      'DEPOSIT': { label: 'Nạp tiền', variant: 'default' as const },
-      'PAYMENT': { label: 'Thanh toán', variant: 'secondary' as const },
-      'MONTHLYFEE': { label: 'Phí hàng tháng', variant: 'outline' as const },
-      'WITHDRAW': { label: 'Rút tiền', variant: 'destructive' as const }
+      DEPOSIT: { label: "Nạp tiền", variant: "default" as const },
+      PAYMENT: { label: "Thanh toán", variant: "secondary" as const },
+      MONTHLYFEE: { label: "Phí hàng tháng", variant: "outline" as const },
+      WITHDRAW: { label: "Rút tiền", variant: "destructive" as const },
     };
 
-    const typeInfo = typeMap[type as keyof typeof typeMap] || { label: type, variant: 'outline' as const };
+    const typeInfo = typeMap[type as keyof typeof typeMap] || {
+      label: type,
+      variant: "outline" as const,
+    };
     return <Badge variant={typeInfo.variant}>{typeInfo.label}</Badge>;
   };
 
   const handleClearFilters = () => {
-    setStartDate('');
-    setEndDate('');
-    setPeriod('all');
-    setTransactionType('all');
+    setStartDate("");
+    setEndDate("");
+    setPeriod("all");
+    setTransactionType("all");
     setPage(1);
   };
 
   const columns = [
     {
-      key: 'type',
-      header: 'Loại',
-      render: (transaction: Transaction) => getTypeBadge(transaction.transactionType)
+      key: "type",
+      header: "Loại",
+      render: (transaction: Transaction) =>
+        getTypeBadge(transaction.transactionType),
     },
     {
-      key: 'amount',
-      header: 'Số tiền',
-      className: 'text-right',
+      key: "amount",
+      header: "Số tiền",
+      className: "text-right",
       render: (transaction: Transaction) => (
-        <div className="font-medium">{formatCurrency(Number(transaction.amount))}</div>
-      )
+        <div className="font-medium">
+          {formatCurrency(Number(transaction.amount))}
+        </div>
+      ),
     },
     {
-      key: 'status',
-      header: 'Trạng thái',
+      key: "status",
+      header: "Trạng thái",
       render: (transaction: Transaction) => (
-        <Badge variant={transaction.status === 'SUCCESS' ? 'default' : 'destructive'}>
-          {transaction.status === 'SUCCESS' ? 'Thành công' :
-           transaction.status === 'PENDING' ? 'Chờ xử lý' : 'Thất bại'}
+        <Badge
+          variant={transaction.status === "SUCCESS" ? "default" : "destructive"}
+        >
+          {transaction.status === "SUCCESS"
+            ? "Thành công"
+            : transaction.status === "PENDING"
+            ? "Chờ xử lý"
+            : "Thất bại"}
         </Badge>
-      )
+      ),
     },
     {
-      key: 'createdAt',
-      header: 'Thời gian',
+      key: "createdAt",
+      header: "Thời gian",
       render: (transaction: Transaction) => (
         <div className="text-sm">
-          {new Date(transaction.createdAt).toLocaleString('vi-VN')}
+          {new Date(transaction.createdAt).toLocaleString("vi-VN")}
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   const periodOptions = [
-    { value: 'all', label: 'Tất cả thời gian' },
-    { value: 'today', label: 'Hôm nay' },
-    { value: 'week', label: '7 ngày qua' },
-    { value: 'month', label: '30 ngày qua' },
-    { value: 'quarter', label: '3 tháng qua' },
-    { value: 'year', label: '1 năm qua' }
+    { value: "all", label: "Tất cả thời gian" },
+    { value: "today", label: "Hôm nay" },
+    { value: "week", label: "7 ngày qua" },
+    { value: "month", label: "30 ngày qua" },
+    { value: "quarter", label: "3 tháng qua" },
+    { value: "year", label: "1 năm qua" },
   ];
 
   const typeOptions = [
-    { value: 'all', label: 'Tất cả loại' },
-    { value: 'DEPOSIT', label: 'Nạp tiền' },
-    { value: 'PAYMENT', label: 'Thanh toán' },
-    { value: 'MONTHLYFEE', label: 'Phí hàng tháng' },
-    { value: 'WITHDRAW', label: 'Rút tiền' }
+    { value: "all", label: "Tất cả loại" },
+    { value: "DEPOSIT", label: "Nạp tiền" },
+    { value: "PAYMENT", label: "Thanh toán" },
+    { value: "MONTHLYFEE", label: "Phí hàng tháng" },
+    { value: "WITHDRAW", label: "Rút tiền" },
   ];
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-muted-foreground">Đang tải dữ liệu doanh thu...</div>
+        <div className="text-muted-foreground">
+          Đang tải dữ liệu doanh thu...
+        </div>
       </div>
     );
   }
@@ -145,7 +171,7 @@ export default function RevenueManagement() {
         </p>
       </div>
 
-            {/* Filters */}
+      {/* Filters */}
       <div className="space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 gap-4">
@@ -153,13 +179,13 @@ export default function RevenueManagement() {
               <select
                 value={period}
                 onChange={(e) => {
-                  setPeriod(e.target.value as RevenueFilters['period']);
+                  setPeriod(e.target.value as RevenueFilters["period"]);
                   setPage(1);
                 }}
                 className="px-3 py-2 border border-input rounded-md text-sm"
                 title="Chọn khoảng thời gian"
               >
-                {periodOptions.map(option => (
+                {periodOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -168,13 +194,15 @@ export default function RevenueManagement() {
               <select
                 value={transactionType}
                 onChange={(e) => {
-                  setTransactionType(e.target.value as RevenueFilters['transactionType']);
+                  setTransactionType(
+                    e.target.value as RevenueFilters["transactionType"]
+                  );
                   setPage(1);
                 }}
                 className="px-3 py-2 border border-input rounded-md text-sm"
                 title="Lọc theo loại giao dịch"
               >
-                {typeOptions.map(option => (
+                {typeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -214,14 +242,20 @@ export default function RevenueManagement() {
       <div className="grid gap-4 md:grid-cols-2">
         <StatCard
           title="Tổng doanh thu"
-          value={stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : 'N/A'}
+          value={
+            stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : "N/A"
+          }
           description={`${stats?.totalTransactions || 0} giao dịch`}
           icon={DollarSign}
-          trend={stats?.revenueGrowth ? {
-            value: stats.revenueGrowth,
-            label: `${stats.revenueGrowth.toFixed(1)}%`,
-            isPositive: stats.revenueGrowth >= 0
-          } : undefined}
+          trend={
+            stats?.revenueGrowth
+              ? {
+                  value: stats.revenueGrowth,
+                  label: `${stats.revenueGrowth.toFixed(1)}%`,
+                  isPositive: stats.revenueGrowth >= 0,
+                }
+              : undefined
+          }
         />
         <StatCard
           title="Số giao dịch"
@@ -243,7 +277,10 @@ export default function RevenueManagement() {
               <XAxis dataKey="name" />
               <YAxis tickFormatter={(value) => formatCurrency(value)} />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
+                formatter={(value: number) => [
+                  formatCurrency(value),
+                  "Doanh thu",
+                ]}
                 labelFormatter={(label) => `Thời gian: ${label}`}
               />
               <Line
@@ -251,7 +288,7 @@ export default function RevenueManagement() {
                 dataKey="revenue"
                 stroke="#8884d8"
                 strokeWidth={2}
-                dot={{ fill: '#8884d8' }}
+                dot={{ fill: "#8884d8" }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -262,12 +299,12 @@ export default function RevenueManagement() {
         )}
       </ChartCard>
 
-
-
       {/* Transactions Table */}
       <DataTable
         title="Chi tiết giao dịch"
-        description={`Hiển thị ${transactions.length} trong tổng số ${pagination?.total || 0} giao dịch`}
+        description={`Hiển thị ${transactions.length} trong tổng số ${
+          pagination?.total || 0
+        } giao dịch`}
         data={transactions}
         columns={columns}
         emptyMessage="Không có giao dịch nào trong khoảng thời gian này"

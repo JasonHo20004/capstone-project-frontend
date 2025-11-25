@@ -34,7 +34,6 @@ export default function AdminLessonDetail() {
   });
 
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -55,6 +54,10 @@ export default function AdminLessonDetail() {
     mutationFn: (data: any) => courseManagementService.updateLesson(searchParams.get("courseId")!, lessonId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminLessonDetail", lessonId, searchParams.get("courseId")] });
+      toast({
+        title: "Cập nhật thành công",
+        description: "Bài học đã được cập nhật.",
+      });
     },
   });
 
@@ -69,22 +72,15 @@ export default function AdminLessonDetail() {
     mutationFn: (file: File) => courseManagementService.uploadLessonVideo(searchParams.get("courseId")!, lessonId!, file),
     onSuccess: (response) => {
       const videoUrl = response.data.url;
-      // Use functional update to avoid stale state
       setForm((prevForm) => ({ ...prevForm, videoUrl }));
       setSelectedVideoFile(null);
-      setUploadProgress(0);
-      // Invalidate and refetch to ensure lesson data is up to date
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       queryClient.invalidateQueries({ queryKey: ["adminLessonDetail", lessonId, searchParams.get("courseId")] });
       toast({
         title: "Upload thành công",
         description: "Video đã được upload.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Upload thất bại",
-        description: error?.response?.data?.message || "Có lỗi xảy ra khi upload video",
-        variant: "destructive",
       });
     },
   });

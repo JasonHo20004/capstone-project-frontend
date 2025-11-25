@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   BookOpen,
@@ -20,6 +21,12 @@ const sidebarItems = [
 
 export default function SellerSidebar() {
   const location = useLocation();
+  const queryClient = useQueryClient();
+
+  const handleNavClick = () => {
+    // Invalidate all queries to refetch data when navigating
+    queryClient.invalidateQueries();
+  };
 
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r">
@@ -33,6 +40,7 @@ export default function SellerSidebar() {
             <Link
               key={item.href}
               to={item.href}
+              onClick={handleNavClick}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive

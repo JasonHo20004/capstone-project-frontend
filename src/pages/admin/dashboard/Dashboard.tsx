@@ -1,10 +1,5 @@
-import {
-  Users,
-  BookOpen,
-  DollarSign,
-  UserCheck
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Users, BookOpen, DollarSign, UserCheck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart,
   Area,
@@ -17,24 +12,24 @@ import {
   Tooltip,
   ResponsiveContainer,
   BarChart,
-  Bar
-} from 'recharts';
-import { dashboardService } from '@/lib/api/services/admin';
-import StatCard from '@/components/admin/StatCard';
-import ChartCard from '@/components/admin/ChartCard';
+  Bar,
+} from "recharts";
+import { dashboardService } from "@/lib/api/services/admin";
+import StatCard from "@/components/admin/StatCard";
+import ChartCard from "@/components/admin/ChartCard";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
 // Mapping course status to Vietnamese
 const getCourseStatusLabel = (status: string): string => {
   const statusMap: Record<string, string> = {
-    'PUBLISHED': 'Đã xuất bản',
-    'ACTIVE': 'Hoạt động',
-    'PENDING': 'Chờ duyệt',
-    'REFUSE': 'Từ chối',
-    'INACTIVE': 'Không hoạt động',
-    'DELETE': 'Đã xóa',
-    'DRAFT': 'Nháp'
+    PUBLISHED: "Đã xuất bản",
+    ACTIVE: "Hoạt động",
+    PENDING: "Chờ duyệt",
+    REFUSE: "Từ chối",
+    INACTIVE: "Không hoạt động",
+    DELETE: "Đã xóa",
+    DRAFT: "Nháp",
   };
   return statusMap[status.toUpperCase()] || status;
 };
@@ -42,7 +37,7 @@ const getCourseStatusLabel = (status: string): string => {
 export default function AdminDashboard() {
   // Fetch dashboard data
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['adminDashboard'],
+    queryKey: ["adminDashboard"],
     queryFn: () => dashboardService.getDashboardData(),
     refetchInterval: 30000, // Refetch every 30 seconds
   });
@@ -52,22 +47,26 @@ export default function AdminDashboard() {
   const userGrowthData = dashboardData?.data?.userGrowthData || [];
 
   // Transform course status data to Vietnamese
-  const courseStatusData = (dashboardData?.data?.courseStatusData || []).map(item => ({
-    ...item,
-    name: getCourseStatusLabel(item.name)
-  }));
+  const courseStatusData = (dashboardData?.data?.courseStatusData || []).map(
+    (item) => ({
+      ...item,
+      name: getCourseStatusLabel(item.name),
+    })
+  );
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(value);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-muted-foreground">Đang tải dữ liệu dashboard...</div>
+        <div className="text-muted-foreground">
+          Đang tải dữ liệu dashboard...
+        </div>
       </div>
     );
   }
@@ -87,30 +86,44 @@ export default function AdminDashboard() {
           title="Tổng người dùng"
           value={stats?.totalUsers || 0}
           icon={Users}
-          trend={stats?.monthlyGrowth?.users ? {
-            value: stats.monthlyGrowth.users,
-            label: "so với tháng trước"
-          } : undefined}
+          trend={
+            stats?.monthlyGrowth?.users
+              ? {
+                  value: stats.monthlyGrowth.users,
+                  label: "so với tháng trước",
+                }
+              : undefined
+          }
         />
 
         <StatCard
           title="Tổng khóa học"
           value={stats?.totalCourses || 0}
           icon={BookOpen}
-          trend={stats?.monthlyGrowth?.courses ? {
-            value: stats.monthlyGrowth.courses,
-            label: "so với tháng trước"
-          } : undefined}
+          trend={
+            stats?.monthlyGrowth?.courses
+              ? {
+                  value: stats.monthlyGrowth.courses,
+                  label: "so với tháng trước",
+                }
+              : undefined
+          }
         />
 
         <StatCard
           title="Doanh thu"
-          value={stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : 'N/A'}
+          value={
+            stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : "N/A"
+          }
           icon={DollarSign}
-          trend={stats?.monthlyGrowth?.revenue ? {
-            value: stats.monthlyGrowth.revenue,
-            label: "so với tháng trước"
-          } : undefined}
+          trend={
+            stats?.monthlyGrowth?.revenue
+              ? {
+                  value: stats.monthlyGrowth.revenue,
+                  label: "so với tháng trước",
+                }
+              : undefined
+          }
         />
 
         <StatCard
@@ -133,9 +146,14 @@ export default function AdminDashboard() {
               <AreaChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
+                <YAxis
+                  tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+                />
                 <Tooltip
-                  formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
+                  formatter={(value: number) => [
+                    formatCurrency(value),
+                    "Doanh thu",
+                  ]}
                 />
                 <Area
                   type="monotone"
@@ -166,13 +184,18 @@ export default function AdminDashboard() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
                   {courseStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
