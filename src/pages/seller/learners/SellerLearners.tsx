@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
-import { mockUserActivities, mockCourses, mockUsers } from '@/data/mock';
+import { useSellerLearners } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
 
 type Row = {
   userName: string;
@@ -11,28 +13,22 @@ type Row = {
 };
 
 export default function SellerLearners() {
-  const currentUserId = localStorage.getItem('currentUserId') || '1';
   const [search, setSearch] = useState('');
+  const { data: learnersData, isLoading, error } = useSellerLearners({ search, limit: 100 });
 
-  const myCourses = useMemo(() => mockCourses.filter((c) => c.courseSellerId === currentUserId), [currentUserId]);
-  const myCourseIds = new Set(myCourses.map((c) => c.id));
-  const userById = new Map(mockUsers.map((u) => [u.id, u]));
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
-  const rows: Row[] = useMemo(() => {
-    return mockUserActivities
-      .filter((a) => myCourseIds.has(a.courseId) && a.transaction?.status === 'SUCCESS')
-      .map((a) => {
-        const user = userById.get(a.userId);
-        const course = myCourses.find((c) => c.id === a.courseId)!;
-        return {
-          userName: user?.fullName || a.userId,
-          email: user?.email,
-          courseTitle: course.title,
-          purchasedAt: a.createdAt,
-        } as Row;
-      })
-      .filter((r) => r.userName.toLowerCase().includes(search.toLowerCase()) || r.courseTitle.toLowerCase().includes(search.toLowerCase()));
-  }, [myCourses, myCourseIds, userById, search]);
+  if (error) {
+    return <ErrorMessage message="Không thể tải danh sách người học. Vui lòng thử lại sau." />;
+  }
+
+  const rows: Row[] = learnersData?.learners || [];
 
   return (
     <div className="space-y-6">

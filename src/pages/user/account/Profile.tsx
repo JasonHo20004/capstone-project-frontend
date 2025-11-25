@@ -1,25 +1,30 @@
-import { useState, useEffect,useRef } from "react"; // MỚI: Thêm useEffect
-import Navbar from "@/components/user/layout/Navbar";
-import Footer from "@/components/user/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import Navbar from '@/components/user/layout/Navbar';
+import Footer from '@/components/user/layout/Footer';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Edit, Save, X, Loader2,Camera } from "lucide-react"; // MỚI: Thêm Loader2
-import { toast } from "sonner";
-import CourseSellerApplicationDialog from "@/components/user/account/CourseSellerApplicationDialog";
-import { formatVND, formatDate, formatDateForInput } from "@/lib/utils";
-import { useProfile, useUpdateProfile } from "@/hooks/api/use-user";
-import { useQueryClient } from "@tanstack/react-query"; // MỚI: Thêm Query Client
+
+} from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Edit, Save, X, Loader2, Camera, LayoutDashboard } from 'lucide-react';
+import { toast } from 'sonner';
+import { User } from '@/types/type';
+import CourseSellerApplicationDialog from '@/components/user/account/CourseSellerApplicationDialog';
+import type { CourseSellerApplication } from '@/types/type';
+import { formatVND, formatDate, formatDateForInput } from '@/lib/utils';
+import { useProfile, useUpdateProfile } from '@/hooks/api/use-user';
+import { useQueryClient } from '@tanstack/react-query';
 
 const englishLevels = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -178,7 +183,7 @@ export default function Profile() {
             Đã xảy ra lỗi
           </h2>
           <p className="text-muted-foreground mb-4">
-            {error?.message || "Không thể tải thông tin cá nhân."}
+            {error || "Không thể tải thông tin cá nhân."}
           </p>
           <Button onClick={() => window.location.reload()}>
             Tải lại trang
@@ -188,6 +193,8 @@ export default function Profile() {
       </div>
     );
   }
+
+  const canAccessSellerPortal = user.role === 'COURSESELLER';
 
   // Màn hình chính khi đã có data
   return (
@@ -234,23 +241,33 @@ export default function Profile() {
                 </p>
               </div>
               <div className="flex-1" />
-              {!editing ? (
-                <Button variant="secondary" onClick={startEdit}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Chỉnh sửa
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button variant="secondary" onClick={saveEdit}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Lưu
+              <div className="flex items-center gap-3">
+                {canAccessSellerPortal && (
+                  <Button asChild variant="default">
+                    <Link to="/seller">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Quản lý khóa học
+                    </Link>
                   </Button>
-                  <Button variant="outline" onClick={cancelEdit}>
-                    <X className="w-4 h-4 mr-2" />
-                    Hủy
+                )}
+                {!editing ? (
+                  <Button variant="secondary" onClick={startEdit}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Chỉnh sửa
                   </Button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={saveEdit}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Lưu
+                    </Button>
+                    <Button variant="outline" onClick={cancelEdit}>
+                      <X className="w-4 h-4 mr-2" />
+                      Hủy
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>

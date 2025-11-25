@@ -5,20 +5,34 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Eye, ToggleLeft, ToggleRight } from 'lucide-react';
+import { MoreHorizontal, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { mockCourses } from '@/data/mock';
 import { formatVND } from '@/lib/utils';
+import { useSellerCourses } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
+import { useProfile } from '@/hooks/api/use-user';
+import type { Course } from '@/types/type';
 
 export default function SellerCourses() {
   const navigate = useNavigate();
-  const currentUserId = localStorage.getItem('currentUserId') || '1';
+  const { user, isLoading: isProfileLoading } = useProfile();
+  const currentUserId = user?.id ?? localStorage.getItem('currentUserId') ?? '';
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('ALL');
   const [level, setLevel] = useState<string>('ALL');
-  const [selected, setSelected] = useState<typeof mockCourses[number] | null>(null);
 
-  const myCourses = useMemo(() => mockCourses.filter((c) => c.courseSellerId === currentUserId), [currentUserId]);
+  const {
+    data: sellerCoursesResponse,
+    isLoading: isCoursesLoading,
+    isError: isCoursesError,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useSellerCourses(currentUserId, {
+    status: status === 'ALL' ? undefined : (status as Course['status']),
+  });
+
+  const myCourses = sellerCoursesResponse?.data ?? [];
 
   const levels = useMemo(() => {
     const s = new Set<string>();
@@ -45,10 +59,45 @@ export default function SellerCourses() {
         return <Badge variant="destructive">Từ chối</Badge>;
       case 'INACTIVE':
         return <Badge className="bg-gray-600">Tạm dừng</Badge>;
+      case 'PUBLISHED':
+        return <Badge className="bg-blue-600">Đã xuất bản</Badge>;
+      case 'DRAFT':
+        return <Badge className="bg-muted text-foreground">Bản nháp</Badge>;
+      case 'DELETE':
+        return <Badge variant="destructive">Đã xoá</Badge>;
       default:
         return <Badge variant="outline">Khác</Badge>;
     }
   };
+
+  if (!currentUserId && !isProfileLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Quản lý khoá học của tôi</h1>
+        <p className="text-muted-foreground">Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.</p>
+      </div>
+    );
+  }
+
+  if (isCoursesLoading || isProfileLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <LoadingSpinner text="Đang tải khoá học..." />
+      </div>
+    );
+  }
+
+  if (isCoursesError) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Quản lý khoá học của tôi</h1>
+        <ErrorMessage
+          message={coursesError instanceof Error ? coursesError.message : 'Không thể tải danh sách khoá học.'}
+          onRetry={refetchCourses}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -68,6 +117,9 @@ export default function SellerCourses() {
               { value: 'PENDING', label: 'Chờ duyệt' },
               { value: 'REFUSE', label: 'Từ chối' },
               { value: 'INACTIVE', label: 'Tạm dừng' },
+              { value: 'PUBLISHED', label: 'Đã xuất bản' },
+              { value: 'DRAFT', label: 'Bản nháp' },
+              { value: 'DELETE', label: 'Đã xoá' },
             ],
             placeholder: 'Trạng thái'
           },
@@ -105,23 +157,13 @@ export default function SellerCourses() {
                   <DropdownMenuItem onClick={() => navigate(`/seller/courses/${item.id}`)}>
                     <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                   </DropdownMenuItem>
-                  {item.status === 'ACTIVE' ? (
-                    <DropdownMenuItem onClick={() => alert('Tạm dừng (demo)')}>
-                      <ToggleLeft className="mr-2 h-4 w-4" /> Tạm dừng
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={() => alert('Kích hoạt (demo)')}>
-                      <ToggleRight className="mr-2 h-4 w-4" /> Kích hoạt
-                    </DropdownMenuItem>
-                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )
           }
         ]}
+        emptyMessage="Bạn chưa có khoá học nào."
       />
-
-      
     </div>
   );
 }

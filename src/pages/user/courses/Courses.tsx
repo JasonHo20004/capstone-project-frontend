@@ -32,17 +32,20 @@ const Courses = () => {
 
   // === FETCH 2: KHÓA HỌC CÓ SẴN (CHƯA MUA) ===
   // Nếu chưa login -> Lấy tất cả (undefined). Nếu đã login -> Lấy 'not_enrolled'
-  const { data: availableRes, isLoading: isLoadingAvailable, isPlaceholderData } = useGetCourses({
+  const {
+    data: availableRes,
+    isLoading: isLoadingAvailable,
+    isPlaceholderData,
+  } = useGetCourses({
     page: page,
     limit: limit,
     search: searchQuery || undefined,
     level: selectedLevel,
     enrollmentStatus: user ? 'not_enrolled' : undefined, // 👈 Lọc Server: CHƯA MUA
   });
-console.log("👉 API Response:", availableRes); // Xem nó in ra gì?
-  console.log("👉 Courses Array:", availableRes?.data);
+
   // Data
-  const myCourses = user ? (myCoursesRes?.data || []) : [];
+  const myCourses = user ? myCoursesRes?.data || [] : [];
   const availableCourses = availableRes?.data || [];
   const pagination = availableRes?.pagination;
 
@@ -71,8 +74,8 @@ console.log("👉 API Response:", availableRes); // Xem nó in ra gì?
             <div className="max-w-3xl mx-auto bg-background/10 p-4 rounded-xl backdrop-blur-md border border-white/20 flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
-                <Input 
-                  placeholder="Tìm kiếm..." 
+                <Input
+                  placeholder="Tìm kiếm..."
                   className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:bg-white/20"
                   value={searchQuery}
                   onChange={handleSearch}
@@ -83,7 +86,11 @@ console.log("👉 API Response:", availableRes); // Xem nó in ra gì?
                   <SelectValue placeholder="Trình độ" />
                 </SelectTrigger>
                 <SelectContent>
-                  {levels.map(l => <SelectItem key={l} value={l}>{l === 'all' ? 'Tất cả' : l}</SelectItem>)}
+                  {levels.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {l === 'all' ? 'Tất cả' : l}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

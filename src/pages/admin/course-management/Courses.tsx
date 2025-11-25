@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
+import { useMemo, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,12 +11,22 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Check, X, Star, Pencil } from "lucide-react";
-import { Course, CourseWithStats, CourseStatus } from "@/types/type";
-import { courseManagementService } from "@/lib/api/services/admin";
-import DataTable from "@/components/admin/DataTable";
-import FilterSection from "@/components/admin/FilterSection";
+} from '@/components/ui/dropdown-menu';
+import { 
+  MoreHorizontal, 
+  Eye, 
+  Check, 
+  X,
+  Star,
+  Pencil
+} from 'lucide-react';
+import { Course, CourseWithStats, CourseStatus } from '@/types/type';
+import { courseManagementService } from '@/lib/api/services/admin';
+import DataTable from '@/components/admin/DataTable';
+import FilterSection from '@/components/admin/FilterSection';
+import { useCourses } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
 
 export default function CoursesManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,28 +34,40 @@ export default function CoursesManagement() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: coursesResp } = useQuery({
-    queryKey: ["adminCourses"],
-    queryFn: () => courseManagementService.getCourses(),
+  const {
+    data: coursesResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useCourses({
+    page: 1,
+    limit: 50,
+    search: searchTerm || undefined,
+    status: statusFilter === 'all' ? undefined : statusFilter as Course['status'],
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
   });
 
-  const courses = coursesResp?.data || [];
+  const courses = coursesResponse?.data ?? [];
+  const totalCourses = coursesResponse?.pagination.total ?? courses.length;
 
-  const filteredCourses = courses.filter((course) => {
-    const sellerName = ((course as any).user?.fullName || "").toLowerCase();
-    const matchesSearch =
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sellerName.includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || course.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredCourses = useMemo(() => {
+    if (!courses) return [];
+    return courses.filter(course => {
+      const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (course.courseSeller?.fullName ?? '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [courses, searchTerm, statusFilter]);
 
   const updateCourseMutation = useMutation({
     mutationFn: (vars: { id: string; data: { status?: Course["status"] } }) =>
       courseManagementService.updateCourse(vars.id, vars.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+      queryClient.invalidateQueries({ queryKey: ['adminCourses'] });
+      refetch();
     },
   });
 
@@ -67,6 +90,12 @@ export default function CoursesManagement() {
         return <Badge variant="destructive">Từ chối</Badge>;
       case "INACTIVE":
         return <Badge variant="outline">Không hoạt động</Badge>;
+      case 'PUBLISHED':
+        return <Badge className="bg-blue-600">Đã xuất bản</Badge>;
+      case 'DRAFT':
+        return <Badge variant="outline">Bản nháp</Badge>;
+      case 'DELETE':
+        return <Badge variant="destructive">Đã xoá</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -80,7 +109,7 @@ export default function CoursesManagement() {
         <div>
           <div className="font-medium">{course.title}</div>
           <div className="text-sm text-muted-foreground">
-            Giảng viên: {(course as any).user?.fullName || "N/A"}
+            Giảng viên: {course.courseSeller?.fullName ?? 'Giảng viên ẩn danh'}
           </div>
         </div>
       ),
@@ -187,13 +216,37 @@ export default function CoursesManagement() {
   ];
 
   const statusOptions = [
-    { value: "all", label: "Tất cả trạng thái" },
-    { value: "PUBLISHED", label: "Đã xuất bản" },
-    { value: "ACTIVE", label: "Hoạt động" },
-    { value: "PENDING", label: "Chờ duyệt" },
-    { value: "REFUSE", label: "Từ chối" },
-    { value: "INACTIVE", label: "Không hoạt động" },
+    { value: 'all', label: 'Tất cả trạng thái' },
+    { value: 'PUBLISHED', label: 'Đã xuất bản' },
+    { value: 'ACTIVE', label: 'Hoạt động' },
+    { value: 'PENDING', label: 'Chờ duyệt' },
+    { value: 'REFUSE', label: 'Từ chối' },
+    { value: 'INACTIVE', label: 'Không hoạt động' },
+    { value: 'PUBLISHED', label: 'Đã xuất bản' },
+    { value: 'DRAFT', label: 'Bản nháp' },
+    { value: 'DELETE', label: 'Đã xoá' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Quản lý khóa học</h1>
+        <LoadingSpinner text="Đang tải khoá học..." />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Quản lý khóa học</h1>
+        <ErrorMessage
+          message={error instanceof Error ? error.message : 'Không thể tải danh sách khoá học.'}
+          onRetry={refetch}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -220,7 +273,7 @@ export default function CoursesManagement() {
 
       <DataTable
         title="Danh sách khóa học"
-        description={`Tổng cộng ${courses.length} khóa học`}
+        description={`Tổng cộng ${totalCourses} khóa học`}
         data={filteredCourses}
         columns={columns}
         emptyMessage="Không tìm thấy khóa học nào"

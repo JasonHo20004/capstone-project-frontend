@@ -3,9 +3,12 @@ import { toast } from 'sonner';
 import {
   courseService,
   type GetCoursesParams,
-  type Course,
   type CourseDetail,
-} from '@/lib/api/services/course.service';
+  type SellerCoursesParams,
+  type CreateCourseRequest,
+  type UpdateCourseRequest,
+} from '@/lib/api/services';
+import type { Course } from '@/types/type';
 
 import  {courseServiceUser,type GetCoursesForUserParams} from '@/lib/api/services/user'
 export const courseKeys = {
@@ -54,17 +57,41 @@ export const useCourse = (id: string | undefined) => {
 };
 
 /**
+ * Hook để lấy danh sách courses theo seller
+ */
+export const useSellerCourses = (
+  sellerId: string | undefined,
+  params?: SellerCoursesParams
+) => {
+  return useQuery({
+    queryKey: ['seller-courses', sellerId, params],
+    queryFn: () => {
+      // Nếu có sellerId và không phải empty string, dùng endpoint với sellerId
+      // Nếu không, dùng endpoint /me để tự động lấy từ token
+      if (sellerId && sellerId.trim() !== '') {
+        return courseService.getCoursesBySeller(sellerId, params);
+      } else {
+        return courseService.getMyCourses(params);
+      }
+    },
+    enabled: true, // Luôn enabled, sẽ dùng /me nếu không có sellerId
+    staleTime: 2 * 60 * 1000,
+    select: (response) => response.data,
+  });
+};
+
+/**
  * Hook để tạo course mới
  */
 export const useCreateCourse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>) =>
-      courseService.createCourse(data),
+    mutationFn: (data: CreateCourseRequest) => courseService.createCourse(data),
     onSuccess: () => {
       // Invalidate và refetch danh sách courses
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
       toast.success('Tạo khóa học thành công!');
     },
     onError: (error) => {
@@ -86,13 +113,14 @@ export const useUpdateCourse = () => {
       data,
     }: {
       id: string;
-      data: Partial<Course>;
+      data: UpdateCourseRequest;
     }) => courseService.updateCourse(id, data),
     onSuccess: (response, variables) => {
       // Update cache cho course cụ thể
-      queryClient.setQueryData(['course', variables.id], response);
+      queryClient.setQueryData(['course', variables.id], response.data);
       // Invalidate danh sách courses
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
       toast.success('Cập nhật khóa học thành công!');
     },
   });
@@ -109,8 +137,41 @@ export const useDeleteCourse = () => {
     onSuccess: () => {
       // Invalidate danh sách courses
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
       toast.success('Xóa khóa học thành công!');
     },
   });
 };
+
+/**
+ * Hook để publish course
+ */
+export const usePublishCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => courseService.publishCourse(id),
+    onSuccess: (response, variables) => {
+      queryClient.setQueryData(['course', variables], response.data);
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
+      toast.success('Xuất bản khóa học thành công!');
+    },
+  });
+};
+
+/**
+ * Hook để lấy chi tiết một lesson
+ */
+export const useLesson = (courseId: string | undefined, lessonId: string | undefined) => {
+  return useQuery({
+    queryKey: ['lesson', courseId, lessonId],
+    queryFn: () => courseService.getLessonById(courseId!, lessonId!),
+    enabled: !!courseId && !!lessonId,
+    staleTime: 5 * 60 * 1000,
+    select: (response) => response.data,
+  });
+};
+
+
 

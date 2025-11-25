@@ -8,16 +8,20 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { mockCourses, mockLessons, mockRatings, mockComments, mockUsers } from '@/data/mock';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatVND } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useCourse, useLesson, useUpdateCourse } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
+import type { CourseStatus, CourseLevel } from '@/types/type';
 
 type Draft = Partial<{
   title: string;
   description: string;
   price: number;
   courseLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
-  status: 'PENDING' | 'ACTIVE' | 'REFUSE' | 'INACTIVE' | 'DELETE';
+  status: 'PENDING' | 'ACTIVE' | 'REFUSE' | 'INACTIVE' | 'DELETE' | 'PUBLISHED' | 'DRAFT';
 }>;
 
 const DRAFT_KEY = (id: string) => `seller_course_draft_${id}`;
@@ -25,12 +29,15 @@ const DRAFT_KEY = (id: string) => `seller_course_draft_${id}`;
 export default function SellerCourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const course = useMemo(() => mockCourses.find((c) => c.id === id), [id]);
+  const { data: course, isLoading, isError, error, refetch } = useCourse(id);
+  const updateCourseMutation = useUpdateCourse();
 
-  const lessons = useMemo(() => mockLessons.filter((l) => l.courseId === id), [id]);
-  const ratings = useMemo(() => mockRatings.filter((r) => r.courseId === id), [id]);
-  const lessonIds = useMemo(() => new Set(lessons.map((l) => l.id)), [lessons]);
-  const comments = useMemo(() => mockComments.filter((c) => lessonIds.has(c.lessonId)), [lessonIds]);
+  const lessons = useMemo(() => (course?.lessons ?? []).slice().sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0)), [course]);
+  const ratings = useMemo(() => course?.ratings ?? [], [course]);
+  const totalComments = useMemo(
+    () => lessons.reduce((sum, lesson) => sum + (lesson.commentCount ?? 0), 0),
+    [lessons]
+  );
 
   const seller = course?.courseSeller;
   const sellerName = seller?.fullName;
@@ -39,6 +46,9 @@ export default function SellerCourseDetail() {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [lessonUpdate, setLessonUpdate] = useState<Partial<{ title: string; description?: string; durationInSeconds?: number; materials: string[]; videoUrl?: string; lessonOrder?: number }>>({});
   const [refresh, setRefresh] = useState(0);
+
+  // Fetch lesson details with comments when a lesson is selected
+  const { data: lessonDetail } = useLesson(id, selectedLessonId || undefined);
 
   useEffect(() => {
     if (!id) return;
@@ -57,6 +67,26 @@ export default function SellerCourseDetail() {
     } catch {}
   }, [selectedLessonId]);
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <LoadingSpinner text="Đang tải thông tin khoá học..." />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <ErrorMessage
+          message={error instanceof Error ? error.message : 'Không thể tải dữ liệu khoá học.'}
+          onRetry={refetch}
+        />
+        <Button onClick={() => navigate('/seller/courses')}>Quay lại danh sách</Button>
+      </div>
+    );
+  }
+
   if (!course) {
     return (
       <div className="space-y-4">
@@ -68,10 +98,36 @@ export default function SellerCourseDetail() {
 
   const merged = { ...course, ...draft };
 
-  const saveDraft = () => {
+  const saveDraft = async () => {
     if (!id) return;
-    localStorage.setItem(DRAFT_KEY(id), JSON.stringify(draft));
-    toast.success('Đã lưu bản nháp cập nhật khoá học');
+    
+    // If there are changes, update via API
+    const hasChanges = Object.keys(draft).length > 0;
+    if (hasChanges) {
+      try {
+        await updateCourseMutation.mutateAsync({
+          id,
+          data: {
+            ...(draft.title !== undefined && { title: draft.title }),
+            ...(draft.description !== undefined && { description: draft.description }),
+            ...(draft.price !== undefined && { price: draft.price }),
+            ...(draft.courseLevel !== undefined && { courseLevel: draft.courseLevel as CourseLevel }),
+            ...(draft.status !== undefined && { status: draft.status as CourseStatus }),
+          },
+        });
+        // Clear draft after successful update
+        localStorage.removeItem(DRAFT_KEY(id));
+        setDraft({});
+        refetch();
+      } catch (error) {
+        // If API fails, still save to localStorage as backup
+        localStorage.setItem(DRAFT_KEY(id), JSON.stringify(draft));
+        console.error('Failed to update course:', error);
+      }
+    } else {
+      localStorage.setItem(DRAFT_KEY(id), JSON.stringify(draft));
+      toast.success('Đã lưu bản nháp cập nhật khoá học');
+    }
   };
 
   const clearDraft = () => {
@@ -86,11 +142,30 @@ export default function SellerCourseDetail() {
       case 'ACTIVE':
         return <Badge className="bg-green-600">Đang hoạt động</Badge>;
       case 'PENDING':
-        return <Badge className="bg-yellow-600">Chờ duyệt</Badge>;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge className="bg-yellow-600">Chờ duyệt</Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Khóa học đang chờ admin duyệt. Sau khi được duyệt, khóa học sẽ chuyển sang trạng thái ACTIVE và có thể được người học mua.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       case 'REFUSE':
         return <Badge variant="destructive">Từ chối</Badge>;
       case 'INACTIVE':
         return <Badge className="bg-gray-600">Tạm dừng</Badge>;
+      case 'PUBLISHED':
+        return <Badge className="bg-blue-600">Đã xuất bản</Badge>;
+      case 'DRAFT':
+        return <Badge className="bg-muted text-foreground">Bản nháp</Badge>;
+      case 'DELETE':
+        return <Badge variant="destructive">Đã xoá</Badge>;
       default:
         return <Badge variant="outline">Khác</Badge>;
     }
@@ -102,7 +177,7 @@ export default function SellerCourseDetail() {
         <div>
           <h1 className="text-2xl font-semibold">{merged.title}</h1>
           <div className="mt-1 text-sm text-muted-foreground">
-            Người bán: {sellerName} • Level: {merged.courseLevel} • Giá: {formatVND(merged.price)}
+            Người bán: {sellerName ?? 'Giảng viên ẩn danh'} • Level: {merged.courseLevel ?? '—'} • Giá: {formatVND(merged.price ?? 0)}
           </div>
         </div>
         {statusBadge(merged.status)}
@@ -123,8 +198,8 @@ export default function SellerCourseDetail() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div><span className="font-medium">Mô tả:</span> {merged.description}</div>
-              <div><span className="font-medium">Đánh giá TB:</span> {merged.averageRating ?? '-'} ({merged.ratingCount ?? 0})</div>
-              <div><span className="font-medium">Bình luận:</span> {comments.length}</div>
+              <div><span className="font-medium">Đánh giá TB:</span> {merged.averageRating && merged.averageRating > 0 ? merged.averageRating.toFixed(2) : '-'} ({merged.ratingCount ?? 0})</div>
+              <div><span className="font-medium">Bình luận:</span> {totalComments}</div>
               <div><span className="font-medium">Tạo lúc:</span> {new Date(merged.createdAt).toLocaleString()}</div>
               <div><span className="font-medium">Cập nhật:</span> {new Date(merged.updatedAt).toLocaleString()}</div>
             </CardContent>
@@ -175,12 +250,15 @@ export default function SellerCourseDetail() {
                       </CardHeader>
                       <CardContent className="space-y-2 text-sm">
                         {(() => {
-                          const base = lessons.find((x) => x.id === selectedLessonId)!;
+                          const base = lessons.find((x) => x.id === selectedLessonId);
+                          if (!base) {
+                            return <p className="text-muted-foreground">Không có dữ liệu bài học.</p>;
+                          }
                           const mergedLesson = { ...base, ...lessonUpdate, materials: lessonUpdate.materials ?? base.materials };
                           return (
                             <div className="space-y-2">
                               <div><span className="font-medium">Tiêu đề:</span> {mergedLesson.title}</div>
-                              <div><span className="font-medium">Mô tả:</span> {mergedLesson.description}</div>
+                              <div><span className="font-medium">Mô tả:</span> {mergedLesson.description || '-'}</div>
                               <div><span className="font-medium">Thứ tự:</span> {mergedLesson.lessonOrder ?? '-'}</div>
                               <div><span className="font-medium">Thời lượng:</span> {mergedLesson.durationInSeconds ? Math.round(mergedLesson.durationInSeconds / 60) + ' phút' : '-'}</div>
                               <div><span className="font-medium">Tài liệu:</span> {(mergedLesson.materials || []).join(', ') || '-'}</div>
@@ -197,7 +275,10 @@ export default function SellerCourseDetail() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {(() => {
-                          const base = lessons.find((x) => x.id === selectedLessonId)!;
+                          const base = lessons.find((x) => x.id === selectedLessonId);
+                          if (!base) {
+                            return <p className="text-muted-foreground">Không có dữ liệu bài học để cập nhật.</p>;
+                          }
                           return (
                             <>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -238,21 +319,41 @@ export default function SellerCourseDetail() {
 
                     <Card>
                       <CardHeader>
-                        <CardTitle>Bình luận</CardTitle>
+                        <CardTitle>Bình luận ({lessonDetail?.comments?.length ?? lessons.find((x) => x.id === selectedLessonId)?.commentCount ?? 0})</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-3">
-                          {mockComments.filter((c) => c.lessonId === selectedLessonId).map((c) => {
-                            const u = mockUsers.find((u) => u.id === c.userId);
-                            return (
-                              <div key={c.id} className="rounded-lg border p-3">
-                                <div className="text-sm font-medium">{u?.fullName || c.userId}</div>
-                                <div className="text-sm text-muted-foreground">{c.content}</div>
-                                <div className="text-xs">{new Date(c.createdAt).toLocaleString()}</div>
+                        {lessonDetail?.comments && lessonDetail.comments.length > 0 ? (
+                          <div className="space-y-3">
+                            {lessonDetail.comments.map((comment: any) => (
+                              <div key={comment.id} className="rounded-lg border p-3">
+                                <div className="flex items-start gap-3">
+                                  {comment.user?.profilePicture && (
+                                    <img
+                                      src={comment.user.profilePicture}
+                                      alt={comment.user.fullName || 'User'}
+                                      className="w-8 h-8 rounded-full object-cover"
+                                    />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="font-medium text-sm">
+                                      {comment.user?.fullName || 'Người dùng ẩn danh'}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground mt-1">
+                                      {comment.content}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      {new Date(comment.createdAt).toLocaleString('vi-VN')}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                            );
-                          })}
-                        </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Chưa có bình luận nào cho bài học này.
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
@@ -269,16 +370,13 @@ export default function SellerCourseDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {ratings.map((r) => {
-                  const u = mockUsers.find((u) => u.id === r.userId);
-                  return (
-                    <div key={r.id} className="rounded-lg border p-3">
-                      <div className="font-medium">{u?.fullName || r.userId} • {r.score}★</div>
-                      <div className="text-sm text-muted-foreground">{r.content || ''}</div>
-                      <div className="text-xs">{new Date(r.createdAt).toLocaleString()}</div>
-                    </div>
-                  );
-                })}
+                {ratings.map((r) => (
+                  <div key={r.id} className="rounded-lg border p-3">
+                    <div className="font-medium">{r.user?.fullName ?? r.userId} • {r.score}★</div>
+                    <div className="text-sm text-muted-foreground">{r.content || ''}</div>
+                    <div className="text-xs">{new Date(r.createdAt).toLocaleString()}</div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -314,16 +412,41 @@ export default function SellerCourseDetail() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Trạng thái</label>
-                  <Select value={draft.status ?? merged.status ?? ''} onValueChange={(v) => setDraft((d) => ({ ...d, status: v as any }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['PENDING','ACTIVE','REFUSE','INACTIVE','DELETE'].map((st) => (
-                        <SelectItem key={st} value={st}>{st}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select 
+                      value={draft.status ?? merged.status ?? ''} 
+                      onValueChange={(v) => {
+                        // Prevent seller from selecting ACTIVE
+                        if (v === 'ACTIVE') {
+                          toast.error('Bạn không thể tự chuyển khóa học sang ACTIVE. Chỉ admin mới có thể duyệt khóa học.');
+                          return;
+                        }
+                        setDraft((d) => ({ ...d, status: v as any }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['DRAFT', 'INACTIVE', 'PENDING', 'PUBLISHED', 'REFUSE'].map((st) => (
+                          <SelectItem key={st} value={st}>{st}</SelectItem>
+                        ))}
+                        {/* ACTIVE is not available for seller selection */}
+                      </SelectContent>
+                    </Select>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-xs text-muted-foreground cursor-help">ℹ️</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Bạn có thể chọn các trạng thái như DRAFT, INACTIVE, PENDING, PUBLISHED. Trạng thái ACTIVE chỉ có thể được đặt bởi admin sau khi duyệt khóa học.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">

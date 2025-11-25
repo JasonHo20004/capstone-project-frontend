@@ -1,19 +1,35 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { mockUsers, mockSubscriptionContracts, mockCourses, mockUserActivities } from '@/data/mock';
 import { formatVND } from '@/lib/utils';
+import { useProfile } from '@/hooks/api/use-user';
+import { useSellerDashboard } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
 
 export default function SellerProfile() {
-  const currentUserId = localStorage.getItem('currentUserId') || '1';
-  const user = mockUsers.find((u) => u.id === currentUserId);
-  const profile = user?.courseSellerProfile;
-  const wallet = user?.wallet;
-  const contract = mockSubscriptionContracts.find((c) => c.courseSellerId === currentUserId);
+  const { user, isLoading: isLoadingUser, error: userError } = useProfile();
+  const { data: dashboardStats, isLoading: isLoadingStats, error: statsError } = useSellerDashboard();
 
-  const myCourses = mockCourses.filter((c) => c.courseSellerId === currentUserId);
-  const myCourseIds = new Set(myCourses.map((c) => c.id));
-  const learners = Array.from(new Set(mockUserActivities.filter((a) => myCourseIds.has(a.courseId) && a.transaction?.status === 'SUCCESS').map((a) => a.userId)));
+  if (isLoadingUser || isLoadingStats) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (userError || statsError) {
+    return <ErrorMessage message="Không thể tải thông tin hồ sơ. Vui lòng thử lại sau." />;
+  }
+
+  if (!user) {
+    return <ErrorMessage message="Không tìm thấy thông tin người dùng." />;
+  }
+
+  const profile = user.courseSellerProfile;
+  const wallet = user.wallet;
+  const subscription = dashboardStats?.subscription;
 
   return (
     <div className="space-y-6">
@@ -23,21 +39,21 @@ export default function SellerProfile() {
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={user?.profilePicture || ''} alt={user?.fullName || 'Seller'} />
-              <AvatarFallback>{(user?.fullName || 'SE').slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={user.profilePicture || ''} alt={user.fullName || 'Seller'} />
+              <AvatarFallback>{(user.fullName || 'SE').slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
               <div className="space-y-1">
-                <div className="text-xl font-semibold">{user?.fullName || 'Seller'}</div>
-                <div className="text-sm text-muted-foreground">{user?.email}</div>
-                <div className="text-sm">Số điện thoại: {user?.phoneNumber || '-'}</div>
-                <div className="text-sm">Ngày sinh: {user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : '-'}</div>
+                <div className="text-xl font-semibold">{user.fullName || 'Seller'}</div>
+                <div className="text-sm text-muted-foreground">{user.email}</div>
+                <div className="text-sm">Số điện thoại: {user.phoneNumber || '-'}</div>
+                <div className="text-sm">Ngày sinh: {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : '-'}</div>
               </div>
               <div className="space-y-1">
-                <div className="text-sm">Trình độ tiếng Anh: {user?.englishLevel || '-'}</div>
-                <div className="text-sm">Mục tiêu học: {(user?.learningGoals || []).join(', ') || '-'}</div>
-                <div className="text-sm">Số khoá học: {myCourses.length}</div>
-                <div className="text-sm">Số người học: {learners.length}</div>
+                <div className="text-sm">Trình độ tiếng Anh: {user.englishLevel || '-'}</div>
+                <div className="text-sm">Mục tiêu học: {(user.learningGoals || []).join(', ') || '-'}</div>
+                <div className="text-sm">Số khoá học: {dashboardStats?.coursesCount || 0}</div>
+                <div className="text-sm">Số người học: {dashboardStats?.learnersCount || 0}</div>
               </div>
             </div>
           </div>
@@ -51,16 +67,15 @@ export default function SellerProfile() {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{contract?.subscriptionPlan.name || 'Chưa đăng ký'}</span>
-              {contract && (
-                <Badge variant={contract.status ? 'default' : 'destructive'}>
-                  {contract.status ? 'Đang hoạt động' : 'Hết hạn'}
+              <span className="font-medium">{subscription?.planName || 'Chưa đăng ký'}</span>
+              {subscription && (
+                <Badge variant={subscription.status ? 'default' : 'destructive'}>
+                  {subscription.status ? 'Đang hoạt động' : 'Hết hạn'}
                 </Badge>
               )}
             </div>
-            <div className="text-sm">Phí hằng tháng: {formatVND(contract?.subscriptionPlan.monthlyFee || 0)}</div>
-            <div className="text-sm">Hết hạn: {contract?.expiresAt ? new Date(contract.expiresAt).toLocaleDateString() : '-'}</div>
-            <div className="text-sm">Gia hạn gần nhất: {contract?.lastRenewalAt ? new Date(contract.lastRenewalAt).toLocaleDateString() : '-'}</div>
+            <div className="text-sm">Phí hằng tháng: {formatVND(subscription?.monthlyFee || 0)}</div>
+            <div className="text-sm">Hết hạn: {subscription?.expiresAt ? new Date(subscription.expiresAt).toLocaleDateString() : '-'}</div>
           </CardContent>
         </Card>
 

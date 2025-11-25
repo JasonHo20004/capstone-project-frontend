@@ -1,7 +1,7 @@
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
-import { mockCourses, mockLessons, mockEnglishTestTypes, mockTests, mockSections } from '@/data/mock';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
@@ -9,73 +9,106 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatVND } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
-import { useMemo, useState } from 'react';
 import { usePurchases } from '@/context/PurchasesContext';
 import CourseReportDialog from '@/components/user/course/CourseReportDialog';
 import type { Report } from '@/types/type';
+import { useCourse } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
+
+const REPORT_STORAGE_KEY = 'skillboost_course_reports_v1';
+
+const loadStoredReports = (): Report[] => {
+  try {
+    const raw = localStorage.getItem(REPORT_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Report[]) : [];
+  } catch {
+    return [];
+  }
+};
 
 const CourseDetail = () => {
   const { id } = useParams();
-  const course = mockCourses.find(c => c.id === id);
   const { addItem } = useCart();
-  const [buyOpen, setBuyOpen] = useState(false);
-  const [tab, setTab] = useState<'overview' | 'instructor' | 'content'>('overview');
   const { addCourse, has } = usePurchases();
-  const currentUserId = useMemo(() => localStorage.getItem('currentUserId') ?? '1', []);
+  const [buyOpen, setBuyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [myReports, setMyReports] = useState<Report[]>(() => {
-    try {
-      const raw = localStorage.getItem('skillboost_course_reports_v1');
-      const all: Report[] = raw ? JSON.parse(raw) : [];
-      return course ? all.filter((r) => r.courseId === course.id && r.userId === currentUserId) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [tab, setTab] = useState<'overview' | 'instructor' | 'content'>('overview');
+  const currentUserId = useMemo(() => localStorage.getItem('currentUserId') ?? '1', []);
+  const { data: course, isLoading, isError, error, refetch } = useCourse(id);
+  const [myReports, setMyReports] = useState<Report[]>([]);
 
-  if (!course) {
+  useEffect(() => {
+    if (!course) return;
+    const storedReports = loadStoredReports();
+    setMyReports(storedReports.filter((report) => report.courseId === course.id && report.userId === currentUserId));
+  }, [course, currentUserId]);
+
+  const courseLessons = useMemo(() => {
+    if (!course?.lessons) return [];
+    return [...course.lessons].sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0));
+  }, [course]);
+
+  const isPurchased = course ? has(course.id) : false;
+
+  const renderNotFound = () => (
+    <div className="min-h-screen">
+      <Navbar />
+      <div className="container mx-auto px-4 py-20 text-center">
+        <h1 className="text-4xl font-bold mb-4">Không tìm thấy khóa học</h1>
+        <Link to="/courses">
+          <Button>Quay lại Khóa học</Button>
+        </Link>
+      </div>
+      <Footer />
+    </div>
+  );
+
+  if (isLoading) {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <div className="container mx-auto px-4 py-20 text-center">
-          <h1 className="text-4xl font-bold mb-4">Không tìm thấy khóa học</h1>
-          <Link to="/courses">
-            <Button>Quay lại Khóa học</Button>
-          </Link>
+        <div className="container mx-auto px-4 py-20 flex justify-center">
+          <LoadingSpinner text="Đang tải thông tin khóa học..." />
         </div>
         <Footer />
       </div>
     );
   }
 
-  // Nội dung khoá học: bài học và bài test liên quan
-  const isPurchased = has(course.id);
-  const courseLessons = mockLessons
-    .filter((l) => l.courseId === course.id)
-    .sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0));
+  if (isError) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20">
+          <ErrorMessage
+            message={error instanceof Error ? error.message : 'Không thể tải dữ liệu khoá học.'}
+            onRetry={refetch}
+          />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-  const matchTestType = mockEnglishTestTypes.find((tt) =>
-    `${course.title} ${course.description ?? ''}`.toLowerCase().includes(tt.name.toLowerCase())
-  );
-  const relatedTests = matchTestType ? mockTests.filter((t) => t.testTypeId === matchTestType.id) : [];
+  if (!course) {
+    return renderNotFound();
+  }
 
   return (
     <div className="min-h-screen">
       <Navbar />
-      
+
       <main className="pt-20">
-        {/* Hero Section */}
         <section className="bg-gradient-hero text-primary-foreground py-12">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl">
-              {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-sm mb-4 text-primary-foreground/70">
                 <Link to="/courses" className="hover:text-primary-foreground">Khóa học</Link>
                 <span>/</span>
                 <span>{course.title}</span>
               </div>
 
-              {/* Title & Badges */}
               <div className="mb-6">
                 <div className="flex flex-wrap gap-2 mb-4">
                   {course.courseLevel && (
@@ -84,9 +117,9 @@ const CourseDetail = () => {
                     </Badge>
                   )}
                 </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
-                {course.title}
-              </h1>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
+                  {course.title}
+                </h1>
                 {course.description && (
                   <p className="text-xl text-primary-foreground/80 mb-6">
                     {course.description}
@@ -94,7 +127,6 @@ const CourseDetail = () => {
                 )}
               </div>
 
-              {/* Stats: rating only */}
               <div className="flex flex-wrap gap-6 mb-6">
                 <div className="flex items-center gap-2">
                   <Star className="w-5 h-5 text-secondary fill-secondary" />
@@ -103,18 +135,17 @@ const CourseDetail = () => {
                 </div>
               </div>
 
-              {/* Instructor */}
               <div className="flex items-center gap-4">
                 {course.courseSeller?.profilePicture && (
                   <img
-                    src={course.courseSeller.profilePicture}
-                    alt={course.courseSeller.fullName}
+                    src={course.courseSeller?.profilePicture ?? ''}
+                    alt={course.courseSeller?.fullName ?? 'Giảng viên'}
                     className="w-12 h-12 rounded-full object-cover ring-2 ring-primary-foreground/20"
                   />
                 )}
                 <div>
                   <div className="text-sm text-primary-foreground/70">Giảng viên</div>
-                  <div className="font-semibold">{course.courseSeller.fullName}</div>
+                  <div className="font-semibold">{course.courseSeller?.fullName ?? 'Giảng viên ẩn danh'}</div>
                 </div>
               </div>
             </div>
@@ -123,9 +154,8 @@ const CourseDetail = () => {
 
         <div className="container mx-auto px-4 py-12">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2">
-              <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
+              <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="overview">Tổng quan</TabsTrigger>
                   <TabsTrigger value="instructor">Giảng viên</TabsTrigger>
@@ -133,17 +163,15 @@ const CourseDetail = () => {
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6 mt-6">
-                  {/* Course Description from data */}
                   {course.description && (
                     <div className="bg-card rounded-2xl p-8 border border-border">
-              <h3 className="text-2xl font-semibold mb-4 font-['Be Vietnam Pro']">Mô tả khóa học</h3>
+                      <h3 className="text-2xl font-semibold mb-4 font-['Be Vietnam Pro']">Mô tả khóa học</h3>
                       <p className="text-muted-foreground leading-relaxed">
                         {course.description}
                       </p>
                     </div>
                   )}
 
-                  {/* My Reports */}
                   {isPurchased && (
                     <div className="bg-card rounded-2xl p-8 border border-border">
                       <div className="flex items-center justify-between mb-4">
@@ -152,14 +180,14 @@ const CourseDetail = () => {
                       </div>
                       {myReports.length > 0 ? (
                         <ul className="space-y-4">
-                          {myReports.map((r) => (
-                            <li key={r.id} className="border border-border rounded-xl p-4">
+                          {myReports.map((report) => (
+                            <li key={report.id} className="border border-border rounded-xl p-4">
                               <div className="text-sm text-muted-foreground">
-                                {new Date(r.createdAt).toLocaleString('vi-VN')}
+                                {new Date(report.createdAt).toLocaleString('vi-VN')}
                               </div>
                               <div className="mt-1">
-                                <Badge variant="outline" className="mr-2">{r.reasonType}</Badge>
-                                <span className="text-sm">{r.content}</span>
+                                <Badge variant="outline" className="mr-2">{report.reasonType}</Badge>
+                                <span className="text-sm">{report.content}</span>
                               </div>
                             </li>
                           ))}
@@ -176,13 +204,15 @@ const CourseDetail = () => {
                     <div className="flex items-start gap-6 mb-6">
                       {course.courseSeller?.profilePicture && (
                         <img
-                          src={course.courseSeller.profilePicture}
-                          alt={course.courseSeller.fullName}
+                          src={course.courseSeller?.profilePicture ?? ''}
+                          alt={course.courseSeller?.fullName ?? 'Giảng viên'}
                           className="w-24 h-24 rounded-full object-cover"
                         />
                       )}
                       <div>
-              <h3 className="text-2xl font-semibold mb-2 font-['Be Vietnam Pro']">{course.courseSeller.fullName}</h3>
+                        <h3 className="text-2xl font-semibold mb-2 font-['Be Vietnam Pro']">
+                          {course.courseSeller?.fullName ?? 'Giảng viên ẩn danh'}
+                        </h3>
                       </div>
                     </div>
                   </div>
@@ -204,20 +234,23 @@ const CourseDetail = () => {
                         <h3 className="text-2xl font-semibold mb-4 font-['Be Vietnam Pro']">Bài học</h3>
                         {courseLessons.length > 0 ? (
                           <ul className="space-y-4">
-                            {courseLessons.map((l, idx) => (
-                              <li key={l.id} className="flex items-start justify-between gap-4 border border-border rounded-xl p-4">
+                            {courseLessons.map((lesson, index) => (
+                              <li key={lesson.id} className="flex items-start justify-between gap-4 border border-border rounded-xl p-4">
                                 <div>
-                                  <div className="font-semibold">{l.lessonOrder ?? idx + 1}. {l.title}</div>
-                                  {l.description && (
-                                    <p className="text-sm text-muted-foreground mt-1">{l.description}</p>
+                                  <div className="font-semibold">
+                                    {lesson.lessonOrder ?? index + 1}. {lesson.title}
+                                  </div>
+                                  {lesson.description && (
+                                    <p className="text-sm text-muted-foreground mt-1">{lesson.description}</p>
                                   )}
                                   <div className="text-xs text-muted-foreground mt-2">
-                                    {l.durationInSeconds ? `${Math.round(l.durationInSeconds / 60)} phút` : '—'} • {l.materials?.length ?? 0} tài liệu • {l.commentCount ?? 0} bình luận
+                                    {lesson.durationInSeconds ? `${Math.round(lesson.durationInSeconds / 60)} phút` : '—'} •{' '}
+                                    {lesson.materials?.length ?? 0} tài liệu • {lesson.commentCount ?? 0} bình luận
                                   </div>
                                 </div>
-                                {l.videoUrl && (
+                                {lesson.videoUrl && (
                                   <Button asChild variant="outline" size="sm">
-                                    <a href={l.videoUrl} target="_blank" rel="noopener noreferrer">Xem video</a>
+                                    <a href={lesson.videoUrl} target="_blank" rel="noopener noreferrer">Xem video</a>
                                   </Button>
                                 )}
                               </li>
@@ -230,36 +263,34 @@ const CourseDetail = () => {
 
                       <div className="bg-card rounded-2xl p-8 border border-border">
                         <h3 className="text-2xl font-semibold mb-4 font-['Be Vietnam Pro']">Bài test</h3>
-                        {relatedTests.length > 0 ? (
+                        {course.test ? (
                           <div className="space-y-4">
-                            {relatedTests.map((t) => {
-                              const secs = mockSections.filter((s) => s.testId === t.id);
-                              return (
-                                <div key={t.id} className="border border-border rounded-xl p-4">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                      <div className="font-semibold">{t.name}</div>
-                                      {t.description && (
-                                        <p className="text-sm text-muted-foreground mt-1">{t.description}</p>
-                                      )}
-                                      <div className="text-xs text-muted-foreground mt-2">Loại: {t.testType.name}</div>
-                                    </div>
+                            <div className="border border-border rounded-xl p-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div>
+                                  <div className="font-semibold">{course.test.title}</div>
+                                  <div className="text-sm text-muted-foreground mt-1">
+                                    Thời lượng: {course.test.durationInMinutes} phút • Điểm tối đa: {course.test.totalScore}
                                   </div>
-                                  {secs.length > 0 && (
-                                    <ul className="mt-3 grid sm:grid-cols-2 gap-3">
-                                      {secs.map((s) => (
-                                        <li key={s.id} className="border border-border rounded-lg p-3">
-                                          <div className="text-sm font-medium">{s.title}</div>
-                                          <div className="text-xs text-muted-foreground mt-1">
-                                            Kỹ năng: {s.skill} • {s.totalQuestions ?? 0} câu • {s.durationInSeconds ? Math.round(s.durationInSeconds / 60) : 0} phút
-                                          </div>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
+                                  <div className="text-xs text-muted-foreground mt-2">
+                                    Loại bài: {course.test.testType}
+                                  </div>
                                 </div>
-                              );
-                            })}
+                              </div>
+                              {course.test.sections && course.test.sections.length > 0 && (
+                                <ul className="mt-3 grid sm:grid-cols-2 gap-3">
+                                  {course.test.sections.map((section) => (
+                                    <li key={section.id} className="border border-border rounded-lg p-3">
+                                      <div className="text-sm font-medium">{section.title}</div>
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        Kỹ năng: {section.skill} • {section.totalQuestions ?? 0} câu •{' '}
+                                        {section.durationInSeconds ? Math.round(section.durationInSeconds / 60) : 0} phút
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <p className="text-muted-foreground">Chưa có bài test phù hợp cho khoá học này.</p>
@@ -271,57 +302,55 @@ const CourseDetail = () => {
               </Tabs>
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
-                {/* Course Card */}
                 <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-border">
-                    <div className="p-6 space-y-4">
-                      <div className="flex items-baseline justify-center gap-2">
-                        <span className="text-4xl font-bold text-primary">
-                          {formatVND(course.price)}
-                        </span>
-                      </div>
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-4xl font-bold text-primary">
+                        {formatVND(course.price)}
+                      </span>
+                    </div>
 
-                      {isPurchased ? (
-                        <div className="space-y-3">
-                          <div className="text-green-600 font-medium text-center">Bạn đã mua khoá học này</div>
-                          <Button
-                            size="lg"
-                            className="w-full bg-gradient-primary shadow-accent text-lg"
-                            onClick={() => setTab('content')}
-                          >
-                            Xem nội dung
-                          </Button>
-                          <Button
-                            size="lg"
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => setReportOpen(true)}
-                          >
-                            Báo cáo khóa học
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-3">
-                          <Button
-                            size="lg"
-                            className="w-full bg-gradient-primary shadow-accent text-lg"
-                            onClick={() => setBuyOpen(true)}
-                            disabled={(course.price || 0) <= 0}
-                          >
-                            Mua ngay
-                          </Button>
-                          <Button
-                            size="lg"
-                            variant="outline"
-                            className="w-full text-lg"
-                            onClick={() => addItem(course)}
-                          >
-                            Thêm vào giỏ
-                          </Button>
-                        </div>
-                      )}
+                    {isPurchased ? (
+                      <div className="space-y-3">
+                        <div className="text-green-600 font-medium text-center">Bạn đã mua khoá học này</div>
+                        <Button
+                          size="lg"
+                          className="w-full bg-gradient-primary shadow-accent text-lg"
+                          onClick={() => setTab('content')}
+                        >
+                          Xem nội dung
+                        </Button>
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setReportOpen(true)}
+                        >
+                          Báo cáo khóa học
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3">
+                        <Button
+                          size="lg"
+                          className="w-full bg-gradient-primary shadow-accent text-lg"
+                          onClick={() => setBuyOpen(true)}
+                          disabled={(course.price || 0) <= 0}
+                        >
+                          Mua ngay
+                        </Button>
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="w-full text-lg"
+                          onClick={() => addItem(course)}
+                        >
+                          Thêm vào giỏ
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -330,13 +359,12 @@ const CourseDetail = () => {
         </div>
       </main>
 
-      {/* Report Dialog */}
       <CourseReportDialog
         open={reportOpen}
         onOpenChange={setReportOpen}
         course={course}
         userId={currentUserId}
-        onSubmitted={(rep) => setMyReports((prev) => [rep, ...prev])}
+        onSubmitted={(report) => setMyReports((prev) => [report, ...prev])}
       />
 
       <PaymentDialog

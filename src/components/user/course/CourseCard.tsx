@@ -60,8 +60,8 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
           <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
             {instructor.profilePicture ? (
               <img
-                src={instructor.profilePicture}
-                alt={instructor.fullName}
+                src={course.courseSeller?.profilePicture ?? ''}
+                alt={course.courseSeller?.fullName || 'Giảng viên'}
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
@@ -69,10 +69,8 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
                  <User className="w-4 h-4 text-secondary" />
               </div>
             )}
-            
-            {/* ✅ SỬA LỖI: Dùng optional chaining (?.) để tránh crash */}
             <span className="text-sm text-muted-foreground">
-              {instructor.fullName || 'Unknown Instructor'}
+              {course.courseSeller?.fullName ?? 'Giảng viên ẩn danh'}
             </span>
           </div>
 

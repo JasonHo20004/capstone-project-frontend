@@ -5,37 +5,20 @@ import type {
   PaginationParams,
   EmptyResponse,
 } from '../types';
+import type {
+  Course,
+  CourseLesson,
+  CourseLevel,
+  CourseTest,
+} from '@/types/type';
 
 /**
  * Course Service - Xử lý tất cả API calls liên quan đến courses
  */
 
-// Types cho Course
-export interface Course {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  instructor: string;
-  thumbnail?: string;
-  rating?: number;
-  totalStudents?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 export interface CourseDetail extends Course {
-  lessons: Lesson[];
-  requirements?: string[];
-  whatYouWillLearn?: string[];
-}
-
-export interface Lesson {
-  id: string;
-  title: string;
-  description?: string;
-  order: number;
-  duration?: number;
+  lessons?: CourseLesson[];
+  test?: CourseTest | null;
 }
 
 export interface GetCoursesParams extends PaginationParams {
@@ -43,6 +26,31 @@ export interface GetCoursesParams extends PaginationParams {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
+  courseLevel?: CourseLevel;
+  status?: Course['status'];
+}
+
+export interface SellerCoursesParams {
+  status?: Course['status'] | 'PUBLISHED' | 'ACTIVE' | 'PENDING';
+}
+
+export interface CreateCourseRequest {
+  title: string;
+  price: number;
+  description?: string;
+  category?: string;
+  courseLevel?: CourseLevel;
+  finalTestId?: string | null;
+}
+
+export interface UpdateCourseRequest {
+  title?: string;
+  price?: number;
+  description?: string;
+  category?: string;
+  courseLevel?: CourseLevel;
+  status?: Course['status'];
+  finalTestId?: string | null;
 }
 
 class CourseService {
@@ -73,7 +81,7 @@ class CourseService {
    * Tạo course mới (Admin/Instructor)
    */
   async createCourse(
-    data: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
+    data: CreateCourseRequest
   ): Promise<ApiResponse<Course>> {
     const response = await apiClient.post<ApiResponse<Course>>(
       '/courses',
@@ -87,7 +95,7 @@ class CourseService {
    */
   async updateCourse(
     id: string,
-    data: Partial<Course>
+    data: UpdateCourseRequest
   ): Promise<ApiResponse<Course>> {
     const response = await apiClient.put<ApiResponse<Course>>(
       `/courses/${id}`,
@@ -102,6 +110,55 @@ class CourseService {
   async deleteCourse(id: string): Promise<ApiResponse<EmptyResponse>> {
     const response = await apiClient.delete<ApiResponse<EmptyResponse>>(
       `/courses/${id}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Publish course (seller/admin)
+   */
+  async publishCourse(id: string): Promise<ApiResponse<Course>> {
+    const response = await apiClient.put<ApiResponse<Course>>(
+      `/courses/${id}/publish`
+    );
+    return response.data;
+  }
+
+  /**
+   * Lấy courses theo seller
+   */
+  async getCoursesBySeller(
+    sellerId: string,
+    params?: SellerCoursesParams
+  ): Promise<ApiResponse<{ data: Course[]; count: number }>> {
+    const response = await apiClient.get<
+      ApiResponse<{ data: Course[]; count: number }>
+    >(`/courses/seller/${sellerId}`, {
+      params,
+    });
+    return response.data;
+  }
+
+  /**
+   * Lấy courses của seller hiện tại (tự động lấy từ token)
+   */
+  async getMyCourses(
+    params?: SellerCoursesParams
+  ): Promise<ApiResponse<{ data: Course[]; count: number }>> {
+    const response = await apiClient.get<
+      ApiResponse<{ data: Course[]; count: number }>
+    >('/courses/seller/me', {
+      params,
+    });
+    return response.data;
+  }
+
+  /**
+   * Lấy chi tiết một lesson
+   */
+  async getLessonById(courseId: string, lessonId: string): Promise<ApiResponse<any>> {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/courses/${courseId}/lessons/${lessonId}`
     );
     return response.data;
   }

@@ -197,9 +197,53 @@ export interface CourseSellerProfile {
 export interface AdministratorProfile {
   id: string;
   userId: string;
+}
+
+export interface Wallet {
+  id: string;
+  allowance: number; // Decimal trong DB, number trong FE
+  userId: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description?: string;
+  price: number; // Decimal trong DB, number trong FE
+  category?: string;
+  courseLevel?: CourseLevel;
+  courseSellerId: string;
+  finalTestId?: string;
+  ratingCount?: number;
+  status: CourseStatus;
+  createdAt: string; // DateTime as ISO string
+  updatedAt?: string;
+  averageRating?: number;
   
   // Relations
+  courseSeller?: User;
   user?: User;
+  test?: Test;
+  courseTests?: CourseTest[];
+  ratings?: Rating[];
+  lessons?: Lesson[];
+  reports?: Report[];
+  cartItems?: CartItem[];
+  userActivities?: UserActivity[];
+}
+
+
+export interface TopupOrder {
+  id: string;
+  userId: string;
+  realMoney: number; // Decimal trong DB, number trong FE
+  realAmount?: number; // Decimal trong DB, number trong FE
+  currency: string;
+  paymentMethod: 'MOMO' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
+  status: 'PENDING' | 'SUCCESS' | 'FAILED';
+  createdAt: string; // DateTime as ISO string
+  updatedAt: string; // DateTime as ISO string
+  user: User;
 }
 
 export interface CourseSellerApplication {
@@ -216,14 +260,13 @@ export interface CourseSellerApplication {
   user?: User;
 }
 
-export interface Wallet {
+
+
+// Các interface cho Notification system từ schema
+export interface NotificationType {
   id: string;
-  allowance: number; // Decimal as number
-  userId: string;
-  
-  // Relations
-  transactions?: Transaction[];
-  user?: User;
+  name: string;
+  isLocked: boolean;
 }
 
 export interface Notification {
@@ -338,29 +381,6 @@ export interface UserNotification {
   user?: User;
 }
 
-export interface Course {
-  id: string;
-  title: string;
-  description?: string;
-  price: number; // Decimal as number
-  category?: string;
-  courseLevel?: CourseLevel;
-  courseSellerId: string;
-  finalTestId?: string;
-  ratingCount?: number;
-  status: CourseStatus;
-  createdAt: string;
-  
-  // Relations
-  user?: User;
-  test?: Test;
-  courseTests?: CourseTest[];
-  ratings?: Rating[];
-  lessons?: Lesson[];
-  reports?: Report[];
-  cartItems?: CartItem[];
-  userActivities?: UserActivity[];
-}
 
 export interface Section {
   id: string;
