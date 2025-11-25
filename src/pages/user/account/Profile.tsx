@@ -194,7 +194,19 @@ export default function Profile() {
     );
   }
 
-  const canAccessSellerPortal = user.role === 'COURSESELLER';
+  // Check role từ localStorage hoặc từ user object
+  const getUserRole = () => {
+    // Thử lấy từ localStorage trước
+    const storedRole = localStorage.getItem('role');
+    if (storedRole) return storedRole;
+
+    // Nếu không có, lấy từ user object
+    return user?.role;
+  };
+
+  const userRole = getUserRole();
+  const canAccessSellerPortal = userRole === 'COURSESELLER';
+  const canAccessAdminPortal = userRole === 'ADMINISTRATOR';
 
   // Màn hình chính khi đã có data
   return (
@@ -242,6 +254,14 @@ export default function Profile() {
               </div>
               <div className="flex-1" />
               <div className="flex items-center gap-3">
+                {canAccessAdminPortal && (
+                  <Button asChild variant="default">
+                    <Link to="/admin">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Quản lý hệ thống
+                    </Link>
+                  </Button>
+                )}
                 {canAccessSellerPortal && (
                   <Button asChild variant="default">
                     <Link to="/seller">
