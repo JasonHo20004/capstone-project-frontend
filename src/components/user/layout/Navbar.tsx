@@ -25,8 +25,8 @@ const Navbar = () => {
     { to: '/courses', label: 'Khóa học' },
     { to: '/flashcards', label: 'Thẻ ghi nhớ' },
     { to: '/about', label: 'Giới thiệu' },
-    { to: '/blog', label: 'Blog' },
-    { to: '/contact', label: 'Liên hệ' },
+    // { to: '/blog', label: 'Blog' },
+    // { to: '/contact', label: 'Liên hệ' },
   ];
 
   // SỬA Ở ĐÂY: Logic-thông-báo-dựa-trên-người-dùng-thật
