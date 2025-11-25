@@ -22,7 +22,7 @@ import MyCourses from "./pages/user/courses/MyCourses";
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
 import UsersManagement from "./pages/admin/user-management/Users";
 import CoursesManagement from "./pages/admin/course-management/Courses";
-import ApplicationsManagement from "./pages/admin/management[notDone]/ApplicationsManagement";
+import ApplicationsManagement from "./pages/admin/application-management/ApplicationsManagement";
 import ReportsManagement from "./pages/admin/management[notDone]/ReportsManagement";
 import NotificationsManagement from "./pages/admin/management[notDone]/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
