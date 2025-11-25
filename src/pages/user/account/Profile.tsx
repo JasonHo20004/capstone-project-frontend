@@ -539,23 +539,98 @@ export default function Profile() {
 
               {/* Danh sách đơn đã nộp (Đọc `myApplications` từ hook) */}
               {myApplications.length > 0 && user.role !== "COURSESELLER" && (
-                <div className="pt-4 border-t">
-                  <h3 className="text-sm font-medium mb-3">Đơn đã nộp</h3>
-                  <div className="space-y-3">
-                    {[...myApplications]
-                      .sort(
-                        (a, b) =>
-                          new Date(b.createdAt).getTime() -
-                          new Date(a.createdAt).getTime()
-                      )
-                      .map((app) => (
-                        <div key={app.id} className="p-3 rounded-md border">
-                          {/* ... (GiV giữ nguyên) ... */}
-                        </div>
-                      ))}
-                  </div>
+  <div className="pt-4 border-t">
+    <h3 className="text-sm font-medium mb-3">Đơn đã nộp</h3>
+    <div className="space-y-3">
+      {[...myApplications]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+        )
+        .map((app) => (
+          <div key={app.id} className="p-4 rounded-lg border border-border bg-muted/10">
+            {/* Header: Status & Date */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant={
+                    app.status === 'APPROVED' ? 'default' : 
+                    app.status === 'REJECTED' ? 'destructive' : 
+                    'secondary'
+                  }
+                >
+                  {app.status === 'PENDING' ? 'Đang chờ duyệt' : 
+                   app.status === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(app.createdAt).toLocaleDateString('vi-VN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Message */}
+            {app.message && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Lời nhắn:</p>
+                <p className="text-sm bg-background p-2 rounded border border-border/50">
+                  {app.message}
+                </p>
+              </div>
+            )}
+
+            {/* Rejection Reason */}
+            {app.rejectionReason && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-destructive mb-1">Lý do từ chối:</p>
+                <p className="text-sm text-destructive bg-destructive/10 p-2 rounded border border-destructive/20">
+                  {app.rejectionReason}
+                </p>
+              </div>
+            )}
+
+            {/* Expertise */}
+            {app.expertise && app.expertise.length > 0 && (
+              <div className="mb-2">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Chuyên môn:</p>
+                <div className="flex flex-wrap gap-1">
+                  {app.expertise.map((exp, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs font-normal">
+                      {exp}
+                    </Badge>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* Certification Images */}
+            {app.certification && app.certification.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Chứng chỉ:</p>
+                <div className="flex flex-wrap gap-2">
+                  {app.certification.map((certUrl, idx) => (
+                    <a 
+                      key={idx} 
+                      href={certUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block w-16 h-16 rounded overflow-hidden border hover:opacity-80 transition-opacity"
+                    >
+                      <img 
+                        src={certUrl} 
+                        alt={`Cert ${idx + 1}`} 
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+    </div>
+  </div>
+)}
             </Card>
           </div>
         </section>
