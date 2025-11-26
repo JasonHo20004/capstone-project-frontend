@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,20 +29,20 @@ import {
   UserCheck,
   UserCog
 } from 'lucide-react';
-import { mockNotifications, mockUsers, mockNotificationTypes } from '@/data/mock';
-import { Notification, NotificationType, User } from '@/types/type';
+import { notificationService } from '@/lib/api/services';
+import type { InAppNotification, NotificationType, User } from '@/types/type';
 import StatCard from '@/components/admin/StatCard';
 import FilterSection from '@/components/admin/FilterSection';
 import DataTable from '@/components/admin/DataTable';
 
 export default function NotificationsManagement() {
-  const [notifications] = useState<Notification[]>(mockNotifications);
-  const [users] = useState<User[]>(mockUsers);
-  const [notificationTypes] = useState<NotificationType[]>(mockNotificationTypes);
+  const [notifications, setNotifications] = useState<InAppNotification[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [notificationTypes, setNotificationTypes] = useState<NotificationType[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [selectedNotification, setSelectedNotification] = useState<InAppNotification | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newNotification, setNewNotification] = useState({
     title: '',
@@ -53,21 +53,53 @@ export default function NotificationsManagement() {
     selectedUserIds: [] as string[]
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [notificationsRes, typesRes] = await Promise.all([
+          notificationService.getUserNotifications({
+            userId: 'admin', // backend will be filtered by user when using real admin context
+            page: 1,
+            limit: 100,
+          }),
+          // Fallback: get notification types for filtering
+          notificationService.getUserStats('admin').catch(() => null),
+        ]);
+
+        setNotifications(notificationsRes.data?.notifications ?? []);
+        if ((typesRes as any)?.data?.byType) {
+          const byType = (typesRes as any).data.byType as Record<string, number>;
+          setNotificationTypes(
+            Object.keys(byType).map((name) => ({
+              id: name,
+              name,
+              isLocked: false,
+            })),
+          );
+        }
+      } catch {
+        // swallow errors for now; UI will show empty state
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const filteredNotifications = notifications.filter(notification => {
     const matchesSearch = notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       notification.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || notification.notificationType.name === typeFilter;
+    const matchesType = typeFilter === 'all' || notification.type === typeFilter;
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'seen' && notification.seen) ||
-      (statusFilter === 'unseen' && !notification.seen);
+      (statusFilter === 'seen' && notification.isRead) ||
+      (statusFilter === 'unseen' && !notification.isRead);
     return matchesSearch && matchesType && matchesStatus;
   });
 
   const stats = {
     totalNotifications: notifications.length,
-    unreadNotifications: notifications.filter(n => !n.seen).length,
-    systemNotifications: notifications.filter(n => n.notificationType.name === 'SYSTEM').length,
-    userNotifications: notifications.filter(n => n.notificationType.name === 'USER').length
+    unreadNotifications: notifications.filter(n => !n.isRead).length,
+    systemNotifications: notifications.filter(n => n.type === 'SYSTEM').length,
+    userNotifications: notifications.filter(n => n.type === 'USER').length
   };
 
   const formatDate = (date: string) => {
@@ -98,8 +130,10 @@ export default function NotificationsManagement() {
   };
 
   // Get recipients for a notification
-  const getNotificationRecipients = (notification: Notification): User[] => {
-    return users.filter(user => notification.userIds.includes(user.id));
+  const getNotificationRecipients = (_notification: InAppNotification): User[] => {
+    // Detailed per-recipient view would require a dedicated admin API;
+    // for now we return an empty array to keep UI simple.
+    return users;
   };
 
   // Get user-friendly label for notification type
@@ -166,7 +200,7 @@ export default function NotificationsManagement() {
     {
       key: 'notification',
       header: 'Thông báo',
-      render: (notification: Notification) => (
+      render: (notification: InAppNotification) => (
         <div className="max-w-xs">
           <div className="font-medium truncate">{notification.title}</div>
           <div className="text-sm text-muted-foreground truncate">
@@ -178,24 +212,24 @@ export default function NotificationsManagement() {
     {
       key: 'type',
       header: 'Loại',
-      render: (notification: Notification) => getTypeBadge(notification.notificationType.name)
+      render: (notification: InAppNotification) => getTypeBadge(notification.type)
     },
     {
       key: 'status',
       header: 'Trạng thái',
-      render: (notification: Notification) => getStatusBadge(notification.seen)
+      render: (notification: InAppNotification) => getStatusBadge(notification.isRead)
     },
     {
       key: 'createdAt',
       header: 'Ngày tạo',
-      render: (notification: Notification) => (
+      render: (notification: InAppNotification) => (
         <div className="text-sm">{formatDate(notification.createdAt)}</div>
       )
     },
     {
       key: 'actions',
       header: 'Thao tác',
-      render: (notification: Notification) => (
+      render: (notification: InAppNotification) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -585,13 +619,13 @@ export default function NotificationsManagement() {
                   <div>
                     <label className="text-sm font-medium">Loại thông báo</label>
                     <div className="mt-1">
-                      {getTypeBadge(selectedNotification.notificationType.name)}
+                      {getTypeBadge(selectedNotification.type)}
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Trạng thái</label>
                     <div className="mt-1">
-                      {getStatusBadge(selectedNotification.seen)}
+                      {getStatusBadge(selectedNotification.isRead)}
                     </div>
                   </div>
                   <div>
