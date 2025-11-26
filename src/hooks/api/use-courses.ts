@@ -14,6 +14,8 @@ import  {courseServiceUser,type GetCoursesForUserParams} from '@/lib/api/service
 export const courseKeys = {
   // Key cache phụ thuộc vào tất cả params (bao gồm enrollmentStatus)
   list: (params: GetCoursesForUserParams) => ['courses', 'list', params] as const,
+  myCourses: ['courses', 'my'] as const,
+  detail: (id: string) => ['courses', 'detail', id] as const,
 };
 
 export const useGetCourses = (params: GetCoursesForUserParams) => {
@@ -24,6 +26,29 @@ export const useGetCourses = (params: GetCoursesForUserParams) => {
       return res.data;
     },
     placeholderData: keepPreviousData,
+  });
+};
+
+export const useGetMyCourses = () => {
+  // Lưu ý: Hook này cần User login mới chạy được (xử lý enabled ở component hoặc check token)
+  return useQuery({
+    queryKey: courseKeys.myCourses,
+    queryFn: async () => {
+      // Giả sử courseServiceUser có hàm getMyCourses
+      // Nếu chưa có, bạn cần thêm vào service giống như hướng dẫn trước
+      const res = await courseServiceUser.getAllCourses({ enrollmentStatus: 'enrolled', limit: 100 });
+      // Hoặc gọi endpoint riêng nếu bạn đã tách: await courseService.getMyCourses()
+      return res.data; 
+    },
+  });
+};
+export const useGetCourseDetail = (id: string) => {
+  return useQuery({
+    queryKey: courseKeys.detail(id),
+    queryFn: () => courseService.getCourseById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    select: (response) => response.data,
   });
 };
 /**
