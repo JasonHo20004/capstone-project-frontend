@@ -1,43 +1,63 @@
 import { Link } from 'react-router-dom';
-import { Star, User } from 'lucide-react'; // Thêm icon User làm avatar fallback
+import { Star, User, ShoppingCart, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Course as AdminCourse } from '@/types/type';
+import { Course } from '@/types/type';
 import { formatVND } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useCart } from '@/context/CartContext';
+
+// MỚI: Import Hooks
+import { useAddToCart } from '@/hooks/api/use-cart';
+import { useUser } from '@/hooks/api/use-user';
+import { toast } from 'sonner';
 
 interface CourseCardProps {
-  course: AdminCourse;
-  hideAddToCart?: boolean;
-  purchased?: boolean;
+  course: Course;
+  hideAddToCart?: boolean; // Prop để ẩn nút thêm giỏ (ví dụ khóa đã mua)
+  purchased?: boolean;     // Prop để hiện badge "Đã mua"
 }
 
 const CourseCard = ({ course, hideAddToCart = false, purchased = false }: CourseCardProps) => {
-  const { addItem } = useCart();
-
-  // ✅ SỬA LỖI: Lấy thông tin giảng viên an toàn
-  // API trả về 'user', nhưng type có thể là 'courseSeller'. Chúng ta kiểm tra cả hai.
+  const { user } = useUser();
   
-  const instructor = course.courseSeller || course.user || {};
+  // Hook thêm vào giỏ
+  const addToCartMutation = useAddToCart();
+
+  // Xử lý logic lấy thông tin giảng viên
+  const instructor = course.user || (course as any).courseSeller || {};
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // Ngăn chặn chuyển trang khi bấm nút
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+      return;
+    }
+
+    addToCartMutation.mutate(course.id);
+  };
 
   return (
     <Link to={`/courses/${course.id}`}>
       <div className="group bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-accent transition-all duration-300 border border-border hover:border-primary/20 h-full flex flex-col relative">
         
-        {/* Placeholder cho Thumbnail (nếu chưa có ảnh bìa) */}
-        {/* <div className="h-48 bg-muted flex items-center justify-center text-muted-foreground">
-            <span className="text-sm">Course Thumbnail</span>
-        </div> */}
-
-        {purchased && (
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-secondary text-secondary-foreground">Đã mua</Badge>
-          </div>
-        )}
+        {/* Thumbnail Placeholder */}
+        <div >
+            
+            
+            {/* Badge Đã mua */}
+            {purchased && (
+              <div className="absolute top-3 right-3">
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200">
+                  Đã sở hữu
+                </Badge>
+              </div>
+            )}
+        </div>
 
         {/* Content */}
         <div className="p-6 flex flex-col flex-1">
-          {/* Level badge (A1–C2) */}
+          {/* Level badge */}
           {course.courseLevel && (
             <div className="mb-2">
               <Badge variant="outline" className="bg-card/90">
@@ -70,34 +90,43 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
               </div>
             )}
             
-            {/* ✅ SỬA LỖI: Dùng optional chaining (?.) để tránh crash */}
             <span className="text-sm text-muted-foreground">
               {instructor.fullName || 'Unknown Instructor'}
             </span>
           </div>
 
-          {/* Rating & Price */}
+          {/* Rating & Price & AddToCart */}
           <div className="flex items-center justify-between mt-auto">
             <div className="flex items-center gap-1">
-              <Star className="w-5 h-5 text-secondary fill-secondary" />
-              <span className="font-semibold">{course.averageRating ?? 0}</span>
-              <span className="text-sm text-muted-foreground">({course.ratingCount ?? 0})</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-primary">
-                {formatVND(course.price)}
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              <span className="font-semibold text-sm">
+                {course.averageRating != null ? course.averageRating.toFixed(1) : '0.0'}
               </span>
-              {!hideAddToCart && (
+              <span className="text-xs text-muted-foreground">
+                ({course.ratingCount ?? 0})
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold text-primary">
+                {formatVND(Number(course.price))}
+              </span>
+
+              {/* Nút Add to Cart */}
+              {!hideAddToCart && !purchased && (
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    addItem(course);
-                  }}
+                  size="icon"
+                  variant="secondary"
+                  className="h-9 w-9 rounded-full shadow-sm hover:bg-primary hover:text-white transition-colors"
+                  onClick={handleAddToCart}
+                  disabled={addToCartMutation.isPending}
+                  title="Thêm vào giỏ hàng"
                 >
-                  Thêm vào giỏ
+                  {addToCartMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4" />
+                  )}
                 </Button>
               )}
             </div>

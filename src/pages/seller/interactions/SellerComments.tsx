@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
-import { mockComments, mockLessons, mockCourses, mockUsers } from '@/data/mock';
+import { useSellerComments } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
 
 type Row = {
   id: string;
@@ -13,33 +15,22 @@ type Row = {
 };
 
 export default function SellerComments() {
-  const currentUserId = localStorage.getItem('currentUserId') || '1';
   const [search, setSearch] = useState('');
+  const { data: commentsData, isLoading, error } = useSellerComments({ search, limit: 100 });
 
-  const myCourses = useMemo(() => mockCourses.filter((c) => c.courseSellerId === currentUserId), [currentUserId]);
-  const myCourseIds = new Set(myCourses.map((c) => c.id));
-  const lessons = mockLessons.filter((l) => myCourseIds.has(l.courseId));
-  const lessonById = new Map(lessons.map((l) => [l.id, l]));
-  const userById = new Map(mockUsers.map((u) => [u.id, u]));
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
-  const rows: Row[] = useMemo(() => {
-    return mockComments
-      .filter((c) => lessonById.has(c.lessonId))
-      .map((c) => {
-        const lesson = lessonById.get(c.lessonId)!;
-        const course = myCourses.find((mc) => mc.id === lesson.courseId)!;
-        const user = userById.get(c.userId);
-        return {
-          id: c.id,
-          content: c.content,
-          userName: user?.fullName || c.userId,
-          lessonTitle: lesson.title,
-          courseTitle: course.title,
-          createdAt: c.createdAt,
-        } as Row;
-      })
-      .filter((r) => r.content.toLowerCase().includes(search.toLowerCase()));
-  }, [myCourses, lessonById, userById, search]);
+  if (error) {
+    return <ErrorMessage message="Không thể tải danh sách bình luận. Vui lòng thử lại sau." />;
+  }
+
+  const rows: Row[] = commentsData?.comments || [];
 
   return (
     <div className="space-y-6">

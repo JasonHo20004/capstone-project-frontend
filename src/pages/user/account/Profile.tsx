@@ -1,25 +1,30 @@
-import { useState, useEffect,useRef } from "react"; // MỚI: Thêm useEffect
-import Navbar from "@/components/user/layout/Navbar";
-import Footer from "@/components/user/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import Navbar from '@/components/user/layout/Navbar';
+import Footer from '@/components/user/layout/Footer';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Edit, Save, X, Loader2,Camera } from "lucide-react"; // MỚI: Thêm Loader2
-import { toast } from "sonner";
-import CourseSellerApplicationDialog from "@/components/user/account/CourseSellerApplicationDialog";
-import { formatVND, formatDate, formatDateForInput } from "@/lib/utils";
-import { useProfile, useUpdateProfile } from "@/hooks/api/use-user";
-import { useQueryClient } from "@tanstack/react-query"; // MỚI: Thêm Query Client
+
+} from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Edit, Save, X, Loader2, Camera, LayoutDashboard } from 'lucide-react';
+import { toast } from 'sonner';
+import { User } from '@/types/type';
+import CourseSellerApplicationDialog from '@/components/user/account/CourseSellerApplicationDialog';
+import type { CourseSellerApplication } from '@/types/type';
+import { formatVND, formatDate, formatDateForInput } from '@/lib/utils';
+import { useProfile, useUpdateProfile } from '@/hooks/api/use-user';
+import { useQueryClient } from '@tanstack/react-query';
 
 const englishLevels = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -178,7 +183,7 @@ export default function Profile() {
             Đã xảy ra lỗi
           </h2>
           <p className="text-muted-foreground mb-4">
-            {error?.message || "Không thể tải thông tin cá nhân."}
+            {error || "Không thể tải thông tin cá nhân."}
           </p>
           <Button onClick={() => window.location.reload()}>
             Tải lại trang
@@ -188,6 +193,20 @@ export default function Profile() {
       </div>
     );
   }
+
+  // Check role từ localStorage hoặc từ user object
+  const getUserRole = () => {
+    // Thử lấy từ localStorage trước
+    const storedRole = localStorage.getItem('role');
+    if (storedRole) return storedRole;
+
+    // Nếu không có, lấy từ user object
+    return user?.role;
+  };
+
+  const userRole = getUserRole();
+  const canAccessSellerPortal = userRole === 'COURSESELLER';
+  const canAccessAdminPortal = userRole === 'ADMINISTRATOR';
 
   // Màn hình chính khi đã có data
   return (
@@ -234,23 +253,41 @@ export default function Profile() {
                 </p>
               </div>
               <div className="flex-1" />
-              {!editing ? (
-                <Button variant="secondary" onClick={startEdit}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Chỉnh sửa
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button variant="secondary" onClick={saveEdit}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Lưu
+              <div className="flex items-center gap-3">
+                {canAccessAdminPortal && (
+                  <Button asChild variant="default">
+                    <Link to="/admin">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Quản lý hệ thống
+                    </Link>
                   </Button>
-                  <Button variant="outline" onClick={cancelEdit}>
-                    <X className="w-4 h-4 mr-2" />
-                    Hủy
+                )}
+                {canAccessSellerPortal && (
+                  <Button asChild variant="default">
+                    <Link to="/seller">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Quản lý khóa học
+                    </Link>
                   </Button>
-                </div>
-              )}
+                )}
+                {!editing ? (
+                  <Button variant="secondary" onClick={startEdit}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Chỉnh sửa
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={saveEdit}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Lưu
+                    </Button>
+                    <Button variant="outline" onClick={cancelEdit}>
+                      <X className="w-4 h-4 mr-2" />
+                      Hủy
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -522,23 +559,98 @@ export default function Profile() {
 
               {/* Danh sách đơn đã nộp (Đọc `myApplications` từ hook) */}
               {myApplications.length > 0 && user.role !== "COURSESELLER" && (
-                <div className="pt-4 border-t">
-                  <h3 className="text-sm font-medium mb-3">Đơn đã nộp</h3>
-                  <div className="space-y-3">
-                    {[...myApplications]
-                      .sort(
-                        (a, b) =>
-                          new Date(b.createdAt).getTime() -
-                          new Date(a.createdAt).getTime()
-                      )
-                      .map((app) => (
-                        <div key={app.id} className="p-3 rounded-md border">
-                          {/* ... (GiV giữ nguyên) ... */}
-                        </div>
-                      ))}
-                  </div>
+  <div className="pt-4 border-t">
+    <h3 className="text-sm font-medium mb-3">Đơn đã nộp</h3>
+    <div className="space-y-3">
+      {[...myApplications]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+        )
+        .map((app) => (
+          <div key={app.id} className="p-4 rounded-lg border border-border bg-muted/10">
+            {/* Header: Status & Date */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant={
+                    app.status === 'APPROVED' ? 'default' : 
+                    app.status === 'REJECTED' ? 'destructive' : 
+                    'secondary'
+                  }
+                >
+                  {app.status === 'PENDING' ? 'Đang chờ duyệt' : 
+                   app.status === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(app.createdAt).toLocaleDateString('vi-VN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Message */}
+            {app.message && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Lời nhắn:</p>
+                <p className="text-sm bg-background p-2 rounded border border-border/50">
+                  {app.message}
+                </p>
+              </div>
+            )}
+
+            {/* Rejection Reason */}
+            {app.rejectionReason && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-destructive mb-1">Lý do từ chối:</p>
+                <p className="text-sm text-destructive bg-destructive/10 p-2 rounded border border-destructive/20">
+                  {app.rejectionReason}
+                </p>
+              </div>
+            )}
+
+            {/* Expertise */}
+            {app.expertise && app.expertise.length > 0 && (
+              <div className="mb-2">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Chuyên môn:</p>
+                <div className="flex flex-wrap gap-1">
+                  {app.expertise.map((exp, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs font-normal">
+                      {exp}
+                    </Badge>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* Certification Images */}
+            {app.certification && app.certification.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Chứng chỉ:</p>
+                <div className="flex flex-wrap gap-2">
+                  {app.certification.map((certUrl, idx) => (
+                    <a 
+                      key={idx} 
+                      href={certUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block w-16 h-16 rounded overflow-hidden border hover:opacity-80 transition-opacity"
+                    >
+                      <img 
+                        src={certUrl} 
+                        alt={`Cert ${idx + 1}`} 
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+    </div>
+  </div>
+)}
             </Card>
           </div>
         </section>

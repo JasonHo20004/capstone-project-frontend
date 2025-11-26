@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,27 +24,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  MoreHorizontal, 
-  Eye, 
-  Check, 
-  X, 
+import {
+  MoreHorizontal,
+  Eye,
+  Check,
+  X,
   FileText,
   User
 } from 'lucide-react';
-import { mockCourseSellerApplications } from '@/data/mock';
 import { CourseSellerApplication } from '@/types/type';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
+import { applicationManagementService } from '@/lib/api/services/admin/application-management/application.service';
+import { toast } from 'sonner';
 
 export default function ApplicationsManagement() {
-  const [applications] = useState<CourseSellerApplication[]>(mockCourseSellerApplications);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedApplication, setSelectedApplication] = useState<CourseSellerApplication | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewStatus, setReviewStatus] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
-  const [reviewNote, setReviewNote] = useState('');
+
+  // Fetch applications
+  const { data: applicationsResp, isLoading } = useQuery({
+    queryKey: ['applications'],
+    queryFn: () => applicationManagementService.getApplications(),
+  });
+
+  const applications = applicationsResp?.data || [];
+
+  // Mutation for updating application status
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ applicationId, status }: { applicationId: string; status: 'APPROVED' | 'REJECTED' }) =>
+      applicationManagementService.updateApplicationStatus(applicationId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      toast.success(reviewStatus === 'APPROVED' ? 'Đã duyệt đơn đăng ký' : 'Đã từ chối đơn đăng ký');
+      setReviewDialogOpen(false);
+      setSelectedApplication(null);
+    },
+    onError: () => {
+      toast.error('Có lỗi xảy ra khi cập nhật trạng thái');
+    },
+  });
 
   const filteredApplications = applications.filter(app => {
     const matchesSearch = app.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,15 +95,23 @@ export default function ApplicationsManagement() {
     setReviewDialogOpen(true);
   };
 
+  const handleViewApplication = async (applicationId: string) => {
+    try {
+      const response = await applicationManagementService.getApplicationById(applicationId);
+      if (response.data) {
+        setSelectedApplication(response.data);
+      }
+    } catch (error) {
+      toast.error('Không thể tải thông tin đơn đăng ký');
+    }
+  };
+
   const submitReview = () => {
-    // Handle review submission logic here
-    console.log('Review submitted:', {
-      applicationId: selectedApplication?.id,
+    if (!selectedApplication) return;
+    updateStatusMutation.mutate({
+      applicationId: selectedApplication.id,
       status: reviewStatus,
-      note: reviewNote
     });
-    setReviewDialogOpen(false);
-    setReviewNote('');
   };
 
   const columns = [
@@ -139,7 +170,7 @@ export default function ApplicationsManagement() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setSelectedApplication(app)}>
+            <DropdownMenuItem onClick={() => handleViewApplication(app.id)}>
               <Eye className="mr-2 h-4 w-4" />
               Xem chi tiết
             </DropdownMenuItem>
@@ -317,35 +348,30 @@ export default function ApplicationsManagement() {
               {reviewStatus === 'APPROVED' ? 'Duyệt đơn đăng ký' : 'Từ chối đơn đăng ký'}
             </DialogTitle>
             <DialogDescription>
-              {reviewStatus === 'APPROVED' 
-                ? 'Xác nhận duyệt đơn đăng ký này?' 
-                : 'Vui lòng cung cấp lý do từ chối'
+              {reviewStatus === 'APPROVED'
+                ? 'Xác nhận duyệt đơn đăng ký này?'
+                : 'Xác nhận từ chối đơn đăng ký này?'
               }
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">
-                {reviewStatus === 'APPROVED' ? 'Ghi chú (tùy chọn)' : 'Lý do từ chối'}
-              </label>
-              <Textarea
-                placeholder={reviewStatus === 'APPROVED' 
-                  ? 'Thêm ghi chú cho quyết định này...' 
-                  : 'Nhập lý do từ chối đơn đăng ký...'
-                }
-                value={reviewNote}
-                onChange={(e) => setReviewNote(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div className="flex space-x-2">
-              <Button onClick={submitReview} className="flex-1">
-                {reviewStatus === 'APPROVED' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'}
-              </Button>
-              <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
-                Hủy
-              </Button>
-            </div>
+          <div className="flex space-x-2">
+            <Button
+              onClick={submitReview}
+              className="flex-1"
+              disabled={updateStatusMutation.isPending}
+            >
+              {updateStatusMutation.isPending
+                ? 'Đang xử lý...'
+                : (reviewStatus === 'APPROVED' ? 'Xác nhận duyệt' : 'Xác nhận từ chối')
+              }
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setReviewDialogOpen(false)}
+              disabled={updateStatusMutation.isPending}
+            >
+              Hủy
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

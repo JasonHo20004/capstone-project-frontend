@@ -22,7 +22,7 @@ import MyCourses from "./pages/user/courses/MyCourses";
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
 import UsersManagement from "./pages/admin/user-management/Users";
 import CoursesManagement from "./pages/admin/course-management/Courses";
-import ApplicationsManagement from "./pages/admin/management[notDone]/ApplicationsManagement";
+import ApplicationsManagement from "./pages/admin/application-management/ApplicationsManagement";
 import ReportsManagement from "./pages/admin/management[notDone]/ReportsManagement";
 import NotificationsManagement from "./pages/admin/management[notDone]/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
@@ -35,6 +35,7 @@ import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
+import { SellerProtectedRoute } from "./components/auth/SellerProtectedRoute";
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
@@ -115,14 +116,16 @@ const App = () => (
           </Route>
 
           {/* Seller Routes */}
-          <Route path="/seller" element={<SellerLayout />}>
-            <Route index element={<SellerDashboard />} />
-            <Route path="courses" element={<SellerCourses />} />
-            <Route path="courses/:id" element={<SellerCourseDetail />} />
-            <Route path="fees" element={<SellerMonthlyFees />} />
-            <Route path="comments" element={<SellerComments />} />
-            <Route path="learners" element={<SellerLearners />} />
-            <Route path="profile" element={<SellerProfile />} />
+          <Route element={<SellerProtectedRoute />}>
+            <Route path="/seller" element={<SellerLayout />}>
+              <Route index element={<SellerDashboard />} />
+              <Route path="courses" element={<SellerCourses />} />
+              <Route path="courses/:id" element={<SellerCourseDetail />} />
+              <Route path="fees" element={<SellerMonthlyFees />} />
+              <Route path="comments" element={<SellerComments />} />
+              <Route path="learners" element={<SellerLearners />} />
+              <Route path="profile" element={<SellerProfile />} />
+            </Route>
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

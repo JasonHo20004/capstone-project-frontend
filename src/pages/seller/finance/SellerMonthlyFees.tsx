@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
 import DataTable from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/badge';
-import { mockTransactions, mockSubscriptionContracts } from '@/data/mock';
 import { formatVND } from '@/lib/utils';
+import { useSellerMonthlyFees } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
 
 type FeeRow = {
   id: string;
@@ -14,28 +15,7 @@ type FeeRow = {
 };
 
 export default function SellerMonthlyFees() {
-  const currentUserId = localStorage.getItem('currentUserId') || '1';
-
-  const rows: FeeRow[] = useMemo(() => {
-    const byId = new Map(mockSubscriptionContracts.map((c) => [c.id, c]));
-    return mockTransactions
-      .filter((t) => t.transactionType === 'MONTHLYFEE' && t.subscriptionContractId)
-      .filter((t) => {
-        const sc = byId.get(t.subscriptionContractId!);
-        return sc?.courseSellerId === currentUserId;
-      })
-      .map((t) => {
-        const sc = byId.get(t.subscriptionContractId!);
-        return {
-          id: t.id,
-          createdAt: t.createdAt,
-          amount: t.amount,
-          status: t.status,
-          planName: sc ? sc.subscriptionPlan.name : '-',
-          description: t.description,
-        } as FeeRow;
-      });
-  }, [currentUserId]);
+  const { data: feesData, isLoading, error } = useSellerMonthlyFees();
 
   const statusBadge = (s: string) => {
     switch (s) {
@@ -49,6 +29,20 @@ export default function SellerMonthlyFees() {
         return <Badge variant="outline">Khác</Badge>;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <ErrorMessage message="Không thể tải dữ liệu phí hằng tháng. Vui lòng thử lại sau." />;
+  }
+
+  const rows: FeeRow[] = feesData?.fees || [];
 
   return (
     <div className="space-y-6">

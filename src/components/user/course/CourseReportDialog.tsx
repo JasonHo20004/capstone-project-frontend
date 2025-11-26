@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Course, Report, User } from '@/types/type';
-import { mockUsers } from '@/data/mock';
+import type { Course, Report } from '@/types/type';
 import { toast } from 'sonner';
+import { useProfile } from '@/hooks/api/use-user';
 
 type ReasonType = Report['reasonType'];
 
@@ -46,7 +46,7 @@ interface CourseReportDialogProps {
 }
 
 export default function CourseReportDialog({ open, onOpenChange, course, userId, onSubmitted }: CourseReportDialogProps) {
-  const me: User | undefined = useMemo(() => mockUsers.find((u) => u.id === userId), [userId]);
+  const { user: me } = useProfile();
 
   const [reason, setReason] = useState<ReasonType>('NOT_AS_DESCRIBED');
   const [content, setContent] = useState('');
@@ -61,7 +61,8 @@ export default function CourseReportDialog({ open, onOpenChange, course, userId,
   }, [open]);
 
   const handleSubmit = () => {
-    if (!me) {
+    const reporterId = me?.id ?? userId;
+    if (!reporterId) {
       toast.error('Không xác định được người dùng hiện tại');
       return;
     }
@@ -75,9 +76,9 @@ export default function CourseReportDialog({ open, onOpenChange, course, userId,
       content: content.trim(),
       reasonType: reason,
       createdAt: new Date().toISOString(),
-      userId: me.id,
+      userId: reporterId,
       courseId: course.id,
-      user: me,
+      user: me ?? undefined,
       course,
     };
 

@@ -72,9 +72,6 @@ export const useUpdateProfile = () => {
     
     onSuccess: () => {
       
-      
-      // QUAN TRỌNG: Làm mới data để UI cập nhật ngay lập tức
-      // 1. Làm mới trang Profile
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
       // 2. Làm mới Navbar (nếu Navbar dùng key ['user', 'me'])
       queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
@@ -82,6 +79,25 @@ export const useUpdateProfile = () => {
     
     onError: (error: AxiosError<ApiError>) => {
       const message = error.response?.data?.message || 'Cập nhật thất bại';
+      toast.error(message);
+    },
+  });
+};
+
+export const useCreateSellerApplication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) => userService.createCourseSellerApplication(formData),
+    onSuccess: () => {
+      toast.success('Nộp đơn thành công!', {
+        description: 'Vui lòng chờ quản trị viên xét duyệt hồ sơ của bạn.',
+      });
+      // Làm mới profile để cập nhật trạng thái (nếu profile có trả về status application)
+      queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Nộp đơn thất bại.';
       toast.error(message);
     },
   });

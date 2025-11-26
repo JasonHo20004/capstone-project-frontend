@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api/config';
-import type { ApiResponse,PaginatedResponse } from '@/lib/api/types';
+import type { ApiResponse, PaginatedResponse } from '@/lib/api/types';
 import type { Course } from '@/types/type';
 
 export interface GetCoursesForUserParams {
@@ -8,6 +8,8 @@ export interface GetCoursesForUserParams {
   search?: string;
   level?: string;
   enrollmentStatus?: 'enrolled' | 'not_enrolled';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 class CourseServiceUser {
@@ -22,7 +24,11 @@ class CourseServiceUser {
       search: params?.search,
       // Map 'level' frontend -> 'courseLevel' backend
       courseLevel: (params?.level && params.level !== 'all') ? params.level : undefined,
-      status: 'PUBLISHED',
+      // Chỉ lấy các khoá học đang hoạt động cho màn hình người dùng
+      status: 'ACTIVE',
+      // Cho phép sort linh hoạt (mặc định BE sẽ sort theo createdAt nếu không truyền)
+      sortBy: params?.sortBy,
+      sortOrder: params?.sortOrder,
       
       // 👇 Gửi status lọc mua/chưa mua
       enrollmentStatus: params?.enrollmentStatus, 

@@ -1,31 +1,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockCourses, mockUserActivities, mockComments, mockLessons, mockSubscriptionContracts } from '@/data/mock';
 import { formatVND } from '@/lib/utils';
+import { useSellerDashboard } from '@/hooks/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
 
 export default function SellerDashboard() {
-  const currentUserId = localStorage.getItem('currentUserId') || '1';
+  const { data: dashboardStats, isLoading, error } = useSellerDashboard();
 
-  const myCourses = mockCourses.filter((c) => c.courseSellerId === currentUserId);
-  const myCourseIds = new Set(myCourses.map((c) => c.id));
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
-  const myLearners = Array.from(
-    new Set(
-      mockUserActivities
-        .filter((a) => myCourseIds.has(a.courseId) && a.transaction?.status === 'SUCCESS')
-        .map((a) => a.userId)
-    )
-  );
+  if (error) {
+    return <ErrorMessage message="Không thể tải dữ liệu dashboard. Vui lòng thử lại sau." />;
+  }
 
-  const myLessons = mockLessons.filter((l) => myCourseIds.has(l.courseId));
-  const myLessonIds = new Set(myLessons.map((l) => l.id));
-  const myComments = mockComments.filter((c) => myLessonIds.has(c.lessonId));
+  if (!dashboardStats) {
+    return <ErrorMessage message="Không có dữ liệu dashboard." />;
+  }
 
-  const myContract = mockSubscriptionContracts.find((sc) => sc.courseSellerId === currentUserId);
-
-  const monthlyFee = myContract?.subscriptionPlan.monthlyFee || 0;
-  const planName = myContract?.subscriptionPlan.name || 'Chưa đăng ký';
-  const contractStatus = myContract?.status ? 'Đang hoạt động' : 'Hết hạn';
+  const { coursesCount, learnersCount, commentsCount, subscription } = dashboardStats;
+  const contractStatus = subscription.status ? 'Đang hoạt động' : 'Hết hạn';
 
   return (
     <div className="space-y-6">
@@ -36,7 +36,7 @@ export default function SellerDashboard() {
             <CardTitle>Khoá học</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{myCourses.length}</div>
+            <div className="text-3xl font-bold">{coursesCount}</div>
             <p className="text-sm text-muted-foreground">Tổng số khoá học bạn đang có</p>
           </CardContent>
         </Card>
@@ -45,7 +45,7 @@ export default function SellerDashboard() {
             <CardTitle>Người học</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{myLearners.length}</div>
+            <div className="text-3xl font-bold">{learnersCount}</div>
             <p className="text-sm text-muted-foreground">Số người đã mua khoá học của bạn</p>
           </CardContent>
         </Card>
@@ -54,7 +54,7 @@ export default function SellerDashboard() {
             <CardTitle>Bình luận</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{myComments.length}</div>
+            <div className="text-3xl font-bold">{commentsCount}</div>
             <p className="text-sm text-muted-foreground">Bình luận trên bài học của bạn</p>
           </CardContent>
         </Card>
@@ -64,12 +64,10 @@ export default function SellerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{planName}</span>
-              {myContract && (
-                <Badge variant={myContract.status ? 'default' : 'destructive'}>{contractStatus}</Badge>
-              )}
+              <span className="font-semibold">{subscription.planName}</span>
+              <Badge variant={subscription.status ? 'default' : 'destructive'}>{contractStatus}</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">Phí hằng tháng: {formatVND(monthlyFee)}</p>
+            <p className="text-sm text-muted-foreground">Phí hằng tháng: {formatVND(subscription.monthlyFee)}</p>
           </CardContent>
         </Card>
       </div>

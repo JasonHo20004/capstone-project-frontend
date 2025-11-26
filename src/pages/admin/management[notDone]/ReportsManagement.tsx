@@ -118,8 +118,10 @@ export default function ReportsManagement() {
       header: 'Người báo cáo',
       render: (report: Report) => (
         <div className="text-sm">
-          <div className="font-medium">{report.user.fullName}</div>
-          <div className="text-muted-foreground">{report.user.email}</div>
+          <div className="font-medium">{report.user?.fullName ?? report.userId}</div>
+          {report.user?.email && (
+            <div className="text-muted-foreground">{report.user.email}</div>
+          )}
         </div>
       )
     },
@@ -128,8 +130,10 @@ export default function ReportsManagement() {
       header: 'Khóa học',
       render: (report: Report) => (
         <div className="text-sm">
-          <div className="font-medium truncate">{report.course.title}</div>
-          <div className="text-muted-foreground">{report.course.price.toLocaleString('vi-VN')} VND</div>
+          <div className="font-medium truncate">{report.course?.title ?? report.courseId}</div>
+          {report.course?.price !== undefined && (
+            <div className="text-muted-foreground">{report.course.price.toLocaleString('vi-VN')} VND</div>
+          )}
         </div>
       )
     },
@@ -266,15 +270,21 @@ export default function ReportsManagement() {
                 <div>
                   <label className="text-sm font-medium">Người báo cáo</label>
                   <div className="mt-1">
-                    <p className="text-sm font-medium">{selectedReport.user.fullName}</p>
-                    <p className="text-sm text-muted-foreground">{selectedReport.user.email}</p>
+                    <p className="text-sm font-medium">{selectedReport.user?.fullName ?? selectedReport.userId}</p>
+                    {selectedReport.user?.email && (
+                      <p className="text-sm text-muted-foreground">{selectedReport.user.email}</p>
+                    )}
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Khóa học</label>
                   <div className="mt-1">
-                    <p className="text-sm font-medium">{selectedReport.course.title}</p>
-                    <p className="text-sm text-muted-foreground">{selectedReport.course.price.toLocaleString('vi-VN')} VND</p>
+                    <p className="text-sm font-medium">{selectedReport.course?.title ?? selectedReport.courseId}</p>
+                    {selectedReport.course?.price !== undefined && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedReport.course.price.toLocaleString('vi-VN')} VND
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div>
