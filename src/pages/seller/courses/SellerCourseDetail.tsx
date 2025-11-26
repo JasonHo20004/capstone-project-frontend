@@ -32,15 +32,38 @@ export default function SellerCourseDetail() {
   const { data: course, isLoading, isError, error, refetch } = useCourse(id);
   const updateCourseMutation = useUpdateCourse();
 
-  const lessons = useMemo(() => (course?.lessons ?? []).slice().sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0)), [course]);
+  const lessons = useMemo(
+    () => (course?.lessons ?? []).slice().sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0)),
+    [course],
+  );
   const ratings = useMemo(() => course?.ratings ?? [], [course]);
   const totalComments = useMemo(
     () => lessons.reduce((sum, lesson) => sum + (lesson.commentCount ?? 0), 0),
-    [lessons]
+    [lessons],
   );
 
-  const seller = course?.courseSeller;
-  const sellerName = seller?.fullName;
+  const seller = useMemo(() => {
+    if (!course) return null;
+    // Ưu tiên courseSeller, fallback sang user (tương tự trang user CourseDetail)
+    return (course as any).courseSeller || (course as any).user || null;
+  }, [course]);
+  const sellerName = seller?.fullName as string | undefined;
+
+  // Tính điểm trung bình từ ratings nếu backend chưa set averageRating
+  const averageRating = useMemo(() => {
+    if (!course) return undefined;
+    if ((course as any).averageRating != null) {
+      const value = Number((course as any).averageRating);
+      return Number.isNaN(value) ? undefined : Number(value.toFixed(2));
+    }
+
+    const ratingList = (course as any).ratings as { score: number }[] | undefined;
+    if (!ratingList || ratingList.length === 0) return undefined;
+
+    const sum = ratingList.reduce((acc, r) => acc + (r.score || 0), 0);
+    const avg = sum / ratingList.length;
+    return Number(avg.toFixed(2));
+  }, [course]);
 
   const [draft, setDraft] = useState<Draft>({});
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
@@ -173,14 +196,20 @@ export default function SellerCourseDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="space-y-1">
           <h1 className="text-2xl font-semibold">{merged.title}</h1>
           <div className="mt-1 text-sm text-muted-foreground">
-            Người bán: {sellerName ?? 'Giảng viên ẩn danh'} • Level: {merged.courseLevel ?? '—'} • Giá: {formatVND(merged.price ?? 0)}
+            Người bán: {sellerName ?? 'Giảng viên ẩn danh'} • Level: {merged.courseLevel ?? '—'} • Giá:{' '}
+            {formatVND(merged.price ?? 0)}
           </div>
         </div>
-        {statusBadge(merged.status)}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate('/seller/courses')}>
+            Quay lại danh sách
+          </Button>
+          {statusBadge(merged.status)}
+        </div>
       </div>
 
       <Tabs defaultValue="overview">
@@ -198,10 +227,21 @@ export default function SellerCourseDetail() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div><span className="font-medium">Mô tả:</span> {merged.description}</div>
-              <div><span className="font-medium">Đánh giá TB:</span> {merged.averageRating && merged.averageRating > 0 ? merged.averageRating.toFixed(2) : '-'} ({merged.ratingCount ?? 0})</div>
+              <div>
+                <span className="font-medium">Đánh giá TB:</span>{' '}
+                {averageRating != null && averageRating > 0 ? averageRating.toFixed(2) : '-'}
+                {' '}
+                ({(merged as any).ratingCount ?? (course as any)?.ratings?.length ?? 0})
+              </div>
               <div><span className="font-medium">Bình luận:</span> {totalComments}</div>
-              <div><span className="font-medium">Tạo lúc:</span> {new Date(merged.createdAt).toLocaleString()}</div>
-              <div><span className="font-medium">Cập nhật:</span> {new Date(merged.updatedAt).toLocaleString()}</div>
+              <div>
+                <span className="font-medium">Tạo lúc:</span>{' '}
+                {merged.createdAt ? new Date(merged.createdAt as any).toLocaleString('vi-VN') : '-'}
+              </div>
+              <div>
+                <span className="font-medium">Cập nhật:</span>{' '}
+                {merged.updatedAt ? new Date(merged.updatedAt as any).toLocaleString('vi-VN') : '-'}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -372,7 +412,9 @@ export default function SellerCourseDetail() {
               <div className="space-y-3">
                 {ratings.map((r) => (
                   <div key={r.id} className="rounded-lg border p-3">
-                    <div className="font-medium">{r.user?.fullName ?? r.userId} • {r.score}★</div>
+                    <div className="font-medium">
+                      {r.user?.fullName ?? 'Người dùng ẩn danh'} • {r.score}★
+                    </div>
                     <div className="text-sm text-muted-foreground">{r.content || ''}</div>
                     <div className="text-xs">{new Date(r.createdAt).toLocaleString()}</div>
                   </div>
@@ -454,10 +496,13 @@ export default function SellerCourseDetail() {
                 <Textarea rows={4} value={draft.description ?? merged.description ?? ''} onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))} />
               </div>
               <div className="flex gap-2">
-                <Button onClick={saveDraft}>Lưu bản nháp</Button>
+                <Button onClick={saveDraft}>Lưu & cập nhật khoá học</Button>
                 <Button variant="secondary" onClick={clearDraft}>Xoá bản nháp</Button>
               </div>
-              <p className="text-xs text-muted-foreground">Lưu ý: bản nháp được lưu trong trình duyệt (localStorage). Kết nối API sẽ cập nhật DB khi có backend.</p>
+              <p className="text-xs text-muted-foreground">
+                Khi bạn nhấn &quot;Lưu & cập nhật khoá học&quot;, hệ thống sẽ gọi API để cập nhật dữ liệu khoá học trong database.
+                Nếu API lỗi, bản nháp sẽ được lưu tạm vào trình duyệt (localStorage) để bạn không mất nội dung.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

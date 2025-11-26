@@ -4,6 +4,7 @@
 export { authService } from './user/auth/auth.service';
 export { courseService } from './course.service';
 export { sellerService } from './seller.service';
+export { notificationService } from './notification.service';
 
 // Export types
 export type {

@@ -1,30 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Bell, Eye, EyeOff, Filter, Search } from 'lucide-react';
-import { mockNotifications } from '@/data/mock';
-import { Notification } from '@/types/type';
-
-const STORAGE_KEY_PREFIX = 'skillboost_user_notifications_seen_v1_';
-
-const getCurrentUserId = (): string => {
-  const id = localStorage.getItem('currentUserId');
-  return id || '1';
-};
-
-const loadSeenMap = (userId: string): Record<string, boolean> => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_PREFIX + userId);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-};
-
-const saveSeenMap = (userId: string, map: Record<string, boolean>) => {
-  localStorage.setItem(STORAGE_KEY_PREFIX + userId, JSON.stringify(map));
-};
+import { useUser } from '@/hooks/api/use-user';
+import {
+  useMarkAllNotificationsAsRead,
+  useMarkNotificationAsRead,
+  useNotificationRealtime,
+  useNotifications,
+} from '@/hooks/api';
+import type { InAppNotification } from '@/lib/api/types';
 
 const formatDate = (date: string) => {
   try {
@@ -51,25 +38,35 @@ const getTypeBadge = (typeName: string) => {
 };
 
 export default function Notifications() {
-  const [userId, setUserId] = useState<string>('1');
-  const [seenMap, setSeenMap] = useState<Record<string, boolean>>({});
+  const { user } = useUser();
+  const userId = user?.id;
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'unseen' | 'seen'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  useEffect(() => {
-    const id = getCurrentUserId();
-    setUserId(id);
-    setSeenMap(loadSeenMap(id));
-  }, []);
+  const { data } = useNotifications({
+    userId,
+    page: 1,
+    limit: 50,
+    unreadOnly: false,
+    enabled: Boolean(userId),
+  });
 
-  const notificationsForUser: Notification[] = useMemo(() => {
-    return mockNotifications.filter(n => n.userIds?.includes(userId));
-  }, [userId]);
+  const notificationsForUser: InAppNotification[] = useMemo(
+    () => data?.notifications ?? [],
+    [data],
+  );
+
+  const { mutate: markReadMutation } = useMarkNotificationAsRead(userId);
+  const { mutate: markAllReadMutation } = useMarkAllNotificationsAsRead(userId);
+
+  useNotificationRealtime(userId);
 
   const typeOptions = useMemo(() => {
     const set = new Set<string>();
-    notificationsForUser.forEach(n => set.add(n.notificationType?.name));
+    notificationsForUser.forEach(n => set.add(n.type));
     return ['all', ...Array.from(set)];
   }, [notificationsForUser]);
 
@@ -77,8 +74,8 @@ export default function Notifications() {
     return notificationsForUser
       .filter(n => {
         const matchesSearch = (n.title + ' ' + n.content).toLowerCase().includes(search.toLowerCase());
-        const matchesType = typeFilter === 'all' || n.notificationType?.name === typeFilter;
-        const isSeen = seenMap[n.id] ?? n.seen ?? false;
+        const matchesType = typeFilter === 'all' || n.type === typeFilter;
+        const isSeen = n.isRead;
         const matchesStatus =
           statusFilter === 'all' ||
           (statusFilter === 'seen' && isSeen) ||
@@ -86,38 +83,18 @@ export default function Notifications() {
         return matchesSearch && matchesType && matchesStatus;
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [notificationsForUser, search, typeFilter, statusFilter, seenMap]);
+  }, [notificationsForUser, search, typeFilter, statusFilter]);
 
   const unreadCount = useMemo(() => {
-    return notificationsForUser.reduce((acc, n) => {
-      const isSeen = seenMap[n.id] ?? n.seen ?? false;
-      return acc + (isSeen ? 0 : 1);
-    }, 0);
-  }, [notificationsForUser, seenMap]);
+    return notificationsForUser.reduce((acc, n) => acc + (n.isRead ? 0 : 1), 0);
+  }, [notificationsForUser]);
 
   const markRead = (id: string) => {
-    const next = { ...seenMap, [id]: true };
-    setSeenMap(next);
-    saveSeenMap(userId, next);
-  };
-
-  const markUnread = (id: string) => {
-    const next = { ...seenMap };
-    delete next[id];
-    setSeenMap(next);
-    saveSeenMap(userId, next);
+    markReadMutation(id);
   };
 
   const markAllRead = () => {
-    const next: Record<string, boolean> = { ...seenMap };
-    notificationsForUser.forEach(n => { next[n.id] = true; });
-    setSeenMap(next);
-    saveSeenMap(userId, next);
-  };
-
-  const clearAllSeen = () => {
-    setSeenMap({});
-    saveSeenMap(userId, {});
+    markAllReadMutation();
   };
 
   return (
@@ -134,11 +111,11 @@ export default function Notifications() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Quay lại
+            </Button>
             <Button variant="secondary" onClick={markAllRead}>
               <Eye className="w-4 h-4 mr-2" /> Đánh dấu tất cả đã đọc
-            </Button>
-            <Button variant="outline" onClick={clearAllSeen}>
-              <EyeOff className="w-4 h-4 mr-2" /> Bỏ đánh dấu toàn bộ
             </Button>
           </div>
         </div>
@@ -189,24 +166,20 @@ export default function Notifications() {
               )}
 
               {computedNotifications.map((n) => {
-                const isSeen = seenMap[n.id] ?? n.seen ?? false;
+                const isSeen = n.isRead;
                 return (
                   <div key={n.id} className={`border rounded-xl p-4 flex items-start justify-between transition ${isSeen ? 'bg-card' : 'bg-primary/5 border-primary/20'}`}>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-lg">{n.title}</h3>
-                        {getTypeBadge(n.notificationType?.name)}
+                        {getTypeBadge(n.type)}
                         {!isSeen && <Badge variant="default">Mới</Badge>}
                       </div>
                       <p className="text-muted-foreground">{n.content}</p>
                       <div className="text-xs text-muted-foreground">{formatDate(n.createdAt)}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isSeen ? (
-                        <Button variant="outline" size="sm" onClick={() => markUnread(n.id)}>
-                          <EyeOff className="w-4 h-4 mr-2" /> Bỏ đánh dấu
-                        </Button>
-                      ) : (
+                      {!isSeen && (
                         <Button variant="secondary" size="sm" onClick={() => markRead(n.id)}>
                           <Eye className="w-4 h-4 mr-2" /> Đánh dấu đã đọc
                         </Button>

@@ -145,6 +145,7 @@ class SellerService {
     const response = await apiClient.get<ApiResponse<GetMonthlyFeesResponse>>(
       `/seller/fees?${queryParams.toString()}`
     );
+    console.log("response", response)
     return response.data;
   }
 }
