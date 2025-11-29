@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { Bell, Search, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useMemo } from "react";
+import { Bell, Search, Home, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,17 +9,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   useNotificationRealtime,
   useNotificationStats,
   useNotifications,
-} from '@/hooks/api';
-import { useUser } from '@/hooks/api/use-user';
-import { Link } from 'react-router-dom';
+} from "@/hooks/api";
+import { useUser } from "@/hooks/api/use-user";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AdminHeader() {
+  const navigate = useNavigate();
   const { user } = useUser();
   const userId = user?.id;
 
@@ -36,7 +37,7 @@ export default function AdminHeader() {
 
   const latestNotifications = useMemo(
     () => notificationsResponse?.notifications ?? [],
-    [notificationsResponse],
+    [notificationsResponse]
   );
 
   const unreadCount = stats?.unread ?? 0;
@@ -54,13 +55,27 @@ export default function AdminHeader() {
       </div>
 
       <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="hidden sm:inline-flex"
+          onClick={() => navigate("/")}
+        >
+          <Home className="mr-2 h-4 w-4" />
+          Về trang chủ
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative" aria-label="Thông báo">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              aria-label="Thông báo"
+            >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-h-4 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white flex items-center justify-center">
-                  {unreadCount > 99 ? '99+' : unreadCount}
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
             </Button>
@@ -77,14 +92,16 @@ export default function AdminHeader() {
                 {latestNotifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`px-3 py-2 text-sm border-b last:border-b-0 ${n.isRead ? 'bg-background' : 'bg-primary/5'}`}
+                    className={`px-3 py-2 text-sm border-b last:border-b-0 ${
+                      n.isRead ? "bg-background" : "bg-primary/5"
+                    }`}
                   >
                     <div className="font-medium line-clamp-1">{n.title}</div>
                     <div className="text-xs text-muted-foreground line-clamp-2">
                       {n.content}
                     </div>
                     <div className="mt-1 text-[10px] text-muted-foreground">
-                      {new Date(n.createdAt).toLocaleString('vi-VN')}
+                      {new Date(n.createdAt).toLocaleString("vi-VN")}
                     </div>
                   </div>
                 ))}
@@ -92,7 +109,10 @@ export default function AdminHeader() {
             )}
             <DropdownMenuSeparator />
             <div className="px-3 py-2 text-xs text-right">
-              <Link to="/admin/notifications" className="text-primary hover:underline">
+              <Link
+                to="/admin/notifications"
+                className="text-primary hover:underline"
+              >
                 Xem tất cả
               </Link>
             </div>

@@ -15,14 +15,15 @@ export const useConfirmTopup = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // mutationFn giờ nhận vào object params phức tạp từ MoMo
     mutationFn: (data: ConfirmPaymentRequest) => topupService.confirmPayment(data),
     onSuccess: () => {
-      // QUAN TRỌNG: Sau khi nạp thành công, làm mới thông tin User (để cập nhật số dư ví)
       queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
       toast.success('Nạp tiền thành công! Số dư đã được cập nhật.');
     },
     onError: (error: any) => {
+      // Backend throw Error thì sẽ hiện toast ở đây
       toast.error(error.response?.data?.message || 'Xác nhận thanh toán thất bại');
     },
   });

@@ -1,51 +1,89 @@
-import { useState } from 'react';
-import Navbar from '@/components/user/layout/Navbar';
-import Footer from '@/components/user/layout/Footer';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wallet, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-import { formatVND } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import Navbar from "@/components/user/layout/Navbar";
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import Footer from "@/components/user/layout/Footer";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Wallet, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { formatVND } from "@/lib/utils";
 
 // Hooks
-import { useProfile } from '@/hooks/api/use-user'; // Hook lấy thông tin user & ví
-import { useCreateTopupOrder, useConfirmTopup } from '@/hooks/api/use-topup'; // Hooks nạp tiền
+import { useProfile } from "@/hooks/api/use-user"; // Hook lấy thông tin user & ví
+import { useCreateTopupOrder, useConfirmTopup } from "@/hooks/api/use-topup"; // Hooks nạp tiền
 
-type PaymentMethod = 'MOMO' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
+type PaymentMethod = "MOMO" | "ZALOPAY" | "BANKING" | "APPLEPAY";
 
 const paymentMethods: { value: PaymentMethod; label: string }[] = [
-  { value: 'MOMO', label: 'MOMO' },
-  { value: 'ZALOPAY', label: 'ZaloPay' },
-  { value: 'BANKING', label: 'Chuyển khoản ngân hàng' },
-  { value: 'APPLEPAY', label: 'Apple Pay' },
+  { value: "MOMO", label: "MOMO" },
+  { value: "ZALOPAY", label: "ZaloPay" },
+  { value: "BANKING", label: "Chuyển khoản ngân hàng" },
+  { value: "APPLEPAY", label: "Apple Pay" },
 ];
 
 export default function WalletPage() {
-  // 1. Lấy số dư từ Profile
   const { user, isLoading: isLoadingProfile } = useProfile();
   
-  // 2. Hooks nạp tiền
   const createOrderMutation = useCreateTopupOrder();
   const confirmPaymentMutation = useConfirmTopup();
 
   const [amount, setAmount] = useState<string>('');
   const [method, setMethod] = useState<PaymentMethod>('MOMO');
-  
-  // State giả lập quá trình thanh toán
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Số dư hiện tại (lấy từ user.wallet.allowance)
-  // Lưu ý: user?.wallet có thể null nếu user chưa có ví hoặc chưa load xong
+  // [THAY ĐỔI]: Sử dụng hooks của React Router DOM
+  // useSearchParams trả về mảng [params, setParams]
+  const [searchParams] = useSearchParams(); 
+  const navigate = useNavigate(); // Thay thế cho router
+
+  // Số dư hiện tại
   const currentBalance = Number(user?.wallet?.allowance) || 0;
+
+  // 1. Xử lý khi user vừa thanh toán xong và được redirect về đây
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      // searchParams trong react-router-dom hoạt động giống URLSearchParams chuẩn
+      if (searchParams.get('resultCode') && searchParams.get('orderId')) {
+        setIsProcessing(true);
+        
+        // Gom tất cả params từ URL lại thành object
+        const params: any = {};
+        for (const [key, value] of searchParams.entries()) {
+            params[key] = value;
+        }
+
+        try {
+          // Gọi API confirmPayment với toàn bộ params từ MoMo
+          await confirmPaymentMutation.mutateAsync(params);
+          
+          // [THAY ĐỔI]: Xóa query params trên URL để user không bị submit lại khi F5
+          // replace: true giúp không lưu lịch sử duyệt web bước này
+          navigate('/wallet', { replace: true }); 
+        } catch (error) {
+          console.error("Payment verification failed", error);
+        } finally {
+          setIsProcessing(false);
+        }
+      }
+    };
+
+    checkPaymentStatus();
+  }, [searchParams, navigate]); // Thêm dependencies
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const realMoney = Number(amount);
-    if (Number.isNaN(realMoney) || realMoney <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ (> 0).');
+    if (Number.isNaN(realMoney) || realMoney < 1000) {
+      alert('Vui lòng nhập số tiền hợp lệ (tối thiểu 1000 VND).');
       return;
     }
 
@@ -54,22 +92,20 @@ export default function WalletPage() {
     try {
       // BƯỚC 1: Gọi API tạo Order (Backend)
       const createRes = await createOrderMutation.mutateAsync({ realMoney });
-      const orderId = createRes.data; // Backend trả về orderId
+      const { payUrl } = createRes.data; 
 
-      // BƯỚC 2: Giả lập chuyển hướng sang cổng thanh toán (Momo/Bank...)
-      // Trong thực tế, đây là lúc redirect user sang trang thanh toán
-      await new Promise((r) => setTimeout(r, 2000)); 
-
-      // BƯỚC 3: Gọi API xác nhận thanh toán (Backend)
-      // (Trong thực tế, bước này thường được gọi qua Webhook hoặc khi user quay lại trang web)
-      await confirmPaymentMutation.mutateAsync({ orderId });
-
-      // Reset form
-      setAmount('');
+      if (payUrl) {
+         // BƯỚC 2: Redirect sang MoMo
+         // window.location là chuẩn JS thuần, dùng được cho mọi framework
+         window.location.href = payUrl; 
+      } else {
+        alert("Không nhận được link thanh toán");
+      }
+      
     } catch (error) {
-      // Lỗi đã được xử lý trong onError của hook
       console.error(error);
     } finally {
+      // Lưu ý: Nếu redirect thành công thì dòng này có thể không chạy kịp (không sao cả)
       setIsProcessing(false);
     }
   };
@@ -96,8 +132,12 @@ export default function WalletPage() {
             <div className="flex items-center gap-4">
               <Wallet className="h-8 w-8" />
               <div>
-                <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">Ví của bạn</h1>
-                <p className="text-primary-foreground/80">Nạp tiền để thanh toán khóa học nhanh chóng</p>
+                <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">
+                  Ví của bạn
+                </h1>
+                <p className="text-primary-foreground/80">
+                  Nạp tiền để thanh toán khóa học nhanh chóng
+                </p>
               </div>
             </div>
           </div>
@@ -138,8 +178,8 @@ export default function WalletPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Phương thức thanh toán</Label>
-                    <Select 
-                      value={method} 
+                    <Select
+                      value={method}
                       onValueChange={(v) => setMethod(v as PaymentMethod)}
                       disabled={isProcessing}
                     >
@@ -148,7 +188,9 @@ export default function WalletPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {paymentMethods.map((m) => (
-                          <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -160,18 +202,21 @@ export default function WalletPage() {
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-medium text-green-800">Mô phỏng thanh toán</p>
+                      <p className="font-medium text-green-800">
+                        Mô phỏng thanh toán
+                      </p>
                       <p className="text-sm text-green-700">
-                        Hệ thống sẽ tự động xác nhận thanh toán sau 2 giây để cộng tiền vào ví.
+                        Hệ thống sẽ tự động xác nhận thanh toán sau 2 giây để
+                        cộng tiền vào ví.
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <Button 
-                    type="submit" 
-                    disabled={isProcessing || !amount} 
+                  <Button
+                    type="submit"
+                    disabled={isProcessing || !amount}
                     className="w-full md:w-auto min-w-[150px] bg-primary"
                   >
                     {isProcessing ? (
@@ -180,13 +225,13 @@ export default function WalletPage() {
                         Đang xử lý...
                       </>
                     ) : (
-                      'Nạp tiền ngay'
+                      "Nạp tiền ngay"
                     )}
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setAmount('')}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAmount("")}
                     disabled={isProcessing}
                   >
                     Làm mới

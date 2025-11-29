@@ -6,18 +6,20 @@ export interface CreateTopupRequest {
   realMoney: number;
 }
 
-export interface ConfirmPaymentRequest {
+export interface CreateTopupResponse {
   orderId: string;
+  payUrl: string; // Link để redirect sang MoMo
 }
 
+export type ConfirmPaymentRequest = Record<string, any>;
 class TopupService {
   /**
    * Bước 1: Tạo yêu cầu nạp tiền
    * POST /topup-orders/create
    */
-  async createOrder(data: CreateTopupRequest): Promise<ApiResponse<string>> {
-    // API trả về orderId (string) trong data
-    const response = await apiClient.post<ApiResponse<string>>(
+  async createOrder(data: CreateTopupRequest): Promise<ApiResponse<CreateTopupResponse>> {
+    // Sửa generic type từ string -> CreateTopupResponse
+    const response = await apiClient.post<ApiResponse<CreateTopupResponse>>(
       '/topup-orders/create',
       data
     );
