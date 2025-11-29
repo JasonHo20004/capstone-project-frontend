@@ -86,7 +86,41 @@ export const useCourseRatings = (
     queryKey: learningKeys.ratings(courseId),
     queryFn: () => studentLearningService.getCourseRatings(courseId!, params),
     enabled: Boolean(courseId),
-    select: (response) => response.data as CourseRatingsResponse,
+    select: (response) => {
+      // Handle case when response is undefined or not an object
+      if (!response || typeof response !== 'object') {
+        return {
+          ratings: [],
+          total: 0,
+          averageScore: 0,
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+        } as CourseRatingsResponse;
+      }
+
+      // Response structure from backend:
+      // { success, message, data: [...ratings], averageScore, pagination: { total, page, limit } }
+      const resp = response as any;
+      
+      // Extract ratings array - could be in response.data or response
+      const ratingsArray = Array.isArray(resp.data) 
+        ? resp.data 
+        : (Array.isArray(resp.ratings) ? resp.ratings : []);
+      
+      // Extract pagination info
+      const pagination = resp.pagination || {};
+      
+      // Build the transformed response
+      const transformed: CourseRatingsResponse = {
+        ratings: ratingsArray,
+        total: typeof pagination.total === 'number' ? pagination.total : (resp.total || 0),
+        averageScore: typeof resp.averageScore === 'number' ? resp.averageScore : 0,
+        page: typeof pagination.page === 'number' ? pagination.page : (params?.page || 1),
+        limit: typeof pagination.limit === 'number' ? pagination.limit : (params?.limit || 20),
+      };
+      
+      return transformed;
+    },
     onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };

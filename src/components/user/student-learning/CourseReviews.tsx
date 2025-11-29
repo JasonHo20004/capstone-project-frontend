@@ -14,7 +14,7 @@ type FilterValue = "all" | "5" | "4" | "3" | "2" | "1";
 export const CourseReviews = ({ ratings }: CourseReviewsProps) => {
   const [filter, setFilter] = useState<FilterValue>("all");
 
-  if (!ratings) {
+  if (!ratings || !Array.isArray(ratings.ratings)) {
     return (
       <div className="rounded-3xl border bg-background p-6 text-sm text-muted-foreground">
         Chưa có dữ liệu đánh giá cho khóa học này.
@@ -48,11 +48,11 @@ export const CourseReviews = ({ ratings }: CourseReviewsProps) => {
           <h3 className="text-lg font-semibold">Đánh giá khóa học</h3>
           <div className="mt-1 flex items-center gap-2">
             <span className="text-2xl font-bold">
-              {ratings.averageScore.toFixed(1)}
+              {typeof ratings.averageScore === 'number' ? ratings.averageScore.toFixed(1) : '0.0'}
             </span>
-            {renderStars(Math.round(ratings.averageScore))}
+            {renderStars(Math.round(ratings.averageScore || 0))}
             <span className="text-xs text-muted-foreground">
-              ({ratings.total} đánh giá)
+              ({ratings.total || 0} đánh giá)
             </span>
           </div>
         </div>

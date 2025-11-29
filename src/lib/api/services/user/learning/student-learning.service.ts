@@ -57,7 +57,8 @@ class StudentLearningService {
   }
 
   async getCourseRatings(courseId: string, params?: PaginatedParams) {
-    const response = await apiClient.get<ApiResponse<CourseRatingsResponse>>(
+    // Backend returns: { success, message, data: [...ratings], averageScore, pagination }
+    const response = await apiClient.get<any>(
       `/student/courses/${courseId}/ratings`,
       { params }
     );
