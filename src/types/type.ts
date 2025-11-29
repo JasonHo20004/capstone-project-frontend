@@ -219,7 +219,7 @@ export interface Course {
   createdAt: string; // DateTime as ISO string
   updatedAt?: string;
   averageRating?: number;
-  
+  thumbnailUrl?: string;
   // Relations
   courseSeller?: User;
   user?: User;
