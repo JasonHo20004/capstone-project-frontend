@@ -90,8 +90,6 @@ export default function CoursesManagement() {
         return <Badge variant="destructive">Từ chối</Badge>;
       case "INACTIVE":
         return <Badge variant="outline">Không hoạt động</Badge>;
-      case 'PUBLISHED':
-        return <Badge className="bg-blue-600">Đã xuất bản</Badge>;
       case 'DRAFT':
         return <Badge variant="outline">Bản nháp</Badge>;
       case 'DELETE':
@@ -222,7 +220,6 @@ export default function CoursesManagement() {
     { value: 'PENDING', label: 'Chờ duyệt' },
     { value: 'REFUSE', label: 'Từ chối' },
     { value: 'INACTIVE', label: 'Không hoạt động' },
-    { value: 'PUBLISHED', label: 'Đã xuất bản' },
     { value: 'DRAFT', label: 'Bản nháp' },
     { value: 'DELETE', label: 'Đã xoá' },
   ];
