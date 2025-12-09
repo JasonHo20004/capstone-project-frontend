@@ -177,8 +177,7 @@ export const useSubmitReview = () => {
       queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
     },
     onError: (error: any) => {
-
-      toast.error('Lưu tiến độ thất bại: ' + error.response?.data?.message);
+      toast.error(error.response?.data?.message);
     },
   });
 };

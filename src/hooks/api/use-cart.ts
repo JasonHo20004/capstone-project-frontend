@@ -15,6 +15,9 @@ export const useGetUserCart = () => {
       const res = await cartService.getUserCart();
       return res.data;
     },
+    onError: (error: any) => {
+      console.error('Failed to fetch cart:', error);
+    },
   });
 };
 
@@ -27,9 +30,9 @@ export const useAddToCart = () => {
             toast.success("Đã thêm vào giỏ hàng");
             queryClient.invalidateQueries({ queryKey: cartKeys.userCart });
         },
-        // onError: (error: any) => {
-        //     toast.error(error.response?.data?.message || "Thêm vào giỏ hàng thất bại");
-        // }
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message);
+        }
     })
 }
 
@@ -46,9 +49,9 @@ export const useCheckoutFullCart = () => {
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['courses', 'my'] });
     },
-    // onError: (error: any) => {
-    //   toast.error(error.response?.data?.message || 'Thanh toán thất bại');
-    // },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
+    },
   });
 };
 
@@ -63,9 +66,9 @@ export const useCheckoutPartial = () => {
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['courses', 'my'] });
     },
-    // onError: (error: any) => {
-    //   toast.error(error.response?.data?.message || 'Thanh toán thất bại');
-    // },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
+    },
   });
 };
 
@@ -83,10 +86,9 @@ export const useDirectBuy = () => {
       // Làm mới giỏ hàng (nếu backend xóa item khỏi giỏ khi mua direct)
       queryClient.invalidateQueries({ queryKey: cartKeys.userCart });
     },
-    
-    // onError: (error: any) => {
-    //   const message = error.response?.data?.message || 'Mua khóa học thất bại';
-    //   toast.error(message);
-    // },
+
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
+    },
   });
 };
