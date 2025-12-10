@@ -3,7 +3,6 @@ import axios, {
   AxiosInstance,
   InternalAxiosRequestConfig,
 } from "axios";
-import { toast } from "sonner";
 // import type { ApiError } from "@/lib/api/types";
 type FailedQueuePromise = {
   resolve: (token: string) => void;
@@ -120,9 +119,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Xử lý các lỗi API khác (nếu không phải 401)
-    handleApiError(error);
-
+    // Không cần xử lý lỗi ở đây nữa, để component tự xử lý
     return Promise.reject(error);
   }
 );
@@ -138,43 +135,6 @@ const handleLogout = () => {
   // Redirect (Không gọi-API-logout-ở-đây,-việc-đó-thuộc-về-useAuth-hook)
   if (window.location.pathname !== "/login") {
     window.location.href = "/login";
-  }
-};
-// Hàm xử lý lỗi API
-const handleApiError = (error: AxiosError) => {
-  if (!error.response) {
-    // Lỗi-mạng-hoặc-timeout
-    toast.error("Lỗi mạng", { description: "Không thể kết nối đến máy chủ." });
-    return;
-  }
-
-  const status = error.response?.status;
-  const data = error.response?.data as
-    | { message?: string; code?: string }
-    | undefined;
-  const message =
-    data?.message || error.message || "Đã xảy ra lỗi không xác định";
-
-  // Không hiển thị toast cho lỗi 401 (đã xử lý ở trên)
-  if (status === 401) {
-    return;
-  }
-
-  switch (status) {
-    case 400:
-      toast.error("Yêu cầu không hợp lệ", { description: message });
-      break;
-    case 403:
-      toast.error("Không có quyền truy cập", { description: message });
-      break;
-    case 404:
-      toast.error("Không tìm thấy", { description: message });
-      break;
-    case 500:
-      toast.error("Lỗi máy chủ", { description: message });
-      break;
-    default:
-      toast.error("Đã xảy ra lỗi", { description: message });
   }
 };
 
