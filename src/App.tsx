@@ -32,6 +32,7 @@ import SubscriptionPlansManagement from "./pages/admin/management[notDone]/Subsc
 import SubscriptionContractsManagement from "./pages/admin/management[notDone]/SubscriptionContractsManagement";
 import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
 import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
+import TagsManagement from "./pages/admin/tag-management/Tags";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -117,6 +118,7 @@ const App = () => (
               element={<SubscriptionContractsManagement />}
             />
             <Route path="revenue" element={<RevenueManagement />} />
+            <Route path="tags" element={<TagsManagement />} />
           </Route>
 
           {/* Seller Routes */}
