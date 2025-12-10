@@ -130,17 +130,56 @@ const Register = () => {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left Side (Giữ nguyên) */}
+      {/* Left Side */}
       <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-hero text-primary-foreground p-12">
-         <div className="max-w-md">
-            <h1 className="text-4xl font-bold">SkillBoost</h1>
-            <p className="mt-4 text-lg">Đăng ký để bắt đầu học ngay hôm nay.</p>
-         </div>
+        <div className="max-w-md space-y-8">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center shadow-accent transition-transform group-hover:scale-105">
+              <BookOpen className="w-8 h-8" />
+            </div>
+            <span className="text-4xl font-bold font-['Be Vietnam Pro']">SkillBoost</span>
+          </Link>
+
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold leading-tight font-['Be Vietnam Pro']">
+              Chào mừng trở lại!
+            </h1>
+            <p className="text-xl text-primary-foreground/80">
+              Tiếp tục lộ trình học tập của bạn và chinh phục các thử thách mới.
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-6 pt-8">
+            <div className="space-y-2">
+              <div className="text-3xl font-bold text-secondary">50K+</div>
+              <div className="text-sm text-primary-foreground/70">Học viên</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-3xl font-bold text-secondary">200+</div>
+              <div className="text-sm text-primary-foreground/70">Khóa học</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-3xl font-bold text-secondary">98%</div>
+              <div className="text-sm text-primary-foreground/70">Hài lòng</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Right Side - Form */}
       <div className="flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-6">
+          {/* Mobile Logo */}
+          <Link to="/" className="flex lg:hidden items-center gap-2 justify-center">
+            <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-accent">
+              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent font-['Be Vietnam Pro']">
+              SkillBoost
+            </span>
+          </Link>
+
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-bold font-['Be Vietnam Pro']">Tạo tài khoản</h2>
             <p className="text-muted-foreground">Nhập thông tin cá nhân của bạn</p>
@@ -272,6 +311,12 @@ const Register = () => {
             <span className="text-muted-foreground">Đã có tài khoản? </span>
             <Link to="/login" className="font-semibold text-primary hover:underline">
               Đăng nhập
+            </Link>
+          </div>
+
+          <div className="text-center pt-4">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
+              ← Về trang chủ
             </Link>
           </div>
         </div>
