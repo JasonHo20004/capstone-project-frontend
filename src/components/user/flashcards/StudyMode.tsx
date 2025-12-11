@@ -73,7 +73,9 @@ useEffect(() => {
 
     // Quan trọng: Đợi 300ms để hiệu ứng lật về (nếu muốn) hoặc reset ngay
     setShowBack(false);
-    setIdx((i) => i + 1);
+    setTimeout(() => {
+      setIdx((i) => i + 1);
+    }, 200);
   };
 
   const renderStatusBadge = (type?: string) => {
