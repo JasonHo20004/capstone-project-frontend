@@ -65,6 +65,7 @@ export default function WalletPage() {
           await confirmPaymentMutation.mutateAsync(params);
           
           // [THAY ĐỔI]: Xóa query params trên URL để user không bị submit lại khi F5
+          await new Promise((resolve) => setTimeout(resolve, 5000));
           // replace: true giúp không lưu lịch sử duyệt web bước này
           navigate('/wallet', { replace: true }); 
         } catch (error) {
