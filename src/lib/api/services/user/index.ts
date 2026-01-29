@@ -2,7 +2,7 @@
  * Export tất cả services từ một nơi để dễ import
  */
 export { authService } from './auth/auth.service';
-export { courseServiceUser } from './course/course.serivce';
+export { courseServiceUser } from './course/course.service';
 export {flashcardService} from './flashcard/flashcard.service'
 export {tagService} from './flashcard/tag.service'
 export {userService} from './profile/user.service'
@@ -19,7 +19,7 @@ export type {
   RefreshTokenResponse,
 } from './auth/auth.service';
 
-export type {GetCoursesForUserParams} from './course/course.serivce';
+export type {GetCoursesForUserParams} from './course/course.service';
 
 export type {ReviewQuality,SubmitReviewDTO,DeckFormDTO, CardFormDTO} from './flashcard/flashcard.service'
 export type {UpdateProfileDTO}from './profile/user.service'
