@@ -40,3 +40,11 @@ export const LearningTabs = ({ activeTab, onTabChange }: LearningTabsProps) => {
 
 export type LearningTabId = Tab["id"];
 
+
+
+
+
+
+
+
+
