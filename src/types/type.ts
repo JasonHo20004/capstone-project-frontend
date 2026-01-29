@@ -80,8 +80,9 @@ export enum ApplicationStatus {
 }
 
 export enum FlashcardStatus {
+  NEW = 'NEW',
   LEARNING = 'LEARNING',
-  REVIEW = 'REVIEW'
+  REVIEW = 'REVIEW',
 }
 
 export enum TestType {
@@ -239,12 +240,12 @@ export interface TopupOrder {
   realMoney: number; // Decimal trong DB, number trong FE
   realAmount?: number; // Decimal trong DB, number trong FE
   currency: string;
-  paymentMethod: 'MOMO' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
-  status: 'PENDING' | 'SUCCESS' | 'FAILED';
+  paymentMethod: PaymentMethod;
+  status: OrderStatus;
   createdAt: string; // DateTime as ISO string
   updatedAt: string; // DateTime as ISO string
-  user: User;
-}
+  user?: User;
+} 
 
 export interface CourseSellerApplication {
   id: string;
@@ -355,8 +356,7 @@ export interface TopupOrder {
   paymentMethod: PaymentMethod;
   status: OrderStatus;
   createdAt: string;
-  
-  // Relations
+  updatedAt: string;
   user?: User;
   transactions?: Transaction[];
 }
@@ -404,8 +404,7 @@ export interface Flashcard {
   exampleSentence?: string;
   audioUrl?: string;
   deckId: string;
-  queueType?: 'NEW' | 'LEARNING' | 'REVIEW';
-  // Relations
+  queueType?: FlashcardStatus;
   deck?: FlashcardDeck;
   userProgress?: UserFlashcardProgress[];
 }
