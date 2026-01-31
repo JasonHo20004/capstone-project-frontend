@@ -149,6 +149,9 @@ export const useUpdateCourse = () => {
       queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
       toast.success('Cập nhật khóa học thành công!');
     },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
+    },
   });
 };
 
@@ -166,6 +169,9 @@ export const useDeleteCourse = () => {
       queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
       toast.success('Xóa khóa học thành công!');
     },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
+    },
   });
 };
 
@@ -182,6 +188,9 @@ export const usePublishCourse = () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
       toast.success('Xuất bản khóa học thành công!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
     },
   });
 };

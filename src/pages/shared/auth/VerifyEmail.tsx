@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Mail } from "lucide-react";
 import apiClient from "@/lib/api/config";
 import { Button } from "@/components/ui/button";
 
-type Status = "idle" | "loading" | "success" | "error";
+type Status = "idle" | "loading" | "success" | "error" | "pending";
 
 const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
@@ -14,6 +14,13 @@ const VerifyEmailPage = () => {
 
   useEffect(() => {
     const token = searchParams.get("token");
+    const pending = searchParams.get("pending");
+
+    // Nếu có pending=true, hiển thị trang yêu cầu kiểm tra email
+    if (pending === "true") {
+      setStatus("pending");
+      return;
+    }
 
     if (!token) {
       setStatus("error");
@@ -107,6 +114,35 @@ const VerifyEmailPage = () => {
                   variant="outline"
                 >
                   Đến trang đăng nhập
+                </Button>
+              </div>
+            </>
+          )}
+
+          {status === "pending" && (
+            <>
+              <Mail className="h-12 w-12 text-sky-400" />
+              <h1 className="text-xl font-semibold text-slate-50">
+                Vui lòng kiểm tra email của bạn
+              </h1>
+              <p className="text-sm text-slate-400">
+                Chúng tôi đã gửi một liên kết xác thực đến email của bạn. Vui
+                lòng kiểm tra hộp thư và nhấp vào liên kết để kích hoạt tài
+                khoản.
+              </p>
+              <p className="text-xs text-slate-500 mt-2">
+                Không thấy email? Vui lòng kiểm tra thư mục spam.
+              </p>
+              <div className="mt-4 flex w-full flex-col gap-2">
+                <Button className="w-full" onClick={handleGoToLogin}>
+                  Đến trang đăng nhập
+                </Button>
+                <Button
+                  className="w-full"
+                  onClick={handleGoHome}
+                  variant="outline"
+                >
+                  Về trang chủ
                 </Button>
               </div>
             </>

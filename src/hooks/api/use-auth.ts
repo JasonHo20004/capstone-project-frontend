@@ -35,9 +35,8 @@ export const useAuth = () => {
       queryClient.setQueryData(["user", "me"], user);
       navigate("/");
     },
-    onError: (error) => {
-      // Error đã được xử lý trong interceptor, nhưng có thể custom thêm ở đây
-      console.error("Login error:", error);
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
     },
   });
 
@@ -51,18 +50,16 @@ export const useAuth = () => {
 
       // 1. Thông báo thành công
       toast.success("Đăng ký thành công!", {
-        description: "Vui lòng đăng nhập bằng tài khoản vừa tạo.",
+        description: "Vui lòng kiểm tra email để xác thực tài khoản.",
       });
 
-      // 2. Chuyển hướng về trang Login (Thay vì trang chủ)
-      navigate("/login");
+      // 2. Chuyển hướng về trang xác nhận email
+      navigate("/auth/verify?pending=true");
     },
 
-    // onError: (_error: AxiosError<ApiError>) => {
-    //   const message =
-    //     "Đăng ký thất bại. Vui lòng thử lại.";
-    //   toast.error(message);
-    // },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
+    },
   });
   // Logout mutation
   const logoutMutation = useMutation({

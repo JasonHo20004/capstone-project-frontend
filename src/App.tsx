@@ -24,14 +24,15 @@ import AdminDashboard from "./pages/admin/dashboard/Dashboard";
 import UsersManagement from "./pages/admin/user-management/Users";
 import CoursesManagement from "./pages/admin/course-management/Courses";
 import ApplicationsManagement from "./pages/admin/application-management/ApplicationsManagement";
-import ReportsManagement from "./pages/admin/management[notDone]/ReportsManagement";
-import NotificationsManagement from "./pages/admin/management[notDone]/NotificationsManagement";
+import ReportsManagement from "./pages/admin/management/ReportsManagement";
+import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
 import RevenueManagement from "./pages/admin/revenue-management/Revenues";
-import SubscriptionPlansManagement from "./pages/admin/management[notDone]/SubscriptionPlansManagement";
-import SubscriptionContractsManagement from "./pages/admin/management[notDone]/SubscriptionContractsManagement";
+import SubscriptionPlansManagement from "./pages/admin/management/SubscriptionPlansManagement";
+import SubscriptionContractsManagement from "./pages/admin/management/SubscriptionContractsManagement";
 import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
 import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
+import TagsManagement from "./pages/admin/tag-management/Tags";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -117,6 +118,7 @@ const App = () => (
               element={<SubscriptionContractsManagement />}
             />
             <Route path="revenue" element={<RevenueManagement />} />
+            <Route path="tags" element={<TagsManagement />} />
           </Route>
 
           {/* Seller Routes */}

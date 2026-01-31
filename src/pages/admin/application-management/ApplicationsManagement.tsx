@@ -64,8 +64,8 @@ export default function ApplicationsManagement() {
       setReviewDialogOpen(false);
       setSelectedApplication(null);
     },
-    onError: () => {
-      toast.error('Có lỗi xảy ra khi cập nhật trạng thái');
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
     },
   });
 
@@ -101,8 +101,8 @@ export default function ApplicationsManagement() {
       if (response.data) {
         setSelectedApplication(response.data);
       }
-    } catch (error) {
-      toast.error('Không thể tải thông tin đơn đăng ký');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message);
     }
   };
 

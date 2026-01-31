@@ -84,8 +84,8 @@ export default function UsersManagement() {
       setCreatingUser(false);
       toast.success("Tạo người dùng mới thành công!");
     },
-    onError: () => {
-      toast.error("Tạo người dùng thất bại");
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
     },
   });
 
@@ -103,8 +103,8 @@ export default function UsersManagement() {
       setEditingUser(null);
       toast.success("Cập nhật thông tin người dùng thành công!");
     },
-    onError: () => {
-      toast.error("Cập nhật thông tin người dùng thất bại");
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
     },
   });
 
@@ -116,8 +116,8 @@ export default function UsersManagement() {
       setSelectedUser(null);
       toast.success("Xóa người dùng thành công!");
     },
-    onError: () => {
-      toast.error("Xóa người dùng thất bại");
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
     },
   });
 
@@ -187,8 +187,8 @@ export default function UsersManagement() {
       if (response.data) {
         setSelectedUser(response.data);
       }
-    } catch (error) {
-      toast.error("Không thể tải thông tin người dùng");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message);
     }
   };
 
@@ -212,8 +212,8 @@ export default function UsersManagement() {
           walletAllowance: user.wallet?.allowance || 0,
         });
       }
-    } catch (error) {
-      toast.error("Không thể tải thông tin người dùng");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message);
     }
   };
 

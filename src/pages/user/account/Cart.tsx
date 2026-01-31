@@ -64,6 +64,9 @@ const CartPage = () => {
         onSuccess: () => {
             setPayOpen(false);
             setSelectedIds([]);
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message);
         }
       });
     } else {
@@ -72,6 +75,9 @@ const CartPage = () => {
         onSuccess: () => {
             setPayOpen(false);
             setSelectedIds([]);
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message);
         }
       });
     }

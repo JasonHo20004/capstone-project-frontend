@@ -84,6 +84,9 @@ export const useMarkNotificationAsRead = (userId: string | undefined) => {
         queryKey: ["notifications", "stats", userId],
       });
     },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
+    },
   });
 };
 
@@ -101,6 +104,9 @@ export const useMarkAllNotificationsAsRead = (userId: string | undefined) => {
       queryClient.invalidateQueries({
         queryKey: ["notifications", "stats", userId],
       });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message);
     },
   });
 };

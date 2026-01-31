@@ -12,7 +12,8 @@ import {
   UserCheck,
   AlertTriangle,
   Package,
-  ScrollText
+  ScrollText,
+  Tag
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -45,6 +46,11 @@ const sidebarItems = [
     title: 'Đơn đăng ký',
     href: '/admin/applications',
     icon: UserCheck,
+  },
+  {
+    title: 'Quản lý Tag',
+    href: '/admin/tags',
+    icon: Tag,
   },
   // {
   //   title: 'Báo cáo vi phạm',
