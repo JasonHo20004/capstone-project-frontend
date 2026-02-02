@@ -1,0 +1,15 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "pipeline": {
+      "build": {
+        "outputs": ["dist/**"],     
+        "inputs": ["src/**", "index.html", "vite.config.ts"] 
+      },
+      "lint": {
+        "outputs": []               
+      },
+      "build:dev": {
+        "cache": false              
+      }
+    }
+  }

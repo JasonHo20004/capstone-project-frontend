@@ -1,73 +1,212 @@
-# Welcome to your Lovable project
+# Capstone Project - E-Learning Platform Frontend
 
-## Project info
+An online learning platform providing comprehensive course management, flashcards, and learning features with three main user roles: Students, Instructors, and Administrators.
 
-**URL**: https://lovable.dev/projects/14162297-6fcc-481e-aa39-f1c2183c3cd9
+## 📋 Table of Contents
 
-## How can I edit this code?
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Environment Configuration](#environment-configuration)
+- [Running the Application](#running-the-application)
+- [Project Structure](#project-structure)
+- [User Roles](#user-roles)
 
-There are several ways of editing your application.
+## 🎯 Overview
 
-**Use Lovable**
+This is the frontend application for a capstone project - an E-Learning Platform. The application provides a comprehensive learning experience with course management, interactive learning, flashcards, and integrated payment system.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/14162297-6fcc-481e-aa39-f1c2183c3cd9) and start prompting.
+## ✨ Key Features
 
-Changes made via Lovable will be committed automatically to this repo.
+### For Students (User)
+- 🔍 Browse and search courses
+- 🛒 Shopping cart and checkout
+- 💳 Digital wallet management
+- 📚 Learn with videos and materials
+- 🎴 Flashcards for revision
+- 💬 Comment and review courses
+- 📊 Track learning progress
+- 🔔 Notifications
 
-**Use your preferred IDE**
+### For Instructors (Seller)
+- 📝 Create and manage courses
+- 📹 Upload lessons and materials
+- 👥 Manage learners
+- 💰 Track revenue
+- 💬 Interact with students via comments
+- 📊 Statistics dashboard
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### For Administrators (Admin)
+- 👤 User management
+- 📚 Review and manage courses
+- 📝 Process instructor applications
+- 💵 Transaction and revenue management
+- 📊 System overview dashboard
+- 🔔 Notification management
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ Tech Stack
 
-Follow these steps:
+- **Framework**: React 18.3.1
+- **Language**: TypeScript 5.8.3
+- **Build Tool**: Vite 5.4.19
+- **Styling**:
+  - Tailwind CSS 3.4.17
+  - shadcn-ui components
+  - Radix UI primitives
+- **State Management & Data Fetching**: TanStack Query 5.83.0
+- **Routing**: React Router DOM 6.30.2
+- **Form Handling**: React Hook Form 7.61.1 + Zod 3.25.76
+- **HTTP Client**: Axios 1.13.2
+- **Charts**: Recharts 2.15.4
+- **UI Libraries**:
+  - Lucide React (icons)
+  - date-fns (date utilities)
+  - Sonner (toast notifications)
+  - Embla Carousel
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 📦 Installation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Prerequisites
+- Node.js (version 16.x or higher)
+- npm or yarn
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation Steps
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd capstone-project-frontend
 ```
 
-**Edit a file directly in GitHub**
+2. **Install dependencies**
+```bash
+npm install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. **Configure environment variables**
+```bash
+cp .env.example .env
+```
 
-**Use GitHub Codespaces**
+Then edit the `.env` file with appropriate values.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## ⚙️ Environment Configuration
 
-## What technologies are used for this project?
+Create a `.env` file in the root directory with the following content:
 
-This project is built with:
+```env
+# API Configuration
+VITE_API_BASE_URL=http://localhost:3000/api
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Optional Configuration
+VITE_APP_NAME=SkillBoost
+VITE_APP_VERSION=1.0.0
+```
 
-## How can I deploy this project?
+### Environment Variables
 
-Simply open [Lovable](https://lovable.dev/projects/14162297-6fcc-481e-aa39-f1c2183c3cd9) and click on Share -> Publish.
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_API_BASE_URL` | Backend API URL | ✅ |
+| `VITE_APP_NAME` | Application name | ❌ |
+| `VITE_APP_VERSION` | Application version | ❌ |
 
-## Can I connect a custom domain to my Lovable project?
+## 🚀 Running the Application
 
-Yes, you can!
+### Development mode
+```bash
+npm run dev
+```
+Application will run at `http://localhost:5173`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Build for production
+```bash
+npm run build
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Build for development
+```bash
+npm run build:dev
+```
+
+### Preview production build
+```bash
+npm run preview
+```
+
+### Lint code
+```bash
+npm run lint
+```
+
+## 📁 Project Structure
+
+```
+capstone-project-frontend/
+├── src/
+│   ├── components/          # Reusable components
+│   │   ├── ui/             # shadcn-ui components
+│   │   ├── admin/          # Admin components
+│   │   ├── seller/         # Seller components
+│   │   ├── user/           # User components
+│   │   └── auth/           # Protected routes
+│   ├── pages/              # Main pages
+│   │   ├── admin/          # Admin pages
+│   │   ├── seller/         # Seller pages
+│   │   ├── user/           # User pages
+│   │   └── shared/         # Shared pages
+│   ├── lib/                # Utilities and services
+│   │   └── api/            # API services
+│   │       └── services/   # Service layers
+│   ├── hooks/              # Custom React hooks
+│   │   └── api/            # API hooks
+│   ├── context/            # React Context providers
+│   ├── types/              # TypeScript type definitions
+│   ├── App.tsx             # Root component
+│   └── main.tsx            # Entry point
+├── public/                 # Static assets
+├── .env.example            # Environment variables template
+├── package.json            # Dependencies and scripts
+├── tsconfig.json           # TypeScript configuration
+├── vite.config.ts          # Vite configuration
+└── tailwind.config.ts      # Tailwind CSS configuration
+```
+
+## 👥 User Roles
+
+### 🎓 Student (User)
+- **Routes**: `/`, `/courses`, `/my-courses`, `/flashcards`, `/cart`, `/wallet`
+- **Access**: Public routes + Protected user routes
+
+### 👨‍🏫 Instructor (Seller)
+- **Routes**: `/seller/*`
+- **Access**: Requires authentication and Seller role
+- **Features**: Manage courses, track learners, manage revenue
+
+### 👨‍💼 Administrator (Admin)
+- **Routes**: `/admin/*`
+- **Access**: Requires authentication and Admin role
+- **Features**: Full system management
+
+## 📝 Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run build:dev` | Build in development mode |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Lint code with ESLint |
+
+## 🔗 Useful Links
+
+- [React Documentation](https://react.dev)
+- [Vite Documentation](https://vitejs.dev)
+- [shadcn-ui](https://ui.shadcn.com)
+- [Tailwind CSS](https://tailwindcss.com)
+- [TanStack Query](https://tanstack.com/query)
+
+## 📄 License
+
+Copyright © 2025. All rights reserved.
