@@ -1,6 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
+  "packageManager": "npm@10.9.2",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -8,6 +9,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "type-check": "tsc --noEmit",
     "preview": "vite preview",
     "turbo:build": "turbo build",
     "turbo:check": "turbo lint build"
