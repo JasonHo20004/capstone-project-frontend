@@ -23,7 +23,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
   const addToCartMutation = useAddToCart();
 
   // Xử lý logic lấy thông tin giảng viên
-  const instructor = course.user || (course as any).courseSeller || {};
+  const instructor = course.user || course.courseSeller || {};
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); // Ngăn chặn chuyển trang khi bấm nút

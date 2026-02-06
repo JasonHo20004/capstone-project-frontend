@@ -13,12 +13,13 @@ import { Badge } from '@/components/ui/badge';
 import { X, Upload, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateSellerApplication } from '@/hooks/api/use-user';
+import type { CourseSellerApplication } from '@/types/type';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string; // (Có thể không cần dùng nếu API tự lấy từ token)
-  onSubmitted?: (app: any) => void;
+  onSubmitted?: (app: CourseSellerApplication) => void;
 }
 
 export default function CourseSellerApplicationDialog({ open, onOpenChange, onSubmitted }: Props) {
@@ -106,8 +107,8 @@ export default function CourseSellerApplicationDialog({ open, onOpenChange, onSu
 
     // Gọi API
     createApplicationMutation.mutate(formData, {
-      onSuccess: (data) => {
-        onSubmitted?.(data);
+      onSuccess: (response) => {
+        onSubmitted?.(response.data);
         onOpenChange(false);
         // Reset form
         setExpertise([]);

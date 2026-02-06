@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Course, Report } from '@/types/type';
+import type { Report } from '@/types/type';
+import type { CourseDetail } from '@/lib/api/services';
 import { toast } from 'sonner';
 import { useProfile } from '@/hooks/api/use-user';
 
@@ -40,7 +41,7 @@ function saveAllReports(reports: Report[]) {
 interface CourseReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  course: Course;
+  course: CourseDetail;
   userId: string; // current user id
   onSubmitted?: (report: Report) => void;
 }
@@ -79,7 +80,6 @@ export default function CourseReportDialog({ open, onOpenChange, course, userId,
       userId: reporterId,
       courseId: course.id,
       user: me ?? undefined,
-      course,
     };
 
     const current = loadAllReports();
