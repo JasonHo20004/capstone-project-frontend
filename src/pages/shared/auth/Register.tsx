@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +41,7 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const { register, isRegistering } = useAuth();
+  const { register, isRegistering, registerError } = useAuth();
   // State form dữ liệu
   const [formData, setFormData] = useState<RegisterFormData>({
     fullName: '',
@@ -54,6 +54,17 @@ const Register = () => {
 
   // 3. State lưu lỗi (Key là tên trường, Value là câu thông báo)
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Map backend error to form field errors (global handler shows toast)
+  useEffect(() => {
+    if (!registerError) return;
+    const message = (registerError as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
+    if (message.toLowerCase().includes("email")) {
+      setErrors((prev) => ({ ...prev, email: "Email này đã được sử dụng. Vui lòng chọn email khác." }));
+    } else if (message.toLowerCase().includes("phone")) {
+      setErrors((prev) => ({ ...prev, phoneNumber: "Số điện thoại này đã được sử dụng." }));
+    }
+  }, [registerError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -93,38 +104,12 @@ const Register = () => {
     // Nếu validate thành công -> Xóa hết lỗi cũ
     setErrors({});
 
-    // Gọi API Register
- register({
+    register({
       fullName: formData.fullName,
       email: formData.email,
       password: formData.password,
       phoneNumber: formData.phoneNumber || undefined,
       dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
-    }, {
-      // ✅ BẮT LỖI TỪ BACKEND TẠI ĐÂY
-      onError: (error: any) => { // Dùng 'any' hoặc AxiosError<ApiError>
-        const message = error.response?.data?.message || "";
-        
-        // Kiểm tra thông báo lỗi từ Backend để gán vào đúng ô input
-        // (Giả sử backend trả về "Email already exists" hoặc "Email is taken")
-        if (message.toLowerCase().includes("email")) {
-          setErrors((prev) => ({
-            ...prev,
-            email: "Email này đã được sử dụng. Vui lòng chọn email khác.",
-          }));
-        } 
-        // Kiểm tra lỗi số điện thoại (nếu backend trả về)
-        else if (message.toLowerCase().includes("phone")) {
-          setErrors((prev) => ({
-            ...prev,
-            phoneNumber: "Số điện thoại này đã được sử dụng.",
-          }));
-        }
-        else {
-          // Lỗi chung chung thì hiện Toast (Hook useAuth đã xử lý toast rồi, 
-          // nhưng nếu muốn custom thêm thì làm ở đây)
-        }
-      }
     });
   };
 
@@ -232,7 +217,7 @@ const Register = () => {
                   onChange={(e) => {
                     // Chỉ cho phép nhập số
                     const val = e.target.value.replace(/[^0-9+]/g, '');
-                    handleChange({ target: { name: 'phoneNumber', value: val } } as any);
+                    handleChange({ target: { name: 'phoneNumber', value: val } } as React.ChangeEvent<HTMLInputElement>);
                   }}
                   placeholder="0912345678"
                   className={`pl-9 ${errors.phoneNumber ? 'border-destructive' : ''}`}
