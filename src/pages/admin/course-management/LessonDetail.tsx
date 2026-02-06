@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { courseManagementService } from "@/lib/api/services/admin";
 import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Lesson, MediaType, Comment} from "@/types/type";
 
 export default function AdminLessonDetail() {
   const { lessonId } = useParams();
@@ -38,7 +39,7 @@ export default function AdminLessonDetail() {
 
   useEffect(() => {
     if (lesson) {
-      const videoAsset = (lesson.mediaAssets || []).find((asset: any) => asset.assetType === 'VIDEO');
+      const videoAsset = (lesson.mediaAssets || []).find((asset: { assetType: string }) => asset.assetType === 'VIDEO');
       setForm({
         title: lesson.title ?? "",
         description: lesson.description ?? "",
@@ -51,7 +52,7 @@ export default function AdminLessonDetail() {
   }, [lesson]);
 
   const updateLessonMutation = useMutation({
-    mutationFn: (data: any) => courseManagementService.updateLesson(searchParams.get("courseId")!, lessonId!, data),
+    mutationFn: (data: Partial<Lesson> & { mediaAssets?: { assetType: string; assetUrl: string }[] }) => courseManagementService.updateLesson(searchParams.get("courseId")!, lessonId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminLessonDetail", lessonId, searchParams.get("courseId")] });
       toast({
@@ -145,7 +146,7 @@ export default function AdminLessonDetail() {
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(backHref as any)}>Quay lại</Button>
+          <Button variant="outline" onClick={() => navigate(backHref as string)}>Quay lại</Button>
         </div>
       </div>
 
@@ -171,7 +172,7 @@ export default function AdminLessonDetail() {
 
       {(() => {
         // Check video from form (uploaded) or from lesson data (saved)
-        const currentVideoUrl = form.videoUrl || (lesson?.mediaAssets || []).find((asset: any) => asset.assetType === 'VIDEO')?.assetUrl;
+        const currentVideoUrl = form.videoUrl || (lesson?.mediaAssets || []).find((asset: { assetType: string }) => asset.assetType === 'VIDEO')?.assetUrl;
 
         return currentVideoUrl ? (
           <div className="rounded border p-4 space-y-2">
@@ -285,7 +286,7 @@ export default function AdminLessonDetail() {
           <div className="md:col-span-2 flex gap-2">
             <Button
               onClick={() => {
-                const updateData: any = {
+                const updateData: Partial<Lesson> & { mediaAssets?: { assetType: string; assetUrl: string }[] } = {
                   title: form.title,
                   description: form.description,
                   lessonOrder: form.lessonOrder === "" ? undefined : Number(form.lessonOrder),
@@ -300,7 +301,9 @@ export default function AdminLessonDetail() {
                 if (form.videoUrl.trim()) {
                   updateData.mediaAssets = [
                     {
-                      assetType: 'VIDEO',
+                      id: "",
+                      lessonId: lessonId!,
+                      assetType: MediaType.VIDEO,
                       assetUrl: form.videoUrl.trim(),
                     }
                   ];
@@ -322,7 +325,7 @@ export default function AdminLessonDetail() {
           <div className="text-sm text-muted-foreground">Chưa có bình luận</div>
         ) : (
           <div className="space-y-2 mt-2">
-            {comments.map((cm: any) => (
+            {comments.map((cm: Comment) => (
               <div key={cm.id} className="flex items-start justify-between">
                 <div>
                   <div className="text-sm">{cm.user?.fullName || cm.userId}</div>

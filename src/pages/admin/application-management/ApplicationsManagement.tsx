@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,9 +64,11 @@ export default function ApplicationsManagement() {
       setReviewDialogOpen(false);
       setSelectedApplication(null);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
-    },
+  });
+
+  const fetchApplicationMutation = useMutation({
+    mutationFn: (applicationId: string) =>
+      applicationManagementService.getApplicationById(applicationId),
   });
 
   const filteredApplications = applications.filter(app => {
@@ -95,15 +97,14 @@ export default function ApplicationsManagement() {
     setReviewDialogOpen(true);
   };
 
-  const handleViewApplication = async (applicationId: string) => {
-    try {
-      const response = await applicationManagementService.getApplicationById(applicationId);
-      if (response.data) {
-        setSelectedApplication(response.data);
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message);
-    }
+  const handleViewApplication = (applicationId: string) => {
+    fetchApplicationMutation.mutate(applicationId, {
+      onSuccess: (response) => {
+        if (response.data) {
+          setSelectedApplication(response.data);
+        }
+      },
+    });
   };
 
   const submitReview = () => {
@@ -114,11 +115,18 @@ export default function ApplicationsManagement() {
     });
   };
 
-  const columns = [
+  type ApplicationRow = CourseSellerApplication;
+
+  const columns: {
+    key: keyof ApplicationRow | string;
+    header: string;
+    render?: (app: ApplicationRow) => ReactNode;
+    className?: string;
+  }[] = [
     {
       key: 'applicant',
       header: 'Người nộp đơn',
-      render: (app: CourseSellerApplication) => (
+      render: (app) => (
         <div>
           <div className="font-medium">{app.user.fullName}</div>
           <div className="text-sm text-muted-foreground">{app.user.email}</div>
@@ -128,7 +136,7 @@ export default function ApplicationsManagement() {
     {
       key: 'expertise',
       header: 'Chuyên môn',
-      render: (app: CourseSellerApplication) => (
+      render: (app) => (
         <div className="text-sm">
           {app.expertise.length > 0 ? app.expertise.join(', ') : 'Chưa có'}
         </div>
@@ -137,7 +145,7 @@ export default function ApplicationsManagement() {
     {
       key: 'certificates',
       header: 'Chứng chỉ',
-      render: (app: CourseSellerApplication) => (
+      render: (app) => (
         <div className="text-sm">
           {app.certification.length > 0 ? (
             <Badge variant="outline">{app.certification.length} chứng chỉ</Badge>
@@ -150,17 +158,17 @@ export default function ApplicationsManagement() {
     {
       key: 'status',
       header: 'Trạng thái',
-      render: (app: CourseSellerApplication) => getStatusBadge(app.status)
+      render: (app) => getStatusBadge(app.status)
     },
     {
       key: 'createdAt',
       header: 'Ngày nộp',
-      render: (app: CourseSellerApplication) => new Date(app.createdAt).toLocaleDateString('vi-VN')
+      render: (app) => new Date(app.createdAt).toLocaleDateString('vi-VN')
     },
     {
       key: 'actions',
       header: 'Thao tác',
-      render: (app: CourseSellerApplication) => (
+      render: (app) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -229,7 +237,7 @@ export default function ApplicationsManagement() {
         ]}
       />
 
-      <DataTable
+      <DataTable<CourseSellerApplication>
         title="Danh sách đơn đăng ký"
         description={`Tổng cộng ${applications.length} đơn đăng ký`}
         data={filteredApplications}

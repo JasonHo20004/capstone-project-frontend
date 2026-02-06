@@ -67,8 +67,9 @@ export default function NotificationsManagement() {
         ]);
 
         setNotifications(notificationsRes.data?.notifications ?? []);
-        if ((typesRes as any)?.data?.byType) {
-          const byType = (typesRes as any).data.byType as Record<string, number>;
+        const typesData = (typesRes as { data?: { byType?: Record<string, number> } })?.data?.byType;
+        if (typesData) {
+          const byType = typesData;
           setNotificationTypes(
             Object.keys(byType).map((name) => ({
               id: name,
