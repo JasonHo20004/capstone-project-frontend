@@ -7,8 +7,6 @@ import {
   type RegisterRequest,
   type LoginResponse,
 } from "@/lib/api/services/user";
-// import { AxiosError } from "axios";
-// import type { ApiError } from "@/lib/api/types";
 
 /**
  * Custom hook cho Authentication với React Query
@@ -24,62 +22,47 @@ export const useAuth = () => {
     mutationFn: (data: LoginRequest) => authService.login(data),
     onSuccess: (response) => {
       const data =
-        typeof (response as any)?.data !== "undefined"
+        typeof (response as { data?: LoginResponse })?.data !== "undefined"
           ? (response as { data: LoginResponse }).data
           : (response as unknown as LoginResponse);
 
       const { accessToken, user } = data;
-      // Lưu tokens vào localStorage
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
       queryClient.setQueryData(["user", "me"], user);
       navigate("/");
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
     },
   });
 
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
-
-    onSuccess: (_response) => {
-      // Response bây giờ chỉ chứa thông tin user, KHÔNG có token
-      // const user = response.data;
-
-      // 1. Thông báo thành công
+    onSuccess: () => {
       toast.success("Đăng ký thành công!", {
         description: "Vui lòng kiểm tra email để xác thực tài khoản.",
       });
-
-      // 2. Chuyển hướng về trang xác nhận email
       navigate("/auth/verify?pending=true");
     },
-
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
-    },
   });
-  // Logout mutation
+
+  // Logout mutation - onSettled ensures local cleanup even when API fails
   const logoutMutation = useMutation({
     mutationFn: () => authService.logout(),
     onSuccess: () => {
-      // Xóa tokens
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
-      // Clear query cache
       queryClient.clear();
-
       toast.success("Đăng xuất thành công!");
       navigate("/login");
     },
-    onError: (error) => {
-      // Ngay cả khi API fail, vẫn logout local
-      localStorage.removeItem("accessToken");
-      // localStorage.removeItem('refreshToken');
-      queryClient.clear();
-      navigate("/login");
+    onSettled: (_data, error) => {
+      if (error) {
+        // When API fails, still clear local state and redirect
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("user");
+        queryClient.clear();
+        navigate("/login");
+      }
     },
   });
 
@@ -90,5 +73,6 @@ export const useAuth = () => {
     isLoggingIn: loginMutation.isPending,
     isRegistering: registerMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
+    registerError: registerMutation.error,
   };
 };

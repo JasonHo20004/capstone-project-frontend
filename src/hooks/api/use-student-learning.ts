@@ -13,15 +13,9 @@ import type {
   LessonPlayer,
 } from "@/types/student-learning";
 
-type ForbiddenHandler = {
-  onForbidden?: () => void;
-};
-
-const handleForbidden = (error: unknown, callback?: () => void) => {
-  if (isAxiosError(error) && error.response?.status === 403) {
-    callback?.();
-  }
-};
+/** Check if error is 403 Forbidden */
+export const isForbiddenError = (error: unknown): boolean =>
+  isAxiosError(error) && error.response?.status === 403;
 
 export const learningKeys = {
   context: (courseId?: string) => ["student-learning", "context", courseId] as const,
@@ -35,52 +29,43 @@ export const learningKeys = {
   ratings: (courseId?: string) => ["student-learning", "ratings", courseId] as const,
 };
 
-export const useCourseContext = (
-  courseId: string | undefined,
-  options?: ForbiddenHandler
-) => {
+export const useCourseContext = (courseId: string | undefined) => {
   return useQuery({
     queryKey: learningKeys.context(courseId),
     queryFn: () => studentLearningService.getCourseContext(courseId!),
     enabled: Boolean(courseId),
     select: (response) => response.data as CourseContext,
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useLessonPlayer = (
   courseId: string | undefined,
-  lessonId: string | undefined,
-  options?: ForbiddenHandler
+  lessonId: string | undefined
 ) => {
   return useQuery({
     queryKey: learningKeys.lesson(courseId, lessonId),
     queryFn: () => studentLearningService.getLesson(courseId!, lessonId!),
     enabled: Boolean(courseId && lessonId),
     select: (response) => response.data as LessonPlayer,
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useLessonComments = (
   courseId: string | undefined,
   lessonId: string | undefined,
-  params?: StudentPaginatedParams,
-  options?: ForbiddenHandler
+  params?: StudentPaginatedParams
 ) => {
   return useQuery({
     queryKey: learningKeys.comments(courseId, lessonId, params),
     queryFn: () => studentLearningService.getLessonComments(courseId!, lessonId!, params),
     enabled: Boolean(courseId && lessonId),
     select: (response) => response.data as LessonCommentsResponse,
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useCourseRatings = (
   courseId: string | undefined,
-  params?: StudentPaginatedParams,
-  options?: ForbiddenHandler
+  params?: StudentPaginatedParams
 ) => {
   return useQuery({
     queryKey: learningKeys.ratings(courseId),
@@ -100,7 +85,13 @@ export const useCourseRatings = (
 
       // Response structure from backend:
       // { success, message, data: [...ratings], averageScore, pagination: { total, page, limit } }
-      const resp = response as any;
+      const resp = response as {
+        data?: CourseRatingsResponse["ratings"];
+        ratings?: CourseRatingsResponse["ratings"];
+        pagination?: { total?: number; page?: number; limit?: number };
+        total?: number;
+        averageScore?: number;
+      };
       
       // Extract ratings array - could be in response.data or response
       const ratingsArray = Array.isArray(resp.data) 
@@ -121,14 +112,12 @@ export const useCourseRatings = (
       
       return transformed;
     },
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useCreateLessonComment = (
   courseId: string | undefined,
-  lessonId: string | undefined,
-  options?: ForbiddenHandler
+  lessonId: string | undefined
 ) => {
   const queryClient = useQueryClient();
 
@@ -140,14 +129,12 @@ export const useCreateLessonComment = (
         queryClient.invalidateQueries({ queryKey: learningKeys.comments(courseId, lessonId) });
       }
     },
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useMarkLessonComplete = (
   courseId: string | undefined,
-  lessonId: string | undefined,
-  options?: ForbiddenHandler
+  lessonId: string | undefined
 ) => {
   const queryClient = useQueryClient();
 
@@ -158,7 +145,6 @@ export const useMarkLessonComplete = (
         queryClient.invalidateQueries({ queryKey: learningKeys.context(courseId) });
       }
     },
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 

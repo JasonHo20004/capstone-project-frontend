@@ -1,5 +1,5 @@
-import { useQuery,useMutation, useQueryClient } from '@tanstack/react-query';
-import { userService , type UpdateProfileDTO} from '@/lib/api/services/user';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { userService, type UpdateProfileDTO } from '@/lib/api/services/user';
 import { User } from '@/types/type';
 import { AxiosError } from 'axios';
 import type { ApiError } from '@/lib/api/types';
@@ -43,14 +43,8 @@ export const useUser = () => {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['user', 'me'], // Khóa-query-để-cache
     queryFn: async () => {
-      try {
-        const response = await userService.getMe();
-        return response.data; // Trả-về-dữ-liệu-user
-      } catch (e) {
-        // Nếu-API-trả-về-401 (token-hết-hạn/không-hợp-lệ),
-        // Interceptor-sẽ-xử-lý,-và-query-này-sẽ-bị-lỗi
-        return null; // Trả-về-null-nếu-lỗi
-      }
+      const response = await userService.getMe();
+      return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 phút-cache
     retry: false, // Không-cần-thử-lại-nếu-lỗi-(thường-là-lỗi-401)
@@ -71,15 +65,8 @@ export const useUpdateProfile = () => {
     mutationFn: (data: UpdateProfileDTO|FormData) => userService.updateProfile(data),
     
     onSuccess: () => {
-      
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
-      // 2. Làm mới Navbar (nếu Navbar dùng key ['user', 'me'])
       queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
-    },
-    
-    onError: (error: AxiosError<ApiError>) => {
-      const message = error.response?.data?.message || 'Cập nhật thất bại';
-      toast.error(message);
     },
   });
 };
@@ -95,10 +82,6 @@ export const useCreateSellerApplication = () => {
       });
       // Làm mới profile để cập nhật trạng thái (nếu profile có trả về status application)
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || 'Nộp đơn thất bại.';
-      toast.error(message);
     },
   });
 };
