@@ -55,7 +55,7 @@ export default function WalletPage() {
         setIsProcessing(true);
         
         // Gom tất cả params từ URL lại thành object
-        const params: any = {};
+        const params: Record<string, string> = {};
         for (const [key, value] of searchParams.entries()) {
             params[key] = value;
         }

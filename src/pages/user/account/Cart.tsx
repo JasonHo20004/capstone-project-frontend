@@ -62,23 +62,17 @@ const CartPage = () => {
       // Case 1: Full Checkout
       checkoutFullMutation.mutate(undefined, {
         onSuccess: () => {
-            setPayOpen(false);
-            setSelectedIds([]);
+          setPayOpen(false);
+          setSelectedIds([]);
         },
-        onError: (error: any) => {
-            toast.error(error.response?.data?.message);
-        }
       });
     } else {
       // Case 2: Partial Checkout
       checkoutPartialMutation.mutate(selectedIds, {
         onSuccess: () => {
-            setPayOpen(false);
-            setSelectedIds([]);
+          setPayOpen(false);
+          setSelectedIds([]);
         },
-        onError: (error: any) => {
-            toast.error(error.response?.data?.message);
-        }
       });
     }
   };

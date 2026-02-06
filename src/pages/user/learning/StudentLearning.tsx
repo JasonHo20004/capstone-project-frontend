@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Menu } from "lucide-react";
 
@@ -24,6 +24,7 @@ import {
   useCourseRatings,
   useLessonPlayer,
   useMarkLessonComplete,
+  isForbiddenError,
 } from "@/hooks/api/use-student-learning";
 
 const DEFAULT_TAB: LearningTabId = "overview";
@@ -36,14 +37,18 @@ const StudentLearningPage = () => {
 
   const activeTab = (searchParams.get("tab") as LearningTabId | null) ?? DEFAULT_TAB;
 
-  const handleForbidden = () => {
+  const handleForbidden = useCallback(() => {
     if (!courseId) return;
     navigate(`/courses/${courseId}`, { replace: true });
-  };
+  }, [courseId, navigate]);
 
-  const { data: context, isLoading: loadingContext } = useCourseContext(courseId, {
-    onForbidden: handleForbidden,
-  });
+  const { data: context, isLoading: loadingContext, error: contextError } = useCourseContext(courseId);
+
+  useEffect(() => {
+    if (contextError && isForbiddenError(contextError)) {
+      handleForbidden();
+    }
+  }, [contextError, handleForbidden]);
 
   const effectiveLessonId = useMemo(() => {
     if (lessonId) return lessonId;
@@ -59,11 +64,16 @@ const StudentLearningPage = () => {
     }
   }, [courseId, lessonId, effectiveLessonId, navigate, searchParams]);
 
-  const { data: lesson, isLoading: loadingLesson } = useLessonPlayer(
+  const { data: lesson, isLoading: loadingLesson, error: lessonError } = useLessonPlayer(
     courseId,
-    effectiveLessonId,
-    { onForbidden: handleForbidden }
+    effectiveLessonId
   );
+
+  useEffect(() => {
+    if (lessonError && isForbiddenError(lessonError)) {
+      handleForbidden();
+    }
+  }, [lessonError, handleForbidden]);
 
   const { data: ratings } = useCourseRatings(courseId, { page: 1, limit: 50 });
   const markCompleteMutation = useMarkLessonComplete(courseId, effectiveLessonId);

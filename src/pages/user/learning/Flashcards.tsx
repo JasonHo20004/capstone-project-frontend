@@ -50,7 +50,7 @@ import {
   useDeleteCard
 } from "@/hooks/api/use-flashcards";
 import { useGetTags } from "@/hooks/api/use-tags";
-import { DeckFormDTO, CardFormDTO } from "@/lib/api/services/flashcard.service";
+import { DeckFormDTO, CardFormDTO } from "@/lib/api/services/user/flashcard/flashcard.service";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -199,11 +199,9 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
             decks.find((d) => d.id !== deletingDeck.id)?.id ?? null;
           setSelectedDeckId(firstDeckId);
         }
-        setDeletingDeck(null); // Đóng dialog sau khi xóa
       },
-      onError: () => {
-        // (Hook đã tự toast lỗi, không cần làm gì thêm)
-        setDeletingDeck(null); // Đóng dialog dù có lỗi
+      onSettled: () => {
+        setDeletingDeck(null);
       },
     });
   };

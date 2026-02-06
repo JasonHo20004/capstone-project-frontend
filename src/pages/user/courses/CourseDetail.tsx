@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatVND } from '@/lib/utils';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
 import CourseReportDialog from '@/components/user/course/CourseReportDialog';
-import type { Report } from '@/types/type';
+import type { Lesson, Report } from '@/types/type';
 
 // --- HOOKS API ---
 import { useGetCourseDetail, useGetMyCourses } from '@/hooks/api/use-courses';
@@ -60,8 +60,8 @@ const CourseDetail = () => {
   const instructor = useMemo(() => {
     if (!course) return null;
     return (
-      course.user ||
-      (course as any).courseSeller || {
+      course.user ??
+      course.courseSeller ?? {
         fullName: "Unknown Instructor",
         email: "",
         profilePicture: null,
@@ -73,8 +73,8 @@ const CourseDetail = () => {
     );
   }, [course]);
 
-  const courseLessons = useMemo(() => {
-    return course?.lessons || [];
+  const courseLessons: Lesson[] = useMemo(() => {
+    return course?.lessons ?? [];
   }, [course]);
 
   const relatedTests = useMemo(() => {
@@ -86,11 +86,9 @@ const CourseDetail = () => {
     if (course.averageRating != null)
       return Number(course.averageRating.toFixed(1));
 
-    // @ts-ignore
-    const ratings = course.ratings || [];
+    const ratings = course.ratings ?? [];
     if (ratings.length === 0) return 0;
-    // @ts-ignore
-    const sum = ratings.reduce((acc, r) => acc + (r.score || 0), 0);
+    const sum = ratings.reduce((acc, r) => acc + (r.score ?? 0), 0);
     return Number((sum / ratings.length).toFixed(1));
   }, [course]);
   const thumbnailUrl = course?.thumbnailUrl || "";
@@ -427,7 +425,7 @@ const CourseDetail = () => {
                         </h3>
                         {courseLessons.length > 0 ? (
                           <ul className="space-y-4">
-                            {courseLessons.map((lesson: any, index: number) => (
+                            {courseLessons.map((lesson, index) => (
                               <li
                                 key={lesson.id}
                                 className="flex items-start justify-between gap-4 border border-border rounded-xl p-4 hover:border-primary/50 transition-colors group"
@@ -488,7 +486,7 @@ const CourseDetail = () => {
                         </h3>
                         {relatedTests.length > 0 ? (
                           <div className="space-y-4">
-                            {relatedTests.map((test: any) => (
+                            {relatedTests.map((test: import('@/types/type').Test) => (
                               <div
                                 key={test.id}
                                 className="border border-border rounded-xl p-5"
@@ -508,7 +506,7 @@ const CourseDetail = () => {
                                 </div>
                                 {test.sections && test.sections.length > 0 && (
                                   <ul className="grid sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-border/50">
-                                    {test.sections.map((section: any) => (
+                                    {test.sections.map((section: import('@/types/type').Section) => (
                                       <li
                                         key={section.id}
                                         className="bg-muted/30 rounded-lg p-3 text-sm"

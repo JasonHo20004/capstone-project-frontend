@@ -71,7 +71,7 @@ export default function Profile() {
     }
   }, [user, editing]); // Chạy lại khi `user` thay đổi hoặc khi `editing` tắt
 
-  const handleChange = (key: keyof typeof form, value: any) => {
+  const handleChange = (key: keyof typeof form, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -519,7 +519,7 @@ export default function Profile() {
                               : "secondary";
                           return (
                             <div className="flex items-center gap-2">
-                              <Badge variant={statusVariant as any}>
+                              <Badge variant={statusVariant as "default" | "destructive" | "secondary"}>
                                 {statusLabel}
                               </Badge>
                               <span className="text-xs text-muted-foreground">
