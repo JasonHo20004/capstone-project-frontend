@@ -46,10 +46,10 @@ class UserService {
     return response.data;
   }
 
-  async createCourseSellerApplication(formData: FormData): Promise<ApiResponse<any>> {
+  async createCourseSellerApplication(formData: FormData): Promise<ApiResponse<import('@/types/type').CourseSellerApplication>> {
     // Axios tự động set Content-Type là multipart/form-data khi data là FormData
     // NHƯNG cần lưu ý: Đừng set thủ công Content-Type: application/json
-    const response = await apiClient.post<ApiResponse<any>>(
+    const response = await apiClient.post<ApiResponse<import('@/types/type').CourseSellerApplication>>(
       '/users/me/course-seller-application',
       formData,
       {

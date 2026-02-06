@@ -9,16 +9,15 @@ import type {
   Course,
   CourseLesson,
   CourseLevel,
-  CourseTest,
+  Lesson,
 } from '@/types/type';
 
 /**
  * Course Service - Xử lý tất cả API calls liên quan đến courses
  */
 
-export interface CourseDetail extends Course {
-  lessons?: CourseLesson[];
-  test?: CourseTest | null;
+export interface CourseDetail extends Omit<Course, 'lessons'> {
+  lessons: CourseLesson[];
 }
 
 export interface GetCoursesParams extends PaginationParams {
@@ -160,8 +159,8 @@ class CourseService {
   /**
    * Lấy chi tiết một lesson
    */
-  async getLessonById(courseId: string, lessonId: string): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  async getLessonById(courseId: string, lessonId: string): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.get<ApiResponse<Lesson>>(
       `/courses/${courseId}/lessons/${lessonId}`
     );
     return response.data;
@@ -173,8 +172,8 @@ class CourseService {
   async createLesson(
     courseId: string,
     data: FormData
-  ): Promise<ApiResponse<any>> {
-    const response = await apiClient.post<ApiResponse<any>>(
+  ): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.post<ApiResponse<Lesson>>(
       `/courses/${courseId}/lessons`,
       data,
       {

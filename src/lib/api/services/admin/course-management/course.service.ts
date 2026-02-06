@@ -1,6 +1,6 @@
 import apiClient from "../../../config";
 import type { ApiResponse } from "../../../types";
-import type { Course, CourseLevel, CourseStatus } from "@/types/type";
+import type { Course, CourseLevel, CourseStatus, Lesson, Rating } from "@/types/type";
 
 export interface UpdateCourseRequest {
   title?: string;
@@ -51,15 +51,15 @@ class CourseManagementService {
     return response.data;
   }
 
-  async getLessons(courseId: string): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  async getLessons(courseId: string): Promise<ApiResponse<Lesson[]>> {
+    const response = await apiClient.get<ApiResponse<Lesson[]>>(
       `/admin/courses/${courseId}/lessons`
     );
     return response.data;
   }
 
-  async createLesson(courseId: string, data: any): Promise<ApiResponse<any>> {
-    const response = await apiClient.post<ApiResponse<any>>(
+  async createLesson(courseId: string, data: FormData | Partial<Lesson>): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.post<ApiResponse<Lesson>>(
       `/admin/courses/${courseId}/lessons`,
       data
     );
@@ -69,9 +69,9 @@ class CourseManagementService {
   async updateLesson(
     courseId: string,
     lessonId: string,
-    data: any
-  ): Promise<ApiResponse<any>> {
-    const response = await apiClient.put<ApiResponse<any>>(
+    data: Partial<Lesson>
+  ): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.put<ApiResponse<Lesson>>(
       `/admin/courses/${courseId}/lessons/${lessonId}`,
       data
     );
@@ -81,8 +81,8 @@ class CourseManagementService {
   async getLessonById(
     courseId: string,
     lessonId: string
-  ): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  ): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.get<ApiResponse<Lesson>>(
       `/admin/courses/${courseId}/lessons/${lessonId}`
     );
     return response.data;
@@ -98,8 +98,8 @@ class CourseManagementService {
     return response.data;
   }
 
-  async getRatings(courseId: string): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  async getRatings(courseId: string): Promise<ApiResponse<Rating[]>> {
+    const response = await apiClient.get<ApiResponse<Rating[]>>(
       `/admin/courses/${courseId}/ratings`
     );
     return response.data;

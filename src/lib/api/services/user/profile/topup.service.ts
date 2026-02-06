@@ -11,7 +11,7 @@ export interface CreateTopupResponse {
   payUrl: string; // Link để redirect sang MoMo
 }
 
-export type ConfirmPaymentRequest = Record<string, any>;
+export type ConfirmPaymentRequest = Record<string, unknown>;
 class TopupService {
   /**
    * Bước 1: Tạo yêu cầu nạp tiền

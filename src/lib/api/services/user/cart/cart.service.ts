@@ -20,7 +20,7 @@ class CartService {
   }
 
   // POST /cart/add-to-cart
-  public async addToCart(courseId: string): Promise<ApiResponse<any>> {
+  public async addToCart(courseId: string): Promise<ApiResponse<unknown>> {
     const response = await apiClient.post('/carts/add-to-cart', { courseId });
     return response.data;
   }
