@@ -16,7 +16,7 @@ import CreateLessonDialog from '@/components/seller/CreateLessonDialog';
 import { Plus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
-import type { CourseStatus, CourseLevel } from '@/types/type';
+import type { CourseStatus, CourseLevel, Lesson, Comment } from '@/types/type';
 
 type Draft = Partial<{
   title: string;
@@ -34,10 +34,16 @@ export default function SellerCourseDetail() {
   const { data: course, isLoading, isError, error, refetch } = useCourse(id);
   const updateCourseMutation = useUpdateCourse();
 
-  const lessons = useMemo(
-    () => (course?.lessons ?? []).slice().sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0)),
-    [course],
-  );
+  const lessons: Lesson[] = useMemo(() => {
+    if (!course?.lessons) return [];
+
+    // Backend may return CourseLesson[] with nested Lesson in `.lesson`
+    return (course.lessons as any[])
+      .map((item) => (item.lesson ? item.lesson : item))
+      .filter((l): l is Lesson => !!l && typeof l.id === 'string')
+      .slice()
+      .sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0));
+  }, [course]);
   const ratings = useMemo(() => course?.ratings ?? [], [course]);
   const totalComments = useMemo(
     () => lessons.reduce((sum, lesson) => sum + (lesson.commentCount ?? 0), 0),
@@ -47,19 +53,19 @@ export default function SellerCourseDetail() {
   const seller = useMemo(() => {
     if (!course) return null;
     // Ưu tiên courseSeller, fallback sang user (tương tự trang user CourseDetail)
-    return (course as any).courseSeller || (course as any).user || null;
+    return course.courseSeller ?? course.user ?? null;
   }, [course]);
   const sellerName = seller?.fullName as string | undefined;
 
   // Tính điểm trung bình từ ratings nếu backend chưa set averageRating
   const averageRating = useMemo(() => {
     if (!course) return undefined;
-    if ((course as any).averageRating != null) {
-      const value = Number((course as any).averageRating);
+    if (course.averageRating != null) {
+      const value = Number(course.averageRating);
       return Number.isNaN(value) ? undefined : Number(value.toFixed(2));
     }
 
-    const ratingList = (course as any).ratings as { score: number }[] | undefined;
+    const ratingList = course.ratings as { score: number }[] | undefined;
     if (!ratingList || ratingList.length === 0) return undefined;
 
     const sum = ratingList.reduce((acc, r) => acc + (r.score || 0), 0);
@@ -81,7 +87,9 @@ export default function SellerCourseDetail() {
     try {
       const raw = localStorage.getItem(DRAFT_KEY(id));
       if (raw) setDraft(JSON.parse(raw) as Draft);
-    } catch {}
+    } catch {
+      // Ignore JSON parse errors for draft
+    }
   }, [id]);
 
   useEffect(() => {
@@ -90,7 +98,9 @@ export default function SellerCourseDetail() {
       const raw = localStorage.getItem(`seller_lesson_update_${selectedLessonId}`);
       if (raw) setLessonUpdate(JSON.parse(raw));
       else setLessonUpdate({});
-    } catch {}
+    } catch {
+      // Ignore JSON parse errors for lesson update
+    }
   }, [selectedLessonId]);
 
   if (isLoading) {
@@ -234,16 +244,16 @@ export default function SellerCourseDetail() {
                 <span className="font-medium">Đánh giá TB:</span>{' '}
                 {averageRating != null && averageRating > 0 ? averageRating.toFixed(2) : '-'}
                 {' '}
-                ({(merged as any).ratingCount ?? (course as any)?.ratings?.length ?? 0})
+                ({merged.ratingCount ?? course?.ratings?.length ?? 0})
               </div>
               <div><span className="font-medium">Bình luận:</span> {totalComments}</div>
               <div>
                 <span className="font-medium">Tạo lúc:</span>{' '}
-                {merged.createdAt ? new Date(merged.createdAt as any).toLocaleString('vi-VN') : '-'}
+                {merged.createdAt ? new Date(merged.createdAt).toLocaleString('vi-VN') : '-'}
               </div>
               <div>
                 <span className="font-medium">Cập nhật:</span>{' '}
-                {merged.updatedAt ? new Date(merged.updatedAt as any).toLocaleString('vi-VN') : '-'}
+                {merged.updatedAt ? new Date(merged.updatedAt).toLocaleString('vi-VN') : '-'}
               </div>
             </CardContent>
           </Card>
@@ -373,7 +383,7 @@ export default function SellerCourseDetail() {
                       <CardContent>
                         {lessonDetail?.comments && lessonDetail.comments.length > 0 ? (
                           <div className="space-y-3">
-                            {lessonDetail.comments.map((comment: any) => (
+                            {lessonDetail.comments.map((comment: Comment) => (
                               <div key={comment.id} className="rounded-lg border p-3">
                                 <div className="flex items-start gap-3">
                                   {comment.user?.profilePicture && (
@@ -460,7 +470,7 @@ export default function SellerCourseDetail() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Level</label>
-                  <Select value={draft.courseLevel ?? merged.courseLevel ?? ''} onValueChange={(v) => setDraft((d) => ({ ...d, courseLevel: v as any }))}>
+                  <Select value={draft.courseLevel ?? merged.courseLevel ?? ''} onValueChange={(v) => setDraft((d) => ({ ...d, courseLevel: v as CourseLevel }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn level" />
                     </SelectTrigger>
@@ -482,7 +492,7 @@ export default function SellerCourseDetail() {
                           toast.error('Bạn không thể tự chuyển khóa học sang ACTIVE. Chỉ admin mới có thể duyệt khóa học.');
                           return;
                         }
-                        setDraft((d) => ({ ...d, status: v as any }));
+                        setDraft((d) => ({ ...d, status: v as CourseStatus }));
                       }}
                     >
                       <SelectTrigger>

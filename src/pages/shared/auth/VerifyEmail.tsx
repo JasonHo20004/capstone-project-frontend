@@ -43,9 +43,9 @@ const VerifyEmailPage = () => {
 
         setStatus("success");
         setMessage(apiMessage);
-      } catch (error: any) {
+      } catch (error: unknown) {
         const apiMessage =
-          error?.response?.data?.message ||
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           "Mã xác thực không hợp lệ hoặc đã hết hạn.";
         setStatus("error");
         setMessage(apiMessage);
