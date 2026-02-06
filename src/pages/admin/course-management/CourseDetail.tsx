@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
 import { courseManagementService } from "@/lib/api/services/admin";
 import type { UpdateCourseRequest } from "@/lib/api/services/admin";
-import { CourseWithStats, CourseStatus, CourseLevel } from "@/types/type";
+import { CourseWithStats, CourseStatus, CourseLevel, Lesson, Rating } from "@/types/type";
 import {
   Select,
   SelectContent,
@@ -92,7 +92,7 @@ export default function AdminCourseDetail() {
   });
 
   const updateLessonMutation = useMutation({
-    mutationFn: (vars: { lessonId: string; data: any }) =>
+    mutationFn: (vars: { lessonId: string; data: Partial<Lesson> }) =>
       courseManagementService.updateLesson(id!, vars.lessonId, vars.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminCourseDetail", id] });
@@ -169,7 +169,7 @@ export default function AdminCourseDetail() {
             <div>
               <h2 className="text-2xl font-semibold">{course.title}</h2>
               <div className="text-sm text-muted-foreground">
-                Người bán: {(course as any).user?.fullName || "N/A"} • Level:{" "}
+                Người bán: {course.user?.fullName ?? course.courseSeller?.fullName ?? "N/A"} • Level:{" "}
                 {course.courseLevel || "N/A"} • Giá:{" "}
                 {formatCurrency(course.price)}
               </div>
@@ -385,7 +385,7 @@ export default function AdminCourseDetail() {
 
             <TabsContent value="lessons" className="space-y-4">
               <div className="space-y-2">
-                {(courseDetailResp?.data?.lessons || []).map((ls: any) => (
+                {(courseDetailResp?.data?.lessons || []).map((ls: import('@/types/type').Lesson) => (
                   <div
                     key={ls.id}
                     className="flex items-center justify-between border rounded p-3"
@@ -422,7 +422,7 @@ export default function AdminCourseDetail() {
 
             <TabsContent value="ratings" className="space-y-4">
               <div className="space-y-2">
-                {(ratingsResp?.data?.ratings || []).map((rt: any) => (
+                {(ratingsResp?.data || []).map((rt: Rating) => (
                   <div key={rt.id} className="border rounded p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="font-medium">

@@ -50,9 +50,6 @@ export default function TagsManagement() {
       setTagForm({ name: "" });
       toast.success("Tạo tag mới thành công!");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi tạo tag");
-    },
   });
 
   const updateTagMutation = useMutation({
@@ -63,9 +60,6 @@ export default function TagsManagement() {
       setEditingTag(null);
       setTagForm({ name: "" });
       toast.success("Cập nhật tag thành công!");
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật tag");
     },
   });
 
@@ -103,8 +97,8 @@ export default function TagsManagement() {
 
   const columns = [
     {
+      key: "id" as keyof Tag,
       header: "ID",
-      accessor: "id" as keyof Tag,
       render: (tag: Tag) => (
         <span className="font-mono text-xs text-muted-foreground">
           {tag.id.substring(0, 8)}...
@@ -112,8 +106,8 @@ export default function TagsManagement() {
       ),
     },
     {
+      key: "name" as keyof Tag,
       header: "Tên Tag",
-      accessor: "name" as keyof Tag,
       render: (tag: Tag) => (
         <div className="flex items-center gap-2">
           <TagIcon className="h-4 w-4 text-muted-foreground" />
@@ -122,8 +116,8 @@ export default function TagsManagement() {
       ),
     },
     {
+      key: "actions",
       header: "",
-      accessor: "id" as keyof Tag,
       render: (tag: Tag) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -164,12 +158,12 @@ export default function TagsManagement() {
           title="Tổng số Tag"
           value={tags.length}
           icon={TagIcon}
-          trend={{ value: 0, isPositive: true }}
+          trend={{ value: 0, label: "So với kỳ trước", isPositive: true }}
         />
       </div>
 
       <FilterSection
-        searchTerm={searchTerm}
+        searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Tìm kiếm tag..."
         filters={[]}
@@ -178,7 +172,6 @@ export default function TagsManagement() {
       <DataTable
         columns={columns}
         data={filteredTags}
-        isLoading={isLoading}
       />
 
       {/* Create Tag Dialog */}

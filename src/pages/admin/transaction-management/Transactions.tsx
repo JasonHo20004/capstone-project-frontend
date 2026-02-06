@@ -29,6 +29,7 @@ import type {
   TransactionFilters,
   TransactionWithRelations,
 } from "@/lib/api/types/transaction.types";
+import type { TransactionStatus } from "@/types/type";
 import DataTable from "@/components/admin/DataTable";
 
 export default function TransactionsManagement() {
@@ -73,7 +74,7 @@ export default function TransactionsManagement() {
   // Build filters using applied values
   const filters: TransactionFilters = {
     search: appliedSearch || undefined,
-    status: appliedStatus === "all" ? undefined : (appliedStatus as any),
+    status: appliedStatus === "all" ? undefined : appliedStatus as TransactionStatus,
     transactionType: appliedType,
     startDate: appliedStartDate || undefined,
     endDate: appliedEndDate || undefined,
@@ -149,7 +150,7 @@ export default function TransactionsManagement() {
     try {
       const response = await transactionManagementService.getTransactionById(transactionId);
       if (response.data?.transaction) {
-        setSelectedTransaction(response.data.transaction as any);
+        setSelectedTransaction(response.data.transaction);
       }
     } catch (error) {
       console.error('Failed to fetch transaction details:', error);
@@ -542,7 +543,7 @@ export default function TransactionsManagement() {
                         Trạng thái
                       </label>
                       <div className="mt-1">
-                        {getStatusBadge((selectedTransaction.topupOrder as any).status)}
+                        {getStatusBadge((selectedTransaction.topupOrder as { status?: string })?.status ?? '')}
                       </div>
                     </div>
                   </div>
