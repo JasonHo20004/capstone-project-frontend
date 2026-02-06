@@ -552,6 +552,15 @@ export interface UserLesson {
   user?: User;
 }
 
+export interface CourseLesson {
+  lessonId: string;
+  courseId: string;
+  
+  // Relations
+  lesson?: Lesson;
+  course?: Course;
+}
+
 export interface UserAnswer {
   id: string;
   practiceSessionId: string;
@@ -600,6 +609,7 @@ export interface Lesson {
   description?: string;
   durationInSeconds?: number;
   lessonOrder?: number;
+  videoUrl?: string;
   materials: string[];
   commentCount?: number;
   courseId: string;
