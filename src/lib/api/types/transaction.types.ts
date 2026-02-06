@@ -45,7 +45,7 @@ export interface TransactionListResponse {
 }
 
 export interface TransactionDetailResponse {
-  transaction: Transaction;
+  transaction: TransactionWithRelations;
 }
 
 export interface TransactionStats {
