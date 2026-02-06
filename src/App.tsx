@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/query/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // User pages
@@ -54,20 +55,6 @@ import SellerComments from "./pages/seller/interactions/SellerComments";
 import SellerLearners from "./pages/seller/learners/SellerLearners";
 import SellerProfile from "./pages/seller/account/SellerProfile";
 import SellerCourseDetail from "./pages/seller/courses/SellerCourseDetail";
-
-// Cấu hình QueryClient với default options
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1, // Retry 1 lần khi fail
-      refetchOnWindowFocus: false, // Không refetch khi focus window
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-    mutations: {
-      retry: false, // Không retry mutations
-    },
-  },
-});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
