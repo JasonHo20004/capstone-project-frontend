@@ -34,6 +34,16 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
+// Type for API error with axios response structure
+export interface ErrorWithResponse {
+  response?: { data?: { message?: string } };
+}
+
+export function getErrorMessage(error: unknown): string | undefined {
+  const e = error as ErrorWithResponse;
+  return e.response?.data?.message;
+}
+
 // Common request/response types
 export interface EmptyResponse {
   message?: string;
