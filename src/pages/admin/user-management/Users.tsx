@@ -84,9 +84,6 @@ export default function UsersManagement() {
       setCreatingUser(false);
       toast.success("Tạo người dùng mới thành công!");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
-    },
   });
 
   const updateUserMutation = useMutation({
@@ -103,9 +100,6 @@ export default function UsersManagement() {
       setEditingUser(null);
       toast.success("Cập nhật thông tin người dùng thành công!");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
-    },
   });
 
   const deleteUserMutation = useMutation({
@@ -116,9 +110,10 @@ export default function UsersManagement() {
       setSelectedUser(null);
       toast.success("Xóa người dùng thành công!");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
-    },
+  });
+
+  const fetchUserMutation = useMutation({
+    mutationFn: (userId: string) => userManagementService.getUserById(userId),
   });
 
   useEffect(() => {
@@ -181,40 +176,38 @@ export default function UsersManagement() {
     return new Date(date).toISOString().split("T")[0];
   };
 
-  const handleViewUser = async (userId: string) => {
-    try {
-      const response = await userManagementService.getUserById(userId);
-      if (response.data) {
-        setSelectedUser(response.data);
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message);
-    }
+  const handleViewUser = (userId: string) => {
+    fetchUserMutation.mutate(userId, {
+      onSuccess: (response) => {
+        if (response.data) {
+          setSelectedUser(response.data);
+        }
+      },
+    });
   };
 
-  const handleEditUser = async (userId: string) => {
-    try {
-      const response = await userManagementService.getUserById(userId);
-      if (response.data) {
-        const user = response.data;
-        setEditingUser(user);
-        setEditForm({
-          fullName: user.fullName,
-          email: user.email,
-          password: "",
-          phoneNumber: user.phoneNumber || "",
-          dateOfBirth: formatDateForInput(user.dateOfBirth),
-          englishLevel: user.englishLevel || "",
-          learningGoals: user.learningGoals || [],
-          role: user.role || "STUDENT",
-          certification: user.courseSellerProfile?.certification || [],
-          expertise: user.courseSellerProfile?.expertise || [],
-          walletAllowance: user.wallet?.allowance || 0,
-        });
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message);
-    }
+  const handleEditUser = (userId: string) => {
+    fetchUserMutation.mutate(userId, {
+      onSuccess: (response) => {
+        if (response.data) {
+          const user = response.data;
+          setEditingUser(user);
+          setEditForm({
+            fullName: user.fullName,
+            email: user.email,
+            password: "",
+            phoneNumber: user.phoneNumber || "",
+            dateOfBirth: formatDateForInput(user.dateOfBirth),
+            englishLevel: user.englishLevel || "",
+            learningGoals: user.learningGoals || [],
+            role: user.role || "STUDENT",
+            certification: user.courseSellerProfile?.certification || [],
+            expertise: user.courseSellerProfile?.expertise || [],
+            walletAllowance: user.wallet?.allowance || 0,
+          });
+        }
+      },
+    });
   };
 
   const handleSaveUser = () => {
