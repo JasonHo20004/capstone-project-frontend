@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { mockUsers } from '@/data/mock';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { userService } from '@/lib/api/services/user';
+import type { UserWithRelations } from '@/domain';
 
 type PaymentMethod = 'MOMO' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
 
@@ -8,28 +9,43 @@ interface WalletContextValue {
   deposit: (amount: number, method: PaymentMethod, currency?: string) => void;
   pay: (amount: number) => boolean;
   clear: () => void;
+  isLoading: boolean;
 }
 
 const WalletContext = createContext<WalletContextValue | undefined>(undefined);
 
-const CURRENT_USER_ID = '1';
-// No persistence required; keep balance ephemeral per session.
-
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const initialBalance = useMemo(() => {
-    const user = mockUsers.find(u => u.id === CURRENT_USER_ID);
-    return user?.wallet?.allowance ?? 0;
-  }, []);
+  const [balance, setBalance] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [balance, setBalance] = useState<number>(initialBalance);
-
+  // Fetch balance from API when user is logged in
   useEffect(() => {
-    // Best-effort: sync mock data for demo pages that read from mockUsers
-    const user = mockUsers.find(u => u.id === CURRENT_USER_ID);
-    if (user && user.wallet) {
-      user.wallet.allowance = balance;
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
-  }, [balance]);
+
+    let cancelled = false;
+    setIsLoading(true);
+    userService
+      .getProfile()
+      .then((res) => {
+        if (cancelled || !res?.data) return;
+        const user = res.data as UserWithRelations;
+        setBalance(Number(user?.wallet?.allowance) || 0);
+      })
+      .catch(() => {
+        if (!cancelled) setBalance(0);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const deposit = (amount: number, _method: PaymentMethod, _currency = 'VND') => {
     if (!amount || amount <= 0) return;
@@ -45,7 +61,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const clear = () => setBalance(0);
 
-  const value: WalletContextValue = { balance, deposit, pay, clear };
+  const value: WalletContextValue = { balance, deposit, pay, clear, isLoading };
 
   return (
     <WalletContext.Provider value={value}>{children}</WalletContext.Provider>

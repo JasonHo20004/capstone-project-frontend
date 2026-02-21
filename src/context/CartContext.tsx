@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Course as AdminCourse } from '@/types/type';
+import type { Course as AdminCourse } from "@/domain";
 
 export type CartItem = {
   id: string;
