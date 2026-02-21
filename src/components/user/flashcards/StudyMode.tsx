@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Flashcard } from '@/types/type';
+import type { Flashcard } from "@/domain";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Volume2, Check, RotateCw } from 'lucide-react'; // Thêm icon RotateCw

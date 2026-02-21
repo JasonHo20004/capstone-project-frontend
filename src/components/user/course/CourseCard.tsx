@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Star, User, ShoppingCart, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Course } from '@/types/type';
+import type { Course } from "@/domain";
 import { formatVND } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 

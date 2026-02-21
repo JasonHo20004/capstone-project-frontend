@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Upload, X } from 'lucide-react';
 import { useCreateLesson } from '@/hooks/api';
-import type { Lesson } from '@/types/type';
+import type { Lesson } from "@/domain";
 
 interface Props {
   open: boolean;

@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { X, Upload, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateSellerApplication } from '@/hooks/api/use-user';
-import type { CourseSellerApplication } from '@/types/type';
+import type { CourseSellerApplication } from "@/domain";
 
 interface Props {
   open: boolean;

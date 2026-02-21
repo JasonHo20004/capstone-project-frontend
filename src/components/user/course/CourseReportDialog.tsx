@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Report } from '@/types/type';
+import type { Report } from "@/domain";
 import type { CourseDetail } from '@/lib/api/services';
 import { toast } from 'sonner';
 import { useProfile } from '@/hooks/api/use-user';

@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateCourse } from '@/hooks/api';
-import { CourseLevel } from '@/types/type';
+import { CourseLevel } from "@/domain";
 
 interface Props {
   open: boolean;

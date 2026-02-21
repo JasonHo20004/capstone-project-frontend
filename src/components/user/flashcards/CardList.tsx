@@ -1,4 +1,4 @@
-import type { Flashcard } from '@/types/type';
+import type { Flashcard } from "@/domain";
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 
