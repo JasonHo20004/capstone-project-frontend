@@ -50,6 +50,8 @@ export interface CourseSellerApplication {
   status: ApplicationStatus;
   rejectionReason?: string;
   createdAt: string;
+  /** Populated when API returns application with user relation */
+  user?: User;
 }
 
 /** User for auth contexts - minimal profile */
