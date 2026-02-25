@@ -8,7 +8,7 @@ import {
   type CreateCourseRequest,
   type UpdateCourseRequest,
 } from '@/lib/api/services';
-import type { Course } from '@/types/type';
+import type { Course } from "@/domain";
 
 import  {courseServiceUser,type GetCoursesForUserParams} from '@/lib/api/services/user'
 export const courseKeys = {

@@ -6,7 +6,7 @@ import {
   type UserNotificationStats,
 } from "@/lib/api/services";
 import type { ApiResponse } from "@/lib/api/types";
-import type { InAppNotification } from "@/types/type";
+import type { InAppNotification } from "@/domain";
 
 interface NotificationQueryParams {
   page?: number;
