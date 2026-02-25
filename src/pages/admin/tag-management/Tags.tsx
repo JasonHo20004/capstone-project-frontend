@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Plus, Tag as TagIcon } from "lucide-react";
-import { Tag } from "@/types/type";
+import type { Tag } from "@/domain";
 import DataTable from "@/components/admin/DataTable";
 import FilterSection from "@/components/admin/FilterSection";
 import StatCard from "@/components/admin/StatCard";

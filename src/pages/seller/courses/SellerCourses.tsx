@@ -13,7 +13,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { useProfile } from '@/hooks/api/use-user';
 import CreateCourseDialog from '@/components/seller/CreateCourseDialog';
-import type { Course } from '@/types/type';
+import type { Course } from "@/domain";
 
 export default function SellerCourses() {
   const navigate = useNavigate();

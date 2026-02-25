@@ -39,7 +39,7 @@ import {
   Save,
   X as XIcon,
 } from "lucide-react";
-import { User } from "@/types/type";
+import type { User } from "@/domain";
 import DataTable from "@/components/admin/DataTable";
 import FilterSection from "@/components/admin/FilterSection";
 import StatCard from "@/components/admin/StatCard";

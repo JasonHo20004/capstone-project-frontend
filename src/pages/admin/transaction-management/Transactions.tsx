@@ -29,7 +29,7 @@ import type {
   TransactionFilters,
   TransactionWithRelations,
 } from "@/lib/api/types/transaction.types";
-import type { TransactionStatus } from "@/types/type";
+import type { TransactionStatus } from "@/domain";
 import DataTable from "@/components/admin/DataTable";
 
 export default function TransactionsManagement() {

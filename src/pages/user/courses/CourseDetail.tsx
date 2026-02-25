@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatVND } from '@/lib/utils';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
 import CourseReportDialog from '@/components/user/course/CourseReportDialog';
-import type { Lesson, Report } from '@/types/type';
+import type { Lesson, Report, CourseLesson } from "@/domain";
+import type { Test, Section } from "@/types/type";
 
 // --- HOOKS API ---
 import { useGetCourseDetail, useGetMyCourses } from '@/hooks/api/use-courses';
@@ -56,29 +57,48 @@ const CourseDetail = () => {
     isPurchased ? id : undefined
   );
 
-  // Lấy thông tin giảng viên
-  const instructor = useMemo(() => {
+  // Lấy thông tin giảng viên (API có thể trả thêm profilePicture, email, etc.)
+  type InstructorInfo = {
+    fullName: string;
+    id?: string;
+    email?: string;
+    profilePicture?: string | null;
+    phoneNumber?: string;
+    englishLevel?: string;
+  };
+  const instructor = useMemo((): InstructorInfo | null => {
     if (!course) return null;
-    return (
-      course.user ??
-      course.courseSeller ?? {
-        fullName: "Unknown Instructor",
-        email: "",
-        profilePicture: null,
-        phoneNumber: "",
-        learningGoals: [],
-        englishLevel: "",
-        thumbnailUrl: "",
-      }
-    );
+    const src = course.user ?? course.courseSeller;
+    if (src) {
+      return {
+        fullName: src.fullName,
+        id: src.id,
+        ...(src as Record<string, unknown>),
+      } as InstructorInfo;
+    }
+    return {
+      fullName: "Unknown Instructor",
+      email: "",
+      profilePicture: null,
+      phoneNumber: "",
+      englishLevel: "",
+    };
   }, [course]);
 
   const courseLessons: Lesson[] = useMemo(() => {
-    return course?.lessons ?? [];
+    const raw = course?.lessons ?? [];
+    return raw
+      .map((item) => {
+        const cl = item as CourseLesson;
+        if (cl.lesson) return cl.lesson;
+        return "id" in item && "title" in item ? (item as unknown as Lesson) : null;
+      })
+      .filter((l): l is Lesson => l != null);
   }, [course]);
 
   const relatedTests = useMemo(() => {
-    return course?.test ? [course.test] : [];
+    const c = course as { test?: Test } | undefined;
+    return c?.test ? [c.test] : [];
   }, [course]);
 
   const averageRating = useMemo(() => {
@@ -86,7 +106,8 @@ const CourseDetail = () => {
     if (course.averageRating != null)
       return Number(course.averageRating.toFixed(1));
 
-    const ratings = course.ratings ?? [];
+    const c = course as { ratings?: { score?: number }[] };
+    const ratings = c.ratings ?? [];
     if (ratings.length === 0) return 0;
     const sum = ratings.reduce((acc, r) => acc + (r.score ?? 0), 0);
     return Number((sum / ratings.length).toFixed(1));
@@ -486,7 +507,7 @@ const CourseDetail = () => {
                         </h3>
                         {relatedTests.length > 0 ? (
                           <div className="space-y-4">
-                            {relatedTests.map((test: import('@/types/type').Test) => (
+                            {relatedTests.map((test: Test) => (
                               <div
                                 key={test.id}
                                 className="border border-border rounded-xl p-5"
@@ -506,7 +527,7 @@ const CourseDetail = () => {
                                 </div>
                                 {test.sections && test.sections.length > 0 && (
                                   <ul className="grid sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-border/50">
-                                    {test.sections.map((section: import('@/types/type').Section) => (
+                                    {test.sections.map((section: Section) => (
                                       <li
                                         key={section.id}
                                         className="bg-muted/30 rounded-lg p-3 text-sm"

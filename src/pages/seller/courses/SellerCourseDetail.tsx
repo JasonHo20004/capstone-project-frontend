@@ -16,7 +16,7 @@ import CreateLessonDialog from '@/components/seller/CreateLessonDialog';
 import { Plus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
-import type { CourseStatus, CourseLevel, Lesson, Comment } from '@/types/type';
+import type { CourseStatus, CourseLevel, Lesson, Comment } from "@/domain";
 
 type Draft = Partial<{
   title: string;

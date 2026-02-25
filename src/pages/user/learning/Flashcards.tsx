@@ -33,7 +33,7 @@ import {
   ChevronsUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { FlashcardDeck, Flashcard, Tag } from "@/types/type";
+import type { FlashcardDeck, Flashcard, Tag } from "@/domain";
 import DeckList from "@/components/user/flashcards/DeckList";
 import CardList from "@/components/user/flashcards/CardList";
 import StudyMode from "@/components/user/flashcards/StudyMode";
