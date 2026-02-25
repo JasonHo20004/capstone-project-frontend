@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -27,14 +28,16 @@ import {
   Calendar,
   Package
 } from 'lucide-react';
-import { mockSubscriptionPlans } from '@/data/mock';
-import { SubscriptionPlan } from '@/types/type';
+import type { SubscriptionPlan } from "@/domain";
+import { useSubscriptionPlans, useCreateSubscriptionPlan, useUpdateSubscriptionPlan } from '@/hooks/api/use-subscription-plans';
 import StatCard from '@/components/admin/StatCard';
 import FilterSection from '@/components/admin/FilterSection';
 import DataTable from '@/components/admin/DataTable';
 
 export default function SubscriptionPlansManagement() {
-  const [plans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
+  const { data: plans = [], isLoading } = useSubscriptionPlans();
+  const createPlanMutation = useCreateSubscriptionPlan();
+  const updatePlanMutation = useUpdateSubscriptionPlan();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -53,9 +56,9 @@ export default function SubscriptionPlansManagement() {
 
   const stats = {
     totalPlans: plans.length,
-    averageFee: plans.reduce((sum, plan) => sum + plan.monthlyFee, 0) / plans.length,
-    maxCourses: Math.max(...plans.map(plan => plan.maxCourses)),
-    minFee: Math.min(...plans.map(plan => plan.monthlyFee))
+    averageFee: plans.length > 0 ? plans.reduce((sum, plan) => sum + plan.monthlyFee, 0) / plans.length : 0,
+    maxCourses: plans.length > 0 ? Math.max(...plans.map(plan => plan.maxCourses)) : 0,
+    minFee: plans.length > 0 ? Math.min(...plans.map(plan => plan.monthlyFee)) : 0
   };
 
   const formatCurrency = (amount: number) => {
@@ -66,16 +69,26 @@ export default function SubscriptionPlansManagement() {
   };
 
   const handleCreatePlan = () => {
-    console.log('Creating plan:', newPlan);
-    setIsCreateDialogOpen(false);
-    setNewPlan({ name: '', description: '', maxCourses: 0, monthlyFee: 0 });
+    createPlanMutation.mutate(newPlan, {
+      onSuccess: () => {
+        setIsCreateDialogOpen(false);
+        setNewPlan({ name: '', description: '', maxCourses: 0, monthlyFee: 0 });
+      },
+    });
   };
 
   const handleEditPlan = () => {
-    console.log('Editing plan:', selectedPlan?.id, newPlan);
-    setIsEditDialogOpen(false);
-    setSelectedPlan(null);
-    setNewPlan({ name: '', description: '', maxCourses: 0, monthlyFee: 0 });
+    if (!selectedPlan) return;
+    updatePlanMutation.mutate(
+      { id: selectedPlan.id, data: newPlan },
+      {
+        onSuccess: () => {
+          setIsEditDialogOpen(false);
+          setSelectedPlan(null);
+          setNewPlan({ name: '', description: '', maxCourses: 0, monthlyFee: 0 });
+        },
+      }
+    );
   };
 
   const openEditDialog = (plan: SubscriptionPlan) => {
@@ -147,6 +160,14 @@ export default function SubscriptionPlansManagement() {
       )
     }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

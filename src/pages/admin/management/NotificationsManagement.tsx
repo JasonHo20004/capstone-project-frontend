@@ -30,7 +30,7 @@ import {
   UserCog
 } from 'lucide-react';
 import { notificationService } from '@/lib/api/services';
-import type { InAppNotification, NotificationType, User } from '@/types/type';
+import type { InAppNotification, NotificationType, User } from "@/domain";
 import StatCard from '@/components/admin/StatCard';
 import FilterSection from '@/components/admin/FilterSection';
 import DataTable from '@/components/admin/DataTable';

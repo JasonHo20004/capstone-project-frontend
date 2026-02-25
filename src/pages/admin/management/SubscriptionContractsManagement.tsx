@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, RefreshCw, Edit, Eye, Calendar, User as UserIcon, Package, DollarSign, FileText } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, RefreshCw, Edit, Loader2, Calendar, User as UserIcon, DollarSign, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,8 +12,16 @@ import { toast } from 'sonner';
 import StatCard from '@/components/admin/StatCard';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
-import { mockSubscriptionContracts, mockSubscriptionPlans, mockUsers } from '@/data/mock';
-import { SubscriptionContract, SubscriptionPlan, User } from '@/types/type';
+import type { SubscriptionContract, SubscriptionPlan } from "@/domain";
+import type { SubscriptionContractWithRelations } from "@/lib/api/services/admin";
+import { userManagementService } from "@/lib/api/services/admin";
+import {
+  useSubscriptionContracts,
+  useCreateSubscriptionContract,
+  useUpdateSubscriptionContract,
+  useRenewSubscriptionContract,
+} from "@/hooks/api/use-subscription-contracts";
+import { useSubscriptionPlans } from "@/hooks/api/use-subscription-plans";
 
 interface ContractFormData {
   courseSellerId: string;
@@ -31,13 +40,24 @@ interface RenewalFormData {
 }
 
 const SubscriptionContractsManagement: React.FC = () => {
-  const [contracts, setContracts] = useState<SubscriptionContract[]>(mockSubscriptionContracts);
+  const { data: contracts = [], isLoading } = useSubscriptionContracts();
+  const { data: plans = [] } = useSubscriptionPlans();
+  const { data: usersData } = useQuery({
+    queryKey: ['admin', 'users'],
+    queryFn: () => userManagementService.getUsers(),
+  });
+  const courseSellers = (usersData?.data?.users ?? []).filter(
+    (u) => u.role === 'COURSESELLER'
+  );
+  const createContractMutation = useCreateSubscriptionContract();
+  const updateContractMutation = useUpdateSubscriptionContract();
+  const renewContractMutation = useRenewSubscriptionContract();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [planFilter, setPlanFilter] = useState('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<SubscriptionContract | null>(null);
+  const [selectedContract, setSelectedContract] = useState<SubscriptionContractWithRelations | null>(null);
   const [createFormData, setCreateFormData] = useState<ContractFormData>({
     courseSellerId: '',
     subscriptionPlanId: '',
@@ -75,8 +95,10 @@ const SubscriptionContractsManagement: React.FC = () => {
   // Filter contracts based on search and filters
   const filteredContracts = useMemo(() => {
     return contracts.filter(contract => {
-      const matchesSearch = contract.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           contract.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const user = contract.user;
+      if (!user) return false;
+      const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.email?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || 
                            (statusFilter === 'active' && contract.status) ||
                            (statusFilter === 'expired' && !contract.status);
@@ -92,8 +114,8 @@ const SubscriptionContractsManagement: React.FC = () => {
     const activeContracts = contracts.filter(c => c.status).length;
     const expiredContracts = contracts.filter(c => !c.status).length;
     const totalRevenue = contracts
-      .filter(c => c.status)
-      .reduce((sum, c) => sum + c.subscriptionPlan.monthlyFee, 0);
+      .filter(c => c.status && c.subscriptionPlan)
+      .reduce((sum, c) => sum + (c.subscriptionPlan?.monthlyFee ?? 0), 0);
 
     return {
       totalContracts,
@@ -110,36 +132,23 @@ const SubscriptionContractsManagement: React.FC = () => {
       return;
     }
 
-    const selectedUser = mockUsers.find(u => u.id === createFormData.courseSellerId);
-    const selectedPlan = mockSubscriptionPlans.find(p => p.id === createFormData.subscriptionPlanId);
-
-    if (!selectedUser || !selectedPlan) {
-      toast.error('Không tìm thấy người dùng hoặc gói subscription');
-      return;
-    }
-
-    const newContract: SubscriptionContract = {
-      id: `sc${Date.now()}`,
-      courseSellerId: createFormData.courseSellerId,
-      status: true,
-      subscriptionPlanId: createFormData.subscriptionPlanId,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-      updatedAt: new Date().toISOString(),
-      renewalCount: 0,
-      notes: createFormData.notes,
-      user: selectedUser,
-      subscriptionPlan: selectedPlan
-    };
-
-    setContracts([...contracts, newContract]);
-    setCreateFormData({ courseSellerId: '', subscriptionPlanId: '', notes: '' });
-    setIsCreateDialogOpen(false);
-    toast.success('Tạo hợp đồng thành công');
+    createContractMutation.mutate(
+      {
+        courseSellerId: createFormData.courseSellerId,
+        subscriptionPlanId: createFormData.subscriptionPlanId,
+        notes: createFormData.notes,
+      },
+      {
+        onSuccess: () => {
+          setCreateFormData({ courseSellerId: '', subscriptionPlanId: '', notes: '' });
+          setIsCreateDialogOpen(false);
+        },
+      }
+    );
   };
 
   // Open renewal dialog
-  const openRenewalDialog = (contract: SubscriptionContract) => {
+  const openRenewalDialog = (contract: SubscriptionContractWithRelations) => {
     setSelectedContract(contract);
     setRenewalFormData({
       subscriptionPlanId: contract.subscriptionPlanId,
@@ -150,66 +159,49 @@ const SubscriptionContractsManagement: React.FC = () => {
 
   // Handle renew contract
   const handleRenewContract = () => {
-    if (!selectedContract) return;
+    if (!selectedContract || !renewalFormData.subscriptionPlanId) return;
 
-    const selectedPlan = mockSubscriptionPlans.find(p => p.id === renewalFormData.subscriptionPlanId);
-    if (!selectedPlan) {
-      toast.error('Vui lòng chọn gói đăng ký');
-      return;
-    }
-
-    const updatedContracts = contracts.map(c => {
-       if (c.id === selectedContract.id) {
-         // Always calculate new expiry date from current expiry date (add 1 month)
-         const currentExpiry = new Date(c.expiresAt);
-         const newExpiry = new Date(currentExpiry.getTime() + 30 * 24 * 60 * 60 * 1000); // Add 30 days to current expiry
-        
-        return {
-          ...c,
-          status: true,
+    renewContractMutation.mutate(
+      {
+        id: selectedContract.id,
+        data: {
           subscriptionPlanId: renewalFormData.subscriptionPlanId,
-          subscriptionPlan: selectedPlan,
-          expiresAt: newExpiry.toISOString(),
-          updatedAt: new Date().toISOString(),
-          renewalCount: c.renewalCount + 1,
-          lastRenewalAt: new Date().toISOString(),
-          notes: renewalFormData.notes || c.notes
-        };
+          notes: renewalFormData.notes,
+        },
+      },
+      {
+        onSuccess: () => {
+          setRenewalFormData({ subscriptionPlanId: '', notes: '' });
+          setIsRenewalDialogOpen(false);
+          setSelectedContract(null);
+        },
       }
-      return c;
-    });
-
-    setContracts(updatedContracts);
-    setRenewalFormData({ subscriptionPlanId: '', notes: '' });
-    setIsRenewalDialogOpen(false);
-    setSelectedContract(null);
-    toast.success('Gia hạn hợp đồng thành công');
+    );
   };
 
   // Handle update contract
   const handleUpdateContract = () => {
     if (!selectedContract) return;
 
-    const updatedContracts = contracts.map(c => {
-      if (c.id === selectedContract.id) {
-        return {
-          ...c,
+    updateContractMutation.mutate(
+      {
+        id: selectedContract.id,
+        data: {
           status: updateFormData.status,
-          notes: updateFormData.notes || c.notes,
-          updatedAt: new Date().toISOString()
-        };
+          notes: updateFormData.notes,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsUpdateDialogOpen(false);
+          setSelectedContract(null);
+        },
       }
-      return c;
-    });
-
-    setContracts(updatedContracts);
-    setIsUpdateDialogOpen(false);
-    setSelectedContract(null);
-    toast.success('Cập nhật hợp đồng thành công');
+    );
   };
 
   // Open update dialog
-  const openUpdateDialog = (contract: SubscriptionContract) => {
+  const openUpdateDialog = (contract: SubscriptionContractWithRelations) => {
     setSelectedContract(contract);
     setUpdateFormData({
       status: contract.status,
@@ -223,21 +215,21 @@ const SubscriptionContractsManagement: React.FC = () => {
     {
       key: 'user',
       header: 'Người dùng',
-      render: (contract: SubscriptionContract) => (
+      render: (contract: SubscriptionContractWithRelations) => (
         <div className="flex flex-col">
-          <span className="font-medium">{contract.user.fullName}</span>
-          <span className="text-sm text-gray-500">{contract.user.email}</span>
+          <span className="font-medium">{contract.user?.fullName ?? '—'}</span>
+          <span className="text-sm text-gray-500">{contract.user?.email ?? '—'}</span>
         </div>
       )
     },
     {
       key: 'subscriptionPlan',
       header: 'Gói subscription',
-      render: (contract: SubscriptionContract) => (
+      render: (contract: SubscriptionContractWithRelations) => (
         <div className="flex flex-col">
-          <span className="font-medium">{contract.subscriptionPlan.name}</span>
+          <span className="font-medium">{contract.subscriptionPlan?.name ?? '—'}</span>
           <span className="text-sm text-gray-500">
-            {contract.subscriptionPlan.monthlyFee.toLocaleString('vi-VN')} VND/tháng
+            {contract.subscriptionPlan ? `${contract.subscriptionPlan.monthlyFee.toLocaleString('vi-VN')} VND/tháng` : '—'}
           </span>
         </div>
       )
@@ -245,7 +237,7 @@ const SubscriptionContractsManagement: React.FC = () => {
     {
       key: 'status',
       header: 'Trạng thái',
-      render: (contract: SubscriptionContract) => (
+      render: (contract: SubscriptionContractWithRelations) => (
         <Badge variant={contract.status ? 'default' : 'destructive'}>
           {contract.status ? 'Đang hoạt động' : 'Hết hạn'}
         </Badge>
@@ -254,7 +246,7 @@ const SubscriptionContractsManagement: React.FC = () => {
     {
       key: 'dates',
       header: 'Ngày tạo / Hết hạn',
-      render: (contract: SubscriptionContract) => (
+      render: (contract: SubscriptionContractWithRelations) => (
         <div className="flex flex-col text-sm">
           <span>Tạo: {new Date(contract.createdAt).toLocaleDateString('vi-VN')}</span>
           <span>Hết hạn: {new Date(contract.expiresAt).toLocaleDateString('vi-VN')}</span>
@@ -264,14 +256,14 @@ const SubscriptionContractsManagement: React.FC = () => {
     {
       key: 'renewalCount',
       header: 'Số lần gia hạn',
-      render: (contract: SubscriptionContract) => (
+      render: (contract: SubscriptionContractWithRelations) => (
         <span className="font-medium">{contract.renewalCount}</span>
       )
     },
     {
       key: 'notes',
       header: 'Ghi chú',
-      render: (contract: SubscriptionContract) => (
+      render: (contract: SubscriptionContractWithRelations) => (
         <span className="text-sm text-gray-600 max-w-xs truncate">
           {contract.notes || 'Không có ghi chú'}
         </span>
@@ -280,7 +272,7 @@ const SubscriptionContractsManagement: React.FC = () => {
     {
       key: 'actions',
       header: 'Thao tác',
-      render: (contract: SubscriptionContract) => (
+      render: (contract: SubscriptionContractWithRelations) => (
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -325,13 +317,21 @@ const SubscriptionContractsManagement: React.FC = () => {
       placeholder: 'Chọn gói',
       options: [
         { value: 'all', label: 'Tất cả gói' },
-        ...mockSubscriptionPlans.map(plan => ({
+        ...plans.map(plan => ({
           value: plan.id,
           label: plan.name
         }))
       ]
     }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -364,7 +364,7 @@ const SubscriptionContractsManagement: React.FC = () => {
                     <SelectValue placeholder="Chọn người dùng" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockUsers.filter(user => user.role === 'COURSESELLER').map(user => (
+                    {courseSellers.map(user => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.fullName} ({user.email})
                       </SelectItem>
@@ -383,7 +383,7 @@ const SubscriptionContractsManagement: React.FC = () => {
                     <SelectValue placeholder="Chọn gói subscription" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockSubscriptionPlans.map(plan => (
+                    {plans.map(plan => (
                       <SelectItem key={plan.id} value={plan.id}>
                         {plan.name} - {plan.monthlyFee.toLocaleString('vi-VN')} VND/tháng
                       </SelectItem>
@@ -488,10 +488,10 @@ const SubscriptionContractsManagement: React.FC = () => {
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium">Thông tin hợp đồng</h4>
                 <p className="text-sm text-gray-600">
-                  Người dùng: {selectedContract.user.fullName}
+                  Người dùng: {selectedContract.user?.fullName ?? '—'}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Gói: {selectedContract.subscriptionPlan.name}
+                  Gói: {selectedContract.subscriptionPlan?.name ?? '—'}
                 </p>
               </div>
               
@@ -551,10 +551,10 @@ const SubscriptionContractsManagement: React.FC = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-medium">Thông tin hợp đồng</h4>
                 <p className="text-sm text-gray-600">
-                  Người dùng: {selectedContract.user.fullName}
+                  Người dùng: {selectedContract.user?.fullName ?? '—'}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Gói hiện tại: {selectedContract.subscriptionPlan.name}
+                  Gói hiện tại: {selectedContract.subscriptionPlan?.name ?? '—'}
                 </p>
                 <p className="text-sm text-gray-600">
                   Hết hạn: {new Date(selectedContract.expiresAt).toLocaleDateString('vi-VN')}
@@ -571,7 +571,7 @@ const SubscriptionContractsManagement: React.FC = () => {
                     <SelectValue placeholder="Chọn gói đăng ký" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockSubscriptionPlans.map(plan => (
+                    {plans.map(plan => (
                       <SelectItem key={plan.id} value={plan.id}>
                         {plan.name} - {plan.monthlyFee.toLocaleString('vi-VN')} VND/tháng
                       </SelectItem>

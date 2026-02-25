@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { TrendingUp, DollarSign, CreditCard, Calendar } from "lucide-react";
 import { revenueManagementService } from "@/lib/api/services/admin";
-import { Transaction } from "@/types/type";
+import type { Transaction } from "@/domain";
 import type { RevenueFilters } from "@/lib/api/types/revenue.types";
 import StatCard from "@/components/admin/StatCard";
 import ChartCard from "@/components/admin/ChartCard";

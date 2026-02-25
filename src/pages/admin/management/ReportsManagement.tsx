@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,21 +28,24 @@ import {
   User,
   FileText
 } from 'lucide-react';
-import { mockReports } from '@/data/mock';
-import { Report } from '@/types/type';
+import type { Report } from "@/domain";
+import { useReports, useResolveReport, useRejectReport } from '@/hooks/api/use-reports';
+import type { ReportWithRelations } from '@/lib/api/services/admin';
 import StatCard from '@/components/admin/StatCard';
 import FilterSection from '@/components/admin/FilterSection';
 import DataTable from '@/components/admin/DataTable';
 
 export default function ReportsManagement() {
-  const [reports] = useState<Report[]>(mockReports);
+  const { data: reports = [], isLoading } = useReports();
+  const resolveReportMutation = useResolveReport();
+  const rejectReportMutation = useRejectReport();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedReport, setSelectedReport] = useState<ReportWithRelations | null>(null);
   const [responseText, setResponseText] = useState('');
 
-  const filteredReports = reports.filter(report => {
+  const filteredReports = reports.filter((report: ReportWithRelations) => {
     const matchesSearch = report.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'all' || report.reasonType === typeFilter;
     return matchesSearch && matchesType;
@@ -49,9 +53,9 @@ export default function ReportsManagement() {
 
   const stats = {
     totalReports: reports.length,
-    pendingReports: reports.length, // Since Report doesn't have status, showing total
-    resolvedReports: 0, // Since Report doesn't have status
-    rejectedReports: 0 // Since Report doesn't have status
+    pendingReports: reports.filter((r: ReportWithRelations) => !r.status || r.status === 'PENDING').length,
+    resolvedReports: reports.filter((r: ReportWithRelations) => r.status === 'RESOLVED').length,
+    rejectedReports: reports.filter((r: ReportWithRelations) => r.status === 'REJECTED').length
   };
 
   const formatDate = (date: string) => {
@@ -89,22 +93,24 @@ export default function ReportsManagement() {
   };
 
   const handleResolveReport = (reportId: string) => {
-    console.log('Resolving report:', reportId, 'with response:', responseText);
-    setSelectedReport(null);
-    setResponseText('');
+    resolveReportMutation.mutate(
+      { id: reportId, data: { responseText } },
+      { onSuccess: () => { setSelectedReport(null); setResponseText(''); } }
+    );
   };
 
   const handleRejectReport = (reportId: string) => {
-    console.log('Rejecting report:', reportId, 'with response:', responseText);
-    setSelectedReport(null);
-    setResponseText('');
+    rejectReportMutation.mutate(
+      { id: reportId, data: { responseText } },
+      { onSuccess: () => { setSelectedReport(null); setResponseText(''); } }
+    );
   };
 
   const columns = [
     {
       key: 'report',
       header: 'Báo cáo',
-      render: (report: Report) => (
+      render: (report: ReportWithRelations) => (
         <div className="max-w-xs">
           <div className="font-medium truncate">Báo cáo khóa học</div>
           <div className="text-sm text-muted-foreground truncate">
@@ -116,7 +122,7 @@ export default function ReportsManagement() {
     {
       key: 'reporter',
       header: 'Người báo cáo',
-      render: (report: Report) => (
+      render: (report: ReportWithRelations) => (
         <div className="text-sm">
           <div className="font-medium">{report.user?.fullName ?? report.userId}</div>
           {report.user?.email && (
@@ -128,7 +134,7 @@ export default function ReportsManagement() {
     {
       key: 'course',
       header: 'Khóa học',
-      render: (report: Report) => (
+      render: (report: ReportWithRelations) => (
         <div className="text-sm">
           <div className="font-medium truncate">{report.course?.title ?? report.courseId}</div>
           {report.course?.price !== undefined && (
@@ -140,19 +146,19 @@ export default function ReportsManagement() {
     {
       key: 'type',
       header: 'Lý do',
-      render: (report: Report) => getTypeBadge(report.reasonType)
+      render: (report: ReportWithRelations) => getTypeBadge(report.reasonType)
     },
     {
       key: 'createdAt',
       header: 'Ngày tạo',
-      render: (report: Report) => (
+      render: (report: ReportWithRelations) => (
         <div className="text-sm">{formatDate(report.createdAt)}</div>
       )
     },
     {
       key: 'actions',
       header: 'Thao tác',
-      render: (report: Report) => (
+      render: (report: ReportWithRelations) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -189,6 +195,14 @@ export default function ReportsManagement() {
     { value: 'UNRESPONSIVE_INSTRUCTOR', label: 'GV không phản hồi' },
     { value: 'INCOMPLETE_CONTENT', label: 'Nội dung thiếu' }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
