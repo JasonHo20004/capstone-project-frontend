@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { courseManagementService } from "@/lib/api/services/admin";
 import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Lesson, MediaType, Comment} from "@/types/type";
+import type { Lesson, MediaType, Comment } from "@/domain";
 
 export default function AdminLessonDetail() {
   const { lessonId } = useParams();

@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
 import { courseManagementService } from "@/lib/api/services/admin";
 import type { UpdateCourseRequest } from "@/lib/api/services/admin";
-import { CourseWithStats, CourseStatus, CourseLevel, Lesson, Rating } from "@/types/type";
+import { CourseWithStats, CourseStatus, CourseLevel, Lesson, Rating } from "@/domain";
+import type { Lesson as LessonType } from "@/domain";
 import {
   Select,
   SelectContent,
@@ -385,7 +386,7 @@ export default function AdminCourseDetail() {
 
             <TabsContent value="lessons" className="space-y-4">
               <div className="space-y-2">
-                {(courseDetailResp?.data?.lessons || []).map((ls: import('@/types/type').Lesson) => (
+                {(courseDetailResp?.data?.lessons || []).map((ls: LessonType) => (
                   <div
                     key={ls.id}
                     className="flex items-center justify-between border rounded p-3"

@@ -32,7 +32,7 @@ import {
   FileText,
   User
 } from 'lucide-react';
-import { CourseSellerApplication } from '@/types/type';
+import type { CourseSellerApplication } from "@/domain";
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import { applicationManagementService } from '@/lib/api/services/admin/application-management/application.service';
@@ -72,8 +72,9 @@ export default function ApplicationsManagement() {
   });
 
   const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm ||
+      app.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -128,8 +129,8 @@ export default function ApplicationsManagement() {
       header: 'Người nộp đơn',
       render: (app) => (
         <div>
-          <div className="font-medium">{app.user.fullName}</div>
-          <div className="text-sm text-muted-foreground">{app.user.email}</div>
+          <div className="font-medium">{app.user?.fullName ?? '—'}</div>
+          <div className="text-sm text-muted-foreground">{app.user?.email ?? '—'}</div>
         </div>
       )
     },
@@ -265,15 +266,15 @@ export default function ApplicationsManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Họ và tên</label>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.user.fullName}</p>
+                    <p className="text-sm text-muted-foreground">{selectedApplication.user?.fullName ?? '—'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Email</label>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.user.email}</p>
+                    <p className="text-sm text-muted-foreground">{selectedApplication.user?.email ?? '—'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Số điện thoại</label>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.user.phoneNumber || 'Chưa cung cấp'}</p>
+                    <p className="text-sm text-muted-foreground">{selectedApplication.user?.phoneNumber || 'Chưa cung cấp'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Trạng thái</label>
