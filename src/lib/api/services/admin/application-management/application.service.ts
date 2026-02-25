@@ -1,6 +1,6 @@
-import apiClient from "../../../config";
-import type { ApiResponse } from "../../../types";
-import type { CourseSellerApplication } from "@/types/type";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
+import type { CourseSellerApplication } from "@/domain";
 
 export interface UpdateApplicationStatusRequest {
   status: "APPROVED" | "REJECTED";

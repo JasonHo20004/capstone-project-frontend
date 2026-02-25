@@ -1,56 +1,18 @@
 import apiClient from '../config';
+import type { Course, Lesson } from "@/domain";
 import type {
-  ApiResponse,
-  PaginatedResponse,
-  PaginationParams,
-  EmptyResponse,
-} from '../types';
-import type {
-  Course,
-  CourseLesson,
-  CourseLevel,
-  Lesson,
-} from '@/types/type';
-
-/**
- * Course Service - Xử lý tất cả API calls liên quan đến courses
- */
-
-export interface CourseDetail extends Omit<Course, 'lessons'> {
-  lessons: CourseLesson[];
-}
-
-export interface GetCoursesParams extends PaginationParams {
-  search?: string;
-  category?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  courseLevel?: CourseLevel;
-  status?: Course['status'];
-}
-
-export interface SellerCoursesParams {
-  status?: Course['status'] | 'PUBLISHED' | 'ACTIVE' | 'PENDING';
-}
-
-export interface CreateCourseRequest {
-  title: string;
-  price: number;
-  description?: string;
-  category?: string;
-  courseLevel?: CourseLevel;
-  finalTestId?: string | null;
-}
-
-export interface UpdateCourseRequest {
-  title?: string;
-  price?: number;
-  description?: string;
-  category?: string;
-  courseLevel?: CourseLevel;
-  status?: Course['status'];
-  finalTestId?: string | null;
-}
+  CreateCourseRequest,
+  UpdateCourseRequest,
+  GetCoursesParams,
+  SellerCoursesParams,
+  GetCoursesResponse,
+  GetCourseDetailResponse,
+  GetSellerCoursesResponse,
+  GetLessonDetailResponse,
+  CreateOrUpdateCourseResponse,
+  DeleteCourseResponse,
+  PublishCourseResponse,
+} from '../types/course.types';
 
 class CourseService {
   /**
@@ -58,8 +20,8 @@ class CourseService {
    */
   async getCourses(
     params?: GetCoursesParams
-  ): Promise<ApiResponse<PaginatedResponse<Course>>> {
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<Course>>>(
+  ): Promise<GetCoursesResponse> {
+    const response = await apiClient.get<GetCoursesResponse>(
       '/courses',
       { params }
     );
@@ -69,8 +31,8 @@ class CourseService {
   /**
    * Lấy chi tiết một course
    */
-  async getCourseById(id: string): Promise<ApiResponse<CourseDetail>> {
-    const response = await apiClient.get<ApiResponse<CourseDetail>>(
+  async getCourseById(id: string): Promise<GetCourseDetailResponse> {
+    const response = await apiClient.get<GetCourseDetailResponse>(
       `/courses/${id}`
     );
     return response.data;
@@ -82,9 +44,9 @@ class CourseService {
    */
   async createCourse(
     data: CreateCourseRequest | FormData
-  ): Promise<ApiResponse<Course>> {
+  ): Promise<CreateOrUpdateCourseResponse> {
     // Axios interceptor will automatically handle FormData Content-Type with boundary
-    const response = await apiClient.post<ApiResponse<Course>>(
+    const response = await apiClient.post<CreateOrUpdateCourseResponse>(
       '/courses',
       data
     );
@@ -98,9 +60,9 @@ class CourseService {
   async updateCourse(
     id: string,
     data: UpdateCourseRequest | FormData
-  ): Promise<ApiResponse<Course>> {
+  ): Promise<CreateOrUpdateCourseResponse> {
     // Axios interceptor will automatically handle FormData Content-Type with boundary
-    const response = await apiClient.put<ApiResponse<Course>>(
+    const response = await apiClient.put<CreateOrUpdateCourseResponse>(
       `/courses/${id}`,
       data
     );
@@ -110,8 +72,8 @@ class CourseService {
   /**
    * Xóa course (Admin/Instructor)
    */
-  async deleteCourse(id: string): Promise<ApiResponse<EmptyResponse>> {
-    const response = await apiClient.delete<ApiResponse<EmptyResponse>>(
+  async deleteCourse(id: string): Promise<DeleteCourseResponse> {
+    const response = await apiClient.delete<DeleteCourseResponse>(
       `/courses/${id}`
     );
     return response.data;
@@ -120,8 +82,8 @@ class CourseService {
   /**
    * Publish course (seller/admin)
    */
-  async publishCourse(id: string): Promise<ApiResponse<Course>> {
-    const response = await apiClient.put<ApiResponse<Course>>(
+  async publishCourse(id: string): Promise<PublishCourseResponse> {
+    const response = await apiClient.put<PublishCourseResponse>(
       `/courses/${id}/publish`
     );
     return response.data;
@@ -133,9 +95,9 @@ class CourseService {
   async getCoursesBySeller(
     sellerId: string,
     params?: SellerCoursesParams
-  ): Promise<ApiResponse<{ data: Course[]; count: number }>> {
+  ): Promise<GetSellerCoursesResponse> {
     const response = await apiClient.get<
-      ApiResponse<{ data: Course[]; count: number }>
+      GetSellerCoursesResponse
     >(`/courses/seller/${sellerId}`, {
       params,
     });
@@ -147,9 +109,9 @@ class CourseService {
    */
   async getMyCourses(
     params?: SellerCoursesParams
-  ): Promise<ApiResponse<{ data: Course[]; count: number }>> {
+  ): Promise<GetSellerCoursesResponse> {
     const response = await apiClient.get<
-      ApiResponse<{ data: Course[]; count: number }>
+      GetSellerCoursesResponse
     >('/courses/seller/me', {
       params,
     });
@@ -159,8 +121,8 @@ class CourseService {
   /**
    * Lấy chi tiết một lesson
    */
-  async getLessonById(courseId: string, lessonId: string): Promise<ApiResponse<Lesson>> {
-    const response = await apiClient.get<ApiResponse<Lesson>>(
+  async getLessonById(courseId: string, lessonId: string): Promise<GetLessonDetailResponse> {
+    const response = await apiClient.get<GetLessonDetailResponse>(
       `/courses/${courseId}/lessons/${lessonId}`
     );
     return response.data;
@@ -172,8 +134,8 @@ class CourseService {
   async createLesson(
     courseId: string,
     data: FormData
-  ): Promise<ApiResponse<Lesson>> {
-    const response = await apiClient.post<ApiResponse<Lesson>>(
+  ): Promise<GetLessonDetailResponse> {
+    const response = await apiClient.post<GetLessonDetailResponse>(
       `/courses/${courseId}/lessons`,
       data,
       {

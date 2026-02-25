@@ -1,5 +1,7 @@
-import apiClient from "../config";
-import type { ApiResponse, InAppNotification, PaginationMeta } from "../types";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
+import type { InAppNotification } from "@/domain";
+import type { PaginationMeta } from "@/lib/api/types";
 
 export interface UserNotificationsResponse {
   notifications: InAppNotification[];

@@ -1,6 +1,6 @@
-import apiClient from "../../../config";
-import type { ApiResponse } from "../../../types";
-import type { Course, CourseLevel, CourseStatus, Lesson, Rating } from "@/types/type";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
+import type { Course, CourseLevel, CourseStatus, Lesson, Rating } from "@/domain";
 
 export interface UpdateCourseRequest {
   title?: string;

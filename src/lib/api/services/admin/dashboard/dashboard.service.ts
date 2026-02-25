@@ -1,12 +1,12 @@
-import apiClient from "../../../config";
-import type { ApiResponse } from "../../../types";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
 import type {
   DashboardData,
   DashboardStats,
   MonthlyRevenueData,
   MonthlyUserGrowthData,
   CourseStatusData,
-} from "../../../types/dashboard.types";
+} from "@/lib/api/types/dashboard.types";
 
 class DashboardService {
   /**
