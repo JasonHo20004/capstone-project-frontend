@@ -16,7 +16,7 @@ import CreateLessonDialog from '@/components/seller/CreateLessonDialog';
 import { Plus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
-import type { CourseStatus, CourseLevel, Lesson, Comment } from "@/domain";
+import type { CourseStatus, CourseLevel, Lesson, Comment, Rating, CourseLesson } from "@/domain";
 
 type Draft = Partial<{
   title: string;
@@ -38,13 +38,16 @@ export default function SellerCourseDetail() {
     if (!course?.lessons) return [];
 
     // Backend may return CourseLesson[] with nested Lesson in `.lesson`
-    return (course.lessons as any[])
-      .map((item) => (item.lesson ? item.lesson : item))
+    return (course.lessons as Array<CourseLesson | Lesson>)
+      .map((item) => (item as CourseLesson).lesson ? (item as CourseLesson).lesson : item as Lesson)
       .filter((l): l is Lesson => !!l && typeof l.id === 'string')
       .slice()
       .sort((a, b) => (a.lessonOrder ?? 0) - (b.lessonOrder ?? 0));
   }, [course]);
-  const ratings = useMemo(() => course?.ratings ?? [], [course]);
+  const ratings = useMemo(
+    () => (course as { ratings?: Rating[] })?.ratings ?? [],
+    [course],
+  );
   const totalComments = useMemo(
     () => lessons.reduce((sum, lesson) => sum + (lesson.commentCount ?? 0), 0),
     [lessons],
@@ -65,7 +68,7 @@ export default function SellerCourseDetail() {
       return Number.isNaN(value) ? undefined : Number(value.toFixed(2));
     }
 
-    const ratingList = course.ratings as { score: number }[] | undefined;
+    const ratingList = (course as { ratings?: { score: number }[] }).ratings;
     if (!ratingList || ratingList.length === 0) return undefined;
 
     const sum = ratingList.reduce((acc, r) => acc + (r.score || 0), 0);
@@ -244,7 +247,7 @@ export default function SellerCourseDetail() {
                 <span className="font-medium">Đánh giá TB:</span>{' '}
                 {averageRating != null && averageRating > 0 ? averageRating.toFixed(2) : '-'}
                 {' '}
-                ({merged.ratingCount ?? course?.ratings?.length ?? 0})
+                ({merged.ratingCount ?? (course as { ratings?: unknown[] })?.ratings?.length ?? 0})
               </div>
               <div><span className="font-medium">Bình luận:</span> {totalComments}</div>
               <div>
@@ -378,12 +381,14 @@ export default function SellerCourseDetail() {
 
                     <Card>
                       <CardHeader>
-                        <CardTitle>Bình luận ({lessonDetail?.comments?.length ?? lessons.find((x) => x.id === selectedLessonId)?.commentCount ?? 0})</CardTitle>
+                        <CardTitle>Bình luận ({(lessonDetail as Lesson & { comments?: Comment[] })?.comments?.length ?? lessons.find((x) => x.id === selectedLessonId)?.commentCount ?? 0})</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {lessonDetail?.comments && lessonDetail.comments.length > 0 ? (
+                        {(() => {
+                          const comments = (lessonDetail as Lesson & { comments?: Comment[] })?.comments;
+                          return comments && comments.length > 0 ? (
                           <div className="space-y-3">
-                            {lessonDetail.comments.map((comment: Comment) => (
+                            {comments.map((comment: Comment & { user?: { fullName?: string; profilePicture?: string } }) => (
                               <div key={comment.id} className="rounded-lg border p-3">
                                 <div className="flex items-start gap-3">
                                   {comment.user?.profilePicture && (
@@ -412,7 +417,8 @@ export default function SellerCourseDetail() {
                           <p className="text-sm text-muted-foreground">
                             Chưa có bình luận nào cho bài học này.
                           </p>
-                        )}
+                        );
+                        })()}
                       </CardContent>
                     </Card>
                   </div>
