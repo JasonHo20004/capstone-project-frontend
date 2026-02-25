@@ -1,65 +1,20 @@
 import apiClient from '@/lib/api/config';
-import type { ApiResponse, EmptyResponse } from '@/lib/api/types';
-
-/**
- * Auth Service - Xử lý tất cả API calls liên quan đến authentication
- */
-
-// Types cho Auth
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken?: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-  };
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  fullName: string;       // Thay cho 'name'
-  phoneNumber?: string;   // Mới
-  dateOfBirth?: string;   // Mới (ISO String)
-}
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
-
-export interface RefreshTokenResponse {
-  accessToken: string;
-}
-
-export interface RegisterRequest {
-  fullName: string;
-  email: string;
-  password: string;
-}
-
-export interface RegisterResponse {
-  accessToken: string;
-  refreshToken?: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-  };
-}
+import type {
+  LoginRequest,
+  LoginApiResponse,
+  RegisterRequest,
+  RegisterApiResponse,
+  RefreshTokenRequest,
+  RefreshTokenApiResponse,
+  LogoutApiResponse,
+} from '@/lib/api/types/auth.types';
 
 class AuthService {
   /**
    * Đăng nhập
    */
-  async login(data: LoginRequest): Promise<ApiResponse<LoginResponse>> {
-    const response = await apiClient.post<ApiResponse<LoginResponse>>(
+  async login(data: LoginRequest): Promise<LoginApiResponse> {
+    const response = await apiClient.post<LoginApiResponse>(
       '/auth/login',
       data
     );
@@ -71,9 +26,10 @@ class AuthService {
    */
   async refreshToken(
     data: RefreshTokenRequest
-  ): Promise<ApiResponse<RefreshTokenResponse>> {
-    const response = await apiClient.post<ApiResponse<RefreshTokenResponse>>(
-      '/auth/refresh'
+  ): Promise<RefreshTokenApiResponse> {
+    const response = await apiClient.post<RefreshTokenApiResponse>(
+      '/auth/refresh',
+      data
     );
     return response.data;
   }
@@ -81,8 +37,8 @@ class AuthService {
   /**
    * Đăng ký
    */
-  async register(data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> {
-    const response = await apiClient.post<ApiResponse<RegisterResponse>>(
+  async register(data: RegisterRequest): Promise<RegisterApiResponse> {
+    const response = await apiClient.post<RegisterApiResponse>(
       '/users/register',
       data
     );
@@ -92,8 +48,8 @@ class AuthService {
   /**
    * Đăng xuất
    */
-  async logout(): Promise<ApiResponse<EmptyResponse>> {
-    const response = await apiClient.post<ApiResponse<EmptyResponse>>(
+  async logout(): Promise<LogoutApiResponse> {
+    const response = await apiClient.post<LogoutApiResponse>(
       '/auth/logout',
     );
     return response.data;

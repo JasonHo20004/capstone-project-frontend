@@ -1,7 +1,7 @@
 // src/lib/api/services/cart.service.ts
 import apiClient from '@/lib/api/config'
 import type { ApiResponse } from  '@/lib/api/types'; // Assuming you have a generic ApiResponse type
-import type { Cart } from '@/types/type';
+import type { Cart } from "@/domain";
 
 export interface CheckoutResponse {
   id: string; // Order ID

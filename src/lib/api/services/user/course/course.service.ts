@@ -1,6 +1,6 @@
 import apiClient from '@/lib/api/config';
 import type { ApiResponse, PaginatedResponse } from '@/lib/api/types';
-import type { Course } from '@/types/type';
+import type { Course } from "@/domain";
 
 export interface GetCoursesForUserParams {
   page?: number;

@@ -1,6 +1,6 @@
 import apiClient from '@/lib/api/config';
 import type { ApiResponse } from '@/lib/api/types';
-import type { Tag } from '@/types/type';
+import type { Tag } from "@/domain";
 
 export interface CreateTagDTO {
   name: string;

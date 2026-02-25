@@ -1,6 +1,6 @@
 import apiClient from '@/lib/api/config';
 import type { ApiResponse } from '@/lib/api/types';
-import type { Wallet } from '@/types/type'; // Giả sử bạn đã có type Wallet
+import type { Wallet } from "@/domain";
 
 export interface CreateTopupRequest {
   realMoney: number;

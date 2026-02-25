@@ -4,7 +4,7 @@ import type {
   FlashcardDeck,
   Flashcard,
   UserFlashcardProgress,
-} from "@/types/type";
+} from "@/domain";
 
 export type ReviewQuality = 1 | 3 | 4 | 5; // Dựa theo backend service
 

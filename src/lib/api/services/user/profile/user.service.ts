@@ -1,6 +1,6 @@
 import apiClient from "@/lib/api/config";
 import type { ApiResponse } from "@/lib/api/types";
-import type { User, CourseSellerApplication } from "@/types/type";
+import type { User, CourseSellerApplication } from "@/domain";
 
 export interface UpdateProfileDTO {
   fullName?: string;
@@ -46,10 +46,10 @@ class UserService {
     return response.data;
   }
 
-  async createCourseSellerApplication(formData: FormData): Promise<ApiResponse<import('@/types/type').CourseSellerApplication>> {
+  async createCourseSellerApplication(formData: FormData): Promise<ApiResponse<CourseSellerApplication>> {
     // Axios tự động set Content-Type là multipart/form-data khi data là FormData
     // NHƯNG cần lưu ý: Đừng set thủ công Content-Type: application/json
-    const response = await apiClient.post<ApiResponse<import('@/types/type').CourseSellerApplication>>(
+    const response = await apiClient.post<ApiResponse<CourseSellerApplication>>(
       '/users/me/course-seller-application',
       formData,
       {
