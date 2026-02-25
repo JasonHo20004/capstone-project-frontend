@@ -1,17 +1,26 @@
-import { Transaction, TransactionType, TransactionStatus } from '@/types/type';
+import type {
+  Transaction,
+  TransactionType,
+  TransactionStatus,
+} from "@/domain";
+import type { ApiResponse } from "../types";
+
+/**
+ * Transaction API Types - request/response contracts for admin transaction management endpoints
+ */
 
 export interface TransactionFilters {
-  search?: string; // Search by description or ID
+  search?: string;
   status?: TransactionStatus | 'all';
   transactionType?: TransactionType | 'all';
-  startDate?: string; // ISO date string
-  endDate?: string; // ISO date string
+  startDate?: string;
+  endDate?: string;
   walletId?: string;
   page?: number;
   limit?: number;
 }
 
-// Extended transaction type with relationships
+/** Extended transaction type with relationships for list/detail views */
 export interface TransactionWithRelations extends Transaction {
   wallet: {
     id: string;
@@ -60,3 +69,11 @@ export interface TransactionStats {
     WITHDRAW: number;
   };
 }
+
+// Response aliases for better readability
+
+export type GetTransactionsResponse = ApiResponse<TransactionListResponse>;
+
+export type GetTransactionDetailResponse = ApiResponse<TransactionDetailResponse>;
+
+export type GetTransactionStatsResponse = ApiResponse<TransactionStats>;

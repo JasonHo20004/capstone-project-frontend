@@ -1,21 +1,26 @@
-import { Transaction, TransactionType, TransactionStatus } from '@/types/type';
+import type { Transaction, TransactionType, TransactionStatus } from "@/domain";
+import type { ApiResponse } from "@/lib/api/types";
+
+/**
+ * Revenue API Types - request/response contracts for admin revenue management endpoints
+ */
 
 export interface RevenueStats {
   totalRevenue: number;
   totalTransactions: number;
   averageTransaction: number;
-  revenueGrowth: number; // Percentage
+  revenueGrowth: number;
 }
 
 export interface RevenueChartData {
-  name: string; // Time period label (e.g., "T1", "Mon", "10:00")
+  name: string;
   revenue: number;
   transactions: number;
 }
 
 export interface RevenueFilters {
-  startDate?: string; // ISO date string
-  endDate?: string; // ISO date string
+  startDate?: string;
+  endDate?: string;
   period?: 'all' | 'today' | 'week' | 'month' | 'quarter' | 'year';
   transactionType?: TransactionType | 'all';
   page?: number;
@@ -34,9 +39,18 @@ export interface RevenueData {
   };
 }
 
-export interface TransactionListResponse {
+/** Transaction list returned by revenue endpoints (distinct from transaction-management) */
+export interface RevenueTransactionListResponse {
   transactions: Transaction[];
   total: number;
   page: number;
   limit: number;
 }
+
+// Response aliases for better readability
+
+export type GetRevenueDataResponse = ApiResponse<RevenueData>;
+
+export type GetRevenueStatsResponse = ApiResponse<RevenueStats>;
+
+export type GetRevenueTransactionsResponse = ApiResponse<RevenueTransactionListResponse>;
