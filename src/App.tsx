@@ -55,6 +55,7 @@ import SellerComments from "./pages/seller/interactions/SellerComments";
 import SellerLearners from "./pages/seller/learners/SellerLearners";
 import SellerProfile from "./pages/seller/account/SellerProfile";
 import SellerCourseDetail from "./pages/seller/courses/SellerCourseDetail";
+import UserAppLayout from "./components/user/layout/UserAppLayout";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -64,7 +65,6 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* public routes */}
-          <Route path="/" element={<Index />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
           <Route path="/about" element={<About />} />
@@ -74,13 +74,16 @@ const App = () => (
           <Route path="/auth/verify" element={<VerifyEmailPage />} />
           {/* protected routes */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/my-courses" element={<MyCourses />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/flashcards" element={<Flashcards />} />
+            <Route element={<UserAppLayout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/my-courses" element={<MyCourses />} />
+              <Route path="/flashcards" element={<Flashcards />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/wallet" element={<Wallet />} />
+              <Route path="/notifications" element={<Notifications />} />
+            </Route>
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/notifications" element={<Notifications />} />
 
             <Route path="/blog" element={<Blog />} />
           </Route>
