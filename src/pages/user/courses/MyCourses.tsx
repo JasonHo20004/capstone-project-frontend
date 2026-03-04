@@ -1,5 +1,3 @@
-import Navbar from '@/components/user/layout/Navbar';
-import Footer from '@/components/user/layout/Footer';
 import CourseCard from '@/components/user/course/CourseCard';
 import { usePurchases } from '@/context/PurchasesContext';
 import { Button } from '@/components/ui/button';
@@ -9,44 +7,43 @@ export default function MyCourses() {
   const { items } = usePurchases();
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      <main className="pt-20">
-        <section className="bg-gradient-hero text-primary-foreground py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">Khoá học đã mua</h1>
-                <p className="text-primary-foreground/80">
-                  Xem tất cả khoá học bạn sở hữu
-                </p>
-              </div>
-            </div>
+    <div className="space-y-8">
+      <section className="rounded-3xl bg-white border border-slate-200 p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight text-slate-900">
+              My Courses
+            </h1>
+            <p className="text-slate-500 text-base max-w-xl">
+              Theo dõi tiến độ và tiếp tục các khóa học bạn đã sở hữu.
+            </p>
           </div>
-        </section>
+          <div className="text-sm font-semibold text-primary bg-primary/10 px-4 py-2 rounded-lg w-fit">
+            {items.length} khóa học
+          </div>
+        </div>
+      </section>
 
-        <section className="py-12">
-          <div className="container mx-auto px-4">
-            {items.length === 0 ? (
-              <div className="text-center py-20 space-y-4">
-                <p className="text-xl text-muted-foreground">
-                  Bạn chưa mua khoá học nào.
-                </p>
-                <Link to="/courses">
-                  <Button className="bg-gradient-primary">Khám phá khoá học</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {items.map(({ id, course }) => (
-                  <CourseCard key={id} course={course} hideAddToCart purchased />
-                ))}
-              </div>
-            )}
+      <section className="bg-white rounded-2xl border border-slate-200 p-6">
+        {items.length === 0 ? (
+          <div className="text-center py-20 space-y-4">
+            <p className="text-xl text-slate-500">
+              Bạn chưa mua khoá học nào.
+            </p>
+            <Link to="/courses">
+              <Button className="bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20">
+                Khám phá khoá học
+              </Button>
+            </Link>
           </div>
-        </section>
-      </main>
-      <Footer />
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {items.map(({ id, course }) => (
+              <CourseCard key={id} course={course} hideAddToCart purchased />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
