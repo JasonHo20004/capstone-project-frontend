@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '@/components/user/layout/Navbar';
-import Footer from '@/components/user/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -163,12 +161,8 @@ export default function Profile() {
   // MỚI: Xử lý trạng thái Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="flex items-center justify-center pt-40">
+      <div className="min-h-[50vh] flex items-center justify-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-        </div>
-        <Footer />
       </div>
     );
   }
@@ -176,20 +170,16 @@ export default function Profile() {
   // MỚI: Xử lý trạng thái Error
   if (isError || !user) {
     return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="container mx-auto px-4 pt-40 text-center">
+      <div className="container mx-auto px-4 pt-10 text-center">
           <h2 className="text-2xl font-semibold text-destructive mb-4">
             Đã xảy ra lỗi
           </h2>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-slate-500 mb-4">
             {error || "Không thể tải thông tin cá nhân."}
           </p>
           <Button onClick={() => window.location.reload()}>
             Tải lại trang
           </Button>
-        </div>
-        <Footer />
       </div>
     );
   }
@@ -210,15 +200,13 @@ export default function Profile() {
 
   // Màn hình chính khi đã có data
   return (
-    <div className="min-h-screen">
-      <Navbar />
-
-      <main className="pt-20">
-        <section className="bg-gradient-hero text-primary-foreground py-16">
+    <div className="space-y-6">
+      <main>
+        <section className="bg-white border border-slate-200 rounded-3xl py-8 shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-6">
               <div className="relative group">
-                <Avatar className="h-24 w-24 border-4 border-background/20">
+                <Avatar className="h-24 w-24 border-4 border-slate-100">
                   {/* form.profilePicture lúc này có thể là URL thật HOẶC URL preview blob */}
                   <AvatarImage src={form.profilePicture} className="object-cover" />
                   <AvatarFallback className="text-2xl font-bold text-primary">
@@ -229,7 +217,7 @@ export default function Profile() {
                 {/* Nút Camera chỉ hiện khi Edit */}
                 {editing && (
                   <div 
-                    className="absolute bottom-0 right-0 bg-white text-primary p-1.5 rounded-full shadow-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="absolute bottom-0 right-0 bg-white text-primary p-1.5 rounded-full shadow-lg cursor-pointer hover:bg-slate-100 transition-colors border border-slate-200"
                     onClick={triggerFileInput}
                   >
                     <Camera className="w-4 h-4" />
@@ -245,10 +233,10 @@ export default function Profile() {
                 />
               </div>
               <div>
-                <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-900">
                   Hồ sơ cá nhân
                 </h1>
-                <p className="text-primary-foreground/80">
+                <p className="text-slate-500">
                   Quản lý và cập nhật thông tin của bạn
                 </p>
               </div>
@@ -271,7 +259,7 @@ export default function Profile() {
                   </Button>
                 )}
                 {!editing ? (
-                  <Button variant="secondary" onClick={startEdit}>
+                  <Button variant="outline" onClick={startEdit}>
                     <Edit className="w-4 h-4 mr-2" />
                     Chỉnh sửa
                   </Button>
@@ -292,11 +280,11 @@ export default function Profile() {
           </div>
         </section>
 
-        <section className="py-12">
+        <section className="py-4">
           <div className="container mx-auto px-4 grid lg:grid-cols-3 gap-8">
             {/* Thông tin cơ bản */}
             <Card className="p-6 lg:col-span-2">
-              <h2 className="text-xl font-semibold mb-6">Thông tin cơ bản</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Thông tin cơ bản</h2>
               {/* Tất cả Input bây giờ sẽ dùng `form.xyz` 
                   Đây là logic đúng, giữ nguyên
               */}
@@ -341,7 +329,7 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label htmlFor="dob">Ngày sinh</Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <Input
                       id="dob"
                       type="date"
@@ -354,7 +342,7 @@ export default function Profile() {
                     />
                   </div>
                   {/* {!editing && (
-                    <p className="text-xs text-muted-foreground">{formatDate(user.dateOfBirth)}</p>
+                    <p className="text-xs text-slate-500">{formatDate(user.dateOfBirth)}</p>
                   )} */}
                 </div>
                 <div className="space-y-2">
@@ -387,19 +375,19 @@ export default function Profile() {
 
             {/* Tài khoản & ví */}
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Tài khoản</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Tài khoản</h2>
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">ID người dùng</p>
-                  <p className="font-mono text-sm">{user.id}</p>
+                  <p className="text-sm text-slate-500">ID người dùng</p>
+                  <p className="font-mono text-sm text-slate-900">{user.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Ngày tạo</p>
-                  <p className="text-sm">{formatDate(user.createdAt)}</p>
+                  <p className="text-sm text-slate-500">Ngày tạo</p>
+                  <p className="text-sm text-slate-900">{formatDate(user.createdAt)}</p>
                 </div>
-                <div className="pt-2 border-t">
-                  <p className="text-sm text-muted-foreground">Số dư ví</p>
-                  <p className="text-lg font-semibold">
+                <div className="pt-2 border-t border-slate-200">
+                  <p className="text-sm text-slate-500">Số dư ví</p>
+                  <p className="text-lg font-bold">
                     {user.wallet ? formatVND(user.wallet.allowance) : "—"}
                   </p>
                 </div>
@@ -409,10 +397,10 @@ export default function Profile() {
         </section>
 
         {/* Mục tiêu học tập */}
-        <section className="py-2">
+        <section className="py-0">
           <div className="container mx-auto px-4 lg:max-w-4xl">
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Mục tiêu học tập</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Mục tiêu học tập</h2>
 
               {/* Danh sách các mục tiêu đang có */}
               <div className="flex flex-wrap gap-2 mb-4">
@@ -434,7 +422,7 @@ export default function Profile() {
                     </Badge>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-slate-500">
                     Chưa có mục tiêu nào.
                   </p>
                 )}
@@ -463,7 +451,7 @@ export default function Profile() {
               </div>
 
               {!editing && (
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-slate-500 mt-2">
                   * Nhấn nút "Chỉnh sửa" ở trên để thêm hoặc xóa mục tiêu.
                 </p>
               )}
@@ -475,11 +463,11 @@ export default function Profile() {
             MỚI: Biến `myApplications` ở đây giờ là data
             từ hook `useProfile`, không phải từ localStorage
         */}
-        <section className="py-2">
+        <section className="py-0">
           <div className="container mx-auto px-4 lg:max-w-4xl">
             <Card className="p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-bold text-slate-900">
                   Trở thành người bán khóa học
                 </h2>
                 {user.role === "COURSESELLER" ? (
@@ -487,7 +475,7 @@ export default function Profile() {
                 ) : null}
               </div>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-500">
                 Gửi đơn đăng ký để đội ngũ admin xét duyệt. Bạn nên cung cấp
                 chứng chỉ và chuyên môn liên quan đến giảng dạy.
               </p>
@@ -522,7 +510,7 @@ export default function Profile() {
                               <Badge variant={statusVariant as "default" | "destructive" | "secondary"}>
                                 {statusLabel}
                               </Badge>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-slate-500">
                                 {new Date(latest.createdAt).toLocaleDateString(
                                   "vi-VN"
                                 )}
@@ -532,7 +520,7 @@ export default function Profile() {
                         })()}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-slate-500 mt-1">
                         Chưa có đơn nào
                       </p>
                     )}
@@ -559,7 +547,7 @@ export default function Profile() {
 
               {/* Danh sách đơn đã nộp (Đọc `myApplications` từ hook) */}
               {myApplications.length > 0 && user.role !== "COURSESELLER" && (
-  <div className="pt-4 border-t">
+  <div className="pt-4 border-t border-slate-200">
     <h3 className="text-sm font-medium mb-3">Đơn đã nộp</h3>
     <div className="space-y-3">
       {[...myApplications]
@@ -569,7 +557,7 @@ export default function Profile() {
             new Date(a.createdAt).getTime()
         )
         .map((app) => (
-          <div key={app.id} className="p-4 rounded-lg border border-border bg-muted/10">
+          <div key={app.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
             {/* Header: Status & Date */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -583,7 +571,7 @@ export default function Profile() {
                   {app.status === 'PENDING' ? 'Đang chờ duyệt' : 
                    app.status === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-slate-500">
                   {new Date(app.createdAt).toLocaleDateString('vi-VN')}
                 </span>
               </div>
@@ -592,8 +580,8 @@ export default function Profile() {
             {/* Message */}
             {app.message && (
               <div className="mb-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Lời nhắn:</p>
-                <p className="text-sm bg-background p-2 rounded border border-border/50">
+                <p className="text-xs font-medium text-slate-500 mb-1">Lời nhắn:</p>
+                <p className="text-sm bg-background p-2 rounded border border-slate-200/50">
                   {app.message}
                 </p>
               </div>
@@ -612,7 +600,7 @@ export default function Profile() {
             {/* Expertise */}
             {app.expertise && app.expertise.length > 0 && (
               <div className="mb-2">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Chuyên môn:</p>
+                <p className="text-xs font-medium text-slate-500 mb-1">Chuyên môn:</p>
                 <div className="flex flex-wrap gap-1">
                   {app.expertise.map((exp, idx) => (
                     <Badge key={idx} variant="outline" className="text-xs font-normal">
@@ -626,7 +614,7 @@ export default function Profile() {
             {/* Certification Images */}
             {app.certification && app.certification.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Chứng chỉ:</p>
+                <p className="text-xs font-medium text-slate-500 mb-1">Chứng chỉ:</p>
                 <div className="flex flex-wrap gap-2">
                   {app.certification.map((certUrl, idx) => (
                     <a 
@@ -668,8 +656,6 @@ export default function Profile() {
           queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
         }}
       />
-
-      <Footer />
     </div>
   );
 }

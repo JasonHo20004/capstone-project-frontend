@@ -1,7 +1,5 @@
 // src/pages/user/account/Cart.tsx
-import { useMemo, useState, useEffect } from 'react';
-import Navbar from '@/components/user/layout/Navbar';
-import Footer from '@/components/user/layout/Footer';
+import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -81,38 +79,33 @@ const CartPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex justify-center items-center">
+      <div className="min-h-[50vh] flex justify-center items-center">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="pt-20 flex-1">
-        <section className="bg-gradient-hero text-primary-foreground py-12">
+    <div className="space-y-6">
+      <main className="flex-1">
+        <section className="bg-white border border-slate-200 rounded-3xl py-8 shadow-sm">
           <div className="container mx-auto px-4">
-            <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">Giỏ hàng</h1>
-            <p className="text-primary-foreground/80">Xem và quản lý các khoá học đã thêm</p>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900">Giỏ hàng</h1>
+            <p className="text-slate-500">Xem và quản lý các khoá học đã thêm</p>
           </div>
         </section>
 
-        <section className="py-10">
-          <div className="container mx-auto px-4 grid lg:grid-cols-3 gap-8">
+        <section className="py-6">
+          <div className="container mx-auto px-0 grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2 space-y-4">
               {cartItems.length === 0 ? (
                 <div className="text-center py-8">
-                    <p className="text-muted-foreground">Giỏ hàng trống.</p>
-                    <p className="text-sm text-muted-foreground mt-1">Hãy thêm khoá học từ danh sách khoá học.</p>
+                    <p className="text-slate-500">Giỏ hàng trống.</p>
+                    <p className="text-sm text-slate-500 mt-1">Hãy thêm khoá học từ danh sách khoá học.</p>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 border-b border-border pb-4">
+                  <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
                     <Checkbox 
                         checked={allSelected} 
                         onCheckedChange={(v) => toggleSelectAll(Boolean(v))} 
@@ -125,7 +118,7 @@ const CartPage = () => {
                   
                   <div className="space-y-4">
                     {cartItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between border-b border-border pb-4 last:border-none last:pb-0">
+                        <div key={item.id} className="flex items-center justify-between border-b border-slate-200 pb-4 last:border-none last:pb-0">
                         <div className="flex items-start gap-3">
                             <Checkbox
                             checked={isSelected(item.id)}
@@ -134,7 +127,7 @@ const CartPage = () => {
                             />
                             <div>
                             <h3 className="font-semibold line-clamp-1">{item.course.title}</h3>
-                            <p className="text-muted-foreground text-sm">{formatVND(item.priceAtTime)}</p>
+                            <p className="text-slate-500 text-sm">{formatVND(item.priceAtTime)}</p>
                             </div>
                         </div>
                         <Button
@@ -160,13 +153,13 @@ const CartPage = () => {
             <Card className="p-6 space-y-4 h-fit sticky top-24">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Đã chọn ({selectedItems.length})</span>
+                  <span className="text-slate-500">Đã chọn ({selectedItems.length})</span>
                   <span className="text-xl font-semibold text-primary">{formatVND(selectedTotal)}</span>
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Button
-                  className="w-full bg-gradient-primary shadow-accent"
+                  className="w-full bg-primary shadow-lg shadow-primary/20"
                   disabled={selectedIds.length === 0 || isProcessing}
                   onClick={handleCheckoutClick}
                 >
@@ -193,8 +186,6 @@ const CartPage = () => {
         confirmLabel={isProcessing ? "Đang xử lý..." : "Xác nhận"}
         onConfirm={handleConfirmPayment}
       />
-      
-      <Footer />
     </div>
   );
 };

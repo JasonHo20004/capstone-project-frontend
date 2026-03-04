@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import Navbar from "@/components/user/layout/Navbar";
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import Footer from "@/components/user/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,7 +75,7 @@ export default function WalletPage() {
     };
 
     checkPaymentStatus();
-  }, [searchParams, navigate]); // Thêm dependencies
+  }, [searchParams, navigate, confirmPaymentMutation]); // Thêm dependencies
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,30 +111,25 @@ export default function WalletPage() {
 
   if (isLoadingProfile) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex justify-center items-center">
+      <div className="min-h-[50vh] flex justify-center items-center">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
+    <div className="space-y-6">
 
-      <main className="pt-20">
-        <section className="bg-gradient-hero text-primary-foreground py-16">
+      <main>
+        <section className="bg-white border border-slate-200 rounded-3xl py-8 shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4">
-              <Wallet className="h-8 w-8" />
+              <Wallet className="h-8 w-8 text-primary" />
               <div>
-                <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-900">
                   Ví của bạn
                 </h1>
-                <p className="text-primary-foreground/80">
+                <p className="text-slate-500">
                   Nạp tiền để thanh toán khóa học nhanh chóng
                 </p>
               </div>
@@ -144,15 +137,15 @@ export default function WalletPage() {
           </div>
         </section>
 
-        <section className="py-12">
-          <div className="container mx-auto px-4 grid lg:grid-cols-3 gap-8">
+        <section className="py-6">
+          <div className="container mx-auto px-0 grid lg:grid-cols-3 gap-6">
             {/* Card Số dư */}
             <Card className="p-6 lg:col-span-1 h-fit">
               <h2 className="text-xl font-semibold mb-4">Số dư hiện tại</h2>
               <p className="text-4xl font-bold text-primary mb-2">
                 {formatVND(currentBalance)}
               </p>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg">
                 <AlertCircle className="w-4 h-4" />
                 <span>Sử dụng số dư để mua khóa học ngay lập tức.</span>
               </div>
@@ -243,8 +236,6 @@ export default function WalletPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }

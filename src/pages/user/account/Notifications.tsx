@@ -98,16 +98,16 @@ export default function Notifications() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-24">
-        <div className="flex items-center justify-between mb-6">
+    <div className="bg-background space-y-6">
+      <section className="bg-white border border-slate-200 rounded-3xl py-8 px-6 shadow-sm">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center shadow-accent">
-              <Bell className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Bell className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold font-['Be Vietnam Pro']">Thông báo của bạn</h1>
-              <p className="text-muted-foreground text-sm">Có {unreadCount} thông báo chưa xem</p>
+              <h1 className="text-2xl md:text-3xl font-bold">Thông báo của bạn</h1>
+              <p className="text-slate-500 text-sm">Có {unreadCount} thông báo chưa xem</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -119,14 +119,16 @@ export default function Notifications() {
             </Button>
           </div>
         </div>
+      </section>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <div className="md:col-span-1">
+      <section className="container mx-auto px-0">
+        <div className="grid md:grid-cols-3 gap-6 mb-6">
+          <div className="md:col-span-1 bg-white border border-slate-200 rounded-2xl p-4 h-fit">
             <div className="flex items-center gap-2 mb-2">
               <Filter className="w-4 h-4" />
-              <span className="text-sm text-muted-foreground">Bộ lọc</span>
+              <span className="text-sm text-slate-500">Bộ lọc</span>
             </div>
-            <div className="space-y-3 p-4 border border-border rounded-xl">
+            <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium">Trạng thái</label>
                 <div className="flex gap-2 mt-2">
@@ -150,17 +152,17 @@ export default function Notifications() {
               <div>
                 <label className="text-sm font-medium">Tìm kiếm</label>
                 <div className="relative mt-2">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nhập từ khóa..." className="pl-9" />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-4">
             <div className="space-y-3">
               {computedNotifications.length === 0 && (
-                <div className="border border-dashed border-border rounded-xl p-8 text-center text-muted-foreground">
+                <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-500">
                   Không có thông báo phù hợp.
                 </div>
               )}
@@ -175,8 +177,8 @@ export default function Notifications() {
                         {getTypeBadge(n.type)}
                         {!isSeen && <Badge variant="default">Mới</Badge>}
                       </div>
-                      <p className="text-muted-foreground">{n.content}</p>
-                      <div className="text-xs text-muted-foreground">{formatDate(n.createdAt)}</div>
+                      <p className="text-slate-500">{n.content}</p>
+                      <div className="text-xs text-slate-500">{formatDate(n.createdAt)}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       {!isSeen && (
@@ -191,7 +193,7 @@ export default function Notifications() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
