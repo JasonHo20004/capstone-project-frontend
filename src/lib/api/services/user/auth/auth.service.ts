@@ -39,7 +39,7 @@ class AuthService {
    */
   async register(data: RegisterRequest): Promise<RegisterApiResponse> {
     const response = await apiClient.post<RegisterApiResponse>(
-      '/users/register',
+      '/auth/register',
       data
     );
     return response.data;

@@ -23,7 +23,7 @@ export const useGetCourses = (params: GetCoursesForUserParams) => {
     queryKey: courseKeys.list(params),
     queryFn: async () => {
       const res = await courseServiceUser.getAllCourses(params);
-      return res.data;
+      return res;
     },
     placeholderData: keepPreviousData,
   });
@@ -34,11 +34,8 @@ export const useGetMyCourses = () => {
   return useQuery({
     queryKey: courseKeys.myCourses,
     queryFn: async () => {
-      // Giả sử courseServiceUser có hàm getMyCourses
-      // Nếu chưa có, bạn cần thêm vào service giống như hướng dẫn trước
       const res = await courseServiceUser.getAllCourses({ enrollmentStatus: 'enrolled', limit: 100 });
-      // Hoặc gọi endpoint riêng nếu bạn đã tách: await courseService.getMyCourses()
-      return res.data; 
+      return res;
     },
   });
 };

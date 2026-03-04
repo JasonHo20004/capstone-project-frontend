@@ -22,8 +22,8 @@ class UserService {
   ): Promise<ApiResponse<User>> {
     // Dùng PATCH để chỉ update những trường thay đổi
     const isFormData = data instanceof FormData;
-    const response = await apiClient.put<ApiResponse<User>>(
-      "/users/me/update",
+    const response = await apiClient.patch<ApiResponse<User>>(
+      "/users/profile",
       data,
       {
         headers: {
@@ -36,13 +36,13 @@ class UserService {
     return response.data;
   }
   async getProfile(): Promise<ApiResponse<User>> {
-    const response = await apiClient.get<ApiResponse<User>>("/users/me");
+    const response = await apiClient.get<ApiResponse<User>>("/users/profile");
     return response.data;
   }
   async getMe(): Promise<ApiResponse<User>> {
     // Endpoint-này-bạn-cần-có-ở-backend
     // Nó-sẽ-đọc-token-từ-header-và-trả-về-user-tương-ứng
-    const response = await apiClient.get<ApiResponse<User>>("/users/me");
+    const response = await apiClient.get<ApiResponse<User>>("/users/profile");
     return response.data;
   }
 
