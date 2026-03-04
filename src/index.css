@@ -8,87 +8,85 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 26% 15%;
+    --background: 240 13% 97%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 26% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 26% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Deep Navy Primary */
-    --primary: 243 75% 15%;
+    --primary: 230 89% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 243 60% 25%;
-    --primary-dark: 243 80% 10%;
+    --primary-light: 230 89% 60%;
+    --primary-dark: 230 85% 39%;
 
-    /* Purple Accent */
-    --secondary: 262 83% 58%;
+    --secondary: 215 16% 47%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-light: 262 83% 68%;
+    --secondary-light: 215 16% 57%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 262 83% 58%;
+    --accent: 230 89% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 262 83% 58%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 230 89% 50%;
 
     --radius: 0.75rem;
 
     /* Custom gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(243 75% 15%), hsl(262 83% 58%));
-    --gradient-secondary: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 83% 60%));
-    --gradient-hero: linear-gradient(180deg, hsl(243 75% 15%) 0%, hsl(243 60% 25%) 100%);
-    
+    --gradient-primary: linear-gradient(135deg, hsl(230 89% 50%), hsl(230 85% 39%));
+    --gradient-secondary: linear-gradient(135deg, hsl(230 89% 50%), hsl(245 58% 51%));
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(230 50% 18%) 100%);
+
     /* Shadows */
-    --shadow-sm: 0 2px 8px hsl(243 75% 15% / 0.08);
-    --shadow-md: 0 4px 16px hsl(243 75% 15% / 0.12);
-    --shadow-lg: 0 8px 32px hsl(243 75% 15% / 0.16);
-    --shadow-accent: 0 8px 24px hsl(262 83% 58% / 0.25);
-    
+    --shadow-sm: 0 1px 3px hsl(222 47% 11% / 0.06), 0 1px 2px hsl(222 47% 11% / 0.04);
+    --shadow-md: 0 4px 6px hsl(222 47% 11% / 0.07), 0 2px 4px hsl(222 47% 11% / 0.04);
+    --shadow-lg: 0 10px 25px hsl(222 47% 11% / 0.1), 0 4px 10px hsl(222 47% 11% / 0.05);
+    --shadow-accent: 0 8px 24px hsl(230 89% 50% / 0.2);
+
     /* Transitions */
     --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 243 75% 8%;
+    --background: 230 36% 10%;
     --foreground: 0 0% 98%;
 
-    --card: 243 60% 12%;
+    --card: 230 30% 14%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 243 60% 12%;
+    --popover: 230 30% 14%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 230 89% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 262 83% 68%;
-    --primary-dark: 262 83% 48%;
+    --primary-light: 230 89% 70%;
+    --primary-dark: 230 85% 49%;
 
-    --secondary: 243 75% 20%;
+    --secondary: 230 30% 22%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 243 50% 15%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 230 25% 17%;
+    --muted-foreground: 215 16% 65%;
 
-    --accent: 262 83% 58%;
+    --accent: 230 89% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 243 40% 18%;
-    --input: 243 40% 18%;
-    --ring: 262 83% 58%;
+    --border: 230 20% 20%;
+    --input: 230 20% 20%;
+    --ring: 230 89% 60%;
   }
 }
 
@@ -140,6 +138,20 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.icon-fill {
+  font-variation-settings: 'FILL' 1;
 }
