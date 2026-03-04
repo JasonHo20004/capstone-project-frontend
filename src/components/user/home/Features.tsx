@@ -35,14 +35,14 @@ const Features = () => {
   ];
 
   return (
-    <section className="py-20 bg-muted">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900 font-display">
             Vì sao chọn <span className="text-primary">SkillBoost</span>?
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-slate-500">
             Chúng tôi cung cấp mọi thứ bạn cần để thành thạo tiếng Anh và đạt được mục tiêu học tập
           </p>
         </div>
@@ -52,13 +52,13 @@ const Features = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group bg-card rounded-2xl p-8 shadow-sm hover:shadow-accent transition-all duration-300 border border-border hover:border-primary/20"
+              className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-200 hover:border-primary/20"
             >
-              <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-md">
-                <feature.icon className="w-7 h-7 text-primary-foreground" />
+              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <feature.icon className="w-7 h-7 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 font-['Be Vietnam Pro']">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl font-semibold mb-3 text-slate-900 font-display">{feature.title}</h3>
+              <p className="text-slate-500 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

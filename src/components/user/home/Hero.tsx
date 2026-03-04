@@ -4,7 +4,7 @@ import { Play, Star, Users, BookOpen } from "lucide-react";
 
 const Hero = () => {
   return (
-    <section className="relative min-h-[90vh] flex items-center bg-gradient-hero overflow-hidden">
+    <section className="relative min-h-[90vh] flex items-center bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div
@@ -22,17 +22,17 @@ const Hero = () => {
           {/* Left Content */}
           <div className="space-y-8 text-primary-foreground">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 backdrop-blur-sm border border-secondary/30">
-              <Star className="w-4 h-4 text-secondary fill-secondary" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
               <span className="text-sm font-medium">
                 Được tin tưởng bởi 50.000+ học viên
               </span>
             </div>
 
             {/* Heading */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight font-['Be Vietnam Pro']">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tighter font-display">
               Thành thạo tiếng Anh
-              <span className="block text-secondary">theo tốc độ của bạn</span>
+              <span className="block text-primary">theo tốc độ của bạn</span>
             </h1>
 
             {/* Description */}
@@ -47,7 +47,7 @@ const Hero = () => {
               <Link to="/courses">
                 <Button
                   size="lg"
-                  className="bg-secondary hover:bg-secondary-light shadow-accent text-lg h-14 px-8"
+                  className="bg-primary hover:bg-primary-dark shadow-xl shadow-primary/20 text-white text-lg h-14 px-8"
                 >
                   <BookOpen className="w-5 h-5 mr-2" />
                   Khám phá khóa học
@@ -55,9 +55,8 @@ const Hero = () => {
               </Link>
               <Button
                 size="lg"
-                variant="secondary" // Hoặc dùng className bg-white nếu variant k
-                // hông có sẵn
-                className="bg-white text-primary hover:bg-gray-100 border-2 border-white shadow-lg text-lg h-14 px-8"
+                variant="ghost"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 rounded-2xl text-lg h-14 px-8"
               >
                 <Play className="w-5 h-5 mr-2 fill-current" />{" "}
                 {/* fill-current để icon đặc ruột */}
@@ -68,7 +67,7 @@ const Hero = () => {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-6 pt-8">
               <div className="space-y-1">
-                <div className="text-3xl md:text-4xl font-bold text-secondary">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
                   50K+
                 </div>
                 <div className="text-sm text-primary-foreground/70">
@@ -76,7 +75,7 @@ const Hero = () => {
                 </div>
               </div>
               <div className="space-y-1">
-                <div className="text-3xl md:text-4xl font-bold text-secondary">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
                   200+
                 </div>
                 <div className="text-sm text-primary-foreground/70">
@@ -84,7 +83,7 @@ const Hero = () => {
                 </div>
               </div>
               <div className="space-y-1">
-                <div className="text-3xl md:text-4xl font-bold text-secondary">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
                   98%
                 </div>
                 <div className="text-sm text-primary-foreground/70">
@@ -121,8 +120,8 @@ const Hero = () => {
             </div>
 
             {/* Decorative Elements */}
-            <div className="absolute -top-6 -right-6 w-32 h-32 bg-secondary/20 rounded-full blur-3xl" />
-            <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-secondary/20 rounded-full blur-3xl" />
+            <div className="absolute -top-6 -right-6 w-32 h-32 bg-primary/20 rounded-full blur-3xl" />
+            <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
           </div>
         </div>
       </div>

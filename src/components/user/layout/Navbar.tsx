@@ -56,15 +56,15 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background backdrop-blur-md border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-accent transition-transform group-hover:scale-105">
-              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
+              <BookOpen className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent font-['Be Vietnam Pro']">
+            <span className="text-2xl font-bold text-primary font-display">
               SkillBoost
             </span>
           </Link>
@@ -78,8 +78,8 @@ const Navbar = () => {
                 className={({ isActive }) =>
                   `px-4 py-2 rounded-lg font-medium transition-all ${
                     isActive
-                      ? 'text-primary bg-primary/5'
-                      : 'text-foreground hover:text-primary hover:bg-muted'
+                      ? 'text-primary bg-primary/10 font-semibold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`
                 }
               >
@@ -94,32 +94,32 @@ const Navbar = () => {
               // === NẾU ĐÃ ĐĂNG NHẬP ===
               <>
                 <Link to="/notifications">
-                  <Button variant="ghost" size="default" className="relative">
+                  <Button variant="ghost" size="default" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     <Bell className="w-4 h-4 mr-2" />
                     Thông báo
                     {/* ... badge thông-báo ... */}
                   </Button>
                 </Link>
                 <Link to="/wallet">
-                  <Button variant="ghost" size="default">
+                  <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     <Wallet className="w-4 h-4 mr-2" />
                     Ví
                   </Button>
                 </Link>
                 <Link to="/cart">
-                  <Button variant="ghost" size="default" className="relative">
+                  <Button variant="ghost" size="default" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Giỏ hàng
                     {/* ... badge giỏ-hàng ... */}
                   </Button>
                 </Link>
                 <Link to="/profile">
-                  <Button variant="ghost" size="default">
+                  <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     <User className="w-4 h-4 mr-2" />
                     Hồ sơ
                   </Button>
                 </Link>
-                <Button variant="ghost" size="default" onClick={handleLogout}>
+                <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50" onClick={handleLogout}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Đăng xuất
                 </Button>
@@ -128,12 +128,12 @@ const Navbar = () => {
               // === NẾU CHƯA ĐĂNG NHẬP (KHÁCH) ===
               <>
                 <Link to="/login">
-                  <Button variant="ghost" size="default">
+                  <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     Đăng nhập
                   </Button>
                 </Link>
                 <Link to="/login?register=1">
-                  <Button className="bg-gradient-primary shadow-accent hover:opacity-90 transition-opacity">
+                  <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-opacity">
                     Bắt đầu
                   </Button>
                 </Link>
@@ -144,7 +144,7 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+            className="md:hidden p-2 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -152,38 +152,38 @@ const Navbar = () => {
 
         {/* SỬA Ở ĐÂY: Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-border animate-in slide-in-from-top-2">
+          <div className="md:hidden py-4 border-t border-slate-200 animate-in slide-in-from-top-2">
             <div className="flex flex-col gap-2">
               {/* ... navLinks (giữ-nguyên) ... */}
-              <div className="flex flex-col gap-2 pt-4 border-t border-border mt-2">
+              <div className="flex flex-col gap-2 pt-4 border-t border-slate-200 mt-2">
                 {isLoggedIn ? (
                   // === NẾU ĐÃ ĐĂNG NHẬP (MOBILE) ===
                   <>
                     <Link to="/notifications" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full relative">
+                      <Button variant="ghost" size="lg" className="w-full relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                         <Bell className="w-4 h-4 mr-2" />
                         Thông báo
                       </Button>
                     </Link>
                     <Link to="/wallet" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full">
+                      <Button variant="ghost" size="lg" className="w-full text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                         <Wallet className="w-4 h-4 mr-2" />
                         Ví
                       </Button>
                     </Link>
                     <Link to="/cart" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full relative">
+                      <Button variant="ghost" size="lg" className="w-full relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         Giỏ hàng
                       </Button>
                     </Link>
                     <Link to="/profile" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full">
+                      <Button variant="ghost" size="lg" className="w-full text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                         <User className="w-4 h-4 mr-2" />
                         Hồ sơ
                       </Button>
                     </Link>
-                    <Button variant="ghost" size="lg" className="w-full" onClick={handleLogout}>
+                    <Button variant="ghost" size="lg" className="w-full text-slate-600 hover:text-slate-900 hover:bg-slate-50" onClick={handleLogout}>
                       <LogOut className="w-4 h-4 mr-2" />
                       Đăng xuất
                     </Button>
@@ -192,12 +192,12 @@ const Navbar = () => {
                   // === NẾU CHƯA ĐĂNG NHẬP (MOBILE) ===
                   <>
                     <Link to="/login" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" size="lg" className="w-full">
+                      <Button variant="outline" size="lg" className="w-full text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900">
                         Đăng nhập
                       </Button>
                     </Link>
                     <Link to="/login?register=1" onClick={() => setIsOpen(false)}>
-                      <Button size="lg" className="w-full bg-gradient-primary shadow-accent">
+                      <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
                         Bắt đầu
                       </Button>
                     </Link>

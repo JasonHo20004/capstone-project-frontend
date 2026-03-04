@@ -39,7 +39,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
 
   return (
     <Link to={`/courses/${course.id}`}>
-      <div className="group bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-accent transition-all duration-300 border border-border hover:border-primary/20 h-full flex flex-col relative">
+      <div className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-200 h-full flex flex-col relative">
         
         {/* Thumbnail Placeholder */}
         <div >
@@ -56,28 +56,28 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
         </div>
 
         {/* Content */}
-        <div className="p-6 flex flex-col flex-1">
+        <div className="p-5 flex flex-col flex-1">
           {/* Level badge */}
           {course.courseLevel && (
             <div className="mb-2">
-              <Badge variant="outline" className="bg-card/90">
+              <Badge variant="outline" className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                 {course.courseLevel}
               </Badge>
             </div>
           )}
 
           {/* Title */}
-          <h3 className="text-xl font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors font-['Be Vietnam Pro']">
+          <h3 className="text-lg font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:text-primary transition-colors font-display">
             {course.title}
           </h3>
 
           {/* Description */}
-          <p className="text-muted-foreground text-sm mb-4 line-clamp-2 flex-1">
+          <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">
             {course.description}
           </p>
 
           {/* Instructor */}
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
+          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200">
             {instructor.profilePicture ? (
               <img
                 src={instructor.profilePicture}
@@ -85,12 +85,12 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
-                 <User className="w-4 h-4 text-secondary" />
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                 <User className="w-4 h-4 text-primary" />
               </div>
             )}
             
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs font-medium text-slate-500">
               {instructor.fullName || 'Unknown Instructor'}
             </span>
           </div>
@@ -99,10 +99,10 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
           <div className="flex items-center justify-between mt-auto">
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span className="font-semibold text-sm">
+              <span className="text-xs font-bold">
                 {course.averageRating != null ? course.averageRating.toFixed(1) : '0.0'}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-slate-400">
                 ({course.ratingCount ?? 0})
               </span>
             </div>

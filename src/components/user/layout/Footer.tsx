@@ -5,31 +5,31 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-primary text-primary-foreground">
+    <footer className="bg-slate-900 text-white">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center shadow-accent transition-transform group-hover:scale-105">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
                 <BookOpen className="w-6 h-6" />
               </div>
-              <span className="text-2xl font-bold font-['Be Vietnam Pro']">SkillBoost</span>
+              <span className="text-2xl font-bold text-white font-display">SkillBoost</span>
             </Link>
-            <p className="text-primary-foreground/80 leading-relaxed">
+            <p className="text-slate-400 leading-relaxed">
               Nâng tầm kỹ năng tiếng Anh với các khóa học do chuyên gia giảng dạy và trải nghiệm học tập tương tác.
             </p>
             <div className="flex gap-3">
-              <a href="#" className="w-10 h-10 rounded-lg bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-lg bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-lg bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-lg bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
                 <Linkedin className="w-5 h-5" />
               </a>
             </div>
@@ -37,25 +37,25 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 font-['Be Vietnam Pro']">Liên kết nhanh</h3>
+            <h3 className="text-lg font-semibold mb-4 font-display">Liên kết nhanh</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/courses" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <Link to="/courses" className="text-slate-400 hover:text-white transition-colors">
                   Xem khóa học
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <Link to="/about" className="text-slate-400 hover:text-white transition-colors">
                   Giới thiệu
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <Link to="/blog" className="text-slate-400 hover:text-white transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <Link to="/contact" className="text-slate-400 hover:text-white transition-colors">
                   Liên hệ
                 </Link>
               </li>
@@ -64,25 +64,25 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 font-['Be Vietnam Pro']">Hỗ trợ</h3>
+            <h3 className="text-lg font-semibold mb-4 font-display">Hỗ trợ</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="#" className="text-slate-400 hover:text-white transition-colors">
                   Trung tâm trợ giúp
                 </a>
               </li>
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="#" className="text-slate-400 hover:text-white transition-colors">
                   Điều khoản dịch vụ
                 </a>
               </li>
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="#" className="text-slate-400 hover:text-white transition-colors">
                   Chính sách bảo mật
                 </a>
               </li>
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="#" className="text-slate-400 hover:text-white transition-colors">
                   Câu hỏi thường gặp
                 </a>
               </li>
@@ -91,17 +91,17 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 font-['Be Vietnam Pro']">Liên hệ</h3>
+            <h3 className="text-lg font-semibold mb-4 font-display">Liên hệ</h3>
             <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-primary-foreground/80">
+              <li className="flex items-start gap-3 text-slate-400">
                 <Mail className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <span>support@skillboost.com</span>
               </li>
-              <li className="flex items-start gap-3 text-primary-foreground/80">
+              <li className="flex items-start gap-3 text-slate-400">
                 <Phone className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <span>+1 (555) 123-4567</span>
               </li>
-              <li className="flex items-start gap-3 text-primary-foreground/80">
+              <li className="flex items-start gap-3 text-slate-400">
                 <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <span>123 Learning Street, Education City, EC 12345</span>
               </li>
@@ -109,7 +109,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-primary-foreground/10 mt-12 pt-8 text-center text-primary-foreground/60">
+        <div className="border-t border-slate-700 mt-12 pt-8 text-center text-slate-500">
           <p>© {currentYear} SkillBoost. Bảo lưu mọi quyền.</p>
         </div>
       </div>
