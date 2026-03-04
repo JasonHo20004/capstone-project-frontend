@@ -59,13 +59,13 @@ const Contact = () => {
       
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="bg-gradient-hero text-primary-foreground py-20">
+        <section className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 font-['Be Vietnam Pro']">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 font-display">
                 Liên hệ với chúng tôi
               </h1>
-              <p className="text-xl text-primary-foreground/80">
+              <p className="text-xl text-white/70">
                 Bạn có câu hỏi? Hãy gửi tin nhắn cho chúng tôi và chúng tôi sẽ phản hồi trong thời gian sớm nhất.
               </p>
             </div>
@@ -82,21 +82,21 @@ const Contact = () => {
                   <a
                     key={index}
                     href={info.link}
-                    className="block bg-card rounded-2xl p-6 shadow-sm hover:shadow-accent transition-all border border-border hover:border-primary/20 group"
+                    className="block bg-card rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all border border-slate-200 hover:border-primary/10 group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md">
-                      <info.icon className="w-6 h-6 text-primary-foreground" />
+                    <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md">
+                      <info.icon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 font-['Be Vietnam Pro']">{info.title}</h3>
-                    <p className="text-muted-foreground">{info.content}</p>
+                    <h3 className="text-lg font-semibold mb-2 font-display">{info.title}</h3>
+                    <p className="text-slate-500">{info.content}</p>
                   </a>
                 ))}
               </div>
 
               {/* Contact Form */}
               <div className="lg:col-span-2">
-                <div className="bg-card rounded-2xl p-8 shadow-sm border border-border">
-                  <h2 className="text-3xl font-bold mb-6 font-['Be Vietnam Pro']">Gửi tin nhắn cho chúng tôi</h2>
+                <div className="bg-card rounded-2xl p-8 shadow-sm border border-slate-200">
+                  <h2 className="text-3xl font-bold mb-6 font-display">Gửi tin nhắn cho chúng tôi</h2>
                   
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
@@ -164,7 +164,7 @@ const Contact = () => {
                       />
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full bg-gradient-primary shadow-accent">
+                    <Button type="submit" size="lg" className="w-full bg-primary shadow-lg shadow-primary/20">
                       <Send className="w-5 h-5 mr-2" />
                       Gửi tin nhắn
                     </Button>
@@ -176,15 +176,15 @@ const Contact = () => {
         </section>
 
         {/* Map Section (Placeholder) */}
-        <section className="py-20 bg-muted">
+        <section className="py-20 bg-slate-50">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-border h-[400px]">
-                <div className="w-full h-full bg-muted flex items-center justify-center">
+              <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-slate-200 h-[400px]">
+                <div className="w-full h-full bg-slate-50 flex items-center justify-center">
                   <div className="text-center">
                     <MapPin className="w-16 h-16 text-primary mx-auto mb-4" />
-                    <p className="text-lg text-muted-foreground">Vị trí bản đồ</p>
-                    <p className="text-sm text-muted-foreground">123 Learning Street, Education City</p>
+                    <p className="text-lg text-slate-500">Vị trí bản đồ</p>
+                    <p className="text-sm text-slate-500">123 Learning Street, Education City</p>
                   </div>
                 </div>
               </div>

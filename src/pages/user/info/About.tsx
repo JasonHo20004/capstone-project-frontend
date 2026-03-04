@@ -64,13 +64,13 @@ const About = () => {
       
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="bg-gradient-hero text-primary-foreground py-20">
+        <section className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 font-['Be Vietnam Pro']">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 font-display">
                 Về SkillBoost
               </h1>
-              <p className="text-xl text-primary-foreground/80">
+              <p className="text-xl text-white/70">
                 Trao quyền cho người học trên toàn thế giới để làm chủ tiếng Anh và đạt được ước mơ
               </p>
             </div>
@@ -86,7 +86,7 @@ const About = () => {
                   <div className="text-4xl md:text-5xl font-bold text-primary mb-2">
                     {stat.value}
                   </div>
-                  <div className="text-muted-foreground">{stat.label}</div>
+                  <div className="text-slate-500">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -98,8 +98,8 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-4xl font-bold mb-6 font-['Be Vietnam Pro']">Câu chuyện của chúng tôi</h2>
-                <div className="space-y-4 text-muted-foreground leading-relaxed">
+                <h2 className="text-4xl font-bold mb-6 font-display">Câu chuyện của chúng tôi</h2>
+                <div className="space-y-4 text-slate-500 leading-relaxed">
                   <p>
                     Được thành lập năm 2020, SkillBoost ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: 
                     mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.
@@ -122,7 +122,7 @@ const About = () => {
                   alt="Câu chuyện của chúng tôi"
                   className="rounded-2xl shadow-lg"
                 />
-                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-secondary/20 rounded-full blur-3xl" />
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
                 <div className="absolute -top-6 -right-6 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
               </div>
             </div>
@@ -130,13 +130,13 @@ const About = () => {
         </section>
 
         {/* Values Section */}
-        <section className="py-20 bg-muted">
+        <section className="py-20 bg-slate-50">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">
                 Giá trị cốt lõi
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-slate-500">
                 Những nguyên tắc định hướng mọi hoạt động của chúng tôi
               </p>
             </div>
@@ -145,13 +145,13 @@ const About = () => {
               {values.map((value, index) => (
                 <div
                   key={index}
-                  className="bg-card rounded-2xl p-8 shadow-sm hover:shadow-accent transition-all border border-border"
+                  className="bg-card rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all border border-slate-200"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-6 shadow-md">
-                    <value.icon className="w-7 h-7 text-primary-foreground" />
+                  <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center mb-6 shadow-md">
+                    <value.icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 font-['Be Vietnam Pro']">{value.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{value.description}</p>
+                  <h3 className="text-xl font-semibold mb-3 font-display">{value.title}</h3>
+                  <p className="text-slate-500 leading-relaxed">{value.description}</p>
                 </div>
               ))}
             </div>
@@ -162,10 +162,10 @@ const About = () => {
         <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">
                 Đội ngũ giảng viên
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-slate-500">
                 Học với các chuyên gia giàu kinh nghiệm, tận tâm với thành công của bạn
               </p>
             </div>
@@ -184,8 +184,8 @@ const About = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-1 font-['Be Vietnam Pro']">{member.name}</h3>
-                  <p className="text-muted-foreground">{member.role}</p>
+                  <h3 className="text-xl font-semibold mb-1 font-display">{member.name}</h3>
+                  <p className="text-slate-500">{member.role}</p>
                 </div>
               ))}
             </div>
@@ -193,17 +193,17 @@ const About = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-gradient-primary">
+        <section className="py-20 bg-primary">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-3xl mx-auto space-y-6">
-              <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground font-['Be Vietnam Pro']">
+              <h2 className="text-4xl md:text-5xl font-bold text-white font-display">
                 Tham gia cộng đồng đang phát triển của chúng tôi
               </h2>
-              <p className="text-xl text-primary-foreground/80">
+              <p className="text-xl text-white/70">
                 Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành và hỗ trợ từ các chuyên gia
               </p>
               <Link to="/courses">
-                <Button size="lg" variant="secondary" className="shadow-accent text-lg h-14 px-8">
+                <Button size="lg" variant="secondary" className="shadow-lg shadow-primary/20 text-lg h-14 px-8">
                   Khám phá khóa học
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>

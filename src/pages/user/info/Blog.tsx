@@ -83,13 +83,13 @@ const Blog = () => {
       
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="bg-gradient-hero text-primary-foreground py-20">
+        <section className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 font-['Be Vietnam Pro']">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 font-display">
                 Tài nguyên và mẹo học tập
               </h1>
-              <p className="text-xl text-primary-foreground/80">
+              <p className="text-xl text-white/70">
                 Lời khuyên từ chuyên gia, mẹo học tập và góc nhìn giúp bạn chinh phục tiếng Anh
               </p>
             </div>
@@ -100,7 +100,7 @@ const Blog = () => {
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
-              <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-border hover:shadow-accent transition-all">
+              <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-slate-200 hover:shadow-lg transition-all">
                 <div className="grid md:grid-cols-2 gap-0">
                   <div className="relative aspect-video md:aspect-auto">
                     <img
@@ -116,10 +116,10 @@ const Blog = () => {
                     <Badge variant="outline" className="w-fit mb-4">
                       {featuredPost.category}
                     </Badge>
-                    <h2 className="text-3xl font-bold mb-4 font-['Be Vietnam Pro']">
+                    <h2 className="text-3xl font-bold mb-4 font-display">
                       {featuredPost.title}
                     </h2>
-                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                    <p className="text-slate-500 mb-6 leading-relaxed">
                       {featuredPost.excerpt}
                     </p>
                     <div className="flex items-center gap-4 mb-6">
@@ -130,7 +130,7 @@ const Blog = () => {
                       />
                       <div className="flex-1">
                         <div className="font-medium">{featuredPost.author}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-3">
+                        <div className="text-sm text-slate-500 flex items-center gap-3">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5" />
                             {featuredPost.date}
@@ -140,7 +140,7 @@ const Blog = () => {
                         </div>
                       </div>
                     </div>
-                    <Button className="w-fit bg-gradient-primary shadow-accent">
+                    <Button className="w-fit bg-primary shadow-lg shadow-primary/20">
                       Đọc bài viết
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -152,15 +152,15 @@ const Blog = () => {
         </section>
 
         {/* Blog Posts Grid */}
-        <section className="py-16 bg-muted">
+        <section className="py-16 bg-slate-50">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-12 font-['Be Vietnam Pro']">Bài viết mới nhất</h2>
+            <h2 className="text-3xl font-bold mb-12 font-display">Bài viết mới nhất</h2>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {posts.slice(1).map((post) => (
                 <article
                   key={post.id}
-                  className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-accent transition-all border border-border hover:border-primary/20 group"
+                  className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-slate-200 hover:border-primary/10 group"
                 >
                   <div className="relative aspect-video overflow-hidden">
                     <img
@@ -173,13 +173,13 @@ const Blog = () => {
                     </Badge>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-3 line-clamp-2 group-hover:text-primary transition-colors font-['Be Vietnam Pro']">
+                    <h3 className="text-xl font-semibold mb-3 line-clamp-2 group-hover:text-primary transition-colors font-display">
                       {post.title}
                     </h3>
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
+                    <p className="text-slate-500 text-sm mb-4 line-clamp-3">
                       {post.excerpt}
                     </p>
-                    <div className="flex items-center gap-3 pt-4 border-t border-border">
+                    <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
                       <img
                         src={post.authorImage}
                         alt={post.author}
@@ -187,7 +187,7 @@ const Blog = () => {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate">{post.author}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <div className="text-xs text-slate-500 flex items-center gap-2">
                           <span>{post.date}</span>
                           <span>•</span>
                           <span>{post.readTime}</span>
@@ -202,13 +202,13 @@ const Blog = () => {
         </section>
 
         {/* Newsletter Section */}
-        <section className="py-20 bg-gradient-primary">
+        <section className="py-20 bg-primary">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-2xl mx-auto space-y-6">
-              <h2 className="text-4xl font-bold text-primary-foreground font-['Be Vietnam Pro']">
+              <h2 className="text-4xl font-bold text-white font-display">
                 Đăng ký nhận bản tin
               </h2>
-              <p className="text-xl text-primary-foreground/80">
+              <p className="text-xl text-white/70">
                 Nhận mẹo học và tài nguyên mới nhất qua email
               </p>
               <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto pt-4">
@@ -217,7 +217,7 @@ const Blog = () => {
                   placeholder="Nhập email của bạn"
                   className="flex-1 h-12 px-4 rounded-lg border-0 focus:ring-2 focus:ring-secondary"
                 />
-                <Button size="lg" variant="secondary" className="shadow-accent">
+                <Button size="lg" variant="secondary" className="shadow-lg shadow-primary/20">
                   Đăng ký
                 </Button>
               </div>
