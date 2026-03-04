@@ -116,20 +116,20 @@ const Register = () => {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left Side */}
-      <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-hero text-primary-foreground p-12">
+      <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white p-12">
         <div className="max-w-md space-y-8">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center shadow-accent transition-transform group-hover:scale-105">
+            <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
               <BookOpen className="w-8 h-8" />
             </div>
-            <span className="text-4xl font-bold font-['Be Vietnam Pro']">SkillBoost</span>
+            <span className="text-4xl font-bold font-display">SkillBoost</span>
           </Link>
 
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold leading-tight font-['Be Vietnam Pro']">
+            <h1 className="text-4xl font-bold leading-tight font-display">
               Chào mừng trở lại!
             </h1>
-            <p className="text-xl text-primary-foreground/80">
+            <p className="text-xl text-white/70">
               Tiếp tục lộ trình học tập của bạn và chinh phục các thử thách mới.
             </p>
           </div>
@@ -137,16 +137,16 @@ const Register = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-6 pt-8">
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-secondary">50K+</div>
-              <div className="text-sm text-primary-foreground/70">Học viên</div>
+              <div className="text-3xl font-bold text-primary">50K+</div>
+              <div className="text-sm text-white/70">Học viên</div>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-secondary">200+</div>
-              <div className="text-sm text-primary-foreground/70">Khóa học</div>
+              <div className="text-3xl font-bold text-primary">200+</div>
+              <div className="text-sm text-white/70">Khóa học</div>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-secondary">98%</div>
-              <div className="text-sm text-primary-foreground/70">Hài lòng</div>
+              <div className="text-3xl font-bold text-primary">98%</div>
+              <div className="text-sm text-white/70">Hài lòng</div>
             </div>
           </div>
         </div>
@@ -157,17 +157,17 @@ const Register = () => {
         <div className="w-full max-w-md space-y-6">
           {/* Mobile Logo */}
           <Link to="/" className="flex lg:hidden items-center gap-2 justify-center">
-            <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-accent">
-              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+              <BookOpen className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent font-['Be Vietnam Pro']">
+            <span className="text-2xl font-bold bg-primary bg-clip-text text-transparent font-display">
               SkillBoost
             </span>
           </Link>
 
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold font-['Be Vietnam Pro']">Tạo tài khoản</h2>
-            <p className="text-muted-foreground">Nhập thông tin cá nhân của bạn</p>
+            <h2 className="text-3xl font-bold font-display">Tạo tài khoản</h2>
+            <p className="text-slate-500">Nhập thông tin cá nhân của bạn</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -175,7 +175,7 @@ const Register = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Họ và tên</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <Input
                   name="fullName"
                   value={formData.fullName}
@@ -192,7 +192,7 @@ const Register = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <Input
                   name="email"
                   type="email"
@@ -209,7 +209,7 @@ const Register = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Số điện thoại</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <Input
                   name="phoneNumber"
                   type="tel"
@@ -230,7 +230,7 @@ const Register = () => {
             <div>
               <label className="block text-sm font-medium mb-1">Ngày sinh</label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <Input
                   name="dateOfBirth"
                   type="date"
@@ -247,7 +247,7 @@ const Register = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Mật khẩu</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     name="password"
                     type="password"
@@ -262,7 +262,7 @@ const Register = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Nhập lại</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     name="confirmPassword"
                     type="password"
@@ -293,14 +293,14 @@ const Register = () => {
           </form>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">Đã có tài khoản? </span>
+            <span className="text-slate-500">Đã có tài khoản? </span>
             <Link to="/login" className="font-semibold text-primary hover:underline">
               Đăng nhập
             </Link>
           </div>
 
           <div className="text-center pt-4">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
+            <Link to="/" className="text-sm text-slate-500 hover:text-primary">
               ← Về trang chủ
             </Link>
           </div>
