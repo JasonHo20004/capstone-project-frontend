@@ -1,6 +1,4 @@
 import { useMemo, useState, useEffect } from "react";
-import Navbar from "@/components/user/layout/Navbar";
-import Footer from "@/components/user/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -275,39 +273,34 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
     });
   };
   return (
-    <div className="min-h-screen">
-      <Navbar />
-
-      <main className="pt-20">
-        {/* Header */}
-        <section className="bg-gradient-hero text-primary-foreground py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
-                Quản lý Flashcards
-              </h1>
-              <p className="text-primary-foreground/80 text-lg">
-                Tạo, chỉnh sửa và xóa bộ thẻ và thẻ ghi nhớ của riêng bạn
-              </p>
-            </div>
+    <div className="space-y-6">
+      <main>
+        <section className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-slate-900">
+              Flashcards Workspace
+            </h1>
+            <p className="text-slate-500 text-lg">
+              Tạo, chỉnh sửa, và học bộ thẻ theo giao diện mới nhưng vẫn giữ logic quản lý hiện tại.
+            </p>
           </div>
         </section>
 
         {/* Content */}
-        <section className="py-12">
-          <div className="container mx-auto px-4">
+        <section className="py-2">
+          <div className="container mx-auto px-0">
             <div className="flex flex-col lg:flex-row gap-8">
               {/* Decks Panel */}
               <div className="w-full lg:w-1/3">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-semibold">Bộ thẻ của tôi</h2>
+                <div className="flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200 p-4">
+                  <h2 className="text-2xl font-bold text-slate-900">Bộ thẻ của tôi</h2>
                   <Button onClick={openCreateDeck} className="bg-primary">
                     <Plus className="w-4 h-4 mr-2" /> Thêm bộ thẻ
                   </Button>
                 </div>
 
                 {isLoadingDecks ? (
-                  <div className="flex justify-center p-10 border rounded-xl">
+                  <div className="flex justify-center p-10 rounded-xl border border-slate-200">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   </div>
                 ) : decks.length > 0 ? (
@@ -320,7 +313,7 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
                     formatDate={formatDate}
                   />
                 ) : (
-                  <div className="border rounded-xl p-6 text-center text-muted-foreground">
+                  <div className="border border-slate-200 rounded-xl p-6 text-center text-slate-500">
                     Chưa có bộ thẻ nào. Hãy tạo bộ thẻ đầu tiên!
                   </div>
                 )}
@@ -328,8 +321,8 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
 
               {/* Cards Panel */}
               <div className="w-full lg:w-2/3">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-semibold">
+                <div className="flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200 p-4">
+                  <h2 className="text-2xl font-bold text-slate-900">
                     {selectedDeck
                       ? `Thẻ trong: ${selectedDeck.title}`
                       : "Chọn một bộ thẻ"}
@@ -356,7 +349,7 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
 
                 {selectedDeckId ? (
                   isLoadingCards ? (
-                    <div className="flex justify-center p-10 border rounded-xl">
+                    <div className="flex justify-center p-10 rounded-xl border border-slate-200">
                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
                   ) : selectedDeckCards.length > 0 ? (
@@ -366,12 +359,12 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
                       onDeleteCard={deleteCard}
                     />
                   ) : (
-                    <div className="border rounded-xl p-6 text-center text-muted-foreground">
+                    <div className="border border-slate-200 rounded-xl p-6 text-center text-slate-500">
                       Chưa có thẻ nào trong bộ này. Hãy thêm thẻ!
                     </div>
                   )
                 ) : (
-                  <div className="border rounded-xl p-6 text-center text-muted-foreground">
+                  <div className="border border-slate-200 rounded-xl p-6 text-center text-slate-500">
                     Hãy chọn một bộ thẻ ở panel bên trái.
                   </div>
                 )}
@@ -816,8 +809,6 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
           />
         </DialogContent>
       </Dialog>
-
-      <Footer />
     </div>
   );
 };

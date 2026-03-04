@@ -99,14 +99,14 @@ const StudentLearningPage = () => {
       <Navbar />
 
       <main className="pt-20 pb-12">
-        <section className="bg-gradient-hero py-10 text-primary-foreground">
+        <section className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 py-10 text-primary-foreground">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h1 className="font-['Be Vietnam Pro'] text-3xl font-bold md:text-4xl">
+                <h1 className="font-display text-3xl font-bold md:text-4xl">
                   Phòng học trực tuyến
                 </h1>
-                <p className="mt-2 text-primary-foreground/80">
+                <p className="mt-2 text-white/70">
                   Xem video, trao đổi và đánh giá khóa học bạn đã đăng ký.
                 </p>
               </div>
@@ -116,7 +116,7 @@ const StudentLearningPage = () => {
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="inline-flex items-center gap-2 rounded-full bg-background/10 text-primary-foreground"
+                      className="inline-flex items-center gap-2 rounded-full bg-white/10 text-white"
                     >
                       <Menu className="h-4 w-4" />
                       Bài học
