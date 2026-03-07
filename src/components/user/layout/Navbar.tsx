@@ -1,214 +1,303 @@
-// Navbar.tsx (Đã-sửa-lỗi)
-
-import { useState, useEffect } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import { Menu, X, BookOpen, User, ShoppingCart, Wallet, Bell, LogOut } from 'lucide-react'; // THÊM: icon LogOut
+import { useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, BookOpen, User, Wallet, LogOut, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/hooks/api/use-auth';
+import { useUser } from '@/hooks/api/use-user';
+import { NotificationDropdown } from './NotificationDropdown';
+import { CartDropdown } from './CartDropdown';
+import { cn } from '@/lib/utils';
 
-// SỬA Ở ĐÂY: Import hook để-lấy-user-và-đăng-xuất
-import { useAuth } from '@/hooks/api/use-auth'; // Giả-sử-đường-dẫn-này-đúng
-import { useUser } from '@/hooks/api/use-user'; // Đây-là-hook-mới-chúng-ta-sẽ-tạo
+const scrollToSection = (hash: string) => {
+  const el = document.getElementById(hash);
+  el?.scrollIntoView({ behavior: 'smooth' });
+};
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { count } = useCart();
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
-
-  // SỬA Ở ĐÂY: Lấy-trạng-thái-xác-thực
+  const location = useLocation();
+  const navigate = useNavigate();
   const { logout } = useAuth();
-  const { user } = useUser(); // Hook này sẽ-trả-về-`user` nếu-đã-đăng-nhập,-hoặc-`null`/`undefined` nếu-chưa
-  const isLoggedIn = !!user; // Tạo-biến-boolean-đơn-giản
+  const { user } = useUser();
+  const isLoggedIn = !!user;
+  const isHomePage = location.pathname === '/';
 
-  const navLinks = [
-    { to: '/', label: 'Trang chủ' },
-    { to: '/courses', label: 'Khóa học' },
-    { to: '/flashcards', label: 'Thẻ ghi nhớ' },
-    { to: '/about', label: 'Giới thiệu' },
-    // { to: '/blog', label: 'Blog' },
-    // { to: '/contact', label: 'Liên hệ' },
+  // Group 1: Page scroll (homepage sections)
+  const scrollLinks = [
+    { to: '/', hash: '', label: 'Trang chủ' },
+    { to: '/#courses', hash: 'courses', label: 'Khóa học' },
+    { to: '/#about', hash: 'about', label: 'Giới thiệu' },
   ];
 
-  // SỬA Ở ĐÂY: Logic-thông-báo-dựa-trên-người-dùng-thật
-  useEffect(() => {
-    // Chúng-ta-sẽ-chuyển-sang-lấy-thông-báo-từ-API-thay-vì-mock-data
-    // Tạm-thời-ẩn-logic-cũ-đi
-    // if (isLoggedIn && user) {
-    //   // TODO: Fetch real notifications from API based on user.id
-    //   // Tạm-thời-dùng-logic-cũ-nhưng-với-user.id
-    //   try {
-    //     const uid = user.id; 
-    //     // ... logic-lấy-từ-localStorage-của-bạn...
-    //   } catch {
-    //     setUnreadNotifications(0);
-    //   }
-    // } else {
-    //   setUnreadNotifications(0); // Không-đăng-nhập,-không-có-thông-báo
-    // }
-    
-    // Tạm-thời-giữ-logic-mock-của-bạn-cho-đến-khi-có-API
-    // ... logic-useEffect-cũ-của-bạn-có-thể-để-ở-đây...
-  }, [user]); // Chạy-lại-khi-user-thay-đổi
+  // Group 2: Page navigation (separate routes)
+  const pageLinks = [
+    ...(isLoggedIn ? [{ to: '/dashboard', label: 'Khu vực học tập' }] : []),
+    { to: '/flashcards', label: 'Thẻ ghi nhớ', highlight: true },
+  ];
+
+  const handleScrollNavClick = (to: string, hash: string) => {
+    setIsOpen(false);
+    if (isHomePage && hash) {
+      scrollToSection(hash);
+    } else if (isHomePage && !hash) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate(to);
+    }
+  };
+
+  const isScrollLinkActive = (hash: string) => {
+    if (!hash) return location.pathname === '/' && !location.hash;
+    return location.pathname === '/' && location.hash === `#${hash}`;
+  };
 
   const handleLogout = () => {
-    logout(); // Gọi-hàm-logout-từ-useAuth
-    setIsOpen(false); // Đóng-menu-mobile-nếu-đang-mở
+    logout();
+    setIsOpen(false);
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-primary font-display">
-              SkillBoost
-            </span>
-          </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
+      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo */}
+        <Link
+          to="/"
+          className="flex items-center gap-2.5 shrink-0 cursor-pointer group"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shadow-sm transition-all duration-200 group-hover:shadow-md group-hover:scale-[1.02]">
+            <BookOpen className="h-4 w-4 text-white" />
+          </div>
+          <span className="text-lg font-bold tracking-tight text-slate-900 font-display sm:text-xl">
+            SkillBoost
+          </span>
+        </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center gap-8">
+          {/* Group 1 - Scroll nav */}
+          <div className="flex items-center gap-1">
+            {scrollLinks.map((link) => (
+              <button
+                key={link.to}
+                type="button"
+                onClick={() => handleScrollNavClick(link.to, link.hash)}
+                className={cn(
+                  'px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer',
+                  isScrollLinkActive(link.hash)
+                    ? 'text-primary'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                )}
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+          <div className="h-4 w-px bg-slate-200" />
+          {/* Group 2 - Page nav */}
+          <div className="flex items-center gap-1">
+            {pageLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
+                onClick={() => setIsOpen(false)}
                 className={({ isActive }) =>
-                  `px-4 py-2 rounded-lg font-medium transition-all ${
-                    isActive
-                      ? 'text-primary bg-primary/10 font-semibold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`
+                  cn(
+                    'relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer',
+                    link.highlight
+                      ? 'text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20'
+                      : isActive
+                        ? 'text-primary'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  )
                 }
               >
+                {link.highlight && (
+                  <Layers className="inline-block w-3.5 h-3.5 mr-1.5 -mt-0.5 align-middle" />
+                )}
                 {link.label}
               </NavLink>
             ))}
           </div>
-
-          {/* SỬA Ở ĐÂY: Desktop Actions */}
-          <div className="hidden md:flex items-center gap-3">
-            {isLoggedIn ? (
-              // === NẾU ĐÃ ĐĂNG NHẬP ===
-              <>
-                <Link to="/notifications">
-                  <Button variant="ghost" size="default" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                    <Bell className="w-4 h-4 mr-2" />
-                    Thông báo
-                    {/* ... badge thông-báo ... */}
-                  </Button>
-                </Link>
-                <Link to="/wallet">
-                  <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Ví
-                  </Button>
-                </Link>
-                <Link to="/cart">
-                  <Button variant="ghost" size="default" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Giỏ hàng
-                    {/* ... badge giỏ-hàng ... */}
-                  </Button>
-                </Link>
-                <Link to="/profile">
-                  <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                    <User className="w-4 h-4 mr-2" />
-                    Hồ sơ
-                  </Button>
-                </Link>
-                <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50" onClick={handleLogout}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Đăng xuất
-                </Button>
-              </>
-            ) : (
-              // === NẾU CHƯA ĐĂNG NHẬP (KHÁCH) ===
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="default" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                    Đăng nhập
-                  </Button>
-                </Link>
-                <Link to="/login?register=1">
-                  <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-opacity">
-                    Bắt đầu
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
-          >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
 
-        {/* SỬA Ở ĐÂY: Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden py-4 border-t border-slate-200 animate-in slide-in-from-top-2">
-            <div className="flex flex-col gap-2">
-              {/* ... navLinks (giữ-nguyên) ... */}
-              <div className="flex flex-col gap-2 pt-4 border-t border-slate-200 mt-2">
-                {isLoggedIn ? (
-                  // === NẾU ĐÃ ĐĂNG NHẬP (MOBILE) ===
-                  <>
-                    <Link to="/notifications" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                        <Bell className="w-4 h-4 mr-2" />
-                        Thông báo
-                      </Button>
-                    </Link>
-                    <Link to="/wallet" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Ví
-                      </Button>
-                    </Link>
-                    <Link to="/cart" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full relative text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Giỏ hàng
-                      </Button>
-                    </Link>
-                    <Link to="/profile" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" size="lg" className="w-full text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                        <User className="w-4 h-4 mr-2" />
-                        Hồ sơ
-                      </Button>
-                    </Link>
-                    <Button variant="ghost" size="lg" className="w-full text-slate-600 hover:text-slate-900 hover:bg-slate-50" onClick={handleLogout}>
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Đăng xuất
-                    </Button>
-                  </>
-                ) : (
-                  // === NẾU CHƯA ĐĂNG NHẬP (MOBILE) ===
-                  <>
-                    <Link to="/login" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" size="lg" className="w-full text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900">
-                        Đăng nhập
-                      </Button>
-                    </Link>
-                    <Link to="/login?register=1" onClick={() => setIsOpen(false)}>
-                      <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-                        Bắt đầu
-                      </Button>
-                    </Link>
-                  </>
+        {/* Desktop Actions */}
+        <div className="hidden lg:flex items-center gap-1">
+          {isLoggedIn ? (
+            <>
+              <NotificationDropdown userId={user?.id} />
+              <Link to="/wallet">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors duration-200 cursor-pointer"
+                >
+                  <Wallet className="h-5 w-5" />
+                </Button>
+              </Link>
+              <CartDropdown />
+              <Link to="/profile">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors duration-200 cursor-pointer"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="ml-2 h-6 w-px bg-slate-200" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium cursor-pointer"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-1.5" />
+                Đăng xuất
+              </Button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/login">
+                <Button
+                  variant="ghost"
+                  className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium cursor-pointer"
+                >
+                  Đăng nhập
+                </Button>
+              </Link>
+              <Link to="/login?register=1">
+                <Button
+                  className="h-9 rounded-lg bg-primary hover:bg-primary/90 text-white font-semibold px-5 cursor-pointer"
+                >
+                  Bắt đầu
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+          aria-label={isOpen ? 'Đóng menu' : 'Mở menu'}
+        >
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+      </nav>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="lg:hidden border-t border-slate-200/80 bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-4 space-y-1">
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 py-2">
+              Trang chủ
+            </div>
+            {scrollLinks.map((link) => (
+              <button
+                key={link.to}
+                type="button"
+                onClick={() => handleScrollNavClick(link.to, link.hash)}
+                className={cn(
+                  'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
+                  isScrollLinkActive(link.hash)
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 )}
-              </div>
+              >
+                {link.label}
+              </button>
+            ))}
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 py-2 mt-2">
+              Hệ thống
+            </div>
+            {pageLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
+                    link.highlight
+                      ? 'bg-primary/10 text-primary'
+                      : isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  )
+                }
+              >
+                {link.highlight && <Layers className="h-4 w-4" />}
+                {link.label}
+              </NavLink>
+            ))}
+            <div className="pt-3 mt-3 border-t border-slate-200 space-y-1">
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    to="/notifications"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
+                  >
+                    <span className="text-sm font-medium">Thông báo</span>
+                  </Link>
+                  <Link
+                    to="/wallet"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
+                  >
+                    <span className="text-sm font-medium">Ví</span>
+                  </Link>
+                  <Link
+                    to="/cart"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
+                  >
+                    <span className="text-sm font-medium">Giỏ hàng</span>
+                    {count > 0 && (
+                      <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
+                        {count}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
+                  >
+                    <span className="text-sm font-medium">Hồ sơ</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 text-left cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-sm font-medium">Đăng xuất</span>
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col gap-2 pt-2">
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full h-11 rounded-lg" size="lg">
+                      Đăng nhập
+                    </Button>
+                  </Link>
+                  <Link to="/login?register=1" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full h-11 rounded-lg bg-primary hover:bg-primary/90" size="lg">
+                      Bắt đầu
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
-        )}
-      </div>
-    </nav>
+        </div>
+      )}
+    </header>
   );
 };
 
