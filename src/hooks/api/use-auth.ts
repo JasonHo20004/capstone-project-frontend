@@ -30,7 +30,7 @@ export const useAuth = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
       queryClient.setQueryData(["user", "me"], user);
-      navigate("/");
+      navigate("/dashboard");
     },
   });
 

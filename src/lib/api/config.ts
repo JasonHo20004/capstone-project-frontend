@@ -67,6 +67,15 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
     
+    // Skip retry for /auth/refresh - if refresh fails, we must logout immediately to avoid deadlock/infinite loading
+    const isRefreshRequest = originalRequest?.url?.includes("/auth/refresh");
+    if (error.response?.status === 401 && isRefreshRequest) {
+      isRefreshing = false;
+      processQueue(error, null);
+      handleLogout();
+      return Promise.reject(error);
+    }
+
     // Chỉ xử lý lỗi 401 (Unauthorized) và không phải là request retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Nếu đang trong quá trình refresh, đưa request vào hàng đợi

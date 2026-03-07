@@ -18,6 +18,8 @@ export interface User {
   englishLevel?: string;
   learningGoals: string[];
   role?: UserRole;
+  /** Populated when API returns user with wallet relation (e.g. /users/profile) */
+  wallet?: Wallet;
 }
 
 export interface RefreshToken {
