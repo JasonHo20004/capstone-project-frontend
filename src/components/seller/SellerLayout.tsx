@@ -8,7 +8,7 @@ export default function SellerLayout() {
       <SellerSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <SellerHeader />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto bg-muted/30 p-6">
           <div className="mx-auto w-full max-w-screen-xl">
             <Outlet />
           </div>

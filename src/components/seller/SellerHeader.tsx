@@ -41,11 +41,14 @@ export default function SellerHeader() {
   const unreadCount = stats?.unread ?? 0;
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-card/80 backdrop-blur-sm px-6">
       <div className="flex items-center gap-4">
-        <div className="relative w-80 md:w-96">
+        <div className="relative w-64 sm:w-80 md:w-96">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Tìm kiếm khoá học, người học..." className="pl-10" />
+          <Input
+            placeholder="Tìm kiếm khoá học, người học..."
+            className="pl-10 bg-muted/50 border-transparent focus-visible:ring-primary/20"
+          />
         </div>
       </div>
       <div className="flex items-center gap-3">
