@@ -801,7 +801,8 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
       </AlertDialog>
       {/* Study Mode Dialog */}
       <Dialog open={studyDialogOpen} onOpenChange={setStudyDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Chế độ học thẻ</DialogTitle>
           <StudyMode
             //cards={selectedDeckCards}
             deckId={selectedDeckId}
