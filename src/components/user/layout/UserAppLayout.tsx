@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/api/use-auth";
 import { useUser } from "@/hooks/api/use-user";
+import { NotificationDropdown } from "./NotificationDropdown";
+import { CartDropdown } from "./CartDropdown";
 
 type NavItem = {
   name: string;
@@ -10,7 +12,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { name: "Dashboard", path: "/", icon: "dashboard" },
+  { name: "Dashboard", path: "/dashboard", icon: "dashboard" },
   { name: "My Courses", path: "/my-courses", icon: "local_library" },
   { name: "Flashcards", path: "/flashcards", icon: "style" },
   { name: "Cart", path: "/cart", icon: "shopping_cart" },
@@ -27,7 +29,7 @@ export default function UserAppLayout() {
 
   const pageTitle = useMemo(() => {
     const current = navItems.find((item) =>
-      item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
+      item.path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.path)
     );
     return current?.name ?? "Learning Workspace";
   }, [location.pathname]);
@@ -58,7 +60,7 @@ export default function UserAppLayout() {
             <NavLink
               key={item.path}
               to={item.path}
-              end={item.path === "/"}
+              end={item.path === "/dashboard"}
               onClick={() => setIsMobileMenuOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -70,8 +72,8 @@ export default function UserAppLayout() {
             >
               <span
                 className={`material-symbols-outlined ${
-                  item.path === "/"
-                    ? location.pathname === "/" ? "icon-fill" : ""
+                  item.path === "/dashboard"
+                    ? location.pathname === "/dashboard" ? "icon-fill" : ""
                     : location.pathname.startsWith(item.path) ? "icon-fill" : ""
                 }`}
               >
@@ -118,14 +120,10 @@ export default function UserAppLayout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <NavLink
-              to="/notifications"
-              className="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 transition-colors"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-            </NavLink>
-            <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+          <div className="flex items-center gap-2">
+            <NotificationDropdown userId={user?.id} />
+            <CartDropdown />
+            <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
             <NavLink
               to="/profile"
               className="flex items-center gap-3 pl-2 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"

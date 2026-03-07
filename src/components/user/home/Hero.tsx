@@ -44,7 +44,7 @@ const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4">
-              <Link to="/courses">
+              <Link to="/#courses">
                 <Button
                   size="lg"
                   className="bg-primary hover:bg-primary-dark shadow-xl shadow-primary/20 text-white text-lg h-14 px-8"
