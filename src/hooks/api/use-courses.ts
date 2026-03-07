@@ -30,13 +30,24 @@ export const useGetCourses = (params: GetCoursesForUserParams) => {
 };
 
 export const useGetMyCourses = () => {
-  // Lưu ý: Hook này cần User login mới chạy được (xử lý enabled ở component hoặc check token)
   return useQuery({
     queryKey: courseKeys.myCourses,
     queryFn: async () => {
-      const res = await courseServiceUser.getAllCourses({ enrollmentStatus: 'enrolled', limit: 100 });
+      const res = await courseServiceUser.getEnrolledCourses();
       return res;
     },
+  });
+};
+
+export const useEnrolledCourses = () => {
+  const hasToken = Boolean(localStorage.getItem('accessToken'));
+  return useQuery({
+    queryKey: ['courses', 'enrolled'] as const,
+    queryFn: async () => {
+      const res = await courseServiceUser.getEnrolledCourses();
+      return res.data ?? [];
+    },
+    enabled: hasToken,
   });
 };
 export const useGetCourseDetail = (id: string) => {

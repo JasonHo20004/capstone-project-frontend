@@ -24,9 +24,8 @@ export default function AdminHeader() {
   const { user } = useUser();
   const userId = user?.id;
 
-  const { data: stats } = useNotificationStats(userId);
+  const { data: stats } = useNotificationStats();
   const { data: notificationsResponse } = useNotifications({
-    userId,
     page: 1,
     limit: 5,
     unreadOnly: false,

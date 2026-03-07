@@ -5,7 +5,6 @@ import {
   type UserNotificationsResponse,
   type UserNotificationStats,
 } from "@/lib/api/services";
-import type { ApiResponse } from "@/lib/api/types";
 import type { InAppNotification } from "@/domain";
 
 interface NotificationQueryParams {
@@ -15,103 +14,126 @@ interface NotificationQueryParams {
   type?: string;
 }
 
-const NOTIFICATIONS_QUERY_KEY = (userId: string, params: NotificationQueryParams) => [
+const NOTIFICATIONS_QUERY_KEY = (params: NotificationQueryParams) => [
   "notifications",
-  userId,
   params,
 ];
 
+/**
+ * Fetch current user's notifications (token-based auth, no userId needed)
+ */
 export const useNotifications = (params: {
-  userId: string | undefined;
   page?: number;
   limit?: number;
   unreadOnly?: boolean;
   type?: string;
   enabled?: boolean;
 }) => {
-  const { userId, enabled = true, ...rest } = params;
+  const { enabled = true, ...rest } = params;
 
-  const query = useQuery<UserNotificationsResponse>({
-    queryKey: NOTIFICATIONS_QUERY_KEY(userId || "anonymous", rest),
+  return useQuery<UserNotificationsResponse>({
+    queryKey: NOTIFICATIONS_QUERY_KEY(rest),
     queryFn: async () => {
-      if (!userId) {
-        return {
-          notifications: [],
-          pagination: {
-            page: rest.page ?? 1,
-            limit: rest.limit ?? 10,
-            total: 0,
-            totalPages: 0,
-          },
-        };
-      }
-
-      const response = await notificationService.getUserNotifications({
-        userId,
-        ...rest,
-      });
-
+      const response = await notificationService.getUserNotifications(rest);
       return response.data!;
     },
-    enabled: Boolean(userId) && enabled,
+    enabled,
     staleTime: 60_000,
   });
-
-  return query;
 };
 
-export const useNotificationStats = (userId: string | undefined) => {
+/**
+ * Fetch notification stats for current user
+ */
+export const useNotificationStats = () => {
   return useQuery<UserNotificationStats>({
-    queryKey: ["notifications", "stats", userId || "anonymous"],
+    queryKey: ["notifications", "stats"],
     queryFn: async () => {
-      if (!userId) {
-        return {
-          total: 0,
-          unread: 0,
-          byType: {},
-        };
-      }
-      const response = await notificationService.getUserStats(userId);
+      const response = await notificationService.getUserStats();
       return response.data!;
     },
-    enabled: Boolean(userId),
     staleTime: 60_000,
   });
 };
 
-export const useMarkNotificationAsRead = (userId: string | undefined) => {
+/**
+ * Fetch unread notification count
+ */
+export const useUnreadNotificationCount = () => {
+  return useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: async () => {
+      const response = await notificationService.getUnreadCount();
+      return response.data!;
+    },
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Mark a single notification as read
+ */
+export const useMarkNotificationAsRead = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (notificationId: string) =>
       notificationService.markNotificationAsRead(notificationId),
     onSuccess: () => {
-      if (!userId) return;
-      queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
-      queryClient.invalidateQueries({
-        queryKey: ["notifications", "stats", userId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 };
 
-export const useMarkAllNotificationsAsRead = (userId: string | undefined) => {
+/**
+ * Mark all notifications as read
+ */
+export const useMarkAllNotificationsAsRead = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<ApiResponse<{ updatedCount: number }>, Error, void>({
-    mutationFn: async () => {
-      if (!userId) {
-        throw new Error("Missing userId");
-      }
-      return notificationService.markAllAsRead(userId);
+  return useMutation<unknown, Error, string | undefined>({
+    mutationFn: async (type?: string) => {
+      return notificationService.markAllAsRead(type);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
-      queryClient.invalidateQueries({ queryKey: ["notifications", "stats", userId] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 };
 
+/**
+ * Archive a notification
+ */
+export const useArchiveNotification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      notificationService.archiveNotification(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+};
+
+/**
+ * Delete a notification
+ */
+export const useDeleteNotification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      notificationService.deleteNotification(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+};
+
+/**
+ * Real-time notification stream via SSE
+ */
 export const useNotificationRealtime = (
   userId: string | undefined,
   onNotification?: (notification: InAppNotification) => void,
@@ -143,11 +165,7 @@ export const useNotificationRealtime = (
           onNotification(data);
         }
 
-        // Refresh queries for this user so UI stays in sync
-        queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
-        queryClient.invalidateQueries({
-          queryKey: ["notifications", "stats", userId],
-        });
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
       } catch {
         // ignore parsing errors
       }
@@ -162,5 +180,3 @@ export const useNotificationRealtime = (
     };
   }, [userId, queryClient, onNotification]);
 };
-
-

@@ -4,6 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CartProvider } from "./context/CartContext";
+import { WalletProvider } from "./context/WalletContext";
+import { PurchasesProvider } from "./context/PurchasesContext";
 
 // User pages
 import Index from "./pages/user/home/Home";
@@ -58,6 +61,9 @@ import UserAppLayout from "./components/user/layout/UserAppLayout";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <CartProvider>
+      <WalletProvider>
+        <PurchasesProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -129,6 +135,9 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+        </PurchasesProvider>
+      </WalletProvider>
+    </CartProvider>
   </QueryClientProvider>
 );
 

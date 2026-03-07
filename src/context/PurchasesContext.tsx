@@ -44,12 +44,10 @@ export const PurchasesProvider: React.FC<React.PropsWithChildren> = ({ children 
     setIsLoading(true);
 
     courseServiceUser
-      .getAllCourses({ enrollmentStatus: 'enrolled', limit: 100 })
+      .getEnrolledCourses()
       .then((res) => {
-        if (cancelled || !res?.data) return;
-        // Handle both { data: { data: [] } } and { data: [] } response shapes
-        const raw = res.data as { data?: AdminCourse[] } | AdminCourse[];
-        const courses: AdminCourse[] = Array.isArray(raw) ? raw : (raw.data ?? []);
+        if (cancelled) return;
+        const courses: AdminCourse[] = Array.isArray(res.data) ? res.data : [];
         const mapped: PurchasedItem[] = courses.map((c) => ({
           id: c.id,
           course: c,

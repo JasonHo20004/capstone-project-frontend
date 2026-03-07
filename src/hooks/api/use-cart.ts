@@ -9,12 +9,14 @@ export const cartKeys = {
 
 // Hook to fetch the user's cart
 export const useGetUserCart = () => {
+  const hasToken = Boolean(localStorage.getItem('accessToken'));
   return useQuery({
     queryKey: cartKeys.userCart,
     queryFn: async () => {
       const res = await cartService.getUserCart();
       return res.data;
     },
+    enabled: hasToken,
   });
 };
 

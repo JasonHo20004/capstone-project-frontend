@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
-import { useGetCourses } from '@/hooks/api/use-courses';
+import { useGetCourses, useEnrolledCourses } from '@/hooks/api/use-courses';
 import { useUser } from '@/hooks/api/use-user';
 
 const levels = ['all', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -54,30 +54,28 @@ export default function Landing() {
   const limit = 9;
   const { user } = useUser();
 
-  const { data: myCoursesRes, isLoading: isLoadingMy } = useGetCourses({
-    page: 1,
-    limit: 100,
-    search: searchQuery || undefined,
-    level: selectedLevel,
-    enrollmentStatus: 'enrolled',
-    sortBy: 'ratingCount',
-    sortOrder: 'desc',
-  });
+  // Fetch enrolled courses from backend
+  const { data: enrolledCourses = [], isLoading: isLoadingEnrolled } = useEnrolledCourses();
 
+  // Fetch all published courses
   const { data: availableRes, isLoading: isLoadingAvailable, isPlaceholderData } = useGetCourses({
     page,
     limit,
     search: searchQuery || undefined,
     level: selectedLevel,
-    enrollmentStatus: user ? 'not_enrolled' : undefined,
     sortBy: 'ratingCount',
     sortOrder: 'desc',
   });
 
-  const myCourses = user ? myCoursesRes?.data || [] : [];
-  const availableCourses = availableRes?.data || [];
-  const pagination = availableRes ? { total: availableRes.total, page: availableRes.page, limit: availableRes.limit, totalPages: availableRes.totalPages } : undefined;
-  const isLoading = (!!user && isLoadingMy) || isLoadingAvailable;
+  // Build a set of enrolled course IDs
+  const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c: any) => c.id)), [enrolledCourses]);
+
+  const myCourses = user ? enrolledCourses : [];
+  // Filter out enrolled courses from explore section
+  const allCourses = (availableRes as any)?.data || [];
+  const availableCourses = user ? allCourses.filter((c: any) => !enrolledIds.has(c.id)) : allCourses;
+  const pagination = availableRes ? { total: (availableRes as any).total, page: (availableRes as any).page, limit: (availableRes as any).limit, totalPages: (availableRes as any).totalPages } : undefined;
+  const isLoading = (!!user && isLoadingEnrolled) || isLoadingAvailable;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

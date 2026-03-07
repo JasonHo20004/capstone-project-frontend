@@ -47,6 +47,14 @@ class CourseServiceUser {
     const response = await apiClient.get<ApiResponse<Course>>(`/courses/${id}`);
     return response.data;
   }
+
+  /**
+   * Lấy danh sách khóa học đã mua (enrolled)
+   */
+  async getEnrolledCourses(): Promise<ApiResponse<Course[]>> {
+    const response = await apiClient.get<ApiResponse<Course[]>>('/courses/enrolled');
+    return response.data;
+  }
 }
 
 export const courseServiceUser = new CourseServiceUser();
