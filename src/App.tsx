@@ -7,14 +7,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // User pages
 import Index from "./pages/user/home/Home";
-import Courses from "./pages/user/courses/Courses";
+import Landing from "./pages/user/home/Landing";
 import CourseDetail from "./pages/user/courses/CourseDetail";
 import Flashcards from "./pages/user/learning/Flashcards";
 import StudentLearningPage from "./pages/user/learning/StudentLearning";
 import Profile from "./pages/user/account/Profile";
 import Wallet from "./pages/user/account/Wallet";
 import Cart from "./pages/user/account/Cart";
-import About from "./pages/user/info/About";
 import Contact from "./pages/user/info/Contact";
 import Blog from "./pages/user/info/Blog";
 import Notifications from "./pages/user/account/Notifications";
@@ -64,18 +63,19 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* public routes */}
-          <Route path="/courses" element={<Courses />} />
+          {/* public routes - / là trang chủ (landing, giới thiệu + khoá học), /about redirect về / */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/courses" element={<Landing />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/about" element={<Landing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/verify" element={<VerifyEmailPage />} />
-          {/* protected routes */}
+          {/* protected routes - dashboard học viên */}
           <Route element={<ProtectedRoute />}>
             <Route element={<UserAppLayout />}>
-              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Index />} />
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/flashcards" element={<Flashcards />} />
               <Route path="/profile" element={<Profile />} />
