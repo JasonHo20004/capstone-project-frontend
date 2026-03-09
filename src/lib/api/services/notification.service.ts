@@ -14,57 +14,106 @@ export interface UserNotificationStats {
   byType: Record<string, number>;
 }
 
+export interface UnreadCountResponse {
+  total: number;
+  byType: Record<string, number>;
+}
+
 export class NotificationService {
-  async getUserNotifications(params: {
-    userId: string;
+  /**
+   * List current user's notifications (token-based, no userId needed)
+   * GET /notifications
+   */
+  async getUserNotifications(params?: {
     page?: number;
     limit?: number;
     unreadOnly?: boolean;
     type?: string;
   }): Promise<ApiResponse<UserNotificationsResponse>> {
-    const { userId, page, limit, unreadOnly, type } = params;
-
-    const searchParams = new URLSearchParams();
-    if (page) searchParams.set("page", String(page));
-    if (limit) searchParams.set("limit", String(limit));
-    if (unreadOnly) searchParams.set("unreadOnly", "true");
-    if (type) searchParams.set("type", type);
-
-    const query = searchParams.toString();
-    const url = `/notifications/in-app/user/${userId}${
-      query ? `?${query}` : ""
-    }`;
-
     const response = await apiClient.get<ApiResponse<UserNotificationsResponse>>(
-      url,
+      "/notifications",
+      { params }
     );
     return response.data;
   }
 
-  async markNotificationAsRead(notificationId: string): Promise<ApiResponse<null>> {
-    const response = await apiClient.post<ApiResponse<null>>(
-      `/notifications/in-app/${notificationId}/read`,
+  /**
+   * Get single notification
+   * GET /notifications/:id
+   */
+  async getNotification(id: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.get<ApiResponse<InAppNotification>>(
+      `/notifications/${id}`
     );
     return response.data;
   }
 
-  async markAllAsRead(userId: string): Promise<ApiResponse<{ updatedCount: number }>> {
-    const response = await apiClient.post<
-      ApiResponse<{
-        updatedCount: number;
-      }>
-    >(`/notifications/in-app/user/${userId}/mark-all-read`);
+  /**
+   * Mark a notification as read
+   * PATCH /notifications/:id/read
+   */
+  async markNotificationAsRead(notificationId: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.patch<ApiResponse<InAppNotification>>(
+      `/notifications/${notificationId}/read`
+    );
     return response.data;
   }
 
-  async getUserStats(userId: string): Promise<ApiResponse<UserNotificationStats>> {
+  /**
+   * Mark all notifications as read
+   * POST /notifications/read-all
+   */
+  async markAllAsRead(type?: string): Promise<ApiResponse<{ count: number }>> {
+    const response = await apiClient.post<ApiResponse<{ count: number }>>(
+      "/notifications/read-all",
+      { type }
+    );
+    return response.data;
+  }
+
+  /**
+   * Archive a notification
+   * PATCH /notifications/:id/archive
+   */
+  async archiveNotification(notificationId: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.patch<ApiResponse<InAppNotification>>(
+      `/notifications/${notificationId}/archive`
+    );
+    return response.data;
+  }
+
+  /**
+   * Delete a notification
+   * DELETE /notifications/:id
+   */
+  async deleteNotification(notificationId: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.delete<ApiResponse<null>>(
+      `/notifications/${notificationId}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get unread notification count
+   * GET /notifications/unread-count
+   */
+  async getUnreadCount(): Promise<ApiResponse<UnreadCountResponse>> {
+    const response = await apiClient.get<ApiResponse<UnreadCountResponse>>(
+      "/notifications/unread-count"
+    );
+    return response.data;
+  }
+
+  /**
+   * Get notification stats for current user
+   * GET /notifications/stats
+   */
+  async getUserStats(): Promise<ApiResponse<UserNotificationStats>> {
     const response = await apiClient.get<ApiResponse<UserNotificationStats>>(
-      `/notifications/in-app/user/${userId}/stats`,
+      "/notifications/stats"
     );
     return response.data;
   }
 }
 
 export const notificationService = new NotificationService();
-
-

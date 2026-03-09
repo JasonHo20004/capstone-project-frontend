@@ -3,12 +3,17 @@
  */
 export { authService } from './auth/auth.service';
 export { courseServiceUser } from './course/course.service';
-export {flashcardService} from './flashcard/flashcard.service'
-export {tagService} from './flashcard/tag.service'
-export {userService} from './profile/user.service'
-export {topupService}  from './profile/topup.service'
-export {cartService} from './cart/cart.service'
-export {studentLearningService} from './learning/student-learning.service'
+export { flashcardService } from './flashcard/flashcard.service';
+export { tagService } from './flashcard/tag.service';
+export { userService } from './profile/user.service';
+export { topupService } from './profile/topup.service';
+export { cartService } from './cart/cart.service';
+export { studentLearningService } from './learning/student-learning.service';
+export { walletService } from './wallet/wallet.service';
+export { orderService } from './order/order.service';
+export { practiceService } from './practice/practice.service';
+export { assessmentService } from './assessment/assessment.service';
+
 // Export types
 export type {
   LoginRequest,
@@ -17,22 +22,25 @@ export type {
   RegisterResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
-} from './auth/auth.service';
+} from '@/lib/api/types/auth.types';
 
-export type {GetCoursesForUserParams} from './course/course.service';
+export type { GetCoursesForUserParams } from './course/course.service';
 
-export type {ReviewQuality,SubmitReviewDTO,DeckFormDTO, CardFormDTO} from './flashcard/flashcard.service'
-export type {UpdateProfileDTO}from './profile/user.service'
-export type {CreateTopupRequest, ConfirmPaymentRequest, CreateTopupResponse} from './profile/topup.service'
-export type {CheckoutResponse} from './cart/cart.service'
-export type {PaginatedParams as StudentPaginatedParams,CreateLessonCommentRequest,} from './learning/student-learning.service'
-// export type {
-//   Course,
-//   CourseDetail,
-//   Lesson,
-//   GetCoursesParams,
-// } from '../course.service';
-
-
-export type { };
-
+export type { ReviewQuality, SubmitReviewDTO, DeckFormDTO, CardFormDTO } from './flashcard/flashcard.service';
+export type { UpdateProfileDTO } from './profile/user.service';
+export type { CreateTopupRequest, ConfirmPaymentRequest, CreateTopupResponse } from './profile/topup.service';
+export type { CheckoutResponse } from './cart/cart.service';
+export type { PaginatedParams as StudentPaginatedParams, CreateLessonCommentRequest } from './learning/student-learning.service';
+export type { WalletTransactionsResponse } from './wallet/wallet.service';
+export type { OrderHistoryResponse, PayOrderResponse } from './order/order.service';
+export type {
+  PracticeTestSummary,
+  PracticeTestDetail,
+  PracticeGradingResult,
+} from './practice/practice.service';
+export type {
+  AssessmentTest,
+  AssessmentTestDetail,
+  AssessmentSession,
+  SessionGradingResult,
+} from './assessment/assessment.service';

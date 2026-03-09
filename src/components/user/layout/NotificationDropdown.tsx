@@ -41,9 +41,8 @@ export function NotificationDropdown({
   triggerClassName,
   onNavigate,
 }: NotificationDropdownProps) {
-  const { data: stats } = useNotificationStats(userId);
+  const { data: stats } = useNotificationStats();
   const { data: notificationsResponse } = useNotifications({
-    userId,
     page: 1,
     limit: 10,
     unreadOnly: false,

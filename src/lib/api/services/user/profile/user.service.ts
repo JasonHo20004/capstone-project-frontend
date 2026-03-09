@@ -47,14 +47,11 @@ class UserService {
   }
 
   async createCourseSellerApplication(formData: FormData): Promise<ApiResponse<CourseSellerApplication>> {
-    // Axios tự động set Content-Type là multipart/form-data khi data là FormData
-    // NHƯNG cần lưu ý: Đừng set thủ công Content-Type: application/json
     const response = await apiClient.post<ApiResponse<CourseSellerApplication>>(
-      '/users/me/course-seller-application',
+      '/seller/apply',
       formData,
       {
         headers: {
-          // Để undefined để browser tự set boundary
           'Content-Type': undefined, 
         },
       }

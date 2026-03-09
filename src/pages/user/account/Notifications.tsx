@@ -11,7 +11,7 @@ import {
   useNotificationRealtime,
   useNotifications,
 } from '@/hooks/api';
-import type { InAppNotification } from '@/lib/api/types';
+import type { InAppNotification } from '@/domain';
 
 const formatDate = (date: string) => {
   try {
@@ -47,7 +47,6 @@ export default function Notifications() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
   const { data } = useNotifications({
-    userId,
     page: 1,
     limit: 50,
     unreadOnly: false,
@@ -59,8 +58,8 @@ export default function Notifications() {
     [data],
   );
 
-  const { mutate: markReadMutation } = useMarkNotificationAsRead(userId);
-  const { mutate: markAllReadMutation } = useMarkAllNotificationsAsRead(userId);
+  const { mutate: markReadMutation } = useMarkNotificationAsRead();
+  const { mutate: markAllReadMutation } = useMarkAllNotificationsAsRead();
 
   useNotificationRealtime(userId);
 
@@ -94,7 +93,7 @@ export default function Notifications() {
   };
 
   const markAllRead = () => {
-    markAllReadMutation();
+    markAllReadMutation(undefined);
   };
 
   return (

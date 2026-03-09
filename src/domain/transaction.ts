@@ -44,16 +44,25 @@ export interface TopupOrder {
   updatedAt: string;
 }
 
+export interface CartItemCourse {
+  id: string;
+  title: string;
+  price: number;
+  thumbnailUrl?: string;
+}
+
 export interface CartItem {
   id: string;
   courseId: string;
   addedAt: string;
   priceAtTime: number;
   cartId: string;
+  course?: CartItemCourse;
 }
 
 export interface Cart {
   id: string;
   userId?: string;
   createdAt: string;
+  cartItems: CartItem[];
 }
