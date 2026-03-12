@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
 import { useGetCourses, useEnrolledCourses } from '@/hooks/api/use-courses';
 import { useUser } from '@/hooks/api/use-user';
+import type { Course } from "@/domain";
 
 const levels = ['all', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
@@ -68,13 +69,13 @@ export default function Landing() {
   });
 
   // Build a set of enrolled course IDs
-  const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c: any) => c.id)), [enrolledCourses]);
+  const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c: Course) => c.id)), [enrolledCourses]);
 
   const myCourses = user ? enrolledCourses : [];
   // Filter out enrolled courses from explore section
-  const allCourses = (availableRes as any)?.data || [];
-  const availableCourses = user ? allCourses.filter((c: any) => !enrolledIds.has(c.id)) : allCourses;
-  const pagination = availableRes ? { total: (availableRes as any).total, page: (availableRes as any).page, limit: (availableRes as any).limit, totalPages: (availableRes as any).totalPages } : undefined;
+  const allCourses = availableRes?.data.data ?? [];
+  const availableCourses = user ? allCourses.filter((c: Course) => !enrolledIds.has(c.id)) : allCourses;
+  const pagination = availableRes?.data.pagination;
   const isLoading = (!!user && isLoadingEnrolled) || isLoadingAvailable;
 
   return (
