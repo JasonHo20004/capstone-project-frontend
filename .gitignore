@@ -31,3 +31,4 @@ schema.prisma
 
 # Turborepo
 .turbo
+.cursor

@@ -22,6 +22,11 @@ import Blog from "./pages/user/info/Blog";
 import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
 
+// Exam center (static UI integration)
+import PracticeTests from "./pages/user/exam-center/PracticeTests";
+import PracticeRunner from "./pages/user/exam-center/PracticeRunner";
+import PracticeResult from "./pages/user/exam-center/PracticeResult";
+
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
 import UsersManagement from "./pages/admin/user-management/Users";
@@ -81,6 +86,9 @@ const App = () => (
           {/* protected routes - dashboard học viên */}
           <Route element={<ProtectedRoute />}>
             <Route element={<UserAppLayout />}>
+              {/* practice (real test flow + design layout) */}
+              <Route path="/practice" element={<PracticeTests />} />
+
               <Route path="/dashboard" element={<Index />} />
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/flashcards" element={<Flashcards />} />
@@ -89,6 +97,9 @@ const App = () => (
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/notifications" element={<Notifications />} />
             </Route>
+            {/* full-page runner/result (no learner layout) */}
+            <Route path="/practice/:testId" element={<PracticeRunner />} />
+            <Route path="/practice/:testId/result" element={<PracticeResult />} />
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
 
             <Route path="/blog" element={<Blog />} />
