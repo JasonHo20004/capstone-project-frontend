@@ -28,7 +28,7 @@ export type { GetCoursesForUserParams } from './course/course.service';
 
 export type { ReviewQuality, SubmitReviewDTO, DeckFormDTO, CardFormDTO } from './flashcard/flashcard.service';
 export type { UpdateProfileDTO } from './profile/user.service';
-export type { CreateTopupRequest, ConfirmPaymentRequest, CreateTopupResponse } from './profile/topup.service';
+export type { CreateTopupRequest, CreateTopupResponse, TopupOrderStatus } from './profile/topup.service';
 export type { CheckoutResponse } from './cart/cart.service';
 export type { PaginatedParams as StudentPaginatedParams, CreateLessonCommentRequest } from './learning/student-learning.service';
 export type { WalletTransactionsResponse } from './wallet/wallet.service';

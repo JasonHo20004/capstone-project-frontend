@@ -15,6 +15,17 @@ export const useWallet = () => {
   });
 };
 
+export const useWalletSummary = () => {
+  return useQuery({
+    queryKey: ['wallet', 'summary'],
+    queryFn: async () => {
+      const response = await walletService.getSummary();
+      return response.data!;
+    },
+    staleTime: 30_000,
+  });
+};
+
 /**
  * Deposit money into wallet
  */

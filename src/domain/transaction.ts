@@ -7,6 +7,7 @@ import type { OrderStatus, PaymentMethod, TransactionStatus, TransactionType } f
 export interface Wallet {
   id: string;
   allowance: number;
+  balance?: number;
   userId: string;
 }
 

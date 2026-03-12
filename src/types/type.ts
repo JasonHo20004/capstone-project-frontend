@@ -5,7 +5,7 @@ export enum UserRole {
 }
 
 export enum PaymentMethod {
-  MOMO = 'MOMO',
+  STRIPE = 'STRIPE',
   ZALOPAY = 'ZALOPAY',
   BANKING = 'BANKING',
   APPLEPAY = 'APPLEPAY'

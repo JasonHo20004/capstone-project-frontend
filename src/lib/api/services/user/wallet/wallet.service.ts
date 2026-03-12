@@ -8,6 +8,11 @@ export interface WalletTransactionsResponse {
   pagination: PaginationMeta;
 }
 
+export interface WalletSummary {
+  monthlyTopupAmount: number;
+  monthlySuccessfulTransactions: number;
+}
+
 class WalletService {
   /**
    * Get current user's wallet
@@ -42,6 +47,11 @@ class WalletService {
       '/wallet/transactions',
       { params }
     );
+    return response.data;
+  }
+
+  async getSummary(): Promise<ApiResponse<WalletSummary>> {
+    const response = await apiClient.get<ApiResponse<WalletSummary>>('/wallet/summary');
     return response.data;
   }
 }

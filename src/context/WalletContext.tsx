@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { userService } from '@/lib/api/services/user';
 import type { UserWithRelations } from '@/domain';
 
-type PaymentMethod = 'MOMO' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
+type PaymentMethod = 'STRIPE' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
 
 interface WalletContextValue {
   balance: number;
@@ -18,7 +18,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [balance, setBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch balance from API when user is logged in
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
@@ -49,13 +48,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const deposit = (amount: number, _method: PaymentMethod, _currency = 'VND') => {
     if (!amount || amount <= 0) return;
-    setBalance(prev => prev + amount);
+    setBalance((prev) => prev + amount);
   };
 
   const pay = (amount: number) => {
     if (!amount || amount <= 0) return false;
     if (balance < amount) return false;
-    setBalance(prev => prev - amount);
+    setBalance((prev) => prev - amount);
     return true;
   };
 
@@ -63,9 +62,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const value: WalletContextValue = { balance, deposit, pay, clear, isLoading };
 
-  return (
-    <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
-  );
+  return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 }
 
 export function useWallet() {
