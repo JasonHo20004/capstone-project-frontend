@@ -26,6 +26,13 @@ import MyCourses from "./pages/user/courses/MyCourses";
 import PracticeTests from "./pages/user/exam-center/PracticeTests";
 import PracticeRunner from "./pages/user/exam-center/PracticeRunner";
 import PracticeResult from "./pages/user/exam-center/PracticeResult";
+import WritingTest from "./pages/user/exam-center/WritingTest";
+import SpeakingTest from "./pages/user/exam-center/SpeakingTest";
+import ExamCenter from "./pages/user/exam-center/ExamCenter";
+import SkillTree from "./pages/user/exam-center/SkillTree";
+import DictationPractice from "./pages/user/exam-center/DictationPractice";
+import LearningPath from "./pages/user/exam-center/LearningPath";
+import IeltsTestModule from "./pages/user/exam-center/IeltsTestModule";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
@@ -96,11 +103,22 @@ const App = () => (
               <Route path="/cart" element={<Cart />} />
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/notifications" element={<Notifications />} />
+
+              {/* AI Features (with sidebar layout) */}
+              <Route path="/exam" element={<ExamCenter />} />
+              <Route path="/skill-tree" element={<SkillTree />} />
+              <Route path="/dictation" element={<DictationPractice />} />
+              <Route path="/learning-path" element={<LearningPath />} />
             </Route>
             {/* full-page runner/result (no learner layout) */}
             <Route path="/practice/:testId" element={<PracticeRunner />} />
             <Route path="/practice/:testId/result" element={<PracticeResult />} />
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
+
+            {/* AI Test routes (full-page, no sidebar — immersive test mode) */}
+            <Route path="/exam/test/writing" element={<WritingTest />} />
+            <Route path="/exam/test/speaking" element={<SpeakingTest />} />
+            <Route path="/exam/test/:testId" element={<IeltsTestModule />} />
 
             <Route path="/blog" element={<Blog />} />
           </Route>

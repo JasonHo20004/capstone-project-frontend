@@ -51,3 +51,11 @@ export {
   useGetSession,
   useSubmitSession,
 } from './use-assessment';
+export {
+  useSubmitWriting,
+  useWritingEvaluation,
+  useUserWritingEvaluations,
+  useSubmitSpeaking,
+  useSpeakingEvaluation,
+  useWritingAssistant,
+} from './use-ai-evaluation';

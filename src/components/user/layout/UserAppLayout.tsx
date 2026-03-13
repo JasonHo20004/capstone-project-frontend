@@ -22,18 +22,54 @@ const navItems: NavItem[] = [
   { name: "Profile", path: "/profile", icon: "person" },
 ];
 
+const aiNavItems: NavItem[] = [
+  { name: "Exam Center", path: "/exam", icon: "history_edu" },
+  { name: "Skill Tree", path: "/skill-tree", icon: "account_tree" },
+  { name: "Dictation", path: "/dictation", icon: "hearing" },
+  { name: "Learning Path", path: "/learning-path", icon: "route" },
+];
+
 export default function UserAppLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user } = useUser();
   const { logout } = useAuth();
 
+  const allNavItems = useMemo(() => [...navItems, ...aiNavItems], []);
+
   const pageTitle = useMemo(() => {
-    const current = navItems.find((item) =>
+    const current = allNavItems.find((item) =>
       item.path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.path)
     );
     return current?.name ?? "Learning Workspace";
-  }, [location.pathname]);
+  }, [location.pathname, allNavItems]);
+
+  const renderNavLink = (item: NavItem) => (
+    <NavLink
+      key={item.path}
+      to={item.path}
+      end={item.path === "/dashboard"}
+      onClick={() => setIsMobileMenuOpen(false)}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+          isActive
+            ? "bg-primary/10 text-primary font-semibold"
+            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium"
+        }`
+      }
+    >
+      <span
+        className={`material-symbols-outlined ${
+          item.path === "/dashboard"
+            ? location.pathname === "/dashboard" ? "icon-fill" : ""
+            : location.pathname.startsWith(item.path) ? "icon-fill" : ""
+        }`}
+      >
+        {item.icon}
+      </span>
+      <span className="text-sm">{item.name}</span>
+    </NavLink>
+  );
 
   return (
     <div className="flex h-screen w-full bg-background font-sans">
@@ -56,33 +92,14 @@ export default function UserAppLayout() {
           </button>
         </div>
 
-        <nav className="flex flex-col gap-2 px-4 mt-4">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === "/dashboard"}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-primary/10 text-primary font-semibold"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium"
-                }`
-              }
-            >
-              <span
-                className={`material-symbols-outlined ${
-                  item.path === "/dashboard"
-                    ? location.pathname === "/dashboard" ? "icon-fill" : ""
-                    : location.pathname.startsWith(item.path) ? "icon-fill" : ""
-                }`}
-              >
-                {item.icon}
-              </span>
-              <span className="text-sm">{item.name}</span>
-            </NavLink>
-          ))}
+        <nav className="flex flex-col gap-1 px-4 mt-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 160px)" }}>
+          {navItems.map(renderNavLink)}
+
+          {/* AI Features Section */}
+          <div className="mt-3 mb-1 px-4 pt-3 border-t border-slate-100">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Features</span>
+          </div>
+          {aiNavItems.map(renderNavLink)}
         </nav>
 
         <div className="mt-auto p-4 border-t border-slate-100">
