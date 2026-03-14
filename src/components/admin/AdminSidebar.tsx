@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   Package,
   ScrollText,
-  Tag
+  Tag,
+  ClipboardList
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -31,6 +32,11 @@ const sidebarItems = [
     title: 'Quản lý khóa học',
     href: '/admin/courses',
     icon: BookOpen,
+  },
+  {
+    title: 'Quản lý bài thi',
+    href: '/admin/exams',
+    icon: ClipboardList,
   },
   // {
   //   title: 'Doanh thu',

@@ -12,9 +12,20 @@ interface TestSummary {
   englishTestType: { name: string };
 }
 
+type SkillFilter = 'ALL' | 'READING' | 'WRITING' | 'LISTENING' | 'SPEAKING';
+
+const SKILL_TABS: { label: string; value: SkillFilter }[] = [
+  { label: 'All Skills', value: 'ALL' },
+  { label: 'Reading', value: 'READING' },
+  { label: 'Writing', value: 'WRITING' },
+  { label: 'Listening', value: 'LISTENING' },
+  { label: 'Speaking', value: 'SPEAKING' },
+];
+
 export default function ExamCenter() {
   const [tests, setTests] = useState<TestSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<SkillFilter>('ALL');
 
   useEffect(() => {
     const fetchTests = async () => {
@@ -30,6 +41,15 @@ export default function ExamCenter() {
     };
     fetchTests();
   }, []);
+
+  // Filter DB tests by skill
+  const filteredTests = activeFilter === 'ALL'
+    ? tests
+    : tests.filter(t => t.testSkills?.some(s => s.skill === activeFilter));
+
+  // Show static Writing/Speaking cards only when filter matches
+  const showWritingCard = activeFilter === 'ALL' || activeFilter === 'WRITING';
+  const showSpeakingCard = activeFilter === 'ALL' || activeFilter === 'SPEAKING';
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -49,21 +69,19 @@ export default function ExamCenter() {
 
       {/* Skill Filter Tabs */}
       <div className="flex p-1 bg-white rounded-xl shadow-sm border border-slate-200 mb-8 w-fit overflow-x-auto">
-        <button className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all bg-primary text-white shadow-md whitespace-nowrap cursor-pointer">
-          All Skills
-        </button>
-        <button className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-primary/5 whitespace-nowrap cursor-pointer">
-          Reading
-        </button>
-        <button className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-primary/5 whitespace-nowrap cursor-pointer">
-          Writing
-        </button>
-        <button className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-primary/5 whitespace-nowrap cursor-pointer">
-          Listening
-        </button>
-        <button className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-primary/5 whitespace-nowrap cursor-pointer">
-          Speaking
-        </button>
+        {SKILL_TABS.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveFilter(tab.value)}
+            className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeFilter === tab.value
+                ? 'bg-primary text-white shadow-md'
+                : 'text-slate-500 hover:bg-primary/5'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Loading */}
@@ -77,9 +95,19 @@ export default function ExamCenter() {
       {/* Test Grid — from database */}
       {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tests.map((test) => (
+          {filteredTests.map((test) => {
+            const skills = test.testSkills?.map(s => s.skill) || [];
+            const primarySkill = skills[0] || 'READING';
+            const skillConfig: Record<string, { label: string; color: string; gradient: string; icon: string }> = {
+              READING: { label: 'Reading', color: 'bg-primary/10 text-primary', gradient: 'from-[#13b6ec] to-[#0891b2]', icon: 'menu_book' },
+              LISTENING: { label: 'Listening', color: 'bg-teal-100 text-teal-600', gradient: 'from-[#14b8a6] to-[#0d9488]', icon: 'headphones' },
+              WRITING: { label: 'Writing', color: 'bg-violet-100 text-violet-600', gradient: 'from-[#8b5cf6] to-[#6d28d9]', icon: 'edit_note' },
+              SPEAKING: { label: 'Speaking', color: 'bg-amber-100 text-amber-600', gradient: 'from-[#f59e0b] to-[#d97706]', icon: 'mic' },
+            };
+            const cfg = skillConfig[primarySkill] || skillConfig.READING;
+            return (
             <div key={test.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
-              <div className="h-28 bg-gradient-to-br from-[#13b6ec] to-[#0891b2] relative overflow-hidden">
+              <div className={`h-28 bg-gradient-to-br ${cfg.gradient} relative overflow-hidden`}>
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
                 <div className="absolute top-4 left-4">
                   <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/30 uppercase tracking-widest">
@@ -87,19 +115,13 @@ export default function ExamCenter() {
                   </span>
                 </div>
                 <div className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md rounded-lg p-2 border border-white/20">
-                  <span className="material-symbols-outlined text-white text-[24px]">menu_book</span>
+                  <span className="material-symbols-outlined text-white text-[24px]">{cfg.icon}</span>
                 </div>
               </div>
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-lg font-bold text-slate-900 leading-tight">{test.title}</h3>
-                  {(() => {
-                    const skills = test.testSkills?.map(s => s.skill) || [];
-                    const isListening = skills.includes('LISTENING');
-                    const label = isListening ? 'Listening' : 'Reading';
-                    const color = isListening ? 'bg-teal-100 text-teal-600' : 'bg-primary/10 text-primary';
-                    return <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter shrink-0 ml-2 ${color}`}>{label}</span>;
-                  })()}
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter shrink-0 ml-2 ${cfg.color}`}>{cfg.label}</span>
                 </div>
                 <div className="flex items-center gap-4 mb-6">
                   <div className="flex flex-col">
@@ -127,9 +149,10 @@ export default function ExamCenter() {
                 </Link>
               </div>
             </div>
-          ))}
+          )})}
 
           {/* Static cards for Writing and Speaking (no DB data yet) */}
+          {showWritingCard && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
             <div className="h-28 bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] relative overflow-hidden">
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
@@ -160,7 +183,9 @@ export default function ExamCenter() {
               </Link>
             </div>
           </div>
+          )}
 
+          {showSpeakingCard && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
             <div className="h-28 bg-gradient-to-br from-[#f59e0b] to-[#d97706] relative overflow-hidden">
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
@@ -191,10 +216,11 @@ export default function ExamCenter() {
               </Link>
             </div>
           </div>
+          )}
         </div>
       )}
 
-      {!loading && tests.length === 0 && (
+      {!loading && filteredTests.length === 0 && !showWritingCard && !showSpeakingCard && (
         <div className="text-center py-8 text-slate-400">
           <span className="material-symbols-outlined text-4xl mb-2 block">quiz</span>
           <p>No IELTS reading tests available yet.</p>

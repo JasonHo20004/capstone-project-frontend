@@ -48,6 +48,8 @@ import SubscriptionContractsManagement from "./pages/admin/management/Subscripti
 import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
 import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 import TagsManagement from "./pages/admin/tag-management/Tags";
+import ExamManagement from "./pages/admin/exam-management/ExamManagement";
+import ExamFormPage from "./pages/admin/exam-management/ExamForm";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -132,6 +134,9 @@ const App = () => (
             <Route path="lessons/:lessonId" element={<AdminLessonDetail />} />
             <Route path="transactions" element={<TransactionsManagement />} />
             <Route path="applications" element={<ApplicationsManagement />} />
+            <Route path="exams" element={<ExamManagement />} />
+            <Route path="exams/new" element={<ExamFormPage />} />
+            <Route path="exams/:id/edit" element={<ExamFormPage />} />
             <Route path="reports" element={<ReportsManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
             <Route

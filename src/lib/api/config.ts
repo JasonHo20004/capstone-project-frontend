@@ -100,7 +100,12 @@ apiClient.interceptors.response.use(
         // Cookie (refreshToken) sẽ được gửi tự động.
         const response = await apiClient.post("/auth/refresh");
 
-        const { accessToken } = response.data;
+        // Backend returns { success, data: { accessToken } }
+        const accessToken = response.data?.data?.accessToken || response.data?.accessToken;
+
+        if (!accessToken) {
+          throw new Error("No access token in refresh response");
+        }
 
         // Lưu accessToken mới
         localStorage.setItem("accessToken", accessToken);
