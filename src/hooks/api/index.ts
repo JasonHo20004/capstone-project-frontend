@@ -55,7 +55,10 @@ export {
   useSubmitWriting,
   useWritingEvaluation,
   useUserWritingEvaluations,
-  useSubmitSpeaking,
-  useSpeakingEvaluation,
+  useStartSpeakingSession,
+  useRespondToSpeaking,
+  useFinishSpeaking,
+  useSpeakingSessionResult,
+  useUserSpeakingSessions,
   useWritingAssistant,
 } from './use-ai-evaluation';

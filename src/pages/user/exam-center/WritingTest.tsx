@@ -81,8 +81,13 @@ export default function WritingTest() {
         userId: getUserId(),
         essayText: essayText.trim(),
       });
-      setEvaluationId(result.data?.evaluationId || null);
+      const evalId = result.data?.evaluationId || null;
+      setEvaluationId(evalId);
       setShowResult(true);
+      // Update URL with evaluationId
+      if (evalId) {
+        window.history.replaceState(null, "", `/exam/test/writing/session/${evalId}`);
+      }
     } catch (err) {
       console.error("Submit failed:", err);
       setIsSubmitting(false);
@@ -139,8 +144,9 @@ export default function WritingTest() {
             <div className="space-y-6">
               {/* Overall Band */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-                <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">Overall Band Score</p>
+                <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">Estimated Band</p>
                 <div className="text-7xl font-black text-indigo-600 mb-2">{evaluation.overallBand}</div>
+                <p className="text-xs text-slate-400 italic mb-3">AI evaluation may vary ±0.5 band from official IELTS scoring</p>
                 <p className="text-slate-600 text-sm max-w-xl mx-auto">{evaluation.overallFeedback}</p>
               </div>
 
@@ -152,7 +158,7 @@ export default function WritingTest() {
                   { key: "lexical", label: "Lexical Resource", icon: "dictionary" },
                   { key: "grammar", label: "Grammar Range & Accuracy", icon: "spellcheck" },
                 ].map(({ key, label, icon }) => {
-                  const c = evaluation.criteria?.[key as keyof typeof evaluation.criteria];
+                  const c = evaluation.criteria?.[key as keyof typeof evaluation.criteria] as any;
                   if (!c) return null;
                   return (
                     <div key={key} className="bg-white rounded-xl border border-slate-200 p-5">
@@ -164,6 +170,15 @@ export default function WritingTest() {
                         <span className="text-2xl font-black text-indigo-600">{c.score}</span>
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed">{c.feedback}</p>
+                      {c.improvements && (
+                        <div className="mt-3 pt-3 border-t border-slate-100">
+                          <p className="text-xs font-semibold text-emerald-700 flex items-center gap-1 mb-1">
+                            <span className="material-symbols-outlined text-sm">tips_and_updates</span>
+                            How to improve
+                          </p>
+                          <p className="text-xs text-emerald-600 leading-relaxed">{c.improvements}</p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -173,11 +188,11 @@ export default function WritingTest() {
               {evaluation.highlightedErrors && evaluation.highlightedErrors.length > 0 && (
                 <div className="bg-white rounded-xl border border-slate-200 p-6">
                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-amber-500">warning</span>
-                    Errors Found ({evaluation.highlightedErrors.length})
+                    <span className="material-symbols-outlined text-amber-500">edit_note</span>
+                    Key Corrections ({evaluation.highlightedErrors.length})
                   </h3>
                   <div className="space-y-3">
-                    {evaluation.highlightedErrors.map((err, i) => (
+                    {evaluation.highlightedErrors.map((err: any, i: number) => (
                       <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                         <span className={`text-xs font-bold px-2 py-0.5 rounded ${
                           err.type === "grammar" ? "bg-red-100 text-red-700" : 
@@ -188,6 +203,9 @@ export default function WritingTest() {
                         <div className="flex-1 text-sm">
                           <p className="text-red-600 line-through">{err.original}</p>
                           <p className="text-green-700 font-medium">→ {err.suggestion}</p>
+                          {err.explanation && (
+                            <p className="text-xs text-slate-500 mt-1 italic">{err.explanation}</p>
+                          )}
                         </div>
                       </div>
                     ))}

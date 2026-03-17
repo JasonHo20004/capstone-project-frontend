@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, Mail, Lock, User, Phone, Calendar } from 'lucide-react';
+import { BookOpen, Mail, Lock, User, Phone, Calendar, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/api/use-auth';
 import { InlineLoading } from '@/components/ui/loading-spinner';
 import { z } from 'zod'; // 1. Import Zod
@@ -54,6 +54,8 @@ const Register = () => {
 
   // 3. State lưu lỗi (Key là tên trường, Value là câu thông báo)
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Map backend error to form field errors (global handler shows toast)
   useEffect(() => {
@@ -250,12 +252,20 @@ const Register = () => {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     name="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="•••••• (min 8)"
-                    className={`pl-9 ${errors.password ? 'border-destructive' : ''}`}
+                    className={`pl-9 pr-9 ${errors.password ? 'border-destructive' : ''}`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
               </div>
@@ -265,12 +275,20 @@ const Register = () => {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirm ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="••••••"
-                    className={`pl-9 ${errors.confirmPassword ? 'border-destructive' : ''}`}
+                    className={`pl-9 pr-9 ${errors.confirmPassword ? 'border-destructive' : ''}`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>}
               </div>

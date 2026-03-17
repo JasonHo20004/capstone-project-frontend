@@ -33,6 +33,11 @@ import SkillTree from "./pages/user/exam-center/SkillTree";
 import DictationPractice from "./pages/user/exam-center/DictationPractice";
 import LearningPath from "./pages/user/exam-center/LearningPath";
 import IeltsTestModule from "./pages/user/exam-center/IeltsTestModule";
+import TestHistory from "./pages/user/exam-center/TestHistory";
+import WritingHistory from "./pages/user/exam-center/WritingHistory";
+import SpeakingHistory from "./pages/user/exam-center/SpeakingHistory";
+import ProgressAnalytics from "./pages/user/exam-center/ProgressAnalytics";
+import TestResultPage from "./pages/user/exam-center/TestResultPage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
@@ -50,6 +55,9 @@ import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 import TagsManagement from "./pages/admin/tag-management/Tags";
 import ExamManagement from "./pages/admin/exam-management/ExamManagement";
 import ExamFormPage from "./pages/admin/exam-management/ExamForm";
+import WritingTestForm from "./pages/admin/exam-management/WritingTestForm";
+import SpeakingTestForm from "./pages/admin/exam-management/SpeakingTestForm";
+import SpeakingTopicManager from "./pages/admin/exam-management/SpeakingTopicManager";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -108,6 +116,10 @@ const App = () => (
 
               {/* AI Features (with sidebar layout) */}
               <Route path="/exam" element={<ExamCenter />} />
+              <Route path="/exam/history" element={<TestHistory />} />
+              <Route path="/exam/writing-history" element={<WritingHistory />} />
+              <Route path="/exam/speaking-history" element={<SpeakingHistory />} />
+              <Route path="/my-progress" element={<ProgressAnalytics />} />
               <Route path="/skill-tree" element={<SkillTree />} />
               <Route path="/dictation" element={<DictationPractice />} />
               <Route path="/learning-path" element={<LearningPath />} />
@@ -119,8 +131,11 @@ const App = () => (
 
             {/* AI Test routes (full-page, no sidebar — immersive test mode) */}
             <Route path="/exam/test/writing" element={<WritingTest />} />
+            <Route path="/exam/test/writing/session/:evalId" element={<WritingTest />} />
             <Route path="/exam/test/speaking" element={<SpeakingTest />} />
             <Route path="/exam/test/:testId" element={<IeltsTestModule />} />
+            <Route path="/exam/test/:testId/session/:sessionId" element={<IeltsTestModule />} />
+            <Route path="/exam/result/:sessionId" element={<TestResultPage />} />
 
             <Route path="/blog" element={<Blog />} />
           </Route>
@@ -136,7 +151,12 @@ const App = () => (
             <Route path="applications" element={<ApplicationsManagement />} />
             <Route path="exams" element={<ExamManagement />} />
             <Route path="exams/new" element={<ExamFormPage />} />
+            <Route path="exams/new/writing" element={<WritingTestForm />} />
+            <Route path="exams/new/speaking" element={<SpeakingTestForm />} />
             <Route path="exams/:id/edit" element={<ExamFormPage />} />
+            <Route path="exams/:id/edit/writing" element={<WritingTestForm />} />
+            <Route path="exams/:id/edit/speaking" element={<SpeakingTestForm />} />
+            <Route path="speaking-topics" element={<SpeakingTopicManager />} />
             <Route path="reports" element={<ReportsManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
             <Route

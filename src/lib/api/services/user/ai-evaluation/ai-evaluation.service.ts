@@ -85,6 +85,9 @@ class AiEvaluationService {
     essayText: string;
     questionId?: string;
     sessionId?: string;
+    taskType?: 1 | 2;
+    question?: string;
+    imageUrl?: string;
   }): Promise<ApiResponse<WritingSubmitResponse>> {
     const response = await apiClient.post<ApiResponse<WritingSubmitResponse>>(
       '/ai/assessments/writing/submit',
@@ -107,15 +110,94 @@ class AiEvaluationService {
     return response.data;
   }
 
-  // ============== Speaking Assessment ==============
+  // ============== Interactive Speaking Sessions ==============
 
-  async submitSpeaking(data: {
+  async startSpeakingSession(data: {
+    userId: string;
+    topic?: string;
+  }): Promise<ApiResponse<{ sessionId: string; question: string; currentPart: number; topic: string }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/speaking-sessions/start',
+      data
+    );
+    return response.data;
+  }
+
+  async getSpeakingUploadUrl(): Promise<ApiResponse<{ uploadUrl: string; key: string; publicUrl: string }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/speaking-sessions/upload-url'
+    );
+    return response.data;
+  }
+
+  async respondToSpeaking(sessionId: string, audioUrl: string, mimeType: string = 'audio/webm'): Promise<ApiResponse<{
+    transcript: string;
+    nextQuestion: string | null;
+    currentPart: number;
+    currentStep: number;
+    isSessionComplete: boolean;
+    cueCard?: { topic: string; bulletPoints: string[]; finalPrompt: string };
+    audioUrl?: string;
+  }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      `/ai/speaking-sessions/${sessionId}/respond`,
+      { audioUrl, mimeType }
+    );
+    return response.data;
+  }
+
+  async finishSpeakingSession(sessionId: string): Promise<ApiResponse<any>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      `/ai/speaking-sessions/${sessionId}/finish`
+    );
+    return response.data;
+  }
+
+  async getSpeakingSessionResult(sessionId: string): Promise<ApiResponse<any>> {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/ai/speaking-sessions/${sessionId}/result`
+    );
+    return response.data;
+  }
+
+  async listSpeakingSessions(userId: string): Promise<ApiResponse<any[]>> {
+    const response = await apiClient.get<ApiResponse<any[]>>(
+      `/ai/speaking-sessions/user/${userId}`
+    );
+    return response.data;
+  }
+
+  // ============== Writing Assistant (Real-time) ==============
+
+  async getWritingAssistance(data: {
+    lastSentence: string;
+    prevSentence?: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/writing-assistant',
+      data
+    );
+    return response.data;
+  }
+
+  // ============== Transcription ==============
+
+  async transcribeAudio(audioUrl: string): Promise<ApiResponse<{ transcript: string; duration: number }>> {
+    const response = await apiClient.post<ApiResponse<{ transcript: string; duration: number }>>(
+      '/ai/transcribe',
+      { audioUrl }
+    );
+    return response.data;
+  }
+  // ============== Speaking Evaluation (Submit + Poll) ==============
+
+  async submitSpeakingEvaluation(data: {
     userId: string;
     audioUrl: string;
     questionId?: string;
     sessionId?: string;
-  }): Promise<ApiResponse<SpeakingSubmitResponse>> {
-    const response = await apiClient.post<ApiResponse<SpeakingSubmitResponse>>(
+  }): Promise<ApiResponse<{ evaluationId: string; jobId: string; status: string }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
       '/ai/assessments/speaking/submit',
       data
     );
@@ -129,32 +211,41 @@ class AiEvaluationService {
     return response.data;
   }
 
-  async getUserSpeakingEvaluations(userId: string): Promise<ApiResponse<SpeakingEvaluation[]>> {
-    const response = await apiClient.get<ApiResponse<SpeakingEvaluation[]>>(
-      `/ai/assessments/speaking/user/${userId}`
+  // ============== Speaking Topic Bank (Admin) ==============
+
+  async listSpeakingTopics(activeOnly: boolean = false): Promise<ApiResponse<any[]>> {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/ai/speaking-topics${activeOnly ? '?active=true' : ''}`
     );
     return response.data;
   }
 
-  // ============== Writing Assistant (Real-time) ==============
-
-  async getWritingAssistance(data: {
-    lastSentence: string;
-    prevSentence?: string;
-  }): Promise<ApiResponse<WritingAssistantResult>> {
-    const response = await apiClient.post<ApiResponse<WritingAssistantResult>>(
-      '/ai/writing-assistant',
+  async createSpeakingTopic(data: {
+    title: string;
+    part1Questions: string[];
+    part2Topic?: string;
+    part2Bullets?: string[];
+    part2FinalPrompt?: string;
+    part3Questions: string[];
+  }): Promise<ApiResponse<any>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/speaking-topics',
       data
     );
     return response.data;
   }
 
-  // ============== Transcription ==============
+  async updateSpeakingTopic(id: string, data: any): Promise<ApiResponse<any>> {
+    const response = await apiClient.put<ApiResponse<any>>(
+      `/ai/speaking-topics/${id}`,
+      data
+    );
+    return response.data;
+  }
 
-  async transcribeAudio(audioUrl: string): Promise<ApiResponse<{ transcript: string; duration: number }>> {
-    const response = await apiClient.post<ApiResponse<{ transcript: string; duration: number }>>(
-      '/ai/transcribe',
-      { audioUrl }
+  async deleteSpeakingTopic(id: string): Promise<ApiResponse<any>> {
+    const response = await apiClient.delete<ApiResponse<any>>(
+      `/ai/speaking-topics/${id}`
     );
     return response.data;
   }

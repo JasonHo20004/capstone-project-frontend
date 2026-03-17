@@ -14,6 +14,9 @@ export const useSubmitWriting = () => {
       essayText: string;
       questionId?: string;
       sessionId?: string;
+      taskType?: 1 | 2;
+      question?: string;
+      imageUrl?: string;
     }) => aiEvaluationService.submitWriting(data),
   });
 };
@@ -54,41 +57,69 @@ export const useUserWritingEvaluations = (userId: string | undefined) => {
   });
 };
 
-// ─── Speaking Assessment Hooks ───────────────────────────────────────────────
+// ─── Interactive Speaking Session Hooks ───────────────────────────────────────
 
 /**
- * Submit audio for AI speaking evaluation
+ * Start an interactive speaking session
  */
-export const useSubmitSpeaking = () => {
+export const useStartSpeakingSession = () => {
   return useMutation({
-    mutationFn: (data: {
-      userId: string;
-      audioUrl: string;
-      questionId?: string;
-      sessionId?: string;
-    }) => aiEvaluationService.submitSpeaking(data),
+    mutationFn: (data: { userId: string; topic?: string }) =>
+      aiEvaluationService.startSpeakingSession(data),
   });
 };
 
 /**
- * Poll for speaking evaluation result
- * Automatically refetches every 3s while status is PENDING or PROCESSING
+ * Send audio response to speaking session (with S3 URL)
  */
-export const useSpeakingEvaluation = (evaluationId: string | null) => {
+export const useRespondToSpeaking = () => {
+  return useMutation({
+    mutationFn: (data: { sessionId: string; audioUrl: string; mimeType?: string }) =>
+      aiEvaluationService.respondToSpeaking(data.sessionId, data.audioUrl, data.mimeType),
+  });
+};
+
+/**
+ * Finish speaking session early
+ */
+export const useFinishSpeaking = () => {
+  return useMutation({
+    mutationFn: (sessionId: string) => aiEvaluationService.finishSpeakingSession(sessionId),
+  });
+};
+
+/**
+ * Poll for speaking session result
+ */
+export const useSpeakingSessionResult = (sessionId: string | null) => {
   return useQuery({
-    queryKey: ['speaking-evaluation', evaluationId],
+    queryKey: ['speaking-session-result', sessionId],
     queryFn: async () => {
-      const response = await aiEvaluationService.getSpeakingEvaluation(evaluationId!);
-      return response.data as SpeakingEvaluation;
+      const response = await aiEvaluationService.getSpeakingSessionResult(sessionId!);
+      return response.data;
     },
-    enabled: Boolean(evaluationId),
+    enabled: Boolean(sessionId),
     refetchInterval: (query) => {
       const data = query.state.data;
-      if (data && (data.status === 'PENDING' || data.status === 'PROCESSING')) {
+      if (data && (data.status === 'GRADING' || data.status === 'IN_PROGRESS')) {
         return 3000;
       }
       return false;
     },
+  });
+};
+
+/**
+ * List user's speaking sessions
+ */
+export const useUserSpeakingSessions = (userId: string | undefined) => {
+  return useQuery({
+    queryKey: ['speaking-sessions', userId],
+    queryFn: async () => {
+      const response = await aiEvaluationService.listSpeakingSessions(userId!);
+      return response.data;
+    },
+    enabled: Boolean(userId),
   });
 };
 

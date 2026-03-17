@@ -61,9 +61,32 @@ export default function ExamCenter() {
             Practice all 4 IELTS skills — Reading, Writing, Listening, Speaking.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-          <span className="material-symbols-outlined text-[16px]">info</span>
-          <span>Tests are timed and follow official IELTS guidelines</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+            <span className="material-symbols-outlined text-[16px]">info</span>
+            <span>Tests are timed and follow official IELTS guidelines</span>
+          </div>
+          <div className="relative group">
+            <button className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap cursor-pointer">
+              <span className="material-symbols-outlined text-[18px]">history</span>
+              Lịch sử
+              <span className="material-symbols-outlined text-[16px] ml-0.5">expand_more</span>
+            </button>
+            <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-xl border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+              <Link to="/exam/history" className="flex items-center gap-2.5 px-4 py-3 text-sm text-slate-700 hover:bg-indigo-50 transition-colors">
+                <span className="material-symbols-outlined text-[18px] text-indigo-600">menu_book</span>
+                Reading / Listening
+              </Link>
+              <Link to="/exam/writing-history" className="flex items-center gap-2.5 px-4 py-3 text-sm text-slate-700 hover:bg-emerald-50 transition-colors border-t border-slate-100">
+                <span className="material-symbols-outlined text-[18px] text-emerald-600">edit_note</span>
+                Writing
+              </Link>
+              <Link to="/exam/speaking-history" className="flex items-center gap-2.5 px-4 py-3 text-sm text-slate-700 hover:bg-amber-50 transition-colors border-t border-slate-100">
+                <span className="material-symbols-outlined text-[18px] text-amber-600">mic</span>
+                Speaking
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 

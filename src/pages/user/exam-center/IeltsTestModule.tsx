@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import apiClient from "@/lib/api/config";
+import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
+import SpeakingTestLayout from "./SpeakingTestLayout";
 
 // ─── Highlight Colors ────────────────────────────────────────────────────────
 const HIGHLIGHT_COLORS = [
@@ -55,7 +57,8 @@ interface TestData {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function IeltsTestModule() {
-  const { testId } = useParams<{ testId: string }>();
+  const { testId, sessionId: urlSessionId } = useParams<{ testId: string; sessionId?: string }>();
+  const [sessionId, setSessionId] = useState<string | null>(urlSessionId || null);
   const [testData, setTestData] = useState<TestData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +77,19 @@ export default function IeltsTestModule() {
   // ─── Highlight State ────────────────────────────────────────────────────────
   const [highlightPopover, setHighlightPopover] = useState<{ x: number; y: number; range: Range } | null>(null);
   const [highlightMode, setHighlightMode] = useState(false);
+
+  // ─── Question Navigator State ──────────────────────────────────────────────
+  const [showNavigator, setShowNavigator] = useState(true);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
+
+  const toggleFlag = useCallback((qId: string) => {
+    setFlaggedQuestions(prev => {
+      const next = new Set(prev);
+      if (next.has(qId)) next.delete(qId);
+      else next.add(qId);
+      return next;
+    });
+  }, []);
 
   // ─── Fetch test data by slug/ID ────────────────────────────────────────────
   useEffect(() => {
@@ -96,6 +112,30 @@ export default function IeltsTestModule() {
 
         setTestData(test);
         setTimeLeft((test.durationInMinutes || 60) * 60);
+
+        // Create practice session BEFORE showing test (so URL has sessionId immediately)
+        if (!urlSessionId) {
+          try {
+            const token = localStorage.getItem("accessToken");
+            let userId: string | undefined;
+            if (token) {
+              const payload = JSON.parse(atob(token.split(".")[1]));
+              userId = payload.sub || payload.userId || payload.id;
+            }
+            if (userId) {
+              const startResp = await apiClient.post(`/tests/${test.id}/start`, { userId });
+              const newSessionId = startResp.data?.data?.sessionId;
+              if (newSessionId) {
+                setSessionId(newSessionId);
+                window.history.replaceState(null, "", `/exam/test/${testId}/session/${newSessionId}`);
+                console.log(`📝 Session started: ${newSessionId}`);
+              }
+            }
+          } catch (err) {
+            console.warn("Failed to create session:", err);
+          }
+        }
+
         setLoading(false);
       } catch (err: any) {
         console.error("Failed to fetch test:", err);
@@ -107,12 +147,33 @@ export default function IeltsTestModule() {
     fetchTest();
   }, [testId]);
 
+  // ─── Writing state ─────────────────────────────────────────────────────────
+  const [activeWritingTab, setActiveWritingTab] = useState(0);
+  const [writingEssays, setWritingEssays] = useState<Record<number, string>>({});
+  const [writingEvalId, setWritingEvalId] = useState<string | null>(null);
+  const [showWritingResult, setShowWritingResult] = useState(false);
+  const [writingSubmitting, setWritingSubmitting] = useState(false);
+  const submitWritingMutation = useSubmitWriting();
+  const { data: writingEvaluation } = useWritingEvaluation(writingEvalId);
+  const { result: assistantResult, isLoading: assistantLoading, analyze: analyzeWriting } = useWritingAssistant();
+
   // ─── Derived data ──────────────────────────────────────────────────────────
   const sections = testData?.sections || [];
   const currentSection = sections[currentSectionIdx];
   const allQuestions = sections.flatMap(s => s.questions);
-  const isListeningTest = sections.some(s => s.mediaUrl);
-  const testSkillLabel = isListeningTest ? "Listening" : "Reading";
+  const isListeningTest = testData?.testSkills?.some((s: any) => s.skill === 'LISTENING')
+    || sections.some(s => s.skill === 'LISTENING')
+    || sections.some(s => s.mediaUrl);
+  const isWritingTest = testData?.testSkills?.some((s: any) => s.skill === 'WRITING')
+    || sections.some(s => s.skill === 'WRITING')
+    || sections.some(s => s.questions?.some((q: any) => q.questionType?.includes('WRITING')));
+  const isSpeakingTest = testData?.testSkills?.some((s: any) => s.skill === 'SPEAKING')
+    || sections.some(s => s.skill === 'SPEAKING')
+    || sections.some(s => s.questions?.some((q: any) => q.questionType?.includes('SPEAKING')));
+  const testSkillLabel = isSpeakingTest ? "Speaking" : isWritingTest ? "Writing" : isListeningTest ? "Listening" : "Reading";
+
+  // Derived writing essay for hooks
+  const currentWritingEssay = writingEssays[activeWritingTab] || '';
 
   // ─── Timer ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -130,6 +191,20 @@ export default function IeltsTestModule() {
     return () => clearInterval(timer);
   }, [testData, timeLeft, submitted]);
 
+  // ─── Writing assistant (debounced) ──────────────────────────────────────────
+  useEffect(() => {
+    if (!isWritingTest || currentWritingEssay.length <= 30) return;
+    const sentences = currentWritingEssay.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+    analyzeWriting(sentences[sentences.length - 1] || '', sentences[sentences.length - 2] || '');
+  }, [currentWritingEssay, isWritingTest]);
+
+  // ─── Writing evaluation completed ──────────────────────────────────────────
+  useEffect(() => {
+    if (writingEvaluation?.status === 'COMPLETED' || writingEvaluation?.status === 'FAILED') {
+      setWritingSubmitting(false);
+    }
+  }, [writingEvaluation?.status]);
+
   const formatTime = (s: number) =>
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
@@ -139,16 +214,32 @@ export default function IeltsTestModule() {
   }, []);
 
   // ─── Submit ─────────────────────────────────────────────────────────────────
+  const navigate = useNavigate();
   const handleSubmit = useCallback(async () => {
     if (!testData) return;
     try {
-      const resp = await apiClient.post(`/tests/${testData.id}/submit`, { submissions: answers });
-      setGradingResult(resp.data?.data);
-      setSubmitted(true);
+      // Extract userId from JWT
+      let userId: string | undefined;
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.sub || payload.userId || payload.id;
+        }
+      } catch {}
+      const resp = await apiClient.post(`/tests/${testData.id}/submit`, { submissions: answers, userId });
+      const sessionId = resp.data?.data?.sessionId;
+      if (sessionId) {
+        navigate(`/exam/result/${sessionId}`);
+      } else {
+        // Fallback: show inline if no session saved
+        setGradingResult(resp.data?.data);
+        setSubmitted(true);
+      }
     } catch {
       setSubmitted(true);
     }
-  }, [testData, answers]);
+  }, [testData, answers, navigate]);
 
   // ─── Navigation ─────────────────────────────────────────────────────────────
   const goNext = () => {
@@ -260,153 +351,20 @@ export default function IeltsTestModule() {
   const totalAnswered = allQuestions.filter(q => answers[q.id]?.trim()).length;
 
   // ─── Result Screen ─────────────────────────────────────────────────────────
+  // Fallback inline result (when sessionId not available)
   if (submitted) {
-    const totalQuestions = allQuestions.length;
-    const correctCount = gradingResult?.score?.correct ?? 0;
-    const total = gradingResult?.score?.total ?? totalQuestions;
-    const pct = gradingResult?.score?.percentage ?? (total > 0 ? Math.round((correctCount / total) * 100) : 0);
-    const band = pct >= 90 ? "9.0" : pct >= 80 ? "8.0" : pct >= 70 ? "7.0" : pct >= 60 ? "6.0" : pct >= 50 ? "5.0" : pct >= 40 ? "4.0" : "3.0";
-    const details: any[] = gradingResult?.details || [];
-
-    const scoreColor = pct >= 70 ? "text-green-600" : pct >= 50 ? "text-amber-600" : "text-red-600";
-    const scoreBg = pct >= 70 ? "bg-green-50 border-green-200" : pct >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
-    const ringColor = pct >= 70 ? "#16a34a" : pct >= 50 ? "#d97706" : "#dc2626";
-    const circumference = 2 * Math.PI * 54;
-    const dashOffset = circumference - (pct / 100) * circumference;
-
     return (
-      <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900">
-        <header className="bg-white border-b border-slate-200 h-16 flex items-center px-6 justify-between">
-          <Link to="/exam" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-            Back to Exam Center
-          </Link>
-          <span className="text-sm font-bold text-slate-500">{testData?.title}</span>
-        </header>
-
-        <div className="max-w-5xl mx-auto p-8">
-          {/* Score Summary */}
-          <div className={`rounded-2xl border shadow-sm p-8 mb-8 ${scoreBg}`}>
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              {/* Score Ring */}
-              <div className="relative w-36 h-36 shrink-0">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="54" fill="none" stroke="#e2e8f0" strokeWidth="8" />
-                  <circle cx="60" cy="60" r="54" fill="none" stroke={ringColor} strokeWidth="8"
-                    strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
-                    style={{ transition: "stroke-dashoffset 1s ease-in-out" }} />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className={`text-3xl font-black ${scoreColor}`}>{pct}%</span>
-                  <span className="text-xs text-slate-400">Score</span>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="flex-1 text-center md:text-left">
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">Test Completed!</h2>
-                <div className="flex flex-wrap items-center gap-6 justify-center md:justify-start">
-                  <div>
-                    <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Correct</p>
-                    <p className="text-2xl font-black text-slate-800">{correctCount}<span className="text-base text-slate-400 font-medium">/{total}</span></p>
-                  </div>
-                  <div className="w-px h-10 bg-slate-200 hidden md:block"></div>
-                  <div>
-                    <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Band Score</p>
-                    <p className={`text-2xl font-black ${scoreColor}`}>{band}</p>
-                  </div>
-                  <div className="w-px h-10 bg-slate-200 hidden md:block"></div>
-                  <div>
-                    <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Wrong</p>
-                    <p className="text-2xl font-black text-red-600">{total - correctCount}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Answer Comparison Table */}
-          {details.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-indigo-600">fact_check</span>
-                  Answer Review
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">Compare your answers with the correct ones</p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="px-4 py-3 text-left font-bold text-slate-500 text-xs uppercase tracking-wider w-12">Q#</th>
-                      <th className="px-4 py-3 text-left font-bold text-slate-500 text-xs uppercase tracking-wider">Question</th>
-                      <th className="px-4 py-3 text-left font-bold text-slate-500 text-xs uppercase tracking-wider w-24">Type</th>
-                      <th className="px-4 py-3 text-left font-bold text-slate-500 text-xs uppercase tracking-wider">Your Answer</th>
-                      <th className="px-4 py-3 text-left font-bold text-slate-500 text-xs uppercase tracking-wider">Correct Answer</th>
-                      <th className="px-4 py-3 text-center font-bold text-slate-500 text-xs uppercase tracking-wider w-16">Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {details.map((d: any, i: number) => (
-                      <tr key={d.questionId || i}
-                        className={`border-b border-slate-100 transition-colors ${d.isCorrect ? "hover:bg-green-50/50" : "hover:bg-red-50/50"}`}>
-                        <td className="px-4 py-3 font-bold text-indigo-600">{d.questionOrder || i + 1}</td>
-                        <td className="px-4 py-3 text-slate-700 max-w-xs">
-                          <span className="line-clamp-2">{d.questionText || `Question ${i + 1}`}</span>
-                          {d.explanation && (
-                            <p className="text-xs text-slate-400 mt-1 italic line-clamp-1">💡 {d.explanation}</p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                            d.questionType === 'MULTIPLE_CHOICE' ? 'bg-blue-100 text-blue-600'
-                            : d.questionType === 'TRUE_FALSE_NOT_GIVEN' ? 'bg-purple-100 text-purple-600'
-                            : 'bg-orange-100 text-orange-600'
-                          }`}>
-                            {d.questionType === 'MULTIPLE_CHOICE' ? 'MCQ'
-                              : d.questionType === 'TRUE_FALSE_NOT_GIVEN' ? 'T/F/NG'
-                              : d.questionType === 'GAP_FILL' ? 'Fill'
-                              : d.questionType}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`font-semibold ${d.isCorrect ? "text-green-700" : "text-red-700"}`}>
-                            {d.userAnswer || "(no answer)"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-green-700">{d.correctAnswer}</td>
-                        <td className="px-4 py-3 text-center">
-                          {d.isCorrect ? (
-                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100">
-                              <span className="material-symbols-outlined text-green-600 text-[18px]">check</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100">
-                              <span className="material-symbols-outlined text-red-600 text-[18px]">close</span>
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* No grading data fallback */}
-          {details.length === 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-              <p className="text-slate-600 mb-2">Your answers have been submitted.</p>
-              <p className="text-sm text-slate-400">Total answered: {totalAnswered} / {total}</p>
-            </div>
-          )}
-
-          {/* Back button */}
-          <div className="text-center mt-8">
-            <Link to="/exam" className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
-              Back to Exam Center
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <span className="material-symbols-outlined text-5xl text-green-500">check_circle</span>
+          <h2 className="text-xl font-bold text-slate-800">Bài thi đã được nộp!</h2>
+          <p className="text-slate-500">Kết quả đang được xử lý...</p>
+          <div className="flex gap-3 justify-center">
+            <Link to="/exam" className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">
+              ← Exam Center
+            </Link>
+            <Link to="/exam/history" className="px-6 py-2.5 bg-white text-indigo-600 rounded-xl font-bold border-2 border-indigo-200 hover:bg-indigo-50 transition">
+              📊 Lịch sử
             </Link>
           </div>
         </div>
@@ -417,6 +375,298 @@ export default function IeltsTestModule() {
   if (!currentSection) return null;
 
   const passageContent = currentSection.passages?.[0]?.content || "";
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SPEAKING TEST — Dedicated Layout with Voice Recording
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (isSpeakingTest) {
+    return <SpeakingTestLayout
+      testData={testData}
+      sections={sections}
+      currentSectionIdx={currentSectionIdx}
+      setCurrentSectionIdx={setCurrentSectionIdx}
+      answers={answers}
+      setAnswer={setAnswer}
+      formatTime={formatTime}
+      timeLeft={timeLeft}
+      goNext={goNext}
+      goPrev={goPrev}
+      handleSubmit={handleSubmit}
+    />;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRITING TEST — Dedicated Layout
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (isWritingTest) {
+    // Build writing sections from test data
+    const writingSections = sections.map((sec, idx) => {
+      const q = sec.questions?.[0];
+      const isTask1 = q?.questionType?.includes('TASK1') || sec.title?.toLowerCase().includes('task 1');
+      return {
+        sectionIdx: idx,
+        title: sec.title || (isTask1 ? 'Task 1 — Biểu đồ' : 'Task 2 — Essay'),
+        taskType: isTask1 ? 1 as const : 2 as const,
+        imageUrl: sec.imageUrl || q?.imageUrl || (q as any)?.content?.imageUrl,
+        prompt: q?.questionText || (q as any)?.content?.prompt || (q as any)?.content?.text || '',
+        questionId: q?.id,
+        wordCountMin: isTask1 ? 150 : 250,
+      };
+    });
+
+    const activeWSection = writingSections[activeWritingTab] || writingSections[0];
+    const currentWEssay = writingEssays[activeWritingTab] || '';
+    const wWordCount = currentWEssay.trim().split(/\s+/).filter(Boolean).length;
+
+    const handleWritingSubmit = async () => {
+      if (writingSubmitting) return;
+      const text = currentWEssay.trim();
+      if (text.length < 50) return;
+      setWritingSubmitting(true);
+      try {
+        let userId: string | undefined;
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userId = payload.sub || payload.userId || 'anonymous';
+          }
+        } catch {}
+        const result = await submitWritingMutation.mutateAsync({
+          userId: userId || 'anonymous',
+          essayText: text,
+          questionId: activeWSection?.questionId,
+          taskType: activeWSection?.taskType || 2,
+          question: activeWSection?.prompt,
+          imageUrl: activeWSection?.imageUrl,
+        });
+        setWritingEvalId(result.data?.evaluationId || null);
+        setShowWritingResult(true);
+      } catch (err) {
+        console.error('Submit failed:', err);
+        setWritingSubmitting(false);
+      }
+    };
+
+    // ── Writing Result Screen ────────────────────────────────────────────
+    if (showWritingResult) {
+      return (
+        <div className="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
+          <header className="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-emerald-600">edit_note</span>
+              <h1 className="font-bold text-slate-800 text-sm">Kết quả chấm Writing</h1>
+            </div>
+            <Link to="/exam" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">← Quay lại</Link>
+          </header>
+          <div className="max-w-4xl mx-auto p-8">
+            {(!writingEvaluation || writingEvaluation.status === 'PENDING' || writingEvaluation.status === 'PROCESSING') && (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-6" />
+                <h2 className="text-xl font-bold text-slate-800 mb-2">AI đang chấm bài...</h2>
+                <p className="text-slate-500">Thường mất 15-30 giây. Vui lòng đợi.</p>
+              </div>
+            )}
+            {writingEvaluation?.status === 'FAILED' && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+                <h2 className="text-xl font-bold text-red-800 mb-2">Chấm bài thất bại</h2>
+                <p className="text-red-600 mb-4">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
+                <button onClick={() => { setShowWritingResult(false); setWritingEvalId(null); setWritingSubmitting(false); }}
+                  className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700">Thử lại</button>
+              </div>
+            )}
+            {writingEvaluation?.status === 'COMPLETED' && writingEvaluation.criteria && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
+                  <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">Estimated Band</p>
+                  <div className="text-7xl font-black text-emerald-600 mb-2">{writingEvaluation.overallBand}</div>
+                  <p className="text-xs text-slate-400 italic mb-3">AI evaluation may vary ±0.5 band from official IELTS scoring</p>
+                  <p className="text-slate-600 text-sm max-w-xl mx-auto">{writingEvaluation.overallFeedback}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { key: 'task_achievement', label: 'Task Achievement', icon: 'task_alt' },
+                    { key: 'coherence', label: 'Coherence & Cohesion', icon: 'link' },
+                    { key: 'lexical', label: 'Lexical Resource', icon: 'dictionary' },
+                    { key: 'grammar', label: 'Grammar Range & Accuracy', icon: 'spellcheck' },
+                  ].map(({ key, label, icon }) => {
+                    const c = writingEvaluation.criteria?.[key as keyof typeof writingEvaluation.criteria];
+                    if (!c) return null;
+                    return (
+                      <div key={key} className="bg-white rounded-xl border border-slate-200 p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-emerald-500 text-xl">{icon}</span>
+                            <span className="font-semibold text-slate-800 text-sm">{label}</span>
+                          </div>
+                          <span className="text-2xl font-black text-emerald-600">{c.score}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed">{c.feedback}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {writingEvaluation.highlightedErrors && writingEvaluation.highlightedErrors.length > 0 && (
+                  <div className="bg-white rounded-xl border border-slate-200 p-6">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-500">warning</span>
+                      Lỗi phát hiện ({writingEvaluation.highlightedErrors.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {writingEvaluation.highlightedErrors.map((err: any, i: number) => (
+                        <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${err.type === 'grammar' ? 'bg-red-100 text-red-700' : err.type === 'vocab' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{err.type}</span>
+                          <div className="flex-1 text-sm">
+                            <p className="text-red-600 line-through">{err.original}</p>
+                            <p className="text-green-700 font-medium">→ {err.suggestion}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="text-center pt-4">
+                  <Link to="/exam" className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors">Quay lại Exam Center</Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Writing Editor Screen ────────────────────────────────────────────
+    return (
+      <div className="h-screen flex flex-col bg-[#f8fafc] font-sans text-slate-900 overflow-hidden">
+        {/* Header */}
+        <header className="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-5 shrink-0 z-20">
+          <div className="flex items-center gap-3">
+            <Link to="/exam" className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </Link>
+            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+              <span className="material-symbols-outlined text-[18px]">edit_note</span>
+            </div>
+            <div>
+              <h1 className="font-bold text-slate-800 text-sm leading-tight">{testData?.title}</h1>
+              <span className="text-[11px] text-slate-500">IELTS Writing</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            {assistantLoading && (
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 animate-pulse">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />AI đang kiểm tra...
+              </div>
+            )}
+            <div className={`px-2.5 py-1 rounded-md font-mono font-bold text-sm ${timeLeft < 300 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>
+              {formatTime(timeLeft)}
+            </div>
+            <button onClick={handleWritingSubmit} disabled={writingSubmitting || wWordCount < 20}
+              className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-colors">
+              {writingSubmitting ? 'Đang nộp...' : 'Nộp bài'}
+            </button>
+          </div>
+        </header>
+
+        {/* Section Tabs */}
+        {writingSections.length > 1 && (
+          <div className="bg-white border-b border-slate-200 px-5 flex gap-1 py-1.5 shrink-0">
+            {writingSections.map((sec, idx) => (
+              <button key={sec.sectionIdx} onClick={() => setActiveWritingTab(idx)}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeWritingTab === idx ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'text-slate-500 hover:bg-slate-50 border border-transparent'}`}>
+                <span className="material-symbols-outlined text-[16px]">{sec.taskType === 1 ? 'bar_chart' : 'edit_note'}</span>
+                {sec.title}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left — Question + Chart */}
+          <div className="w-[38%] bg-white border-r border-slate-200 flex flex-col h-full overflow-y-auto">
+            <div className="p-5 border-b border-slate-100 bg-slate-50">
+              <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined text-[18px] ${activeWSection.taskType === 1 ? 'text-blue-600' : 'text-orange-500'}`}>
+                  {activeWSection.taskType === 1 ? 'bar_chart' : 'edit_note'}
+                </span>
+                <h2 className="font-bold text-slate-700 text-sm">{activeWSection.title}</h2>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-auto">{activeWSection.wordCountMin}+ từ</span>
+              </div>
+            </div>
+            <div className="flex-1 p-5 space-y-5">
+              {activeWSection.imageUrl && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Biểu đồ / Sơ đồ</p>
+                  <img src={activeWSection.imageUrl} alt="Task 1 Visual" className="w-full rounded-lg border border-slate-200 bg-white" />
+                </div>
+              )}
+              <div className="bg-emerald-50/60 rounded-xl p-4 border border-emerald-100">
+                <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">Đề bài</p>
+                <p className="text-sm text-slate-800 leading-relaxed italic">{activeWSection.prompt}</p>
+                <p className="text-xs text-slate-600 mt-3">Write at least {activeWSection.wordCountMin} words.</p>
+              </div>
+              {assistantResult && (assistantResult.errors.length > 0 || assistantResult.suggestions.length > 0) && (
+                <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                  <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">auto_fix_high</span>AI Writing Assistant
+                  </h4>
+                  {assistantResult.errors.map((err, i) => (
+                    <div key={`e-${i}`} className="text-xs mb-2 p-2 bg-white rounded border border-amber-100">
+                      <span className={`font-bold px-1.5 py-0.5 rounded mr-1 ${err.type === 'grammar' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>{err.type}</span>
+                      <span className="text-red-600 line-through">{err.text}</span>
+                      <span className="mx-1">→</span>
+                      <span className="text-green-700 font-medium">{err.suggestion}</span>
+                    </div>
+                  ))}
+                  {assistantResult.suggestions.map((sug, i) => (
+                    <div key={`s-${i}`} className="text-xs mb-1 p-2 bg-white rounded border border-blue-100">
+                      <span className="font-bold text-blue-600 mr-1">💡</span> {sug.improvement}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mẹo viết</h4>
+                <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                  {activeWSection.taskType === 1 ? (
+                    <><li>Bắt đầu bằng câu paraphrase đề bài</li><li>Nêu overview trước khi vào chi tiết</li><li>So sánh số liệu nổi bật</li></>
+                  ) : (
+                    <><li>Lập dàn ý: Mở bài → Thân bài → Kết luận</li><li>Trình bày cả 2 quan điểm</li><li>Dùng linking words</li></>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Right — Essay Editor */}
+          <div className="w-[62%] bg-white flex flex-col h-full">
+            <div className="px-5 py-2 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0">
+              <span className="text-xs text-slate-500 font-medium">Bài viết của bạn</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-slate-400">
+                  Số từ:{' '}
+                  <span className={`font-bold ${wWordCount >= activeWSection.wordCountMin ? 'text-emerald-600' : wWordCount >= activeWSection.wordCountMin * 0.8 ? 'text-amber-600' : 'text-slate-700'}`}>{wWordCount}</span>
+                  <span className="text-slate-300 ml-1">/ {activeWSection.wordCountMin} min</span>
+                </span>
+                {wWordCount >= activeWSection.wordCountMin && (
+                  <span className="text-[10px] flex items-center gap-0.5 text-emerald-600 font-bold">
+                    <span className="material-symbols-outlined text-[14px]">check_circle</span> Đủ từ
+                  </span>
+                )}
+              </div>
+            </div>
+            <textarea
+              className="flex-1 p-6 text-base leading-[1.8] text-slate-800 outline-none resize-none font-serif placeholder:text-slate-300"
+              placeholder={activeWSection.taskType === 1 ? 'The chart/diagram illustrates...' : 'In today\'s society, the issue of...'}
+              value={currentWEssay}
+              onChange={(e) => setWritingEssays(prev => ({ ...prev, [activeWritingTab]: e.target.value }))}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Test Screen ───────────────────────────────────────────────────────────
   return (
@@ -571,8 +821,9 @@ export default function IeltsTestModule() {
           )}
         </div>
 
-        {/* Right Panel: Questions */}
-        <div ref={questionsRef} onMouseUp={handleTextSelect} className="w-1/2 bg-slate-50 p-6 overflow-y-auto">
+        {/* Right Panel: Questions + Navigator */}
+        <div className="w-1/2 flex flex-col overflow-hidden">
+          <div ref={questionsRef} onMouseUp={handleTextSelect} className="flex-1 bg-slate-50 p-6 overflow-y-auto">
           <div className="space-y-5">
             {currentQuestions.map((q) => {
               const qText = q.content?.text || q.questionText || "";
@@ -581,11 +832,30 @@ export default function IeltsTestModule() {
               const qImage = q.imageUrl;
 
               return (
-                <div key={q.id} className={`bg-white rounded-xl border p-5 transition-colors ${answers[q.id] ? "border-indigo-300 shadow-sm" : "border-slate-200"}`}>
-                  <p className="font-medium text-sm text-slate-800 mb-3">
-                    <span className="text-indigo-600 font-bold mr-2">Q{q.questionOrder}.</span>
-                    {qText}
-                  </p>
+                <div key={q.id} id={`question-${q.id}`} className={`bg-white rounded-xl border p-5 transition-colors relative ${
+                  flaggedQuestions.has(q.id)
+                    ? 'border-amber-400 ring-1 ring-amber-200'
+                    : answers[q.id] ? 'border-indigo-300 shadow-sm' : 'border-slate-200'
+                }`}>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <p className="font-medium text-sm text-slate-800">
+                      <span className="text-indigo-600 font-bold mr-2">Q{q.questionOrder}.</span>
+                      {qText}
+                    </p>
+                    <button
+                      onClick={() => toggleFlag(q.id)}
+                      className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                        flaggedQuestions.has(q.id)
+                          ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                          : 'bg-slate-50 text-slate-300 hover:text-amber-500 hover:bg-amber-50'
+                      }`}
+                      title={flaggedQuestions.has(q.id) ? 'Bỏ đánh dấu' : 'Đánh dấu để xem lại'}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        {flaggedQuestions.has(q.id) ? 'flag' : 'outlined_flag'}
+                      </span>
+                    </button>
+                  </div>
 
                   {/* Question Image (Maps, Diagrams) */}
                   {qImage && (
@@ -637,6 +907,81 @@ export default function IeltsTestModule() {
                 </div>
               );
             })}
+          </div>
+          </div>
+
+          {/* ─── Question Navigator Panel (sticky bottom) ─────────────────── */}
+          <div className={`bg-white border-t border-slate-200 transition-all duration-300 ${showNavigator ? 'max-h-[220px]' : 'max-h-10'}`}>
+            {/* Toggle bar */}
+            <button
+              onClick={() => setShowNavigator(!showNavigator)}
+              className="w-full flex items-center justify-between px-4 py-2 hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px] text-indigo-600">grid_view</span>
+                <span className="text-xs font-bold text-slate-600">Question Navigator</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">
+                  {totalAnswered}/{allQuestions.length}
+                </span>
+                {flaggedQuestions.size > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-[12px]">flag</span>
+                    {flaggedQuestions.size}
+                  </span>
+                )}
+              </div>
+              <span className={`material-symbols-outlined text-[16px] text-slate-400 transition-transform ${showNavigator ? 'rotate-180' : ''}`}>
+                expand_less
+              </span>
+            </button>
+
+            {showNavigator && (
+              <div className="px-4 pb-3 overflow-y-auto max-h-[170px]">
+                {sections.map((sec, secIdx) => (
+                  <div key={secIdx} className="mb-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                      {sec.title || `Section ${secIdx + 1}`}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sec.questions.map((q) => {
+                        const isAnswered = !!answers[q.id]?.trim();
+                        const isFlagged = flaggedQuestions.has(q.id);
+                        const isCurrent = secIdx === currentSectionIdx;
+                        return (
+                          <button
+                            key={q.id}
+                            onClick={() => {
+                              if (secIdx !== currentSectionIdx) setCurrentSectionIdx(secIdx);
+                              setTimeout(() => {
+                                const el = document.getElementById(`question-${q.id}`);
+                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }, 100);
+                            }}
+                            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer relative
+                              ${isAnswered
+                                ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
+                                : isCurrent
+                                  ? 'bg-white text-slate-600 border-2 border-indigo-300 hover:border-indigo-400'
+                                  : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'
+                              }
+                              ${isFlagged ? 'ring-2 ring-amber-400' : ''}
+                            `}
+                            title={`Q${q.questionOrder}${isAnswered ? ' ✓' : ''}${isFlagged ? ' 🚩' : ''}`}
+                          >
+                            {q.questionOrder}
+                            {isFlagged && (
+                              <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full flex items-center justify-center">
+                                <span className="text-[7px] text-white">⚑</span>
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
 
 const aiNavItems: NavItem[] = [
   { name: "Exam Center", path: "/exam", icon: "history_edu" },
+  { name: "My Progress", path: "/my-progress", icon: "analytics" },
   { name: "Skill Tree", path: "/skill-tree", icon: "account_tree" },
   { name: "Dictation", path: "/dictation", icon: "hearing" },
   { name: "Learning Path", path: "/learning-path", icon: "route" },

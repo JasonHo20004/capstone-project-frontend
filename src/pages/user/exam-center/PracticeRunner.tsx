@@ -1,11 +1,446 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePracticeTestDetail, useSubmitPracticeTest } from "@/hooks/api/use-practice";
-import type { PracticeQuestion, PracticeQuestionGroup } from "@/lib/api/services/user/practice/practice.service";
+import type { PracticeQuestion, PracticeQuestionGroup, PracticeSection } from "@/lib/api/services/user/practice/practice.service";
 import { ReadingShell, ListeningShell, WritingShell, SpeakingShell } from "@/components/user/exam-center/TestShell";
+import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
+import { Link } from "react-router-dom";
 
 type AnswerMap = Record<string, unknown>;
 type Mode = "reading" | "listening" | "writing" | "speaking";
+
+// ─── Helper ────────────────────────────────────────────────────────────────────
+function extractLastTwoSentences(text: string) {
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+  return { lastSentence: sentences[sentences.length - 1] || "", prevSentence: sentences[sentences.length - 2] || "" };
+}
+
+function getUserId(): string {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.userId || payload.sub || "anonymous";
+    }
+  } catch { /* ignore */ }
+  return "anonymous";
+}
+
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+// =============================================================================
+// WRITING PRACTICE UI — Dedicated Layout
+// =============================================================================
+
+interface WritingSection {
+  id: string;
+  title: string;
+  taskType: 1 | 2;
+  imageUrl?: string;
+  prompt: string;
+  questionId?: string;
+  wordCountMin: number;
+}
+
+function WritingPracticeUI({ test }: { test: any }) {
+  const navigate = useNavigate();
+
+  // Parse writing sections from test data
+  const writingSections = useMemo<WritingSection[]>(() => {
+    const sections: WritingSection[] = [];
+    for (const sec of test.sections || []) {
+      for (const part of sec.parts || []) {
+        for (const group of part.questionGroups || []) {
+          for (const q of group.questions || []) {
+            const isTask1 = q.questionType?.includes("TASK1") || q.questionText?.toLowerCase().includes("task 1");
+            sections.push({
+              id: q.id || group.id,
+              title: isTask1 ? "Task 1 — Biểu đồ" : "Task 2 — Essay",
+              taskType: isTask1 ? 1 : 2,
+              imageUrl: group.imageUrl || q.imageUrl || sec.imageUrl || (q as any).content?.imageUrl,
+              prompt: q.questionText || (q as any).content?.prompt || "",
+              questionId: q.id,
+              wordCountMin: isTask1 ? 150 : 250,
+            });
+          }
+        }
+      }
+    }
+    return sections.length > 0 ? sections : [{ id: "fallback", title: "Task 2 — Essay", taskType: 2 as const, prompt: "Write your essay here.", wordCountMin: 250 }];
+  }, [test]);
+
+  const [activeTab, setActiveTab] = useState(0);
+  const [essays, setEssays] = useState<Record<number, string>>({});
+  const [timeLeft, setTimeLeft] = useState((test.duration || 3600));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [evaluationId, setEvaluationId] = useState<string | null>(null);
+  const [showResult, setShowResult] = useState(false);
+
+  const submitWriting = useSubmitWriting();
+  const { data: evaluation } = useWritingEvaluation(evaluationId);
+  const { result: assistantResult, isLoading: assistantLoading, analyze } = useWritingAssistant();
+
+  const activeSection = writingSections[activeTab];
+  const currentEssay = essays[activeTab] || "";
+  const wordCount = currentEssay.trim().split(/\s+/).filter(Boolean).length;
+
+  // Timer
+  useEffect(() => {
+    if (timeLeft <= 0 || showResult) return;
+    const t = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) { clearInterval(t); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [timeLeft, showResult]);
+
+  // Writing assistant (debounced)
+  useEffect(() => {
+    if (currentEssay.length > 30) {
+      const { lastSentence, prevSentence } = extractLastTwoSentences(currentEssay);
+      analyze(lastSentence, prevSentence);
+    }
+  }, [currentEssay, analyze]);
+
+  // Evaluation completed
+  useEffect(() => {
+    if (evaluation?.status === "COMPLETED" || evaluation?.status === "FAILED") {
+      setIsSubmitting(false);
+    }
+  }, [evaluation?.status]);
+
+  const handleEssayChange = (text: string) => {
+    setEssays(prev => ({ ...prev, [activeTab]: text }));
+  };
+
+  const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    const text = currentEssay.trim();
+    if (text.length < 50) return;
+    setIsSubmitting(true);
+
+    try {
+      const result = await submitWriting.mutateAsync({
+        userId: getUserId(),
+        essayText: text,
+        questionId: activeSection?.questionId,
+        taskType: activeSection?.taskType || 2,
+        question: activeSection?.prompt,
+        imageUrl: activeSection?.imageUrl,
+      });
+      setEvaluationId(result.data?.evaluationId || null);
+      setShowResult(true);
+    } catch (err) {
+      console.error("Submit failed:", err);
+      setIsSubmitting(false);
+    }
+  }, [currentEssay, isSubmitting, submitWriting, activeSection]);
+
+  // ─── Result Screen ─────────────────────────────────────────────────────────
+  if (showResult) {
+    return (
+      <div className="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
+        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+              <span className="material-symbols-outlined text-[20px]">edit_note</span>
+            </div>
+            <h1 className="font-bold text-slate-800">Kết quả chấm Writing</h1>
+          </div>
+          <button onClick={() => navigate("/practice")} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+            ← Quay lại
+          </button>
+        </header>
+
+        <div className="max-w-4xl mx-auto p-8">
+          {(!evaluation || evaluation.status === "PENDING" || evaluation.status === "PROCESSING") && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-6" />
+              <h2 className="text-xl font-bold text-slate-800 mb-2">AI đang chấm bài...</h2>
+              <p className="text-slate-500">Thường mất 15-30 giây. Vui lòng đợi.</p>
+            </div>
+          )}
+
+          {evaluation?.status === "FAILED" && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+              <h2 className="text-xl font-bold text-red-800 mb-2">Chấm bài thất bại</h2>
+              <p className="text-red-600 mb-4">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
+              <button onClick={() => { setShowResult(false); setEvaluationId(null); setIsSubmitting(false); }}
+                className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700">
+                Thử lại
+              </button>
+            </div>
+          )}
+
+          {evaluation?.status === "COMPLETED" && evaluation.criteria && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
+                <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">Overall Band Score</p>
+                <div className="text-7xl font-black text-emerald-600 mb-2">{evaluation.overallBand}</div>
+                <p className="text-slate-600 text-sm max-w-xl mx-auto">{evaluation.overallFeedback}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { key: "task_achievement", label: "Task Achievement", icon: "task_alt" },
+                  { key: "coherence", label: "Coherence & Cohesion", icon: "link" },
+                  { key: "lexical", label: "Lexical Resource", icon: "dictionary" },
+                  { key: "grammar", label: "Grammar Range & Accuracy", icon: "spellcheck" },
+                ].map(({ key, label, icon }) => {
+                  const c = evaluation.criteria?.[key as keyof typeof evaluation.criteria];
+                  if (!c) return null;
+                  return (
+                    <div key={key} className="bg-white rounded-xl border border-slate-200 p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-emerald-500 text-xl">{icon}</span>
+                          <span className="font-semibold text-slate-800 text-sm">{label}</span>
+                        </div>
+                        <span className="text-2xl font-black text-emerald-600">{c.score}</span>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">{c.feedback}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {evaluation.highlightedErrors && evaluation.highlightedErrors.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-6">
+                  <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-500">warning</span>
+                    Lỗi phát hiện ({evaluation.highlightedErrors.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {evaluation.highlightedErrors.map((err: any, i: number) => (
+                      <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                          err.type === "grammar" ? "bg-red-100 text-red-700" :
+                          err.type === "vocab" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                        }`}>{err.type}</span>
+                        <div className="flex-1 text-sm">
+                          <p className="text-red-600 line-through">{err.original}</p>
+                          <p className="text-green-700 font-medium">→ {err.suggestion}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="text-center pt-4">
+                <button onClick={() => navigate("/practice")} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors">
+                  Quay lại Practice
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Writing Editor Screen ─────────────────────────────────────────────────
+  return (
+    <div className="bg-[#f8fafc] h-screen flex flex-col font-sans text-slate-900 overflow-hidden">
+      {/* Header */}
+      <header className="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-5 shrink-0 z-20">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/practice")} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          </button>
+          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+            <span className="material-symbols-outlined text-[18px]">edit_note</span>
+          </div>
+          <div>
+            <h1 className="font-bold text-slate-800 text-sm leading-tight">{test.title}</h1>
+            <span className="text-[11px] text-slate-500">IELTS Writing</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          {assistantLoading && (
+            <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 animate-pulse">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+              AI đang kiểm tra...
+            </div>
+          )}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm ${timeLeft < 300 ? "bg-red-100 text-red-700" : "bg-slate-100"}`}>
+            <span className="material-symbols-outlined text-[18px]">timer</span>
+            <span className={`font-mono font-bold ${timeLeft < 300 ? "text-red-700" : "text-slate-700"}`}>{formatTime(timeLeft)}</span>
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || wordCount < 20}
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-colors"
+          >
+            {isSubmitting ? "Đang nộp..." : "Nộp bài"}
+          </button>
+        </div>
+      </header>
+
+      {/* Section Tabs (if multiple) */}
+      {writingSections.length > 1 && (
+        <div className="bg-white border-b border-slate-200 px-5 flex gap-1 py-1.5 shrink-0">
+          {writingSections.map((sec, idx) => (
+            <button
+              key={sec.id}
+              onClick={() => setActiveTab(idx)}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === idx
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "text-slate-500 hover:bg-slate-50 border border-transparent"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">{sec.taskType === 1 ? "bar_chart" : "edit_note"}</span>
+              {sec.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Panel — Question + Chart */}
+        <div className="w-[38%] bg-white border-r border-slate-200 flex flex-col h-full overflow-y-auto">
+          <div className="p-5 border-b border-slate-100 bg-slate-50">
+            <div className="flex items-center gap-2">
+              <span className={`material-symbols-outlined text-[18px] ${activeSection.taskType === 1 ? "text-blue-600" : "text-orange-500"}`}>
+                {activeSection.taskType === 1 ? "bar_chart" : "edit_note"}
+              </span>
+              <h2 className="font-bold text-slate-700 text-sm">{activeSection.title}</h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-auto">
+                {activeSection.wordCountMin}+ từ
+              </span>
+            </div>
+          </div>
+
+          <div className="flex-1 p-5 space-y-5">
+            {/* Chart/Image for Task 1 */}
+            {activeSection.imageUrl && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 overflow-hidden">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Biểu đồ / Sơ đồ</p>
+                <img
+                  src={activeSection.imageUrl}
+                  alt="Task 1 Visual"
+                  className="w-full rounded-lg border border-slate-200 bg-white"
+                />
+              </div>
+            )}
+
+            {/* Prompt */}
+            <div className="bg-emerald-50/60 rounded-xl p-4 border border-emerald-100">
+              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">Đề bài</p>
+              <p className="text-sm text-slate-800 leading-relaxed italic">{activeSection.prompt}</p>
+              {activeSection.taskType === 1 && (
+                <p className="text-xs text-slate-600 mt-3">
+                  Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
+                  Write at least {activeSection.wordCountMin} words.
+                </p>
+              )}
+              {activeSection.taskType === 2 && (
+                <p className="text-xs text-slate-600 mt-3">
+                  Give reasons for your answer and include any relevant examples from your own knowledge or experience.
+                  Write at least {activeSection.wordCountMin} words.
+                </p>
+              )}
+            </div>
+
+            {/* AI Assistant */}
+            {assistantResult && (assistantResult.errors.length > 0 || assistantResult.suggestions.length > 0) && (
+              <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">auto_fix_high</span>
+                  AI Writing Assistant
+                </h4>
+                {assistantResult.errors.map((err, i) => (
+                  <div key={`err-${i}`} className="text-xs mb-2 p-2 bg-white rounded border border-amber-100">
+                    <span className={`font-bold px-1.5 py-0.5 rounded mr-1 ${
+                      err.type === "grammar" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                    }`}>{err.type}</span>
+                    <span className="text-red-600 line-through">{err.text}</span>
+                    <span className="mx-1">→</span>
+                    <span className="text-green-700 font-medium">{err.suggestion}</span>
+                  </div>
+                ))}
+                {assistantResult.suggestions.map((sug, i) => (
+                  <div key={`sug-${i}`} className="text-xs mb-1 p-2 bg-white rounded border border-blue-100">
+                    <span className="font-bold text-blue-600 mr-1">💡</span> {sug.improvement}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Tips */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mẹo viết</h4>
+              <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                {activeSection.taskType === 1 ? (
+                  <>
+                    <li>Bắt đầu bằng câu paraphrase đề bài</li>
+                    <li>Nêu overview/tổng quan trước khi vào chi tiết</li>
+                    <li>So sánh số liệu nổi bật, không liệt kê tất cả</li>
+                    <li>Sử dụng từ vựng mô tả xu hướng chính xác</li>
+                  </>
+                ) : (
+                  <>
+                    <li>Lập dàn ý trước khi viết: Mở bài → Thân bài → Kết luận</li>
+                    <li>Trình bày cả 2 quan điểm rồi đưa ý kiến cá nhân</li>
+                    <li>Dùng linking words: However, Furthermore, In contrast...</li>
+                    <li>Kiểm tra lỗi chính tả và ngữ pháp trước khi nộp</li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel — Essay Editor */}
+        <div className="w-[62%] bg-white flex flex-col h-full">
+          {/* Toolbar */}
+          <div className="px-5 py-2 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0">
+            <span className="text-xs text-slate-500 font-medium">Bài viết của bạn</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium text-slate-400">
+                Số từ:{" "}
+                <span className={`font-bold ${
+                  wordCount >= activeSection.wordCountMin ? "text-emerald-600" :
+                  wordCount >= activeSection.wordCountMin * 0.8 ? "text-amber-600" : "text-slate-700"
+                }`}>{wordCount}</span>
+                <span className="text-slate-300 ml-1">/ {activeSection.wordCountMin} min</span>
+              </span>
+              {wordCount >= activeSection.wordCountMin && (
+                <span className="text-[10px] flex items-center gap-0.5 text-emerald-600 font-bold">
+                  <span className="material-symbols-outlined text-[14px]">check_circle</span> Đủ từ
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Textarea */}
+          <textarea
+            className="flex-1 p-6 text-base leading-[1.8] text-slate-800 outline-none resize-none font-serif placeholder:text-slate-300"
+            placeholder={activeSection.taskType === 1
+              ? "The chart/diagram illustrates..."
+              : "In today's society, the issue of..."
+            }
+            value={currentEssay}
+            onChange={(e) => handleEssayChange(e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =============================================================================
+// PRACTICE RUNNER (Original — for Reading / Listening / Speaking)
+// =============================================================================
 
 export default function PracticeRunner() {
   const { testId } = useParams<{ testId: string }>();
@@ -42,7 +477,6 @@ export default function PracticeRunner() {
   const handleSubmit = async () => {
     if (!testId) return;
     const res = await submitMutation.mutateAsync({ testId, submissions: answers });
-    // Pass result via navigation state (quick integration). Can be persisted later.
     navigate(`/practice/${testId}/result`, { state: { result: res.data } });
   };
 
@@ -74,11 +508,19 @@ export default function PracticeRunner() {
     ? "writing"
     : "reading";
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WRITING MODE → Dedicated UI
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (inferredMode === "writing") {
+    return <WritingPracticeUI test={test} />;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // READING / LISTENING / SPEAKING → Original Shell Layout
+  // ═══════════════════════════════════════════════════════════════════════════
   const ShellComponent =
     inferredMode === "listening"
       ? ListeningShell
-      : inferredMode === "writing"
-      ? WritingShell
       : inferredMode === "speaking"
       ? SpeakingShell
       : ReadingShell;
@@ -248,4 +690,3 @@ export default function PracticeRunner() {
     />
   );
 }
-

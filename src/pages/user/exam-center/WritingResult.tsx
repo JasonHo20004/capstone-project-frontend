@@ -38,7 +38,7 @@ export default function WritingResult() {
             {/* Overall Score */}
             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-indigo-600"></div>
-              <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Band Score</span>
+              <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Estimated Band</span>
               <span className="text-7xl font-black text-indigo-600 tracking-tighter">6.5</span>
               <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full mt-2 border border-indigo-100">
                 Competent User

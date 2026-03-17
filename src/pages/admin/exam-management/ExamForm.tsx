@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +33,7 @@ import {
   GripVertical,
   ImagePlus,
   Image as ImageIcon,
+  Link2 as LinkIcon,
 } from 'lucide-react';
 import apiClient from '@/lib/api/config';
 
@@ -115,6 +116,7 @@ export default function ExamFormPage() {
   const [imageUploadTarget, setImageUploadTarget] = useState<{ type: 'section' | 'question'; sIdx: number; qIdx?: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
 
   const [form, setForm] = useState<TestFormData>({
     title: '',
@@ -147,9 +149,11 @@ export default function ExamFormPage() {
   // If editing, load existing test
   useEffect(() => {
     if (editId) {
-      apiClient.get(`/tests/${editId}`).then((resp) => {
+      setLoadingEdit(true);
+      apiClient.get(`/tests/${editId}?includeAnswers=true`).then((resp) => {
         const test = resp.data?.data;
         if (test) {
+          console.log('[ExamForm] Loaded test data:', JSON.stringify(test.sections?.[0]?.questions?.slice(0, 3), null, 2));
           setForm({
             title: test.title,
             durationInMinutes: test.durationInMinutes || 60,
@@ -174,23 +178,30 @@ export default function ExamFormPage() {
               collapsed: false,
             })) || [emptySection(0)],
           });
-          setSelectedSkill(test.testSkills?.[0]?.skill || '');
+          // Detect skill: testSkills → section.skill → mediaUrl fallback
+          const detectedSkill =
+            test.testSkills?.[0]?.skill
+            || test.sections?.find((s: any) => s.skill)?.skill
+            || (test.sections?.some((s: any) => s.mediaUrl) ? 'LISTENING' : 'READING');
+          setSelectedSkill(detectedSkill);
         }
-      });
+      }).finally(() => setLoadingEdit(false));
     }
   }, [editId]);
 
   const isListening = selectedSkill === 'LISTENING';
   const totalQuestions = form.sections.reduce((sum, s) => sum + s.questions.length, 0);
 
+  const queryClient = useQueryClient();
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => { const resp = await apiClient.post('/tests', data); return resp.data; },
-    onSuccess: () => navigate('/admin/exams'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['adminTests'] }); navigate('/admin/exams'); },
   });
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => { const resp = await apiClient.put(`/tests/${editId}`, data); return resp.data; },
-    onSuccess: () => navigate('/admin/exams'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['adminTests'] }); navigate('/admin/exams'); },
   });
 
   // Section handlers
@@ -329,6 +340,7 @@ export default function ExamFormPage() {
         }),
       })),
     };
+    console.log('[ExamForm] Submit payload:', JSON.stringify(payload, null, 2));
     isEditing ? updateMutation.mutate(payload) : createMutation.mutate(payload);
   };
 
@@ -336,6 +348,17 @@ export default function ExamFormPage() {
   const canNext = step === 1 ? form.title && selectedSkill : step === 2 ? form.sections.every(s => s.title) : true;
 
   // ─── RENDER ────────────────────────────────────────────────
+  if (loadingEdit) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-muted-foreground font-medium">Đang tải dữ liệu bài test...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Header */}
@@ -427,15 +450,19 @@ export default function ExamFormPage() {
                       { skill: 'LISTENING' as SkillType, icon: Headphones, label: 'Listening', color: 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300' },
                     ]).map(({ skill, icon: Icon, label, color }) => (
                       <button key={skill}
-                        onClick={() => { setSelectedSkill(skill); setForm(prev => ({ ...prev, testSkills: [skill] })); }}
+                        disabled={!!editId}
+                        onClick={() => { if (!editId) { setSelectedSkill(skill); setForm(prev => ({ ...prev, testSkills: [skill] })); } }}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                           selectedSkill === skill
                             ? `${color} border-current shadow-sm`
                             : 'border-border hover:border-muted-foreground/30'
-                        }`}
+                        } ${editId ? 'cursor-not-allowed opacity-60' : ''}`}
                       >
                         <Icon className="h-6 w-6" />
                         <span className="text-sm font-medium">{label}</span>
+                        {editId && selectedSkill === skill && (
+                          <span className="text-[10px] text-muted-foreground">Không thể thay đổi</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -513,37 +540,105 @@ export default function ExamFormPage() {
                       <div>
                         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Audio file</Label>
                         {section.mediaUrl ? (
-                          <div className="flex items-center gap-3 mt-1 rounded-lg bg-primary/5 border border-primary/20 p-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <Music className="h-5 w-5 text-primary" />
+                          <div className="mt-1 space-y-2">
+                            <div className="flex items-center gap-3 rounded-lg bg-primary/5 border border-primary/20 p-3">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Music className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{section.mediaUrl.split('/').pop()}</p>
+                                <p className="text-xs text-muted-foreground">Audio đã được thiết lập</p>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"
+                                onClick={() => updateSection(sIdx, 'mediaUrl', '')}>
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{section.mediaUrl.split('/').pop()}</p>
-                              <p className="text-xs text-muted-foreground">Đã upload thành công</p>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"
-                              onClick={() => updateSection(sIdx, 'mediaUrl', '')}>
-                              <X className="h-4 w-4" />
-                            </Button>
+                            <audio controls className="w-full h-9" src={section.mediaUrl} preload="metadata">
+                              Your browser does not support audio.
+                            </audio>
                           </div>
                         ) : (
-                          <div className="mt-1 border-2 border-dashed rounded-xl p-8 text-center cursor-pointer
-                            hover:border-primary/40 hover:bg-primary/5 transition-all group"
-                            onClick={() => { setUploadingSectionIdx(sIdx); fileInputRef.current?.click(); }}
-                          >
-                            {uploading && uploadingSectionIdx === sIdx ? (
-                              <div className="flex flex-col items-center gap-2">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                <span className="text-sm text-muted-foreground">Đang upload...</span>
+                          <div className="mt-1">
+                            {/* Tab switcher */}
+                            <div className="flex gap-1 p-1 bg-muted rounded-lg mb-3">
+                              <button
+                                type="button"
+                                onClick={() => setForm(prev => ({ ...prev, _audioTab: (prev as any)._audioTab === 'url' ? 'upload' : 'upload' }))}
+                                className={`flex-1 text-xs font-medium py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5 ${
+                                  (form as any)._audioTab !== 'url'
+                                    ? 'bg-background shadow-sm text-foreground'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                <Upload className="h-3.5 w-3.5" /> Upload file
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setForm(prev => ({ ...prev, _audioTab: 'url' }))}
+                                className={`flex-1 text-xs font-medium py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5 ${
+                                  (form as any)._audioTab === 'url'
+                                    ? 'bg-background shadow-sm text-foreground'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                <LinkIcon className="h-3.5 w-3.5" /> Dán URL
+                              </button>
+                            </div>
+
+                            {(form as any)._audioTab === 'url' ? (
+                              /* URL Input */
+                              <div className="space-y-2">
+                                <div className="flex gap-2">
+                                  <Input
+                                    id={`audio-url-${sIdx}`}
+                                    placeholder="https://example.com/audio.mp3"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const val = (e.target as HTMLInputElement).value.trim();
+                                        if (val) updateSection(sIdx, 'mediaUrl', val);
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    className="shrink-0 gap-1.5"
+                                    onClick={() => {
+                                      const input = document.getElementById(`audio-url-${sIdx}`) as HTMLInputElement;
+                                      const val = input?.value?.trim();
+                                      if (val) updateSection(sIdx, 'mediaUrl', val);
+                                    }}
+                                  >
+                                    <Check className="h-3.5 w-3.5" /> Xác nhận
+                                  </Button>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Dán URL audio (MP3, WAV) rồi nhấn Xác nhận hoặc Enter
+                                </p>
                               </div>
                             ) : (
-                              <>
-                                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/10 transition-colors">
-                                  <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </div>
-                                <p className="text-sm font-medium">Kéo thả hoặc click để upload</p>
-                                <p className="text-xs text-muted-foreground mt-1">MP3, WAV · Tối đa 50MB</p>
-                              </>
+                              /* File Upload */
+                              <div className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer
+                                hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                                onClick={() => { setUploadingSectionIdx(sIdx); fileInputRef.current?.click(); }}
+                              >
+                                {uploading && uploadingSectionIdx === sIdx ? (
+                                  <div className="flex flex-col items-center gap-2">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                    <span className="text-sm text-muted-foreground">Đang upload lên AWS...</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/10 transition-colors">
+                                      <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    </div>
+                                    <p className="text-sm font-medium">Kéo thả hoặc click để upload</p>
+                                    <p className="text-xs text-muted-foreground mt-1">MP3, WAV · Tối đa 50MB</p>
+                                  </>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}

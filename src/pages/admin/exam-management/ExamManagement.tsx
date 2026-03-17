@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MoreHorizontal, Pencil, Trash2, Plus, CheckCircle, XCircle } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Plus, CheckCircle, XCircle, PenTool, Mic, BookOpen } from 'lucide-react';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -37,6 +37,7 @@ interface TestItem {
   totalScore: number | null;
   practiceCount: number | null;
   createdAt: string;
+  updatedAt: string | null;
   englishTestType: { name: string };
   testSkills: { skill: string }[];
 }
@@ -147,9 +148,20 @@ export default function ExamManagement() {
       render: (test: TestItem) => getStatusBadge(test.status),
     },
     {
-      key: 'createdAt',
-      header: 'Ngày tạo',
-      render: (test: TestItem) => new Date(test.createdAt).toLocaleDateString('vi-VN'),
+      key: 'updatedAt',
+      header: 'Cập nhật',
+      render: (test: TestItem) => {
+        const d = test.updatedAt ? new Date(test.updatedAt) : new Date(test.createdAt);
+        const diff = Date.now() - d.getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return <span className="text-xs text-muted-foreground">Vừa xong</span>;
+        if (mins < 60) return <span className="text-xs text-muted-foreground">{mins} phút trước</span>;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return <span className="text-xs text-muted-foreground">{hours} giờ trước</span>;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return <span className="text-xs text-muted-foreground">{days} ngày trước</span>;
+        return <span className="text-xs text-muted-foreground">{d.toLocaleDateString('vi-VN')}</span>;
+      },
     },
     {
       key: 'actions',
@@ -163,7 +175,12 @@ export default function ExamManagement() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigate(`/admin/exams/${test.id}/edit`)}>
+            <DropdownMenuItem onClick={() => {
+              const skill = test.testSkills?.[0]?.skill;
+              if (skill === 'WRITING') navigate(`/admin/exams/${test.id}/edit/writing`);
+              else if (skill === 'SPEAKING') navigate(`/admin/exams/${test.id}/edit/speaking`);
+              else navigate(`/admin/exams/${test.id}/edit`);
+            }}>
               <Pencil className="mr-2 h-4 w-4" />
               Chỉnh sửa
             </DropdownMenuItem>
@@ -224,10 +241,30 @@ export default function ExamManagement() {
           <h1 className="text-3xl font-bold tracking-tight">Quản lý bài thi</h1>
           <p className="text-muted-foreground">Tạo và quản lý các bài thi IELTS</p>
         </div>
-        <Button onClick={() => navigate('/admin/exams/new')} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Tạo bài thi mới
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Tạo bài thi mới
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Chọn loại bài thi</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/admin/exams/new')}>
+              <BookOpen className="mr-2 h-4 w-4 text-blue-600" />
+              Reading / Listening
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/exams/new/writing')}>
+              <PenTool className="mr-2 h-4 w-4 text-orange-600" />
+              Writing Test
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/exams/new/speaking')}>
+              <Mic className="mr-2 h-4 w-4 text-teal-600" />
+              Speaking Test
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <FilterSection
