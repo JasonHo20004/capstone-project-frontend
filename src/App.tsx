@@ -26,7 +26,6 @@ import MyCourses from "./pages/user/courses/MyCourses";
 import PracticeTests from "./pages/user/exam-center/PracticeTests";
 import PracticeRunner from "./pages/user/exam-center/PracticeRunner";
 import PracticeResult from "./pages/user/exam-center/PracticeResult";
-import WritingTest from "./pages/user/exam-center/WritingTest";
 import SpeakingTest from "./pages/user/exam-center/SpeakingTest";
 import ExamCenter from "./pages/user/exam-center/ExamCenter";
 import SkillTree from "./pages/user/exam-center/SkillTree";
@@ -130,8 +129,6 @@ const App = () => (
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
 
             {/* AI Test routes (full-page, no sidebar — immersive test mode) */}
-            <Route path="/exam/test/writing" element={<WritingTest />} />
-            <Route path="/exam/test/writing/session/:evalId" element={<WritingTest />} />
             <Route path="/exam/test/speaking" element={<SpeakingTest />} />
             <Route path="/exam/test/:testId" element={<IeltsTestModule />} />
             <Route path="/exam/test/:testId/session/:sessionId" element={<IeltsTestModule />} />

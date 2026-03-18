@@ -16,27 +16,24 @@ export interface TopicDisplay {
   fromDb: boolean;
 }
 
-export const FALLBACK_TOPICS = [
-  { name: "Hometown and Living", icon: "home", color: "from-blue-500 to-cyan-500" },
-  { name: "Work and Studies", icon: "work", color: "from-indigo-500 to-blue-500" },
-  { name: "Daily Routine", icon: "schedule", color: "from-teal-500 to-emerald-500" },
-  { name: "Hobbies and Free Time", icon: "sports_esports", color: "from-cyan-500 to-blue-500" },
-  { name: "Technology", icon: "devices", color: "from-cyan-500 to-blue-500" },
-  { name: "Travel and Holidays", icon: "flight", color: "from-amber-500 to-orange-500" },
-  { name: "Food and Cooking", icon: "restaurant", color: "from-red-500 to-pink-500" },
-  { name: "Health and Fitness", icon: "fitness_center", color: "from-green-500 to-emerald-500" },
-  { name: "Friends and Family", icon: "group", color: "from-pink-500 to-rose-500" },
-  { name: "Music and Entertainment", icon: "music_note", color: "from-fuchsia-500 to-pink-500" },
-  { name: "Reading and Books", icon: "auto_stories", color: "from-amber-600 to-yellow-500" },
-  { name: "Shopping", icon: "shopping_bag", color: "from-rose-500 to-red-500" },
-  { name: "Weather and Seasons", icon: "wb_sunny", color: "from-sky-400 to-blue-500" },
-  { name: "Animals and Nature", icon: "forest", color: "from-lime-500 to-green-600" },
-  { name: "Sports", icon: "sports_soccer", color: "from-orange-500 to-red-500" },
-];
-
-export const TOPIC_ICON_MAP: Record<string, { icon: string; color: string }> = Object.fromEntries(
-  FALLBACK_TOPICS.map(t => [t.name, { icon: t.icon, color: t.color }])
-);
+// Icon/color map for known topic names (used for display styling only)
+export const TOPIC_ICON_MAP: Record<string, { icon: string; color: string }> = {
+  "Hometown and Living": { icon: "home", color: "from-blue-500 to-cyan-500" },
+  "Work and Studies": { icon: "work", color: "from-indigo-500 to-blue-500" },
+  "Daily Routine": { icon: "schedule", color: "from-teal-500 to-emerald-500" },
+  "Hobbies and Free Time": { icon: "sports_esports", color: "from-cyan-500 to-blue-500" },
+  "Technology": { icon: "devices", color: "from-cyan-500 to-blue-500" },
+  "Travel and Holidays": { icon: "flight", color: "from-amber-500 to-orange-500" },
+  "Food and Cooking": { icon: "restaurant", color: "from-red-500 to-pink-500" },
+  "Health and Fitness": { icon: "fitness_center", color: "from-green-500 to-emerald-500" },
+  "Friends and Family": { icon: "group", color: "from-pink-500 to-rose-500" },
+  "Music and Entertainment": { icon: "music_note", color: "from-fuchsia-500 to-pink-500" },
+  "Reading and Books": { icon: "auto_stories", color: "from-amber-600 to-yellow-500" },
+  "Shopping": { icon: "shopping_bag", color: "from-rose-500 to-red-500" },
+  "Weather and Seasons": { icon: "wb_sunny", color: "from-sky-400 to-blue-500" },
+  "Animals and Nature": { icon: "forest", color: "from-lime-500 to-green-600" },
+  "Sports": { icon: "sports_soccer", color: "from-orange-500 to-red-500" },
+};
 
 export function getUserId(): string {
   try {

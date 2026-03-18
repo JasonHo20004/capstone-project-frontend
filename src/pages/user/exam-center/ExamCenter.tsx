@@ -47,10 +47,6 @@ export default function ExamCenter() {
     ? tests
     : tests.filter(t => t.testSkills?.some(s => s.skill === activeFilter));
 
-  // Show static Writing/Speaking cards only when filter matches
-  const showWritingCard = activeFilter === 'ALL' || activeFilter === 'WRITING';
-  const showSpeakingCard = activeFilter === 'ALL' || activeFilter === 'SPEAKING';
-
   return (
     <div className="max-w-7xl mx-auto">
       {/* Title */}
@@ -173,80 +169,13 @@ export default function ExamCenter() {
               </div>
             </div>
           )})}
-
-          {/* Static cards for Writing and Speaking (no DB data yet) */}
-          {showWritingCard && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
-            <div className="h-28 bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] relative overflow-hidden">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/30 uppercase tracking-widest">IELTS</span>
-              </div>
-              <div className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md rounded-lg p-2 border border-white/20">
-                <span className="material-symbols-outlined text-white text-[24px]">edit_note</span>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-slate-900 leading-tight">IELTS Writing Task 2</h3>
-                <span className="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter shrink-0 ml-2 bg-violet-100 text-violet-600">Writing</span>
-              </div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Duration</span>
-                  <span className="text-sm font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px] text-slate-400">timer</span>
-                    40 mins
-                  </span>
-                </div>
-              </div>
-              <Link to="/exam/test/writing" className="w-full bg-violet-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-violet-200 hover:bg-violet-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                <span>Start Writing Test</span>
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-              </Link>
-            </div>
-          </div>
-          )}
-
-          {showSpeakingCard && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
-            <div className="h-28 bg-gradient-to-br from-[#f59e0b] to-[#d97706] relative overflow-hidden">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/30 uppercase tracking-widest">IELTS</span>
-              </div>
-              <div className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md rounded-lg p-2 border border-white/20">
-                <span className="material-symbols-outlined text-white text-[24px]">mic</span>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-slate-900 leading-tight">IELTS Speaking Workshop</h3>
-                <span className="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter shrink-0 ml-2 bg-amber-100 text-amber-600">Speaking</span>
-              </div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Duration</span>
-                  <span className="text-sm font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px] text-slate-400">timer</span>
-                    15 mins
-                  </span>
-                </div>
-              </div>
-              <Link to="/exam/test/speaking" className="w-full bg-amber-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                <span>Start Speaking Test</span>
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-              </Link>
-            </div>
-          </div>
-          )}
         </div>
       )}
 
-      {!loading && filteredTests.length === 0 && !showWritingCard && !showSpeakingCard && (
+      {!loading && filteredTests.length === 0 && (
         <div className="text-center py-8 text-slate-400">
           <span className="material-symbols-outlined text-4xl mb-2 block">quiz</span>
-          <p>No IELTS reading tests available yet.</p>
+          <p>No IELTS tests available for this skill yet.</p>
         </div>
       )}
     </div>

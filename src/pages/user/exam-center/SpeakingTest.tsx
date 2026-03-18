@@ -9,7 +9,6 @@ import {
 } from "@/hooks/api/use-ai-evaluation";
 import { aiEvaluationService } from "@/lib/api/services/user/ai-evaluation/ai-evaluation.service";
 import {
-  FALLBACK_TOPICS,
   TOPIC_ICON_MAP,
   getUserId,
   formatTime,
@@ -61,15 +60,12 @@ export default function SpeakingTest() {
 
   const displayTopics: TopicDisplay[] = useMemo(() => {
     const dbTopics = (dbTopicsRes?.data as any[]) || [];
-    if (dbTopics.length > 0) {
-      return dbTopics.map((t: any) => ({
-        name: t.title,
-        icon: TOPIC_ICON_MAP[t.title]?.icon || "topic",
-        color: TOPIC_ICON_MAP[t.title]?.color || "from-slate-500 to-slate-600",
-        fromDb: true,
-      }));
-    }
-    return FALLBACK_TOPICS.map(t => ({ ...t, fromDb: false }));
+    return dbTopics.map((t: any) => ({
+      name: t.title,
+      icon: TOPIC_ICON_MAP[t.title]?.icon || "topic",
+      color: TOPIC_ICON_MAP[t.title]?.color || "from-slate-500 to-slate-600",
+      fromDb: true,
+    }));
   }, [dbTopicsRes]);
 
   // ─── Auto-scroll chat ────────────────────────────────────────────────────

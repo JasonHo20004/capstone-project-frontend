@@ -147,7 +147,7 @@ export default function WritingHistory() {
             <span className="material-symbols-outlined text-slate-300 text-6xl mb-4 block">edit_note</span>
             <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa có bài viết nào</h3>
             <p className="text-slate-500 text-sm mb-6">Bắt đầu luyện Writing để xem lịch sử ở đây.</p>
-            <Link to="/exam/test/writing" className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors">
+            <Link to="/exam" className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors">
               <span className="material-symbols-outlined text-[18px]">edit</span>
               Viết bài ngay
             </Link>
