@@ -30,6 +30,7 @@ import SpeakingTest from "./pages/user/exam-center/SpeakingTest";
 import ExamCenter from "./pages/user/exam-center/ExamCenter";
 import SkillTree from "./pages/user/exam-center/SkillTree";
 import DictationPractice from "./pages/user/exam-center/DictationPractice";
+import DictationExercises from "./pages/user/exam-center/DictationExercises";
 import LearningPath from "./pages/user/exam-center/LearningPath";
 import IeltsTestModule from "./pages/user/exam-center/IeltsTestModule";
 import TestHistory from "./pages/user/exam-center/TestHistory";
@@ -57,6 +58,7 @@ import ExamFormPage from "./pages/admin/exam-management/ExamForm";
 import WritingTestForm from "./pages/admin/exam-management/WritingTestForm";
 import SpeakingTestForm from "./pages/admin/exam-management/SpeakingTestForm";
 import SpeakingTopicManager from "./pages/admin/exam-management/SpeakingTopicManager";
+import DictationManagement from "./pages/admin/exam-management/DictationManagement";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -120,7 +122,8 @@ const App = () => (
               <Route path="/exam/speaking-history" element={<SpeakingHistory />} />
               <Route path="/my-progress" element={<ProgressAnalytics />} />
               <Route path="/skill-tree" element={<SkillTree />} />
-              <Route path="/dictation" element={<DictationPractice />} />
+              <Route path="/dictation" element={<DictationExercises />} />
+              <Route path="/dictation/:exerciseId" element={<DictationPractice />} />
               <Route path="/learning-path" element={<LearningPath />} />
             </Route>
             {/* full-page runner/result (no learner layout) */}
@@ -154,6 +157,7 @@ const App = () => (
             <Route path="exams/:id/edit/writing" element={<WritingTestForm />} />
             <Route path="exams/:id/edit/speaking" element={<SpeakingTestForm />} />
             <Route path="speaking-topics" element={<SpeakingTopicManager />} />
+            <Route path="dictation" element={<DictationManagement />} />
             <Route path="reports" element={<ReportsManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
             <Route

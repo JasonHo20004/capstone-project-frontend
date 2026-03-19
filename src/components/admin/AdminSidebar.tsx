@@ -14,7 +14,8 @@ import {
   Package,
   ScrollText,
   Tag,
-  ClipboardList
+  ClipboardList,
+  Headphones
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -37,6 +38,11 @@ const sidebarItems = [
     title: 'Quản lý bài thi',
     href: '/admin/exams',
     icon: ClipboardList,
+  },
+  {
+    title: 'Quản lý Dictation',
+    href: '/admin/dictation',
+    icon: Headphones,
   },
   // {
   //   title: 'Doanh thu',
