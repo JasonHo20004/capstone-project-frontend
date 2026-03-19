@@ -155,3 +155,22 @@ All colors MUST be HSL.
 .icon-fill {
   font-variation-settings: 'FILL' 1;
 }
+
+/* Dark scrollbar for dark-themed pages (e.g. skill tree) */
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #020617; /* slate-950 */
+}
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #1e293b; /* slate-800 */
+  border-radius: 4px;
+}
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #334155; /* slate-700 */
+}
+.dark-scrollbar {
+  scrollbar-color: #1e293b #020617; /* Firefox */
+  scrollbar-width: thin;
+}
