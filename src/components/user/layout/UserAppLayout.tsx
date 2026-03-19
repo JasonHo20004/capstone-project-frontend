@@ -116,6 +116,8 @@ export default function UserAppLayout() {
       </aside>
 
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        {/* Hide layout header for full-bleed pages like skill-tree */}
+        {!location.pathname.startsWith("/skill-tree") && (
         <header className="flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200">
           <div className="flex items-center gap-4">
             <button
@@ -155,8 +157,15 @@ export default function UserAppLayout() {
             </NavLink>
           </div>
         </header>
+        )}
 
-        <div className="flex-1 overflow-y-auto bg-background p-6 lg:p-8 scroll-smooth">
+        <div
+          className={`flex-1 overflow-y-auto scroll-smooth ${
+            location.pathname.startsWith("/skill-tree")
+              ? "bg-slate-950 p-0 dark-scrollbar"
+              : "bg-background p-6 lg:p-8"
+          }`}
+        >
           <Outlet />
         </div>
       </div>
