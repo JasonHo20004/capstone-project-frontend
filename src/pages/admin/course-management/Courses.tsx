@@ -20,7 +20,8 @@ import {
   Star,
   Pencil
 } from 'lucide-react';
-import type { Course, CourseWithStats, CourseStatus } from "@/domain";
+import type { Course, CourseWithStats } from "@/domain";
+import { CourseStatus } from "@/domain";
 import { courseManagementService } from '@/lib/api/services/admin';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
@@ -50,7 +51,7 @@ export default function CoursesManagement() {
   });
 
   const courses = coursesResponse?.data ?? [];
-  const totalCourses = coursesResponse?.pagination.total ?? courses.length;
+  const totalCourses = coursesResponse?.total ?? courses.length;
 
   const filteredCourses = useMemo(() => {
     if (!courses) return [];

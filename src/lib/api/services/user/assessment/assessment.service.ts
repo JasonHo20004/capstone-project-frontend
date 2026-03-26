@@ -107,6 +107,28 @@ class AssessmentService {
     );
     return response.data;
   }
+  // ============== Comments ==============
+
+  /**
+   * Get comments for a test
+   * GET /test-comments/:testId
+   */
+  async getTestComments(testId: string, page = 1, limit = 10) {
+    const response = await apiClient.get(`/test-comments/${testId}?page=${page}&limit=${limit}`);
+    return response.data;
+  }
+
+  /**
+   * Post a comment on a test
+   * POST /test-comments/:testId
+   */
+  async postTestComment(testId: string, content: string, parentCommentId?: string) {
+    const response = await apiClient.post(`/test-comments/${testId}`, {
+      content,
+      parentCommentId,
+    });
+    return response.data;
+  }
 }
 
 export const assessmentService = new AssessmentService();

@@ -51,9 +51,18 @@ export interface UpdateCourseRequest {
   finalTestId?: string | null;
 }
 
-// Response aliases for better readability at call sites
-
-export type GetCoursesResponse = ApiResponse<PaginatedResponse<Course>>;
+// Matches actual backend response from getMany/getPublished:
+// { success: true, data: Course[], total, page, limit, totalPages, hasNext, hasPrev }
+export interface GetCoursesResponse {
+  success?: boolean;
+  data: Course[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+}
 
 export type GetCourseDetailResponse = ApiResponse<CourseDetail>;
 

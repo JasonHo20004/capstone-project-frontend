@@ -30,6 +30,8 @@ export const useAuth = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
       queryClient.setQueryData(["user", "me"], user);
+      // Notify PurchasesContext to re-fetch enrolled courses
+      window.dispatchEvent(new Event('auth-change'));
       navigate("/dashboard");
     },
   });
@@ -52,6 +54,7 @@ export const useAuth = () => {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
       queryClient.clear();
+      window.dispatchEvent(new Event('auth-change'));
       toast.success("Đăng xuất thành công!");
       navigate("/login");
     },
@@ -61,6 +64,7 @@ export const useAuth = () => {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
         queryClient.clear();
+        window.dispatchEvent(new Event('auth-change'));
         navigate("/login");
       }
     },

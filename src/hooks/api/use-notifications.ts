@@ -132,11 +132,12 @@ export const useDeleteNotification = () => {
 };
 
 /**
- * Real-time notification stream via SSE
+ * Real-time notification updates via polling
+ * (SSE endpoint not yet implemented on backend, using polling fallback)
  */
 export const useNotificationRealtime = (
   userId: string | undefined,
-  onNotification?: (notification: InAppNotification) => void,
+  _onNotification?: (notification: InAppNotification) => void,
 ) => {
   const queryClient = useQueryClient();
 
@@ -145,38 +146,13 @@ export const useNotificationRealtime = (
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) return;
 
-    if (typeof EventSource === "undefined") {
-      return;
-    }
-
-    const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
-    const streamUrl = `${API_BASE_URL}/notifications/in-app/stream?token=${encodeURIComponent(
-      accessToken,
-    )}`;
-
-    const es = new EventSource(streamUrl);
-
-    es.addEventListener("notification", (event) => {
-      try {
-        const data = JSON.parse((event as MessageEvent).data) as InAppNotification;
-
-        if (onNotification) {
-          onNotification(data);
-        }
-
-        queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      } catch {
-        // ignore parsing errors
-      }
-    });
-
-    es.onerror = () => {
-      es.close();
-    };
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }, 30_000);
 
     return () => {
-      es.close();
+      clearInterval(interval);
     };
-  }, [userId, queryClient, onNotification]);
+  }, [userId, queryClient]);
 };

@@ -62,12 +62,13 @@ export interface CourseContext {
 export interface LessonComment {
   id: string;
   content: string;
+  userId: string;
   createdAt: string;
   parentCommentId: string | null;
-  user: {
-    id: string;
-    fullName: string;
-    profilePicture: string | null;
+  user?: {
+    id?: string;
+    fullName?: string;
+    profilePicture?: string | null;
   };
 }
 

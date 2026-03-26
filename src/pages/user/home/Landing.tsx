@@ -73,9 +73,9 @@ export default function Landing() {
 
   const myCourses = user ? enrolledCourses : [];
   // Filter out enrolled courses from explore section
-  const allCourses = availableRes?.data.data ?? [];
+  const allCourses = availableRes?.data ?? [];
   const availableCourses = user ? allCourses.filter((c: Course) => !enrolledIds.has(c.id)) : allCourses;
-  const pagination = availableRes?.data.pagination;
+  const pagination = availableRes ? { total: availableRes.total, page: availableRes.page, limit: availableRes.limit, totalPages: availableRes.totalPages } : undefined;
   const isLoading = (!!user && isLoadingEnrolled) || isLoadingAvailable;
 
   return (

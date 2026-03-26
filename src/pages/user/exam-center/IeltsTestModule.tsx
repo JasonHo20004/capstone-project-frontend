@@ -230,7 +230,7 @@ export default function IeltsTestModule() {
       const resp = await apiClient.post(`/tests/${testData.id}/submit`, { submissions: answers, userId });
       const sessionId = resp.data?.data?.sessionId;
       if (sessionId) {
-        navigate(`/exam/result/${sessionId}`);
+        navigate(`/practice/${testData.id}/result/${sessionId}`);
       } else {
         // Fallback: show inline if no session saved
         setGradingResult(resp.data?.data);

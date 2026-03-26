@@ -24,7 +24,7 @@ export type {
   RefreshTokenResponse,
 } from '@/lib/api/types/auth.types';
 
-export type { GetCoursesForUserParams } from './course/course.service';
+export type { GetCoursesForUserParams, CoursesListResponse } from './course/course.service';
 
 export type { ReviewQuality, SubmitReviewDTO, DeckFormDTO, CardFormDTO } from './flashcard/flashcard.service';
 export type { UpdateProfileDTO } from './profile/user.service';

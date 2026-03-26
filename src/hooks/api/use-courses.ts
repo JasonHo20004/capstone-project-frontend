@@ -72,7 +72,6 @@ export const useCourses = (params?: GetCoursesParams) => {
     queryKey: ['courses', params],
     queryFn: () => courseService.getCourses(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    select: (response) => response.data, // Chỉ trả về data, không cần wrapper
   });
 };
 
@@ -213,14 +212,82 @@ export const useCreateLesson = () => {
     mutationFn: ({ courseId, formData }: { courseId: string; formData: FormData }) =>
       courseService.createLesson(courseId, formData),
     onSuccess: (response, variables) => {
-      // Invalidate course data to refresh lesson list
       queryClient.invalidateQueries({ queryKey: ['course', variables.courseId] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
       toast.success('Tạo bài học thành công!');
     },
   });
 };
 
+/**
+ * Hook để cập nhật lesson
+ */
+export const useUpdateLesson = () => {
+  const queryClient = useQueryClient();
 
+  return useMutation({
+    mutationFn: ({ courseId, lessonId, formData }: { courseId: string; lessonId: string; formData: FormData }) =>
+      courseService.updateLesson(courseId, lessonId, formData),
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['course', variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['lesson', variables.courseId, variables.lessonId] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
+      toast.success('Cập nhật bài học thành công!');
+    },
+  });
+};
+
+// ── Module hooks ──────────────────────────────────
+
+export const useModules = (courseId?: string) => {
+  return useQuery({
+    queryKey: ['modules', courseId],
+    queryFn: () => courseService.getModules(courseId!),
+    enabled: !!courseId,
+    staleTime: 2 * 60 * 1000,
+    select: (response) => response.data,
+  });
+};
+
+export const useCreateModule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ courseId, data }: { courseId: string; data: { title: string; description?: string; moduleOrder?: number } }) =>
+      courseService.createModule(courseId, data),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['modules', vars.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['course', vars.courseId] });
+      toast.success('Tạo module thành công!');
+    },
+  });
+};
+
+export const useUpdateModule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ courseId, moduleId, data }: { courseId: string; moduleId: string; data: { title?: string; description?: string; moduleOrder?: number } }) =>
+      courseService.updateModule(courseId, moduleId, data),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['modules', vars.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['course', vars.courseId] });
+      toast.success('Cập nhật module thành công!');
+    },
+  });
+};
+
+export const useDeleteModule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ courseId, moduleId }: { courseId: string; moduleId: string }) =>
+      courseService.deleteModule(courseId, moduleId),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['modules', vars.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['course', vars.courseId] });
+      toast.success('Xóa module thành công!');
+    },
+  });
+};
 

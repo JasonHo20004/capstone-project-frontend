@@ -160,7 +160,7 @@ export default function ExamCenter() {
                   </div>
                 </div>
                 <Link
-                  to={`/exam/test/${test.slug || test.id}`}
+                  to={`/practice/${test.slug || test.id}`}
                   className="w-full bg-primary text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Start Test</span>

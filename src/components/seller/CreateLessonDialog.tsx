@@ -18,6 +18,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   courseId: string;
+  moduleId?: string;
   existingLessons: Lesson[];
   onSuccess?: () => void;
 }
@@ -26,6 +27,7 @@ export default function CreateLessonDialog({
   open,
   onOpenChange,
   courseId,
+  moduleId,
   existingLessons,
   onSuccess,
 }: Props) {
@@ -72,12 +74,8 @@ export default function CreateLessonDialog({
       newErrors.lessonOrder = 'Thứ tự bài học phải lớn hơn 0';
     }
 
-    if (formData.durationInSeconds) {
-      const duration = parseFloat(formData.durationInSeconds);
-      if (isNaN(duration) || duration < 0) {
-        newErrors.durationInSeconds = 'Thời lượng phải là số không âm';
-      }
-    }
+
+
 
     if (formData.videoFile) {
       const maxSize = 100 * 1024 * 1024; // 100MB
@@ -107,11 +105,29 @@ export default function CreateLessonDialog({
     }
   };
 
-  // Handle video file selection
+  // Handle video file selection + auto-detect duration
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       handleChange('videoFile', file);
+
+      // Auto-detect video duration using HTML5 video element
+      const videoEl = document.createElement('video');
+      videoEl.preload = 'metadata';
+      videoEl.onloadedmetadata = () => {
+        URL.revokeObjectURL(videoEl.src);
+        if (videoEl.duration && isFinite(videoEl.duration)) {
+          const durationSec = Math.round(videoEl.duration);
+          setFormData((prev) => ({ ...prev, durationInSeconds: durationSec.toString() }));
+          // Clear duration error if any
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next['durationInSeconds'];
+            return next;
+          });
+        }
+      };
+      videoEl.src = URL.createObjectURL(file);
     }
   };
 
@@ -137,6 +153,9 @@ export default function CreateLessonDialog({
     }
     if (formData.videoFile) {
       formDataToSend.append('video', formData.videoFile);
+    }
+    if (moduleId) {
+      formDataToSend.append('moduleId', moduleId);
     }
 
     // Submit
@@ -246,29 +265,15 @@ export default function CreateLessonDialog({
             )}
           </div>
 
-          {/* Duration */}
-          <div className="space-y-2">
-            <Label htmlFor="durationInSeconds">Thời lượng (giây)</Label>
-            <Input
-              id="durationInSeconds"
-              type="number"
-              placeholder="VD: 1800 (30 phút)"
-              value={formData.durationInSeconds}
-              onChange={(e) => handleChange('durationInSeconds', e.target.value)}
-              disabled={createLessonMutation.isPending}
-              min="0"
-              step="1"
-              className={errors.durationInSeconds ? 'border-destructive' : ''}
-            />
-            {formData.durationInSeconds && !errors.durationInSeconds && (
-              <p className="text-xs text-muted-foreground">
-                ≈ {Math.round(parseFloat(formData.durationInSeconds) / 60)} phút
-              </p>
-            )}
-            {errors.durationInSeconds && (
-              <p className="text-sm text-destructive">{errors.durationInSeconds}</p>
-            )}
-          </div>
+          {/* Duration - auto-detected from video */}
+          {formData.videoFile && formData.durationInSeconds && (
+            <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-lg text-sm">
+              <span className="text-emerald-600 font-medium">✓ Thời lượng tự động:</span>
+              <span className="font-bold text-emerald-700">
+                {Math.floor(parseFloat(formData.durationInSeconds) / 60)} phút {Math.round(parseFloat(formData.durationInSeconds) % 60)} giây
+              </span>
+            </div>
+          )}
 
           {/* Video Upload */}
           <div className="space-y-2">

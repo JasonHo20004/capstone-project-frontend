@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
 import CourseCard from '@/components/user/course/CourseCard';
@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 
 // Hooks
-import { useGetCourses } from '@/hooks/api/use-courses';
+import { useGetCourses, useEnrolledCourses } from '@/hooks/api/use-courses';
 import { useUser } from '@/hooks/api/use-user';
+import type { Course } from "@/domain";
 
 const levels = ['all', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
@@ -21,19 +22,10 @@ const Courses = () => {
 
   const { user } = useUser(); // Check xem user có login không
 
-  // === FETCH 1: KHÓA HỌC CỦA TÔI (Chỉ fetch khi đã login) ===
-  const { data: myCoursesRes, isLoading: isLoadingMy } = useGetCourses({
-    page: 1,
-    limit: 100, // Lấy nhiều để hiện hết (thường user không mua quá nhiều)
-    search: searchQuery || undefined,
-    level: selectedLevel,
-    enrollmentStatus: 'enrolled', // 👈 Lọc Server: ĐÃ MUA
-    sortBy: 'ratingCount',
-    sortOrder: 'desc',
-  }); // (Có thể thêm enabled: !!user vào đây nếu cần)
+  // === FETCH 1: KHÓA HỌC CỦA TÔI (dùng endpoint /courses/enrolled) ===
+  const { data: enrolledCourses = [], isLoading: isLoadingMy } = useEnrolledCourses();
 
-  // === FETCH 2: KHÓA HỌC CÓ SẴN (CHƯA MUA) ===
-  // Nếu chưa login -> Lấy tất cả (undefined). Nếu đã login -> Lấy 'not_enrolled'
+  // === FETCH 2: KHÓA HỌC CÓ SẴN (dùng endpoint /courses/published) ===
   const {
     data: availableRes,
     isLoading: isLoadingAvailable,
@@ -43,14 +35,17 @@ const Courses = () => {
     limit: limit,
     search: searchQuery || undefined,
     level: selectedLevel,
-    enrollmentStatus: user ? 'not_enrolled' : undefined, // 👈 Lọc Server: CHƯA MUA
     sortBy: 'ratingCount',
     sortOrder: 'desc',
   });
 
-  // Data - Backend trả { data: [...], total, page, limit, totalPages } ở root
-  const myCourses = user ? myCoursesRes?.data || [] : [];
-  const availableCourses = availableRes?.data || [];
+  // Build enrolled IDs set to filter out purchased courses from explore list
+  const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c: Course) => c.id)), [enrolledCourses]);
+
+  // Data - Backend trả { success, data: [...], total, page, limit, totalPages } (flat)
+  const myCourses = user ? enrolledCourses : [];
+  const allCourses = availableRes?.data || [];
+  const availableCourses = user ? allCourses.filter((c: Course) => !enrolledIds.has(c.id)) : allCourses;
   const pagination = availableRes
     ? { total: availableRes.total, page: availableRes.page, limit: availableRes.limit, totalPages: availableRes.totalPages }
     : undefined;

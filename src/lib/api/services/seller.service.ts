@@ -18,8 +18,10 @@ export interface SellerLearner {
   userId: string;
   userName: string;
   email: string;
+  profilePicture: string | null;
   courseId: string;
   courseTitle: string;
+  courseThumbnail: string | null;
   purchasedAt: string;
 }
 

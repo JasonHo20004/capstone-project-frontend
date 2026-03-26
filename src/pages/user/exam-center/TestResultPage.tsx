@@ -1,11 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import apiClient from "@/lib/api/config";
+import DiscussionSection from "@/components/DiscussionSection";
+import { assessmentService } from "@/lib/api/services/user/assessment/assessment.service";
 
 export default function TestResultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchResultComments = useCallback(async (page: number, limit: number) => {
+    if (!data?.testId) return { comments: [], total: 0 };
+    const res = await assessmentService.getTestComments(data.testId, page, limit);
+    return { comments: res.data?.comments ?? [], total: res.data?.total ?? 0 };
+  }, [data?.testId]);
+
+  const postResultComment = useCallback(async (content: string, parentCommentId?: string) => {
+    if (!data?.testId) return;
+    return assessmentService.postTestComment(data.testId, content, parentCommentId);
+  }, [data?.testId]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -229,6 +242,16 @@ export default function TestResultPage() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* Discussion Section */}
+        {data?.testId && (
+          <DiscussionSection
+            fetchComments={fetchResultComments}
+            postComment={postResultComment}
+            title="Thảo luận"
+            subtitle="Chia sẻ kinh nghiệm, hỏi đáp về bài thi này"
+          />
         )}
 
         {/* Action buttons */}

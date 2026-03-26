@@ -23,9 +23,6 @@ import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
 
 // Exam center (static UI integration)
-import PracticeTests from "./pages/user/exam-center/PracticeTests";
-import PracticeRunner from "./pages/user/exam-center/PracticeRunner";
-import PracticeResult from "./pages/user/exam-center/PracticeResult";
 import SpeakingTest from "./pages/user/exam-center/SpeakingTest";
 import ExamCenter from "./pages/user/exam-center/ExamCenter";
 import SkillTree from "./pages/user/exam-center/SkillTree";
@@ -38,6 +35,7 @@ import WritingHistory from "./pages/user/exam-center/WritingHistory";
 import SpeakingHistory from "./pages/user/exam-center/SpeakingHistory";
 import ProgressAnalytics from "./pages/user/exam-center/ProgressAnalytics";
 import TestResultPage from "./pages/user/exam-center/TestResultPage";
+import TestDetailPage from "./pages/user/exam-center/TestDetailPage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
@@ -80,6 +78,9 @@ import SellerComments from "./pages/seller/interactions/SellerComments";
 import SellerLearners from "./pages/seller/learners/SellerLearners";
 import SellerProfile from "./pages/seller/account/SellerProfile";
 import SellerCourseDetail from "./pages/seller/courses/SellerCourseDetail";
+import SellerCreateCourse from "./pages/seller/courses/SellerCreateCourse";
+import CreateLessonPage from "./pages/seller/courses/CreateLessonPage";
+import LessonDetailPage from "./pages/seller/courses/LessonDetailPage";
 import UserAppLayout from "./components/user/layout/UserAppLayout";
 
 const App = () => (
@@ -104,9 +105,6 @@ const App = () => (
           {/* protected routes - dashboard học viên */}
           <Route element={<ProtectedRoute />}>
             <Route element={<UserAppLayout />}>
-              {/* practice (real test flow + design layout) */}
-              <Route path="/practice" element={<PracticeTests />} />
-
               <Route path="/dashboard" element={<Index />} />
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/flashcards" element={<Flashcards />} />
@@ -126,9 +124,6 @@ const App = () => (
               <Route path="/dictation/:exerciseId" element={<DictationPractice />} />
               <Route path="/learning-path" element={<LearningPath />} />
             </Route>
-            {/* full-page runner/result (no learner layout) */}
-            <Route path="/practice/:testId" element={<PracticeRunner />} />
-            <Route path="/practice/:testId/result" element={<PracticeResult />} />
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
 
             {/* AI Test routes (full-page, no sidebar — immersive test mode) */}
@@ -136,6 +131,8 @@ const App = () => (
             <Route path="/exam/test/:testId" element={<IeltsTestModule />} />
             <Route path="/exam/test/:testId/session/:sessionId" element={<IeltsTestModule />} />
             <Route path="/exam/result/:sessionId" element={<TestResultPage />} />
+            <Route path="/practice/:testId" element={<TestDetailPage />} />
+            <Route path="/practice/:testId/result/:sessionId" element={<TestDetailPage />} />
 
             <Route path="/blog" element={<Blog />} />
           </Route>
@@ -177,6 +174,9 @@ const App = () => (
             <Route path="/seller" element={<SellerLayout />}>
               <Route index element={<SellerDashboard />} />
               <Route path="courses" element={<SellerCourses />} />
+              <Route path="courses/new" element={<SellerCreateCourse />} />
+              <Route path="courses/:courseId/lessons/create" element={<CreateLessonPage />} />
+              <Route path="courses/:courseId/lessons/:lessonId" element={<LessonDetailPage />} />
               <Route path="courses/:id" element={<SellerCourseDetail />} />
               <Route path="fees" element={<SellerMonthlyFees />} />
               <Route path="comments" element={<SellerComments />} />

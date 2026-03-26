@@ -35,6 +35,7 @@ export const useCourseContext = (courseId: string | undefined) => {
     queryFn: () => studentLearningService.getCourseContext(courseId!),
     enabled: Boolean(courseId),
     select: (response) => response.data as CourseContext,
+    retry: false,
   });
 };
 

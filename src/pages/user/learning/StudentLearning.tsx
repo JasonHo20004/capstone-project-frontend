@@ -17,7 +17,7 @@ import { LearningTabs, type LearningTabId } from "@/components/user/student-lear
 import { VideoSection } from "@/components/user/student-learning/VideoSection";
 import { SyllabusSidebar } from "@/components/user/student-learning/SyllabusSidebar";
 import { CourseOverview } from "@/components/user/student-learning/CourseOverview";
-import { LessonComments } from "@/components/user/student-learning/LessonComments";
+import DiscussionSection from "@/components/DiscussionSection";
 import { CourseReviews } from "@/components/user/student-learning/CourseReviews";
 import {
   useCourseContext,
@@ -26,6 +26,7 @@ import {
   useMarkLessonComplete,
   isForbiddenError,
 } from "@/hooks/api/use-student-learning";
+import { studentLearningService } from "@/lib/api/services/user/learning/student-learning.service";
 
 const DEFAULT_TAB: LearningTabId = "overview";
 
@@ -156,8 +157,18 @@ const StudentLearningPage = () => {
                 <LearningTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
                 {activeTab === "overview" && <CourseOverview context={context} />}
-                {activeTab === "comments" && (
-                  <LessonComments courseId={courseId} lessonId={effectiveLessonId} />
+                {activeTab === "comments" && courseId && effectiveLessonId && (
+                  <DiscussionSection
+                    fetchComments={async (page, limit) => {
+                      const res = await studentLearningService.getLessonComments(courseId, effectiveLessonId, { page, limit });
+                      return { comments: res.data?.comments ?? [], total: res.data?.total ?? 0 };
+                    }}
+                    postComment={async (content, parentCommentId) => {
+                      return studentLearningService.createLessonComment(courseId, effectiveLessonId, { content, parentCommentId });
+                    }}
+                    title="Q&A / Bình luận bài học"
+                    subtitle="Đặt câu hỏi hoặc thảo luận về nội dung bài học này"
+                  />
                 )}
                 {activeTab === "reviews" && <CourseReviews ratings={ratings} />}
               </div>

@@ -35,10 +35,30 @@ export const PurchasesProvider: React.FC<React.PropsWithChildren> = ({ children 
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  // Re-fetch trigger: increments when auth state changes
+  const [fetchKey, setFetchKey] = useState(0);
+
+  // Listen for auth changes (login/logout) via custom event + storage event
+  useEffect(() => {
+    const handleAuthChange = () => setFetchKey((k) => k + 1);
+    window.addEventListener('auth-change', handleAuthChange);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'accessToken') handleAuthChange();
+    });
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, []);
+
   // Fetch enrolled courses from API when user is logged in
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (!token) return;
+    if (!token) {
+      setItems([]);
+      setIsLoading(false);
+      return;
+    }
 
     let cancelled = false;
     setIsLoading(true);
@@ -65,7 +85,7 @@ export const PurchasesProvider: React.FC<React.PropsWithChildren> = ({ children 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchKey]);
 
   useEffect(() => {
     try {
