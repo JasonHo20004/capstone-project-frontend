@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Bell, Eye, EyeOff, Filter, Search } from 'lucide-react';
+import { Bell, Eye, Filter, Search, CheckCheck } from 'lucide-react';
 import { useUser } from '@/hooks/api/use-user';
 import {
   useMarkAllNotificationsAsRead,
@@ -12,6 +12,10 @@ import {
   useNotifications,
 } from '@/hooks/api';
 import type { InAppNotification } from '@/domain';
+import {
+  getNotificationTypeConfig,
+  getNotificationLink,
+} from '@/components/user/layout/NotificationDropdown';
 
 const formatDate = (date: string) => {
   try {
@@ -20,22 +24,20 @@ const formatDate = (date: string) => {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   } catch {
     return date;
   }
 };
 
-const getTypeBadge = (typeName: string) => {
-  const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-    SYSTEM: { label: 'Hệ thống', variant: 'default' },
-    USER: { label: 'Người dùng', variant: 'secondary' },
-    ADMIN: { label: 'Quản trị', variant: 'destructive' },
-  };
-  const info = map[typeName] || { label: typeName, variant: 'outline' };
-  return <Badge variant={info.variant}>{info.label}</Badge>;
-};
+const TYPE_FILTER_OPTIONS: { key: string; label: string }[] = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'course_comment', label: '💬 Bình luận' },
+  { key: 'comment_reply', label: '↩️ Trả lời' },
+  { key: 'course_enrollment', label: '👤 Đăng ký' },
+  { key: 'course_update', label: '🔄 Cập nhật' },
+];
 
 export default function Notifications() {
   const { user } = useUser();
@@ -63,16 +65,12 @@ export default function Notifications() {
 
   useNotificationRealtime(userId);
 
-  const typeOptions = useMemo(() => {
-    const set = new Set<string>();
-    notificationsForUser.forEach(n => set.add(n.type));
-    return ['all', ...Array.from(set)];
-  }, [notificationsForUser]);
-
   const computedNotifications = useMemo(() => {
     return notificationsForUser
-      .filter(n => {
-        const matchesSearch = (n.title + ' ' + n.content).toLowerCase().includes(search.toLowerCase());
+      .filter((n) => {
+        const matchesSearch = (n.title + ' ' + n.content)
+          .toLowerCase()
+          .includes(search.toLowerCase());
         const matchesType = typeFilter === 'all' || n.type === typeFilter;
         const isSeen = n.isRead;
         const matchesStatus =
@@ -81,23 +79,29 @@ export default function Notifications() {
           (statusFilter === 'unseen' && !isSeen);
         return matchesSearch && matchesType && matchesStatus;
       })
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
   }, [notificationsForUser, search, typeFilter, statusFilter]);
 
   const unreadCount = useMemo(() => {
     return notificationsForUser.reduce((acc, n) => acc + (n.isRead ? 0 : 1), 0);
   }, [notificationsForUser]);
 
-  const markRead = (id: string) => {
-    markReadMutation(id);
-  };
-
-  const markAllRead = () => {
-    markAllReadMutation(undefined);
+  const handleNotificationClick = (n: InAppNotification) => {
+    if (!n.isRead) {
+      markReadMutation(n.id);
+    }
+    const link = getNotificationLink(n);
+    if (link) {
+      navigate(link);
+    }
   };
 
   return (
     <div className="bg-background space-y-6">
+      {/* Header */}
       <section className="bg-white border border-slate-200 rounded-3xl py-8 px-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -105,84 +109,192 @@ export default function Notifications() {
               <Bell className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Thông báo của bạn</h1>
-              <p className="text-slate-500 text-sm">Có {unreadCount} thông báo chưa xem</p>
+              <h1 className="text-2xl md:text-3xl font-bold">
+                Thông báo của bạn
+              </h1>
+              <p className="text-slate-500 text-sm">
+                {unreadCount > 0
+                  ? `Có ${unreadCount} thông báo chưa đọc`
+                  : 'Tất cả thông báo đã được đọc'}
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate(-1)}>
               Quay lại
             </Button>
-            <Button variant="secondary" onClick={markAllRead}>
-              <Eye className="w-4 h-4 mr-2" /> Đánh dấu tất cả đã đọc
-            </Button>
+            {unreadCount > 0 && (
+              <Button
+                variant="secondary"
+                onClick={() => markAllReadMutation(undefined)}
+              >
+                <CheckCheck className="w-4 h-4 mr-2" /> Đọc tất cả
+              </Button>
+            )}
           </div>
         </div>
       </section>
 
+      {/* Main content */}
       <section className="container mx-auto px-0">
         <div className="grid md:grid-cols-3 gap-6 mb-6">
-          <div className="md:col-span-1 bg-white border border-slate-200 rounded-2xl p-4 h-fit">
-            <div className="flex items-center gap-2 mb-2">
-              <Filter className="w-4 h-4" />
-              <span className="text-sm text-slate-500">Bộ lọc</span>
+          {/* Sidebar filters */}
+          <div className="md:col-span-1 bg-white border border-slate-200 rounded-2xl p-5 h-fit space-y-5">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-slate-400" />
+              <span className="text-sm font-medium text-slate-700">
+                Bộ lọc
+              </span>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium">Trạng thái</label>
-                <div className="flex gap-2 mt-2">
-                  <Button variant={statusFilter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('all')}>Tất cả</Button>
-                  <Button variant={statusFilter === 'unseen' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('unseen')}>Chưa xem</Button>
-                  <Button variant={statusFilter === 'seen' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('seen')}>Đã xem</Button>
-                </div>
-              </div>
 
-              <div>
-                <label className="text-sm font-medium">Loại</label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {typeOptions.map((t) => (
-                    <Button key={t} variant={typeFilter === t ? 'default' : 'outline'} size="sm" onClick={() => setTypeFilter(t)}>
-                      {t === 'all' ? 'Tất cả' : t}
-                    </Button>
-                  ))}
-                </div>
+            {/* Status filter */}
+            <div>
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                Trạng thái
+              </label>
+              <div className="flex gap-2 mt-2">
+                {[
+                  { key: 'all', label: 'Tất cả' },
+                  { key: 'unseen', label: 'Chưa đọc' },
+                  { key: 'seen', label: 'Đã đọc' },
+                ].map((opt) => (
+                  <Button
+                    key={opt.key}
+                    variant={statusFilter === opt.key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() =>
+                      setStatusFilter(opt.key as 'all' | 'unseen' | 'seen')
+                    }
+                    className="text-xs"
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
               </div>
+            </div>
 
-              <div>
-                <label className="text-sm font-medium">Tìm kiếm</label>
-                <div className="relative mt-2">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nhập từ khóa..." className="pl-9" />
-                </div>
+            {/* Type filter */}
+            <div>
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                Loại thông báo
+              </label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {TYPE_FILTER_OPTIONS.map((t) => (
+                  <Button
+                    key={t.key}
+                    variant={typeFilter === t.key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTypeFilter(t.key)}
+                    className="text-xs"
+                  >
+                    {t.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Search */}
+            <div>
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                Tìm kiếm
+              </label>
+              <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Nhập từ khóa..."
+                  className="pl-9"
+                />
               </div>
             </div>
           </div>
 
+          {/* Notification list */}
           <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-4">
-            <div className="space-y-3">
+            <div className="space-y-2">
               {computedNotifications.length === 0 && (
-                <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-500">
-                  Không có thông báo phù hợp.
+                <div className="border border-dashed border-slate-200 rounded-xl p-12 text-center">
+                  <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <Bell className="w-6 h-6 text-slate-300" />
+                  </div>
+                  <p className="text-slate-500 font-medium">
+                    Không có thông báo phù hợp
+                  </p>
+                  <p className="text-slate-400 text-sm mt-1">
+                    Thử thay đổi bộ lọc để xem thêm
+                  </p>
                 </div>
               )}
 
               {computedNotifications.map((n) => {
-                const isSeen = n.isRead;
+                const typeConfig = getNotificationTypeConfig(n.type);
+                const IconComponent = typeConfig.icon;
+                const link = getNotificationLink(n);
+
                 return (
-                  <div key={n.id} className={`border rounded-xl p-4 flex items-start justify-between transition ${isSeen ? 'bg-card' : 'bg-primary/5 border-primary/20'}`}>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-lg">{n.title}</h3>
-                        {getTypeBadge(n.type)}
-                        {!isSeen && <Badge variant="default">Mới</Badge>}
-                      </div>
-                      <p className="text-slate-500">{n.content}</p>
-                      <div className="text-xs text-slate-500">{formatDate(n.createdAt)}</div>
+                  <div
+                    key={n.id}
+                    onClick={() => handleNotificationClick(n)}
+                    className={`border rounded-xl p-4 flex items-start gap-4 transition-all duration-200 group ${
+                      link
+                        ? 'cursor-pointer hover:shadow-md hover:border-slate-300'
+                        : 'cursor-default'
+                    } ${n.isRead ? 'bg-white border-slate-200' : 'bg-primary/5 border-primary/20'}`}
+                  >
+                    {/* Icon */}
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                        n.isRead
+                          ? typeConfig.bgColor
+                          : typeConfig.bgColorUnread
+                      }`}
+                    >
+                      <IconComponent className={`h-5 w-5 ${typeConfig.color}`} />
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!isSeen && (
-                        <Button variant="secondary" size="sm" onClick={() => markRead(n.id)}>
-                          <Eye className="w-4 h-4 mr-2" /> Đánh dấu đã đọc
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3
+                          className={`font-semibold text-base line-clamp-1 ${
+                            n.isRead ? 'text-slate-700' : 'text-slate-900'
+                          }`}
+                        >
+                          {n.title}
+                        </h3>
+                        {!n.isRead && (
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <p className="text-slate-500 text-sm line-clamp-2">
+                        {n.content}
+                      </p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span
+                          className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${typeConfig.bgColor} ${typeConfig.color}`}
+                        >
+                          {typeConfig.label}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {formatDate(n.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {!n.isRead && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markReadMutation(n.id);
+                          }}
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1" /> Đã đọc
                         </Button>
                       )}
                     </div>

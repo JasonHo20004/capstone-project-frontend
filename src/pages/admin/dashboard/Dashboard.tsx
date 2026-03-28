@@ -23,12 +23,10 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 // Mapping course status to Vietnamese
 const getCourseStatusLabel = (status: string): string => {
   const statusMap: Record<string, string> = {
-    PUBLISHED: "Đã xuất bản",
     ACTIVE: "Hoạt động",
     PENDING: "Chờ duyệt",
     REFUSE: "Từ chối",
     INACTIVE: "Không hoạt động",
-    DELETE: "Đã xóa",
     DRAFT: "Nháp",
   };
   return statusMap[status.toUpperCase()] || status;

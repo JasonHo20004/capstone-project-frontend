@@ -35,9 +35,7 @@ export enum CourseStatus {
   ACTIVE = 'ACTIVE',
   REFUSE = 'REFUSE',
   INACTIVE = 'INACTIVE',
-  DELETE = 'DELETE',
-  DRAFT = 'DRAFT',
-  PUBLISHED = 'PUBLISHED'
+  DRAFT = 'DRAFT'
 }
 
 export enum CourseLevel {

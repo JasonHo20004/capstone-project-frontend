@@ -57,7 +57,7 @@ export default function CoursesManagement() {
     if (!courses) return [];
     return courses.filter(course => {
       const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (course.courseSeller?.fullName ?? '').toLowerCase().includes(searchTerm.toLowerCase());
+        (course.sellerName ?? course.courseSeller?.fullName ?? '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -81,8 +81,6 @@ export default function CoursesManagement() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "PUBLISHED":
-        return <Badge variant="default">Đã xuất bản</Badge>;
       case "ACTIVE":
         return <Badge variant="default">Hoạt động</Badge>;
       case "PENDING":
@@ -108,7 +106,7 @@ export default function CoursesManagement() {
         <div>
           <div className="font-medium">{course.title}</div>
           <div className="text-sm text-muted-foreground">
-            Giảng viên: {course.courseSeller?.fullName ?? 'Giảng viên ẩn danh'}
+            Giảng viên: {course.sellerName || course.courseSeller?.fullName || 'Chưa xác định'}
           </div>
         </div>
       ),
@@ -216,13 +214,11 @@ export default function CoursesManagement() {
 
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
-    { value: 'PUBLISHED', label: 'Đã xuất bản' },
     { value: 'ACTIVE', label: 'Hoạt động' },
     { value: 'PENDING', label: 'Chờ duyệt' },
     { value: 'REFUSE', label: 'Từ chối' },
     { value: 'INACTIVE', label: 'Không hoạt động' },
     { value: 'DRAFT', label: 'Bản nháp' },
-    { value: 'DELETE', label: 'Đã xoá' },
   ];
 
   if (isLoading) {

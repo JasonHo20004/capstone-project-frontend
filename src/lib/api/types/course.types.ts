@@ -29,7 +29,7 @@ export interface GetCoursesParams extends PaginationParams {
 }
 
 export interface SellerCoursesParams {
-  status?: Course["status"] | "PUBLISHED" | "ACTIVE" | "PENDING";
+  status?: Course["status"] | "ACTIVE" | "PENDING";
 }
 
 export interface CreateCourseRequest {

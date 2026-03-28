@@ -129,8 +129,6 @@ export default function AdminCourseDetail() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "PUBLISHED":
-        return <Badge variant="default">Đã xuất bản</Badge>;
       case "ACTIVE":
         return <Badge variant="default">Hoạt động</Badge>;
       case "PENDING":
@@ -343,7 +341,6 @@ export default function AdminCourseDetail() {
                           <SelectValue placeholder="Chọn trạng thái" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PUBLISHED">Đã xuất bản</SelectItem>
                           <SelectItem value="ACTIVE">Hoạt động</SelectItem>
                           <SelectItem value="PENDING">Chờ duyệt</SelectItem>
                           <SelectItem value="REFUSE">Từ chối</SelectItem>

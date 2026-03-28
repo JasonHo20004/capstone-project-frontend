@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Bell, MessageSquare } from 'lucide-react';
+import { Bell, MessageSquare, BookOpen, UserPlus, RefreshCw, Reply } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,17 +9,96 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  useMarkNotificationAsRead,
   useNotificationRealtime,
   useNotificationStats,
   useNotifications,
 } from '@/hooks/api';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import type { InAppNotification } from '@/domain';
 
 interface NotificationDropdownProps {
   userId: string | undefined;
   triggerClassName?: string;
   onNavigate?: () => void;
 }
+
+// ============== Notification type config ==============
+
+interface NotificationTypeConfig {
+  icon: React.ElementType;
+  label: string;
+  color: string;
+  bgColor: string;
+  bgColorUnread: string;
+}
+
+const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
+  course_comment: {
+    icon: MessageSquare,
+    label: 'Bình luận',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    bgColorUnread: 'bg-blue-100',
+  },
+  comment_reply: {
+    icon: Reply,
+    label: 'Trả lời',
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-50',
+    bgColorUnread: 'bg-violet-100',
+  },
+  course_enrollment: {
+    icon: UserPlus,
+    label: 'Đăng ký',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    bgColorUnread: 'bg-emerald-100',
+  },
+  course_update: {
+    icon: RefreshCw,
+    label: 'Cập nhật',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    bgColorUnread: 'bg-amber-100',
+  },
+};
+
+const DEFAULT_TYPE_CONFIG: NotificationTypeConfig = {
+  icon: Bell,
+  label: 'Thông báo',
+  color: 'text-slate-600',
+  bgColor: 'bg-slate-100',
+  bgColorUnread: 'bg-slate-200',
+};
+
+export function getNotificationTypeConfig(type: string): NotificationTypeConfig {
+  return NOTIFICATION_TYPE_MAP[type] || DEFAULT_TYPE_CONFIG;
+}
+
+// ============== Navigation helper ==============
+
+export function getNotificationLink(notification: InAppNotification): string | null {
+  const meta = notification.metadata as Record<string, unknown> | null;
+  const courseId = notification.courseId || (meta?.courseId as string);
+
+  switch (notification.type) {
+    case 'course_comment':
+    case 'comment_reply':
+      if (courseId && meta?.lessonId) {
+        return `/courses/${courseId}`;
+      }
+      return courseId ? `/courses/${courseId}` : null;
+    case 'course_enrollment':
+      return courseId ? `/seller/courses/${courseId}` : '/seller/learners';
+    case 'course_update':
+      return courseId ? `/courses/${courseId}` : null;
+    default:
+      return null;
+  }
+}
+
+// ============== Timestamp formatter ==============
 
 function formatTimestamp(dateStr: string) {
   const d = new Date(dateStr);
@@ -36,11 +115,14 @@ function formatTimestamp(dateStr: string) {
   return d.toLocaleDateString('vi-VN');
 }
 
+// ============== Component ==============
+
 export function NotificationDropdown({
   userId,
   triggerClassName,
   onNavigate,
 }: NotificationDropdownProps) {
+  const navigate = useNavigate();
   const { data: stats } = useNotificationStats();
   const { data: notificationsResponse } = useNotifications({
     page: 1,
@@ -48,6 +130,7 @@ export function NotificationDropdown({
     unreadOnly: false,
     enabled: Boolean(userId),
   });
+  const { mutate: markRead } = useMarkNotificationAsRead();
 
   useNotificationRealtime(userId);
 
@@ -56,6 +139,17 @@ export function NotificationDropdown({
     [notificationsResponse],
   );
   const unreadCount = stats?.unread ?? 0;
+
+  const handleNotificationClick = (n: InAppNotification) => {
+    if (!n.isRead) {
+      markRead(n.id);
+    }
+    const link = getNotificationLink(n);
+    if (link) {
+      navigate(link);
+      onNavigate?.();
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -68,7 +162,7 @@ export function NotificationDropdown({
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-white">
+            <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-white animate-pulse">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -76,47 +170,73 @@ export function NotificationDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-80 rounded-xl border border-slate-200/80 bg-white shadow-lg shadow-slate-200/50 p-0"
+        className="w-96 rounded-xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/50 p-0"
         sideOffset={8}
       >
-        <DropdownMenuLabel className="px-4 py-3 font-semibold text-slate-900">
-          Thông báo
+        <DropdownMenuLabel className="px-4 py-3 font-semibold text-slate-900 flex items-center justify-between">
+          <span>Thông báo</span>
+          {unreadCount > 0 && (
+            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+              {unreadCount} mới
+            </span>
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <MessageSquare className="h-10 w-10 text-slate-300 mb-2" />
+            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+              <Bell className="h-6 w-6 text-slate-300" />
+            </div>
             <p className="text-sm text-slate-500">Không có thông báo nào</p>
           </div>
         ) : (
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.map((n) => (
-              <div
-                key={n.id}
-                className={`px-4 py-3 border-b border-slate-100 last:border-b-0 transition-colors cursor-default ${
-                  n.isRead ? 'bg-white' : 'bg-primary/5'
-                }`}
-              >
-                <div className="flex gap-3">
-                  <div
-                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                      n.isRead ? 'bg-slate-100' : 'bg-primary/10'
-                    }`}
-                  >
-                    <MessageSquare
-                      className={`h-4 w-4 ${n.isRead ? 'text-slate-500' : 'text-primary'}`}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900 line-clamp-1">{n.title}</p>
-                    <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{n.content}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      {formatTimestamp(n.createdAt)}
-                    </p>
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.map((n) => {
+              const typeConfig = getNotificationTypeConfig(n.type);
+              const IconComponent = typeConfig.icon;
+              const link = getNotificationLink(n);
+
+              return (
+                <div
+                  key={n.id}
+                  onClick={() => handleNotificationClick(n)}
+                  className={`px-4 py-3 border-b border-slate-100 last:border-b-0 transition-all duration-200 ${
+                    link ? 'cursor-pointer hover:bg-slate-50' : 'cursor-default'
+                  } ${n.isRead ? 'bg-white' : 'bg-primary/5'}`}
+                >
+                  <div className="flex gap-3">
+                    <div
+                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                        n.isRead ? typeConfig.bgColor : typeConfig.bgColorUnread
+                      }`}
+                    >
+                      <IconComponent
+                        className={`h-4 w-4 ${typeConfig.color}`}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-medium line-clamp-1 ${n.isRead ? 'text-slate-700' : 'text-slate-900'}`}>
+                          {n.title}
+                        </p>
+                        {!n.isRead && (
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{n.content}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${typeConfig.bgColor} ${typeConfig.color}`}>
+                          {typeConfig.label}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {formatTimestamp(n.createdAt)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         <DropdownMenuSeparator />
@@ -126,7 +246,7 @@ export function NotificationDropdown({
             onClick={onNavigate}
             className="block text-center text-sm font-medium text-primary hover:underline py-2 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
           >
-            Xem tất cả
+            Xem tất cả thông báo
           </Link>
         </div>
       </DropdownMenuContent>

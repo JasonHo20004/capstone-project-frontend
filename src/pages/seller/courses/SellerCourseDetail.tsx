@@ -26,7 +26,7 @@ type Draft = Partial<{
   description: string;
   price: number;
   courseLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
-  status: 'PENDING' | 'ACTIVE' | 'REFUSE' | 'INACTIVE' | 'DELETE' | 'PUBLISHED' | 'DRAFT';
+  status: 'PENDING' | 'ACTIVE' | 'REFUSE' | 'INACTIVE' | 'DRAFT';
 }>;
 
 interface ModuleData {
@@ -43,11 +43,9 @@ const DRAFT_KEY = (id: string) => `seller_course_draft_${id}`;
 const statusConfig: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
   DRAFT:     { label: 'Bản nháp',       emoji: '📝', bg: 'bg-slate-100',   text: 'text-slate-700' },
   PENDING:   { label: 'Chờ duyệt',      emoji: '⏳', bg: 'bg-amber-100',   text: 'text-amber-700' },
-  PUBLISHED: { label: 'Đã xuất bản',    emoji: '✅', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  ACTIVE:    { label: 'Đang hoạt động',  emoji: '✅', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  ACTIVE:    { label: 'Hoạt động',      emoji: '✅', bg: 'bg-emerald-100', text: 'text-emerald-700' },
   REFUSE:    { label: 'Bị từ chối',      emoji: '❌', bg: 'bg-red-100',     text: 'text-red-700' },
   INACTIVE:  { label: 'Tạm ngưng',       emoji: '⏸️', bg: 'bg-gray-100',    text: 'text-gray-600' },
-  DELETE:    { label: 'Đã xoá',          emoji: '🗑️', bg: 'bg-red-100',     text: 'text-red-700' },
 };
 
 export default function SellerCourseDetail() {
@@ -652,7 +650,7 @@ export default function SellerCourseDetail() {
                           🚀 Gửi duyệt
                         </Button>
                       )}
-                      {(['PUBLISHED', 'ACTIVE'] as string[]).includes(merged.status) && (
+                      {merged.status === 'ACTIVE' && (
                         <Button
                           size="sm" variant="outline" className="text-xs rounded-lg text-orange-600 border-orange-300 hover:bg-orange-50"
                           onClick={() => { setDraft((d) => ({ ...d, status: 'INACTIVE' as CourseStatus })); toast.info('Nhấn "Lưu" để tạm ngưng.'); }}

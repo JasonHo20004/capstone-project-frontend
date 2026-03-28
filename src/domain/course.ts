@@ -31,6 +31,7 @@ export interface Course {
   createdAt: string;
   updatedAt?: string;
   averageRating?: number;
+  sellerName?: string;
   thumbnailUrl?: string;
   /** Optional relations - populated by API when requested */
   lessons?: Lesson[];
