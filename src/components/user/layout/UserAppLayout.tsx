@@ -18,7 +18,6 @@ const navItems: NavItem[] = [
   { name: "Cart", path: "/cart", icon: "shopping_cart" },
   { name: "Wallet", path: "/wallet", icon: "account_balance_wallet" },
   { name: "Notifications", path: "/notifications", icon: "notifications" },
-  { name: "Profile", path: "/profile", icon: "person" },
 ];
 
 const aiNavItems: NavItem[] = [
@@ -51,38 +50,49 @@ export default function UserAppLayout() {
       end={item.path === "/dashboard"}
       onClick={() => setIsMobileMenuOpen(false)}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+        `flex items-center gap-3 px-3 mx-3 py-3 rounded-xl transition-all duration-300 overflow-hidden ${
           isActive
             ? "bg-primary/10 text-primary font-semibold"
             : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium"
         }`
       }
+      title={item.name} // Native tooltip for collapsed state
     >
-      <span
-        className={`material-symbols-outlined ${
-          item.path === "/dashboard"
-            ? location.pathname === "/dashboard" ? "icon-fill" : ""
-            : location.pathname.startsWith(item.path) ? "icon-fill" : ""
-        }`}
-      >
-        {item.icon}
+      <div className="flex items-center justify-center w-6 flex-shrink-0 md:ml-[2px]">
+        <span
+          className={`material-symbols-outlined ${
+            item.path === "/dashboard"
+              ? location.pathname === "/dashboard" ? "icon-fill" : ""
+              : location.pathname.startsWith(item.path) ? "icon-fill" : ""
+          }`}
+        >
+          {item.icon}
+        </span>
+      </div>
+      <span className="text-sm whitespace-nowrap transition-all duration-300 md:opacity-0 md:-translate-x-2 md:group-hover:opacity-100 md:group-hover:translate-x-0 opacity-100">
+        {item.name}
       </span>
-      <span className="text-sm">{item.name}</span>
     </NavLink>
   );
 
   return (
-    <div className="flex h-screen w-full bg-background font-sans">
+    <div className="flex h-screen w-full bg-background font-sans overflow-hidden">
+      {/* Desktop spacer to push content so overlay sidebar doesn't hide left text */}
+      <div className="hidden md:block w-20 flex-shrink-0 border-r border-transparent" />
+
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        className={`group fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 transform transition-all duration-300 ease-in-out md:translate-x-0 flex flex-col overflow-hidden shadow-[4px_0_24px_rgba(0,0,0,0.02)] hover:shadow-[4px_0_24px_rgba(0,0,0,0.05)] ${
+          isMobileMenuOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:w-20 md:hover:w-64"
         }`}
+        onMouseEnter={() => {}} // Could be used to delay expansion if needed
       >
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-200">
-          <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+        <div className="flex items-center gap-3 px-6 h-[72px] border-b border-slate-200 flex-shrink-0">
+          <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white flex-shrink-0 md:-ml-1">
             <span className="material-symbols-outlined">school</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">SkillBoost</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 whitespace-nowrap transition-all duration-300 md:opacity-0 md:-translate-x-2 md:group-hover:opacity-100 md:group-hover:translate-x-0 opacity-100">
+            SkillBoost
+          </h1>
           <button
             className="ml-auto md:hidden text-slate-500"
             onClick={() => setIsMobileMenuOpen(false)}
@@ -92,24 +102,31 @@ export default function UserAppLayout() {
           </button>
         </div>
 
-        <nav className="flex flex-col gap-1 px-4 mt-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 160px)" }}>
+        <nav className="flex flex-col gap-1 mt-4 overflow-y-auto overflow-x-hidden no-scrollbar pb-6" style={{ maxHeight: "calc(100vh - 160px)" }}>
           {navItems.map(renderNavLink)}
 
           {/* AI Features Section */}
-          <div className="mt-3 mb-1 px-4 pt-3 border-t border-slate-100">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Features</span>
+          <div className="mt-3 mb-2 px-6 pt-3 border-t border-slate-100">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap block max-md:opacity-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              AI Features
+            </span>
           </div>
           {aiNavItems.map(renderNavLink)}
         </nav>
 
-        <div className="mt-auto p-4 border-t border-slate-100">
+        <div className="mt-auto p-4 border-t border-slate-100 flex-shrink-0">
           <button
-            className="flex items-center gap-3 px-4 py-2 w-full text-slate-600 hover:text-slate-900 transition-colors"
+            className="flex items-center gap-3 px-3 py-2 w-full text-slate-600 hover:bg-slate-50 hover:text-red-600 transition-colors rounded-xl overflow-hidden"
             onClick={() => logout()}
             type="button"
+            title="Sign Out"
           >
-            <span className="material-symbols-outlined">logout</span>
-            <span className="text-sm font-medium">Sign Out</span>
+            <div className="flex items-center justify-center w-6 flex-shrink-0 md:ml-[2px]">
+              <span className="material-symbols-outlined">logout</span>
+            </div>
+            <span className="text-sm font-medium whitespace-nowrap transition-all duration-300 md:opacity-0 md:-translate-x-2 md:group-hover:opacity-100 md:group-hover:translate-x-0 opacity-100">
+              Sign Out
+            </span>
           </button>
         </div>
       </aside>
