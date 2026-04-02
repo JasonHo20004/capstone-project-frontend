@@ -99,6 +99,12 @@ class FlashcardService {
     );
     return response.data;
   }
+  async resetProgress(deckId: string): Promise<ApiResponse<EmptyResponse>> {
+    const response = await apiClient.delete<ApiResponse<EmptyResponse>>(
+      `/flashcard-review/reset/${deckId}`
+    );
+    return response.data;
+  }
 }
 
 export const flashcardService = new FlashcardService();
