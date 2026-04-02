@@ -47,12 +47,12 @@ export const NODE_THEME: Record<string, {
   icon: string;
   ring: string;
 }> = {
-  root:       { bg: "#818cf8", bgDark: "#4f46e5", border: "#a5b4fc", glow: "rgba(129,140,248,0.5)",  icon: "🎯", ring: "#a5b4fc" },
-  lesson:     { bg: "#60a5fa", bgDark: "#2563eb", border: "#93c5fd", glow: "rgba(96,165,250,0.4)",   icon: "📖", ring: "#93c5fd" },
-  challenge:  { bg: "#fbbf24", bgDark: "#d97706", border: "#fde68a", glow: "rgba(251,191,36,0.4)",   icon: "⚡", ring: "#fde68a" },
-  checkpoint: { bg: "#34d399", bgDark: "#059669", border: "#6ee7b7", glow: "rgba(52,211,153,0.4)",   icon: "🏆", ring: "#6ee7b7" },
-  remedial:   { bg: "#f87171", bgDark: "#dc2626", border: "#fca5a5", glow: "rgba(248,113,113,0.4)",  icon: "🔧", ring: "#fca5a5" },
-  practice:   { bg: "#a78bfa", bgDark: "#7c3aed", border: "#c4b5fd", glow: "rgba(167,139,250,0.4)", icon: "✏️", ring: "#c4b5fd" },
+  root: { bg: "#818cf8", bgDark: "#4f46e5", border: "#a5b4fc", glow: "rgba(129,140,248,0.5)", icon: "🎯", ring: "#a5b4fc" },
+  lesson: { bg: "#60a5fa", bgDark: "#2563eb", border: "#93c5fd", glow: "rgba(96,165,250,0.4)", icon: "📖", ring: "#93c5fd" },
+  challenge: { bg: "#fbbf24", bgDark: "#d97706", border: "#fde68a", glow: "rgba(251,191,36,0.4)", icon: "⚡", ring: "#fde68a" },
+  checkpoint: { bg: "#34d399", bgDark: "#059669", border: "#6ee7b7", glow: "rgba(52,211,153,0.4)", icon: "🏆", ring: "#6ee7b7" },
+  remedial: { bg: "#f87171", bgDark: "#dc2626", border: "#fca5a5", glow: "rgba(248,113,113,0.4)", icon: "🔧", ring: "#fca5a5" },
+  practice: { bg: "#a78bfa", bgDark: "#7c3aed", border: "#c4b5fd", glow: "rgba(167,139,250,0.4)", icon: "✏️", ring: "#c4b5fd" },
 };
 
 // ─── Winding S-Curve Layout ─────────────────────────────────────────────────────
@@ -296,20 +296,19 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   background: isCompleted
                     ? "linear-gradient(135deg, #374151, #1f2937)"
                     : isLocked
-                    ? "linear-gradient(135deg, #1e293b, #0f172a)"
-                    : `linear-gradient(135deg, ${theme.bg}, ${theme.bgDark})`,
-                  border: `3px solid ${
-                    isCompleted ? "#4b5563"
-                    : isLocked ? "#1e293b"
-                    : theme.border
-                  }`,
+                      ? "linear-gradient(135deg, #1e293b, #0f172a)"
+                      : `linear-gradient(135deg, ${theme.bg}, ${theme.bgDark})`,
+                  border: `3px solid ${isCompleted ? "#4b5563"
+                      : isLocked ? "#1e293b"
+                        : theme.border
+                    }`,
                   boxShadow: isNew
                     ? `0 0 24px 8px ${theme.glow}, 0 0 48px 16px ${theme.glow}`
                     : isActive
-                    ? `0 0 20px 4px ${theme.glow}`
-                    : isCompleted
-                    ? "0 2px 8px rgba(0,0,0,0.3)"
-                    : "none",
+                      ? `0 0 20px 4px ${theme.glow}`
+                      : isCompleted
+                        ? "0 2px 8px rgba(0,0,0,0.3)"
+                        : "none",
                   opacity: isLocked ? 0.35 : 1,
                   filter: isLocked ? "grayscale(0.8)" : "none",
                 }}
@@ -351,7 +350,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   borderRadius: "50%",
                   backgroundColor: isCompleted ? "#059669"
                     : isActive ? theme.bgDark
-                    : "#1e293b",
+                      : "#1e293b",
                   border: `2px solid ${isCompleted ? "#34d399" : isActive ? theme.border : "#334155"}`,
                   display: "flex",
                   alignItems: "center",
@@ -388,7 +387,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   </span>
                 )}
                 {isActive && (
-                    <span className="block mt-0.5 text-[10px] text-slate-400 font-medium">
+                  <span className="block mt-0.5 text-[10px] text-slate-400 font-medium">
                     Tap to start
                   </span>
                 )}

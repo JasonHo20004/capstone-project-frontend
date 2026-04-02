@@ -137,14 +137,21 @@ export const useSubmitReview = () => {
     }) =>
       flashcardService.submitReview(flashcardId, data),
     
-    // SỬA: Dùng `deckId` từ `variables`
-    onSuccess: (response, variables) => {
-      // `variables` chính là object { flashcardId, deckId, data }
-      const { deckId } = variables;
+    // Không invalidate reviewQueue ở đây để tránh reset progress bar
+    // Queue sẽ tự refetch khi user mở lại study mode (staleTime: 0)
+    onSuccess: () => {
+      // Review submitted — session state is managed locally in StudyMode
+    },
+  });
+};
 
-      // Bây giờ chúng ta có thể làm mới hàng đợi (queue)
-      // cho đúng bộ thẻ này!
+export const useResetProgress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (deckId: string) => flashcardService.resetProgress(deckId),
+    onSuccess: (_, deckId) => {
       queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
+      toast.success('Đã xóa tiến độ học!');
     },
   });
 };
