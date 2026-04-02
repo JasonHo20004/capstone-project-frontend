@@ -1,6 +1,6 @@
 import type { Flashcard } from "@/domain";
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, BookOpen, MessageSquare } from 'lucide-react';
 
 interface CardListProps {
   cards: Flashcard[];
@@ -8,32 +8,73 @@ interface CardListProps {
   onDeleteCard: (card: Flashcard) => void;
 }
 
+const CARD_COLORS = [
+  'from-blue-500/8 to-indigo-500/4 hover:from-blue-500/12 hover:to-indigo-500/8 border-blue-200/60',
+  'from-emerald-500/8 to-teal-500/4 hover:from-emerald-500/12 hover:to-teal-500/8 border-emerald-200/60',
+  'from-amber-500/8 to-orange-500/4 hover:from-amber-500/12 hover:to-orange-500/8 border-amber-200/60',
+  'from-rose-500/8 to-pink-500/4 hover:from-rose-500/12 hover:to-pink-500/8 border-rose-200/60',
+  'from-cyan-500/8 to-sky-500/4 hover:from-cyan-500/12 hover:to-sky-500/8 border-cyan-200/60',
+  'from-indigo-500/8 to-blue-500/4 hover:from-indigo-500/12 hover:to-blue-500/8 border-indigo-200/60',
+];
+
+const ACCENT_DOTS = [
+  'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500',
+];
+
 export function CardList({ cards, onEditCard, onDeleteCard }: CardListProps) {
   return (
-    <div className="grid md:grid-cols-2 gap-4">
-      {cards.map((card) => (
-        <div key={card.id} className="border rounded-xl p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="font-semibold">{card.frontContent}</div>
-              <div className="text-sm text-muted-foreground mt-1">{card.backContent}</div>
-              {card.exampleSentence && (
-                <div className="text-xs text-muted-foreground mt-2 italic">
-                  {card.exampleSentence}
+    <div className="grid md:grid-cols-2 gap-3">
+      {cards.map((card, i) => {
+        const colorClass = CARD_COLORS[i % CARD_COLORS.length];
+        const dotClass = ACCENT_DOTS[i % ACCENT_DOTS.length];
+
+        return (
+          <div
+            key={card.id}
+            className={`kahoot-slide-up group relative rounded-xl p-4 border bg-gradient-to-br ${colorClass}
+              transition-all duration-300 hover:shadow-md hover:scale-[1.01]`}
+            style={{ animationDelay: `${i * 0.04}s` }}
+          >
+            {/* Accent dot */}
+            <div className={`absolute top-3 left-3 w-2 h-2 rounded-full ${dotClass} opacity-60`} />
+
+            <div className="flex items-start justify-between pl-5">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                  <span className="font-bold text-slate-800 truncate">{card.frontContent}</span>
                 </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => onEditCard(card)}>
-                <Edit className="w-4 h-4" />
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => onDeleteCard(card)}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
+                <p className="text-sm text-slate-600 line-clamp-2">{card.backContent}</p>
+                {card.exampleSentence && (
+                  <div className="flex items-start gap-1.5 mt-2 text-xs text-slate-400 italic">
+                    <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                    <span className="line-clamp-1">{card.exampleSentence}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-slate-400 hover:text-indigo-600"
+                  onClick={() => onEditCard(card)}
+                >
+                  <Edit className="w-3 h-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-lg hover:bg-red-100/80 text-slate-400 hover:text-red-500"
+                  onClick={() => onDeleteCard(card)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
