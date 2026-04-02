@@ -90,10 +90,125 @@ All colors MUST be HSL.
   }
 }
 
+/* ===== KAHOOT-STYLE FLASHCARD SYSTEM ===== */
+
+/* Bounce-in entrance animation */
+@keyframes kahoot-bounce-in {
+  0% { opacity: 0; transform: scale(0.3) translateY(40px); }
+  50% { opacity: 1; transform: scale(1.05) translateY(-8px); }
+  70% { transform: scale(0.95) translateY(2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+/* Screen-shake for wrong/hard answers */
+@keyframes kahoot-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px) rotate(-1deg); }
+  20% { transform: translateX(8px) rotate(1deg); }
+  30% { transform: translateX(-6px) rotate(-0.5deg); }
+  40% { transform: translateX(6px) rotate(0.5deg); }
+  50% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+/* Confetti-burst for correct answers */
+@keyframes kahoot-confetti-particle {
+  0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(-120px) scale(0) rotate(720deg); }
+}
+
+/* Pulse glow on correct */
+@keyframes kahoot-glow-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+  50% { box-shadow: 0 0 30px 10px rgba(34, 197, 94, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* Score pop animation */
+@keyframes kahoot-score-pop {
+  0% { opacity: 0; transform: scale(0) translateY(20px); }
+  60% { opacity: 1; transform: scale(1.3) translateY(-10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Float-up fade for feedback text */
+@keyframes kahoot-float-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+}
+
+/* Slide-in for cards from bottom */
+@keyframes kahoot-slide-up {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Subtle breathing glow */
+@keyframes kahoot-breathe {
+  0%, 100% { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15); }
+  50% { box-shadow: 0 4px 30px rgba(99, 102, 241, 0.3); }
+}
+
+/* Trophy bounce */
+@keyframes kahoot-trophy {
+  0% { transform: scale(0) rotate(-30deg); }
+  60% { transform: scale(1.2) rotate(10deg); }
+  80% { transform: scale(0.9) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Utility classes */
+.kahoot-bounce-in {
+  animation: kahoot-bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kahoot-shake {
+  animation: kahoot-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.kahoot-glow-correct {
+  animation: kahoot-glow-pulse 0.8s ease-out;
+}
+
+.kahoot-score-pop {
+  animation: kahoot-score-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kahoot-float-up {
+  animation: kahoot-float-up 1.2s ease-out forwards;
+}
+
+.kahoot-slide-up {
+  animation: kahoot-slide-up 0.4s ease-out both;
+}
+
+.kahoot-trophy {
+  animation: kahoot-trophy 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Staggered slide-up for lists */
+.kahoot-slide-up-1 { animation: kahoot-slide-up 0.4s ease-out 0.05s both; }
+.kahoot-slide-up-2 { animation: kahoot-slide-up 0.4s ease-out 0.1s both; }
+.kahoot-slide-up-3 { animation: kahoot-slide-up 0.4s ease-out 0.15s both; }
+.kahoot-slide-up-4 { animation: kahoot-slide-up 0.4s ease-out 0.2s both; }
+
+/* Confetti particle (used via JS-injected elements) */
+.kahoot-confetti-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: kahoot-confetti-particle 1s ease-out forwards;
+  pointer-events: none;
+}
+
+/* ===== ENHANCED FLIP CARD ===== */
 .flip-card {
   background-color: transparent;
-  perspective: 1000px; /* Tạo chiều sâu 3D */
-  height: 400px; /* Chiều cao cố định cho thẻ */
+  perspective: 1200px;
+  height: 380px;
 }
 
 .flip-card-inner {
@@ -101,11 +216,10 @@ All colors MUST be HSL.
   width: 100%;
   height: 100%;
   text-align: center;
-  transition: transform 0.6s;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   transform-style: preserve-3d;
 }
 
-/* Class để kích hoạt lật */
 .flip-card-inner.flipped {
   transform: rotateY(180deg);
 }
@@ -120,17 +234,41 @@ All colors MUST be HSL.
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem; /* rounded-2xl */
-  border: 1px solid hsl(var(--border));
-  background-color: hsl(var(--card));
-  color: hsl(var(--card-foreground));
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  border-radius: 1.25rem;
+  border: none;
   padding: 2rem;
+  overflow: hidden;
 }
 
-/* Mặt sau xoay sẵn 180 độ */
+.flip-card-front {
+  background: linear-gradient(145deg, hsl(250 60% 28%), hsl(260 65% 22%));
+  color: white;
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 .flip-card-back {
   transform: rotateY(180deg);
+  background: linear-gradient(145deg, hsl(230 50% 18%), hsl(240 45% 14%));
+  color: white;
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Geometric pattern overlay for cards */
+.flip-card-front::before,
+.flip-card-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
+  pointer-events: none;
 }
 @layer base {
   * {
