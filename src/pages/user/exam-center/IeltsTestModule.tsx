@@ -16,7 +16,7 @@ const HIGHLIGHT_COLORS = [
 
 interface QuestionData {
   id: string;
-  questionType: "MULTIPLE_CHOICE" | "GAP_FILL" | "MATCHING" | "TRUE_FALSE_NOT_GIVEN";
+  questionType: "MULTIPLE_CHOICE" | "MULTIPLE_CHOICE_MULTI_ANSWER" | "GAP_FILL" | "SHORT_ANSWER" | "MATCHING" | "TRUE_FALSE_NOT_GIVEN" | "YES_NO_NOT_GIVEN" | string;
   questionText?: string;
   imageUrl?: string | null;
   content?: {
@@ -880,15 +880,39 @@ export default function IeltsTestModule() {
                     </div>
                   )}
 
-                  {qType === "GAP_FILL" && (
+                  {qType === "MULTIPLE_CHOICE_MULTI_ANSWER" && qOptions.length > 0 && (
+                    <div className="space-y-2">
+                      {qOptions.map((opt, idx) => {
+                        const currentAns = answers[q.id] ? answers[q.id].split(',') : [];
+                        const idxStr = idx.toString();
+                        const isChecked = currentAns.includes(idxStr);
+                        return (
+                          <label key={idx} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                            isChecked ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-200"
+                          }`}>
+                            <input type="checkbox" name={q.id} value={idxStr} checked={isChecked}
+                              onChange={() => {
+                                const newAns = isChecked ? currentAns.filter(i => i !== idxStr) : [...currentAns, idxStr].sort();
+                                setAnswer(q.id, newAns.join(','));
+                              }} className="accent-indigo-600 rounded" />
+                            <span className="text-sm text-slate-700">
+                              <span className="font-bold text-indigo-600 mr-1">{String.fromCharCode(65 + idx)}.</span> {opt}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {(qType === "GAP_FILL" || qType === "SHORT_ANSWER") && (
                     <input type="text" value={answers[q.id] || ""} onChange={e => setAnswer(q.id, e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
                       placeholder="Type your answer..." />
                   )}
 
-                  {qType === "TRUE_FALSE_NOT_GIVEN" && (
+                  {(qType === "TRUE_FALSE_NOT_GIVEN" || qType === "YES_NO_NOT_GIVEN") && (
                     <div className="flex gap-3">
-                      {["TRUE", "FALSE", "NOT GIVEN"].map(opt => (
+                      {(qType === "TRUE_FALSE_NOT_GIVEN" ? ["TRUE", "FALSE", "NOT GIVEN"] : ["YES", "NO", "NOT GIVEN"]).map(opt => (
                         <button key={opt} onClick={() => setAnswer(q.id, opt)}
                           className={`flex-1 py-2 rounded-lg text-sm font-bold border-2 transition-all cursor-pointer ${
                             answers[q.id] === opt ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"

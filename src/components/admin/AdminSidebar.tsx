@@ -15,7 +15,8 @@ import {
   ScrollText,
   Tag,
   ClipboardList,
-  Headphones
+  Headphones,
+  Crown
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -63,6 +64,11 @@ const sidebarItems = [
     title: 'Quản lý Tag',
     href: '/admin/tags',
     icon: Tag,
+  },
+  {
+    title: 'Gói người dùng',
+    href: '/admin/user-plans',
+    icon: Crown,
   },
   // {
   //   title: 'Báo cáo vi phạm',

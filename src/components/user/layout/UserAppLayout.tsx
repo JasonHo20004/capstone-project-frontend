@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { name: "Flashcards", path: "/flashcards", icon: "style" },
   { name: "Cart", path: "/cart", icon: "shopping_cart" },
   { name: "Wallet", path: "/wallet", icon: "account_balance_wallet" },
+  { name: "Pricing", path: "/subscription", icon: "workspace_premium" },
   { name: "Notifications", path: "/notifications", icon: "notifications" },
 ];
 

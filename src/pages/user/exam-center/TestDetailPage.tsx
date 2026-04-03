@@ -126,9 +126,13 @@ export default function TestDetailPage() {
       let correctAnswer = "";
       if (q.questionType === "MULTIPLE_CHOICE") {
         correctAnswer = (contentData?.options || [])[answerData?.correctIndex] || "";
-      } else if (q.questionType === "GAP_FILL" || q.questionType === "MATCHING") {
+      } else if (q.questionType === "MULTIPLE_CHOICE_MULTI_ANSWER") {
+        const options = contentData?.options || [];
+        const indices = answerData?.correctIndices || [];
+        correctAnswer = indices.map((i: number) => String.fromCharCode(65 + i) + '. ' + options[i]).join(', ');
+      } else if (q.questionType === "GAP_FILL" || q.questionType === "MATCHING" || q.questionType === "SHORT_ANSWER") {
         correctAnswer = answerData?.text?.[0] || answerData?.correctAnswer || "";
-      } else if (q.questionType === "TRUE_FALSE_NOT_GIVEN") {
+      } else if (q.questionType === "TRUE_FALSE_NOT_GIVEN" || q.questionType === "YES_NO_NOT_GIVEN") {
         correctAnswer = answerData?.correctAnswer || "";
       }
       return {
@@ -257,13 +261,16 @@ export default function TestDetailPage() {
                           </td>
                           <td className="px-4 py-3">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                              d.questionType === 'MULTIPLE_CHOICE' ? 'bg-blue-100 text-blue-600'
-                              : d.questionType === 'TRUE_FALSE_NOT_GIVEN' ? 'bg-purple-100 text-purple-600'
+                              (d.questionType === 'MULTIPLE_CHOICE' || d.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER') ? 'bg-blue-100 text-blue-600'
+                              : (d.questionType === 'TRUE_FALSE_NOT_GIVEN' || d.questionType === 'YES_NO_NOT_GIVEN') ? 'bg-purple-100 text-purple-600'
                               : 'bg-orange-100 text-orange-600'
                             }`}>
                               {d.questionType === 'MULTIPLE_CHOICE' ? 'MCQ'
+                                : d.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER' ? 'MCQ (Multi)'
                                 : d.questionType === 'TRUE_FALSE_NOT_GIVEN' ? 'T/F/NG'
+                                : d.questionType === 'YES_NO_NOT_GIVEN' ? 'Y/N/NG'
                                 : d.questionType === 'GAP_FILL' ? 'Fill'
+                                : d.questionType === 'SHORT_ANSWER' ? 'Short Ans'
                                 : d.questionType}
                             </span>
                           </td>

@@ -38,7 +38,7 @@ import {
 import apiClient from '@/lib/api/config';
 
 type SkillType = 'READING' | 'LISTENING' | 'WRITING' | 'SPEAKING';
-type QuestionType = 'MULTIPLE_CHOICE' | 'GAP_FILL' | 'TRUE_FALSE_NOT_GIVEN' | 'MATCHING';
+type QuestionType = 'MULTIPLE_CHOICE' | 'MULTIPLE_CHOICE_MULTI_ANSWER' | 'GAP_FILL' | 'SHORT_ANSWER' | 'TRUE_FALSE_NOT_GIVEN' | 'YES_NO_NOT_GIVEN' | 'MATCHING';
 
 interface QuestionData {
   questionText: string;
@@ -78,8 +78,11 @@ const STEPS = [
 
 const QUESTION_TYPES: { label: string; value: QuestionType; desc: string }[] = [
   { label: 'Trắc nghiệm (MCQ)', value: 'MULTIPLE_CHOICE', desc: 'Chọn 1 đáp án đúng' },
+  { label: 'Trắc nghiệm nhiều đáp án', value: 'MULTIPLE_CHOICE_MULTI_ANSWER', desc: 'Chọn nhiều đáp án đúng' },
   { label: 'Điền vào chỗ trống', value: 'GAP_FILL', desc: 'Điền từ/cụm từ' },
+  { label: 'Trả lời ngắn', value: 'SHORT_ANSWER', desc: 'Trả lời ngắn gọn' },
   { label: 'True / False / Not Given', value: 'TRUE_FALSE_NOT_GIVEN', desc: 'Đúng / Sai / Không có thông tin' },
+  { label: 'Yes / No / Not Given', value: 'YES_NO_NOT_GIVEN', desc: 'Có / Không / Không có thông tin' },
   { label: 'Nối (Matching)', value: 'MATCHING', desc: 'Nối thông tin tương ứng' },
 ];
 
@@ -326,12 +329,18 @@ export default function ExamFormPage() {
           if (q.questionType === 'MULTIPLE_CHOICE') {
             item.content = { options: q.options.filter(Boolean), text: q.questionText };
             item.answer = { correctIndex: (q.answer as any)?.correctIndex ?? 0 };
-          } else if (q.questionType === 'GAP_FILL') {
+          } else if (q.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER') {
+            item.content = { options: q.options.filter(Boolean), text: q.questionText };
+            item.answer = { correctIndices: (q.answer as any)?.correctIndices || [] };
+          } else if (q.questionType === 'GAP_FILL' || q.questionType === 'SHORT_ANSWER') {
             item.content = { text: q.questionText };
             item.answer = { text: [(q.answer as any)?.text?.[0] || ''] };
           } else if (q.questionType === 'TRUE_FALSE_NOT_GIVEN') {
             item.content = { text: q.questionText };
             item.answer = { correctAnswer: (q.answer as any)?.correctAnswer || 'TRUE' };
+          } else if (q.questionType === 'YES_NO_NOT_GIVEN') {
+            item.content = { text: q.questionText };
+            item.answer = { correctAnswer: (q.answer as any)?.correctAnswer || 'YES' };
           } else if (q.questionType === 'MATCHING') {
             item.content = { text: q.questionText, options: q.options.filter(Boolean) };
             item.answer = { text: [(q.answer as any)?.text?.[0] || ''] };
@@ -754,8 +763,10 @@ export default function ExamFormPage() {
                                 onValueChange={(v) => {
                                   updateQuestion(sIdx, qIdx, 'questionType', v);
                                   if (v === 'TRUE_FALSE_NOT_GIVEN') updateQuestion(sIdx, qIdx, 'answer', { correctAnswer: 'TRUE' });
-                                  if (v === 'GAP_FILL' || v === 'MATCHING') updateQuestion(sIdx, qIdx, 'answer', { text: [''] });
+                                  if (v === 'YES_NO_NOT_GIVEN') updateQuestion(sIdx, qIdx, 'answer', { correctAnswer: 'YES' });
+                                  if (v === 'GAP_FILL' || v === 'MATCHING' || v === 'SHORT_ANSWER') updateQuestion(sIdx, qIdx, 'answer', { text: [''] });
                                   if (v === 'MULTIPLE_CHOICE') updateQuestion(sIdx, qIdx, 'answer', { correctIndex: 0 });
+                                  if (v === 'MULTIPLE_CHOICE_MULTI_ANSWER') updateQuestion(sIdx, qIdx, 'answer', { correctIndices: [] });
                                 }}>
                                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -782,45 +793,69 @@ export default function ExamFormPage() {
                                     <SelectItem value="TRUE">TRUE</SelectItem>
                                     <SelectItem value="FALSE">FALSE</SelectItem>
                                     <SelectItem value="NOT GIVEN">NOT GIVEN</SelectItem>
-                                    <SelectItem value="YES">YES</SelectItem>
-                                    <SelectItem value="NO">NO</SelectItem>
                                   </SelectContent>
                                 </Select>
                               )}
-                              {(q.questionType === 'GAP_FILL' || q.questionType === 'MATCHING') && (
+                              {q.questionType === 'YES_NO_NOT_GIVEN' && (
+                                <Select value={(q.answer as any)?.correctAnswer || 'YES'}
+                                  onValueChange={(v) => updateQuestion(sIdx, qIdx, 'answer', { correctAnswer: v })}>
+                                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="YES">YES</SelectItem>
+                                    <SelectItem value="NO">NO</SelectItem>
+                                    <SelectItem value="NOT GIVEN">NOT GIVEN</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                              {(q.questionType === 'GAP_FILL' || q.questionType === 'MATCHING' || q.questionType === 'SHORT_ANSWER') && (
                                 <Input className="mt-1" placeholder="Nhập đáp án đúng"
                                   value={(q.answer as any)?.text?.[0] || ''}
                                   onChange={(e) => updateQuestion(sIdx, qIdx, 'answer', { text: [e.target.value] })} />
                               )}
-                              {q.questionType === 'MULTIPLE_CHOICE' && (
+                              {(q.questionType === 'MULTIPLE_CHOICE' || q.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER') && (
                                 <p className="mt-2 text-xs text-muted-foreground italic">Chọn đáp án đúng bên dưới ↓</p>
                               )}
                             </div>
                           </div>
 
                           {/* MCQ Options */}
-                          {q.questionType === 'MULTIPLE_CHOICE' && (
+                          {(q.questionType === 'MULTIPLE_CHOICE' || q.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER') && (
                             <div className="space-y-2 pt-1">
                               <Label className="text-xs text-muted-foreground">Lựa chọn</Label>
-                              {q.options.map((opt, optIdx) => (
-                                <label key={optIdx} className={`flex items-center gap-2.5 p-2.5 rounded-lg cursor-pointer transition-all border ${
-                                  (q.answer as any)?.correctIndex === optIdx
-                                    ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-950 dark:border-emerald-700'
-                                    : 'bg-background border-transparent hover:bg-muted/50'
-                                }`}>
-                                  <input type="radio" name={`q-${sIdx}-${qIdx}`}
-                                    checked={(q.answer as any)?.correctIndex === optIdx}
-                                    onChange={() => updateQuestion(sIdx, qIdx, 'answer', { correctIndex: optIdx })}
-                                    className="accent-emerald-600" />
-                                  <span className="text-xs font-bold text-muted-foreground w-5">
-                                    {String.fromCharCode(65 + optIdx)}.
-                                  </span>
-                                  <Input className="h-8 border-0 bg-transparent p-0 focus-visible:ring-0 shadow-none"
-                                    placeholder={`Lựa chọn ${String.fromCharCode(65 + optIdx)}`}
-                                    value={opt}
-                                    onChange={(e) => updateOption(sIdx, qIdx, optIdx, e.target.value)} />
-                                </label>
-                              ))}
+                              {q.options.map((opt, optIdx) => {
+                                const isMultiple = q.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER';
+                                const isChecked = isMultiple
+                                  ? ((q.answer as any)?.correctIndices || []).includes(optIdx)
+                                  : (q.answer as any)?.correctIndex === optIdx;
+
+                                return (
+                                  <label key={optIdx} className={`flex items-center gap-2.5 p-2.5 rounded-lg cursor-pointer transition-all border ${
+                                    isChecked
+                                      ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-950 dark:border-emerald-700'
+                                      : 'bg-background border-transparent hover:bg-muted/50'
+                                  }`}>
+                                    <input type={isMultiple ? "checkbox" : "radio"} name={`q-${sIdx}-${qIdx}${isMultiple ? `-${optIdx}` : ''}`}
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        if (isMultiple) {
+                                          const prev = (q.answer as any)?.correctIndices || [];
+                                          const next = prev.includes(optIdx) ? prev.filter((i: number) => i !== optIdx) : [...prev, optIdx];
+                                          updateQuestion(sIdx, qIdx, 'answer', { correctIndices: next });
+                                        } else {
+                                          updateQuestion(sIdx, qIdx, 'answer', { correctIndex: optIdx });
+                                        }
+                                      }}
+                                      className="accent-emerald-600 rounded" />
+                                    <span className="text-xs font-bold text-muted-foreground w-5">
+                                      {String.fromCharCode(65 + optIdx)}.
+                                    </span>
+                                    <Input className="h-8 border-0 bg-transparent p-0 focus-visible:ring-0 shadow-none"
+                                      placeholder={`Lựa chọn ${String.fromCharCode(65 + optIdx)}`}
+                                      value={opt}
+                                      onChange={(e) => updateOption(sIdx, qIdx, optIdx, e.target.value)} />
+                                  </label>
+                                );
+                              })}
                               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1"
                                 onClick={() => {
                                   setForm(prev => {

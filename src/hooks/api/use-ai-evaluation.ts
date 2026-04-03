@@ -123,6 +123,27 @@ export const useUserSpeakingSessions = (userId: string | undefined) => {
   });
 };
 
+/**
+ * Poll for speaking individual evaluation result
+ */
+export const useSpeakingEvaluation = (evaluationId: string | null) => {
+  return useQuery({
+    queryKey: ['speaking-evaluation', evaluationId],
+    queryFn: async () => {
+      const response = await aiEvaluationService.getSpeakingEvaluation(evaluationId!);
+      return response.data as SpeakingEvaluation;
+    },
+    enabled: Boolean(evaluationId),
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data && (data.status === 'PENDING' || data.status === 'PROCESSING')) {
+        return 3000;
+      }
+      return false;
+    },
+  });
+};
+
 // ─── Writing Assistant Hook (Real-time, debounced) ───────────────────────────
 
 /**

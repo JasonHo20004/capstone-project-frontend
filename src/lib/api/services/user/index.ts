@@ -13,6 +13,7 @@ export { walletService } from './wallet/wallet.service';
 export { orderService } from './order/order.service';
 export { practiceService } from './practice/practice.service';
 export { assessmentService } from './assessment/assessment.service';
+export { userSubscriptionService } from './subscription/subscription.service';
 
 // Export types
 export type {

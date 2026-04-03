@@ -41,184 +41,6 @@ interface SpeakingTestLayoutProps {
   handleSubmit: () => void;
 }
 
-// ─── Per-Question Recorder ───────────────────────────────────────────────────
-
-function QuestionRecorder({
-  questionId,
-  onBlobReady,
-}: {
-  questionId: string;
-  onBlobReady: (qId: string, blob: Blob | null) => void;
-}) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        onBlobReady(questionId, blob);
-        stream.getTracks().forEach(t => t.stop());
-      };
-
-      recorder.start();
-      mediaRecorderRef.current = recorder;
-      setIsRecording(true);
-      setElapsed(0);
-      setAudioUrl(null);
-      onBlobReady(questionId, null);
-
-      timerRef.current = setInterval(() => {
-        setElapsed(prev => prev + 1);
-      }, 1000);
-    } catch (err) {
-      console.error("Microphone access denied:", err);
-    }
-  }, [questionId, onBlobReady]);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  const deleteRecording = useCallback(() => {
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    setAudioUrl(null);
-    setElapsed(0);
-    setIsPlaying(false);
-    onBlobReady(questionId, null);
-  }, [audioUrl, questionId, onBlobReady]);
-
-  const togglePlayback = useCallback(() => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  }, [isPlaying]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
-    };
-  }, []);
-
-  const formatElapsed = (s: number) =>
-    `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
-
-  return (
-    <div className="mt-3">
-      {!audioUrl ? (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={isRecording ? stopRecording : startRecording}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-              isRecording
-                ? 'bg-red-500 text-white shadow-lg shadow-red-200 hover:bg-red-600'
-                : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 hover:shadow-lg hover:scale-[1.02]'
-            }`}
-          >
-            <span className={`material-symbols-outlined text-[18px] ${isRecording ? 'animate-pulse' : ''}`}>
-              {isRecording ? 'stop_circle' : 'mic'}
-            </span>
-            {isRecording ? 'Dừng ghi' : 'Ghi âm'}
-          </button>
-
-          {isRecording && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-[3px] h-6">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-[3px] bg-red-400 rounded-full"
-                    style={{
-                      animation: `waveform 0.8s ease-in-out ${i * 0.1}s infinite alternate`,
-                      height: `${12 + Math.random() * 12}px`,
-                    }}
-                  />
-                ))}
-              </div>
-              <span className="text-sm font-mono text-red-500 font-bold">{formatElapsed(elapsed)}</span>
-              <span className="text-[10px] text-red-400 animate-pulse">● REC</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
-          <button
-            onClick={togglePlayback}
-            className="w-9 h-9 bg-amber-500 hover:bg-amber-600 text-white rounded-full flex items-center justify-center shadow-sm transition cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              {isPlaying ? 'pause' : 'play_arrow'}
-            </span>
-          </button>
-
-          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-            <div className={`h-full bg-amber-500 rounded-full transition-all ${isPlaying ? 'animate-pulse' : ''}`}
-              style={{ width: isPlaying ? '100%' : '0%', transition: isPlaying ? `width ${elapsed}s linear` : 'none' }}
-            />
-          </div>
-
-          <span className="text-xs font-mono text-slate-500">{formatElapsed(elapsed)}</span>
-
-          <button
-            onClick={deleteRecording}
-            className="w-8 h-8 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex items-center justify-center transition cursor-pointer"
-            title="Xóa và ghi lại"
-          >
-            <span className="material-symbols-outlined text-[16px]">delete</span>
-          </button>
-
-          <span className="text-[10px] text-green-500 font-bold">✓ Đã ghi</span>
-
-          <audio
-            ref={audioRef}
-            src={audioUrl}
-            onEnded={() => setIsPlaying(false)}
-            className="hidden"
-          />
-        </div>
-      )}
-
-      {isRecording && (
-        <style>{`
-          @keyframes waveform {
-            0% { height: 6px; }
-            100% { height: 20px; }
-          }
-        `}</style>
-      )}
-    </div>
-  );
-}
-
 // ─── Submit Progress Modal ──────────────────────────────────────────────────
 
 function SubmitProgress({
@@ -286,6 +108,8 @@ export default function SpeakingTestLayout({
   goPrev,
 }: SpeakingTestLayoutProps) {
   const navigate = useNavigate();
+
+  // ─── Section / Part config ─────────────────────────────────────────────────
   const speakingSections = sections.map((sec, idx) => {
     const partMatch = sec.title?.match(/Part\s*(\d)/i);
     const partNum = partMatch ? parseInt(partMatch[1]) : idx + 1;
@@ -295,29 +119,180 @@ export default function SpeakingTestLayout({
   const speakingQuestions = activeSpeakingSection?.questions || [];
   const cueCardQ = activeSpeakingSection.partNum === 2 ? speakingQuestions[0] : null;
   const cueCardContent = cueCardQ?.content as any;
-  const [showNotes, setShowNotes] = useState<Record<string, boolean>>({});
 
-  // Audio blobs per question
+  // ─── One-question-at-a-time state ──────────────────────────────────────────
+  const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
+  const questionsForPart = activeSpeakingSection.partNum === 2 ? [] : speakingQuestions;
+  const currentQuestion = questionsForPart[activeQuestionIdx];
+
+  // Reset question index on part change
+  useEffect(() => {
+    setActiveQuestionIdx(0);
+  }, [currentSectionIdx]);
+
+  // ─── Recording state ──────────────────────────────────────────────────────
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // ─── Recorded data tracking ───────────────────────────────────────────────
   const blobsRef = useRef<Record<string, Blob>>({});
   const [recordedCount, setRecordedCount] = useState(0);
+  const [recordedMap, setRecordedMap] = useState<Record<string, boolean>>({});
+  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
+  const [transcripts, setTranscripts] = useState<Record<string, string>>({});
 
-  // Submit flow state
+  // ─── Playback state ───────────────────────────────────────────────────────
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // ─── Notes ────────────────────────────────────────────────────────────────
+  const [showNotes, setShowNotes] = useState(false);
+
+  // ─── Part 2 Prep Timer ────────────────────────────────────────────────────
+  const [prepTimeLeft, setPrepTimeLeft] = useState(60);
+  const [isPrepRunning, setIsPrepRunning] = useState(false);
+
+  useEffect(() => {
+    if (activeSpeakingSection.partNum === 2) {
+      setPrepTimeLeft(60);
+      setIsPrepRunning(true);
+    } else {
+      setIsPrepRunning(false);
+    }
+  }, [activeSpeakingSection.partNum]);
+
+  useEffect(() => {
+    if (!isPrepRunning || prepTimeLeft <= 0) {
+      if (prepTimeLeft === 0) setIsPrepRunning(false);
+      return;
+    }
+    const timer = setInterval(() => {
+      setPrepTimeLeft(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isPrepRunning, prepTimeLeft]);
+
+  // ─── Recording Timer ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isRecording) {
+      timerRef.current = setInterval(() => setRecordingTime(p => p + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setRecordingTime(0);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isRecording]);
+
+  const formatElapsed = (s: number) =>
+    `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+
+  // ─── Start Recording ─────────────────────────────────────────────────────
+  const startRecording = useCallback(async (questionId: string) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        blobsRef.current[questionId] = blob;
+        setRecordedCount(Object.keys(blobsRef.current).length);
+        setRecordedMap(prev => ({ ...prev, [questionId]: true }));
+        setAudioUrls(prev => ({ ...prev, [questionId]: url }));
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+
+      // Start speech recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+        recognition.onresult = (e: any) => {
+          let t = "";
+          for (let i = 0; i < e.results.length; i++) {
+            t += e.results[i][0].transcript + " ";
+          }
+          setTranscripts(prev => ({ ...prev, [questionId]: t }));
+        };
+        recognition.onerror = () => {};
+        recognition.start();
+        recognitionRef.current = recognition;
+      }
+
+      // Remove old recording for this question
+      delete blobsRef.current[questionId];
+      setRecordedMap(prev => ({ ...prev, [questionId]: false }));
+      if (audioUrls[questionId]) {
+        URL.revokeObjectURL(audioUrls[questionId]);
+        setAudioUrls(prev => { const n = { ...prev }; delete n[questionId]; return n; });
+      }
+    } catch (err) {
+      console.error("Microphone access denied:", err);
+    }
+  }, [audioUrls]);
+
+  // ─── Stop Recording ──────────────────────────────────────────────────────
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+    }
+    setIsRecording(false);
+  }, []);
+
+  // ─── Delete a recording ──────────────────────────────────────────────────
+  const deleteRecording = useCallback((questionId: string) => {
+    delete blobsRef.current[questionId];
+    setRecordedCount(Object.keys(blobsRef.current).length);
+    setRecordedMap(prev => ({ ...prev, [questionId]: false }));
+    if (audioUrls[questionId]) {
+      URL.revokeObjectURL(audioUrls[questionId]);
+      setAudioUrls(prev => { const n = { ...prev }; delete n[questionId]; return n; });
+    }
+    setTranscripts(prev => { const n = { ...prev }; delete n[questionId]; return n; });
+  }, [audioUrls]);
+
+  // ─── Navigation helpers ───────────────────────────────────────────────────
+  const goToNextQuestion = useCallback(() => {
+    if (activeQuestionIdx < questionsForPart.length - 1) {
+      setActiveQuestionIdx(prev => prev + 1);
+    }
+  }, [activeQuestionIdx, questionsForPart.length]);
+
+  const goToPrevQuestion = useCallback(() => {
+    if (activeQuestionIdx > 0) {
+      setActiveQuestionIdx(prev => prev - 1);
+    }
+  }, [activeQuestionIdx]);
+
+  // Stop recording (no auto-advance — user navigates manually)
+  const stopAndFinish = useCallback(() => {
+    stopRecording();
+  }, [stopRecording]);
+
+  // ─── Submit flow ──────────────────────────────────────────────────────────
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStep, setSubmitStep] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
   const allQuestions = sections.flatMap(s => s.questions);
 
-  const handleBlobReady = useCallback((qId: string, blob: Blob | null) => {
-    if (blob) {
-      blobsRef.current[qId] = blob;
-    } else {
-      delete blobsRef.current[qId];
-    }
-    setRecordedCount(Object.keys(blobsRef.current).length);
-  }, []);
-
-  // ─── Full Submit Flow ──────────────────────────────────────────────────────
   const handleSpeakingSubmit = useCallback(async () => {
     const blobs = blobsRef.current;
     const questionIds = Object.keys(blobs);
@@ -332,7 +307,6 @@ export default function SpeakingTestLayout({
     setSubmitError(null);
 
     try {
-      // Extract userId
       let userId = 'anonymous';
       try {
         const token = localStorage.getItem('accessToken');
@@ -342,17 +316,14 @@ export default function SpeakingTestLayout({
         }
       } catch {}
 
-      // Step 1: Get presigned URLs and upload each blob to S3
       setSubmitStep(0);
       const uploadedUrls: Record<string, string> = {};
 
       for (const qId of questionIds) {
         const blob = blobs[qId];
-        // Get presigned URL
         const urlResp = await aiEvaluationService.getSpeakingUploadUrl();
         const { uploadUrl, publicUrl } = urlResp.data!;
 
-        // Upload directly to S3
         await fetch(uploadUrl, {
           method: 'PUT',
           body: blob,
@@ -362,7 +333,6 @@ export default function SpeakingTestLayout({
         uploadedUrls[qId] = publicUrl;
       }
 
-      // Step 2: Submit for AI evaluation (use first recorded audio for now)
       setSubmitStep(1);
       const firstUrl = Object.values(uploadedUrls)[0];
 
@@ -375,10 +345,9 @@ export default function SpeakingTestLayout({
       const evaluationId = evalResp.data?.evaluationId;
       if (!evaluationId) throw new Error("Không nhận được evaluationId");
 
-      // Step 3: Poll for result
       setSubmitStep(2);
       let attempts = 0;
-      const maxAttempts = 60; // ~2 minutes
+      const maxAttempts = 60;
 
       while (attempts < maxAttempts) {
         await new Promise(r => setTimeout(r, 3000));
@@ -387,18 +356,13 @@ export default function SpeakingTestLayout({
 
         if (status === 'COMPLETED' || status === 'FAILED') {
           setSubmitStep(3);
-
-          // Small delay to show completion
           await new Promise(r => setTimeout(r, 1000));
-
-          // Navigate to result
           navigate(`/exam/speaking-result/${evaluationId}`);
           return;
         }
         attempts++;
       }
 
-      // Timeout
       setSubmitStep(3);
       setSubmitError("Chấm bài quá lâu. Bạn có thể xem kết quả sau ở trang Lịch sử.");
       setTimeout(() => navigate('/exam/speaking-history'), 3000);
@@ -416,8 +380,16 @@ export default function SpeakingTestLayout({
     "Hoàn tất!",
   ];
 
+  // ─── Determine the current question ID for recording ──────────────────────
+  const activeQId = activeSpeakingSection.partNum === 2 && cueCardQ ? cueCardQ.id : currentQuestion?.id;
+  const isCurrentRecorded = activeQId ? !!recordedMap[activeQId] : false;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════════════
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50/30 to-slate-50 flex flex-col">
+    <div className="h-screen bg-slate-50 flex flex-col font-sans text-slate-900 overflow-hidden">
       {/* Submit Progress Modal */}
       {isSubmitting && (
         <SubmitProgress
@@ -427,40 +399,41 @@ export default function SpeakingTestLayout({
         />
       )}
 
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <Link to="/exam" className="text-slate-400 hover:text-slate-600 transition">
-              <span className="material-symbols-outlined">arrow_back</span>
-            </Link>
-            <div className="w-9 h-9 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-sm">
-              <span className="material-symbols-outlined text-[18px]">mic</span>
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-slate-800 uppercase tracking-wide">{testData?.title}</h1>
-              <p className="text-[10px] text-slate-500">{activeSpeakingSection?.title}</p>
-            </div>
+      {/* ─── Header ─────────────────────────────────────────────────────────── */}
+      <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-20">
+        <div className="flex items-center gap-3">
+          <Link to="/exam" className="text-slate-400 hover:text-slate-600 transition">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </Link>
+          <div className="w-9 h-9 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-sm">
+            <span className="material-symbols-outlined text-[18px]">mic</span>
           </div>
-          <div className="flex items-center gap-3">
-            {recordedCount > 0 && (
-              <span className="text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-bold border border-green-200">
-                {recordedCount}/{allQuestions.length} đã ghi
-              </span>
-            )}
-            <span className="text-xs text-slate-500 bg-amber-50 px-2.5 py-1 rounded-full font-bold border border-amber-200">SPEAKING</span>
-            <span className="text-sm font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg">{formatTime(timeLeft)}</span>
+          <div>
+            <h1 className="text-sm font-bold text-slate-800 tracking-tight">{testData?.title}</h1>
+            <p className="text-[10px] text-slate-500 font-medium">{activeSpeakingSection?.title}</p>
           </div>
         </div>
-        {/* Part tabs */}
-        <div className="max-w-4xl mx-auto px-6 pb-2 flex items-center gap-1">
+        <div className="flex items-center gap-3">
+          {recordedCount > 0 && (
+            <span className="text-[10px] text-green-600 bg-green-50 px-2.5 py-1 rounded-full font-bold border border-green-200">
+              {recordedCount}/{allQuestions.length} đã ghi
+            </span>
+          )}
+          <span className="text-xs text-slate-500 bg-amber-50 px-2.5 py-1 rounded-full font-bold border border-amber-200">SPEAKING</span>
+          <span className="text-sm font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg">{formatTime(timeLeft)}</span>
+        </div>
+      </header>
+
+      {/* ─── Part Tabs ────────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-100 px-6">
+        <div className="max-w-3xl mx-auto flex items-center gap-1 py-2">
           {speakingSections.map((sec) => (
             <button
               key={sec.sectionIdx}
               onClick={() => setCurrentSectionIdx(sec.sectionIdx)}
-              className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
+              className={`px-5 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
                 currentSectionIdx === sec.sectionIdx
-                  ? 'bg-amber-500 text-white shadow-sm'
+                  ? 'bg-amber-500 text-white shadow-md shadow-amber-200'
                   : 'text-slate-500 hover:bg-slate-100'
               }`}
             >
@@ -470,135 +443,344 @@ export default function SpeakingTestLayout({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
-        {/* Part 2 — Cue Card */}
-        {activeSpeakingSection.partNum === 2 && cueCardContent && (
-          <div className="mb-8 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl border-2 border-teal-200 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="material-symbols-outlined text-teal-600">credit_card</span>
-              <span className="font-bold text-teal-700">Topic Card</span>
-            </div>
-            <p className="text-lg font-semibold text-slate-800 mb-4">
-              {cueCardContent.cueCardTopic || cueCardQ?.questionText}
-            </p>
-            {cueCardContent.bulletPoints?.filter(Boolean).length > 0 && (
-              <div className="space-y-1.5 mb-3">
-                <p className="text-xs font-bold text-teal-600 uppercase tracking-wider">You should say:</p>
-                {cueCardContent.bulletPoints.filter(Boolean).map((b: string, i: number) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-teal-500 mt-0.5">•</span>
-                    <span className="text-sm text-slate-700">{b}</span>
-                  </div>
+      {/* ─── Main Content ─────────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-y-auto">
+        {/* Background pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40"></div>
+
+        <div className="z-10 w-full max-w-3xl mx-auto">
+
+          {/* ═════════════ Part 1 & 3: One question at a time ═════════════ */}
+          {activeSpeakingSection.partNum !== 2 && currentQuestion && (
+            <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500" key={currentQuestion.id}>
+              {/* Progress dots */}
+              <div className="flex items-center gap-2 mb-8">
+                {questionsForPart.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveQuestionIdx(i)}
+                    className={`transition-all cursor-pointer ${
+                      i === activeQuestionIdx
+                        ? 'w-8 h-3 bg-amber-500 rounded-full shadow-md shadow-amber-300'
+                        : recordedMap[questionsForPart[i].id]
+                        ? 'w-3 h-3 bg-emerald-400 rounded-full'
+                        : 'w-3 h-3 bg-slate-200 rounded-full hover:bg-slate-300'
+                    }`}
+                    title={`Câu ${i + 1}`}
+                  />
                 ))}
               </div>
-            )}
-            {cueCardContent.finalPrompt && (
-              <p className="text-sm text-slate-600 italic border-t border-teal-200 pt-3 mt-3">
-                {cueCardContent.finalPrompt}
-              </p>
-            )}
-            <div className="mt-4 flex items-center gap-2 text-xs text-teal-600">
-              <span className="material-symbols-outlined text-[14px]">timer</span>
-              Preparation: 1 minute · Speaking: 1–2 minutes
-            </div>
-          </div>
-        )}
 
-        {/* Questions */}
-        <div className="space-y-4">
-          {(activeSpeakingSection.partNum === 2 ? [] : speakingQuestions).map((q, idx) => (
-            <div key={q.id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition">
-              <div className="flex items-start gap-4">
-                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-bold text-sm shrink-0">
-                  {idx + 1}
-                </div>
-                <div className="flex-1">
-                  <p className="text-base font-medium text-slate-800">{q.questionText}</p>
+              {/* Question number badge */}
+              <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-amber-500/20 -rotate-3">
+                <span className="text-xl font-black">{activeQuestionIdx + 1}</span>
+              </div>
 
-                  <QuestionRecorder questionId={q.id} onBlobReady={handleBlobReady} />
+              {/* Examiner icon */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-indigo-400 text-[20px]">record_voice_over</span>
+                <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Examiner asks</span>
+              </div>
 
+              {/* THE QUESTION - big and centered */}
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 leading-snug tracking-tight text-center mb-6 max-w-2xl">
+                "{currentQuestion.questionText}"
+              </h2>
+
+              {/* Recorded indicator */}
+              {isCurrentRecorded && !isRecording && (
+                <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3 mb-4 animate-in fade-in duration-300">
+                  <span className="material-symbols-outlined text-emerald-500 text-[20px]">check_circle</span>
+                  <span className="text-sm font-bold text-emerald-700">Đã ghi âm</span>
+                  {audioUrls[currentQuestion.id] && (
+                    <button
+                      onClick={() => {
+                        if (playingId === currentQuestion.id) {
+                          audioRef.current?.pause();
+                          setPlayingId(null);
+                        } else {
+                          if (audioRef.current) {
+                            audioRef.current.src = audioUrls[currentQuestion.id];
+                            audioRef.current.play();
+                            setPlayingId(currentQuestion.id);
+                          }
+                        }
+                      }}
+                      className="ml-2 text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        {playingId === currentQuestion.id ? 'pause' : 'play_arrow'}
+                      </span>
+                      Nghe lại
+                    </button>
+                  )}
                   <button
-                    onClick={() => setShowNotes(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
-                    className="mt-2 text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 cursor-pointer transition"
+                    onClick={() => deleteRecording(currentQuestion.id)}
+                    className="ml-auto text-xs font-bold text-red-400 hover:text-red-600 flex items-center gap-1 cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[14px]">edit_note</span>
-                    {showNotes[q.id] ? 'Ẩn ghi chú' : 'Ghi chú'}
+                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                    Ghi lại
                   </button>
+                </div>
+              )}
 
-                  {showNotes[q.id] && (
+              {/* Transcript preview */}
+              {transcripts[currentQuestion.id] && (
+                <div className="w-full max-w-xl bg-indigo-50/60 border border-indigo-100 rounded-xl px-5 py-3 mb-4">
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Transcript (AI nghe được)</p>
+                  <p className="text-sm text-slate-600 italic leading-relaxed">"{transcripts[currentQuestion.id]}"</p>
+                </div>
+              )}
+
+              {/* Notes toggle */}
+              <button
+                onClick={() => setShowNotes(!showNotes)}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-indigo-500 transition mb-3 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">{showNotes ? "visibility_off" : "edit_note"}</span>
+                {showNotes ? "Ẩn ghi chú" : "Ghi chú nhanh..."}
+              </button>
+
+              {showNotes && (
+                <div className="w-full max-w-xl animate-in slide-in-from-top-2 duration-300">
+                  <textarea
+                    value={answers[currentQuestion.id] || ''}
+                    onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
+                    placeholder="Gõ nháp ý tưởng / keywords trước khi nói..."
+                    rows={3}
+                    className="w-full bg-white border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 rounded-xl px-4 py-3 text-sm resize-none outline-none transition-all placeholder:text-slate-400 shadow-sm"
+                  />
+                </div>
+              )}
+
+              {/* Question navigation (sub-question level) */}
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  onClick={goToPrevQuestion}
+                  disabled={activeQuestionIdx === 0}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 transition cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+                  Câu trước
+                </button>
+                <span className="text-xs font-bold text-slate-400">{activeQuestionIdx + 1} / {questionsForPart.length}</span>
+                <button
+                  onClick={goToNextQuestion}
+                  disabled={activeQuestionIdx === questionsForPart.length - 1}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 transition cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Câu sau
+                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════ Part 2: Cue Card ═════════════ */}
+          {activeSpeakingSection.partNum === 2 && cueCardContent && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 w-full">
+              <div className="bg-white rounded-[28px] border border-slate-200 shadow-xl shadow-slate-200/40 p-8 sm:p-10 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-cyan-500" />
+
+                <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-100">
+                  <span className="bg-teal-100 text-teal-700 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl">Part 2 — Cue Card</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest leading-none mb-1">Prep Time</span>
+                      <span className={`text-2xl leading-none font-mono font-black ${
+                        prepTimeLeft === 0 ? 'text-red-500'
+                        : prepTimeLeft <= 10 ? 'text-orange-500 animate-pulse'
+                        : 'text-teal-600'
+                      }`}>
+                        00:{prepTimeLeft.toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => { setPrepTimeLeft(60); setIsPrepRunning(true); }}
+                      className="w-9 h-9 rounded-full bg-teal-50 text-teal-600 hover:bg-teal-100 flex items-center justify-center transition cursor-pointer"
+                      title="Reset"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">restart_alt</span>
+                    </button>
+                  </div>
+                </div>
+
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-8 leading-tight">
+                  {cueCardContent.cueCardTopic || cueCardQ?.questionText}
+                </h3>
+
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-5">
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">You should say:</p>
+                  <ul className="space-y-4">
+                    {cueCardContent.bulletPoints?.filter(Boolean).map((bp: string, i: number) => (
+                      <li key={i} className="text-base text-slate-700 flex items-start gap-3">
+                        <span className="w-7 h-7 rounded-full bg-teal-500 text-white flex items-center justify-center shrink-0 mt-0.5 text-sm font-black shadow-md shadow-teal-500/20">{i + 1}</span>
+                        <span className="font-medium leading-relaxed">{bp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {cueCardContent.finalPrompt && (
+                    <div className="mt-6 pt-5 border-t border-slate-200">
+                      <p className="text-base text-slate-800 font-bold flex items-start gap-2">
+                        <span className="material-symbols-outlined text-teal-500 mt-0.5">forum</span>
+                        {cueCardContent.finalPrompt}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cue card recording status */}
+                {isCurrentRecorded && !isRecording && (
+                  <div className="mt-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3">
+                    <span className="material-symbols-outlined text-emerald-500 text-[20px]">check_circle</span>
+                    <span className="text-sm font-bold text-emerald-700">Đã ghi âm</span>
+                    {audioUrls[cueCardQ!.id] && (
+                      <button
+                        onClick={() => {
+                          if (playingId === cueCardQ!.id) {
+                            audioRef.current?.pause();
+                            setPlayingId(null);
+                          } else {
+                            if (audioRef.current) {
+                              audioRef.current.src = audioUrls[cueCardQ!.id];
+                              audioRef.current.play();
+                              setPlayingId(cueCardQ!.id);
+                            }
+                          }
+                        }}
+                        className="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{playingId === cueCardQ!.id ? 'pause' : 'play_arrow'}</span>
+                        Nghe lại
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteRecording(cueCardQ!.id)}
+                      className="ml-auto text-xs font-bold text-red-400 hover:text-red-600 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">delete</span>
+                      Ghi lại
+                    </button>
+                  </div>
+                )}
+
+                {/* Notes */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowNotes(!showNotes)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-teal-600 transition cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">{showNotes ? "visibility_off" : "edit_note"}</span>
+                    {showNotes ? "Ẩn ghi chú" : "Ghi chú outline..."}
+                  </button>
+                  {showNotes && cueCardQ && (
                     <textarea
-                      value={answers[q.id] || ''}
-                      onChange={(e) => setAnswer(q.id, e.target.value)}
-                      placeholder="Ghi chú thêm..."
-                      rows={2}
-                      className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition placeholder:text-slate-400"
+                      value={answers[cueCardQ.id] || ''}
+                      onChange={(e) => setAnswer(cueCardQ.id, e.target.value)}
+                      placeholder="Ghi ý chính hoặc outline trước khi nói..."
+                      rows={4}
+                      className="w-full mt-2 bg-white border border-slate-200 focus:border-teal-400 focus:ring-4 focus:ring-teal-500/10 rounded-xl px-4 py-3 text-sm resize-none outline-none transition-all placeholder:text-slate-400 shadow-sm"
                     />
                   )}
                 </div>
               </div>
             </div>
-          ))}
-
-          {/* Part 2 — Record + Notes */}
-          {activeSpeakingSection.partNum === 2 && cueCardQ && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <p className="text-sm font-bold text-slate-600 mb-1">Ghi âm bài nói của bạn</p>
-              <p className="text-xs text-slate-400 mb-3">Nói trong 1–2 phút theo cue card ở trên</p>
-              <QuestionRecorder questionId={cueCardQ.id} onBlobReady={handleBlobReady} />
-
-              <div className="mt-4 pt-3 border-t border-slate-100">
-                <button
-                  onClick={() => setShowNotes(prev => ({ ...prev, [cueCardQ.id]: !prev[cueCardQ.id] }))}
-                  className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 cursor-pointer transition"
-                >
-                  <span className="material-symbols-outlined text-[14px]">edit_note</span>
-                  {showNotes[cueCardQ.id] ? 'Ẩn ghi chú' : 'Ghi chú outline'}
-                </button>
-                {showNotes[cueCardQ.id] && (
-                  <textarea
-                    value={answers[cueCardQ.id] || ''}
-                    onChange={(e) => setAnswer(cueCardQ.id, e.target.value)}
-                    placeholder="Ghi chú ý chính hoặc outline..."
-                    rows={4}
-                    className="w-full mt-2 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition placeholder:text-slate-400"
-                  />
-                )}
-              </div>
-            </div>
           )}
         </div>
+      </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-8">
+      {/* ─── Bottom Recording Bar ──────────────────────────────────────────── */}
+      <div className="border-t border-slate-200 bg-white px-6 py-6 shrink-0 relative z-10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          {/* Left: Part navigation */}
           <button
             onClick={goPrev}
             disabled={currentSectionIdx === 0}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-30 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 transition cursor-pointer disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
             Part trước
           </button>
+
+          {/* Center: Recording button */}
+          <div className="flex flex-col items-center">
+            {isRecording ? (
+              <div className="flex items-center gap-5 animate-in zoom-in duration-300">
+                {/* Waveform */}
+                <div className="flex items-center gap-[3px] h-8">
+                  {[...Array(7)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-[3px] bg-red-400 rounded-full"
+                      style={{
+                        animation: `waveform 0.7s ease-in-out ${i * 0.08}s infinite alternate`,
+                        height: `${10 + Math.random() * 18}px`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={stopAndFinish}
+                  className="relative w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-xl shadow-red-500/30 transition-all hover:scale-105 cursor-pointer border-4 border-white"
+                >
+                  <div className="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-20" />
+                  <span className="material-symbols-outlined text-[28px] relative z-10">stop</span>
+                </button>
+                <div className="flex flex-col items-start">
+                  <span className="text-lg font-mono font-black text-red-500">{formatElapsed(recordingTime)}</span>
+                  <span className="text-[10px] text-red-400 font-bold animate-pulse">● RECORDING</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => { if (activeQId) startRecording(activeQId); }}
+                  disabled={!activeQId}
+                  className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center text-white shadow-xl shadow-amber-500/25 transition-all hover:scale-110 disabled:opacity-40 cursor-pointer border-4 border-white"
+                >
+                  <span className="material-symbols-outlined text-[28px]">mic</span>
+                </button>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+                  {isCurrentRecorded ? "Nhấn để ghi lại" : "Nhấn để trả lời"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Next part or Submit */}
           {currentSectionIdx < sections.length - 1 ? (
             <button
               onClick={goNext}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-amber-500 text-white hover:bg-amber-600 shadow-sm transition cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-amber-500 text-white rounded-xl hover:bg-amber-600 shadow-sm transition cursor-pointer"
             >
               Part tiếp
-              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </button>
           ) : (
             <button
               onClick={handleSpeakingSubmit}
               disabled={recordedCount === 0}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-green-600 text-white hover:bg-green-700 shadow-sm transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 shadow-sm transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <span className="material-symbols-outlined text-[16px]">check_circle</span>
-              Nộp bài ({recordedCount}/{allQuestions.length} đã ghi)
+              <span className="material-symbols-outlined text-[14px]">check_circle</span>
+              Nộp bài
             </button>
           )}
         </div>
       </div>
+
+      {/* Hidden audio player */}
+      <audio ref={audioRef} onEnded={() => setPlayingId(null)} className="hidden" />
+
+      {/* Waveform animation */}
+      {isRecording && (
+        <style>{`
+          @keyframes waveform {
+            0% { height: 6px; }
+            100% { height: 24px; }
+          }
+        `}</style>
+      )}
     </div>
   );
 }

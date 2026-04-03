@@ -154,9 +154,14 @@ export default function SpeakingHistory() {
         {/* Session List */}
         {sessions && sessions.length > 0 && (
           <div className="space-y-3">
-            {sessions.map((session: any) => (
-              <div key={session.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                <div className="flex">
+            {sessions.map((session: any) => {
+              // Interactive vs Evaluation check
+              // Interactive sessions use session.id, but since we map SpeakingEvaluations to /exam/speaking-result/
+              const destinationUrl = `/exam/speaking-result/${session.id}`;
+
+              return (
+                <Link key={session.id} to={destinationUrl} className="block bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all overflow-hidden group">
+                  <div className="flex">
                   {/* Band Score */}
                   <div className={`w-24 shrink-0 flex flex-col items-center justify-center border-r p-4 ${getBandBg(session.overallBand)}`}>
                     {session.overallBand ? (
@@ -191,9 +196,10 @@ export default function SpeakingHistory() {
                       )}
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

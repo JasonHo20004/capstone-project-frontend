@@ -6,6 +6,7 @@ export { revenueManagementService } from './revenue-management/revenue.service';
 export { subscriptionPlanService } from './subscription-plans/subscription-plan.service';
 export { subscriptionContractService } from './subscription-contracts/subscription-contract.service';
 export { reportManagementService } from './reports/report.service';
+export { adminUserPlanService } from './user-plans/user-plan.service';
 
 export type { CreateUserRequest, UpdateUserRequest } from './user-management/user.service';
 export type { UpdateCourseRequest } from './course-management/course.service';

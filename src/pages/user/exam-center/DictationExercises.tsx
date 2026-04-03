@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { dictationService, type DictationExercise } from "@/lib/api/services/user/dictation/dictation.service";
+import { PremiumGate } from "@/components/premium/PremiumGate";
 
 const LEVEL_COLORS: Record<string, { bg: string; text: string; glow: string }> = {
   A1: { bg: "from-green-400 to-emerald-500", text: "text-white", glow: "shadow-green-500/20" },
@@ -13,7 +14,7 @@ const LEVEL_COLORS: Record<string, { bg: string; text: string; glow: string }> =
 
 const DEFAULT_LEVEL = { bg: "from-slate-400 to-slate-500", text: "text-white", glow: "shadow-slate-500/20" };
 
-export default function DictationExercises() {
+function DictationExercisesContent() {
   const [exercises, setExercises] = useState<DictationExercise[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
@@ -200,5 +201,13 @@ export default function DictationExercises() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DictationExercises() {
+  return (
+    <PremiumGate feature="dictation">
+      <DictationExercisesContent />
+    </PremiumGate>
   );
 }

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import { WalletProvider } from "./context/WalletContext";
 import { PurchasesProvider } from "./context/PurchasesContext";
+import { SubscriptionProvider } from "./context/SubscriptionContext";
 
 // User pages
 import Index from "./pages/user/home/Home";
@@ -21,6 +22,7 @@ import Contact from "./pages/user/info/Contact";
 import Blog from "./pages/user/info/Blog";
 import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
+import Subscription from "./pages/user/account/Subscription";
 
 // Exam center (static UI integration)
 import SpeakingTest from "./pages/user/exam-center/SpeakingTest";
@@ -36,6 +38,7 @@ import SpeakingHistory from "./pages/user/exam-center/SpeakingHistory";
 import ProgressAnalytics from "./pages/user/exam-center/ProgressAnalytics";
 import TestResultPage from "./pages/user/exam-center/TestResultPage";
 import TestDetailPage from "./pages/user/exam-center/TestDetailPage";
+import SpeakingResultPage from "./pages/user/exam-center/SpeakingResultPage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
@@ -57,6 +60,7 @@ import WritingTestForm from "./pages/admin/exam-management/WritingTestForm";
 import SpeakingTestForm from "./pages/admin/exam-management/SpeakingTestForm";
 import SpeakingTopicManager from "./pages/admin/exam-management/SpeakingTopicManager";
 import DictationManagement from "./pages/admin/exam-management/DictationManagement";
+import UserPlansManagement from "./pages/admin/management/UserPlansManagement";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -88,6 +92,7 @@ const App = () => (
     <CartProvider>
       <WalletProvider>
         <PurchasesProvider>
+         <SubscriptionProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -112,6 +117,7 @@ const App = () => (
               <Route path="/cart" element={<Cart />} />
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/subscription" element={<Subscription />} />
 
               {/* AI Features (with sidebar layout) */}
               <Route path="/exam" element={<ExamCenter />} />
@@ -131,6 +137,7 @@ const App = () => (
             <Route path="/exam/test/:testId" element={<IeltsTestModule />} />
             <Route path="/exam/test/:testId/session/:sessionId" element={<IeltsTestModule />} />
             <Route path="/exam/result/:sessionId" element={<TestResultPage />} />
+            <Route path="/exam/speaking-result/:evaluationId" element={<SpeakingResultPage />} />
             <Route path="/practice/:testId" element={<TestDetailPage />} />
             <Route path="/practice/:testId/result/:sessionId" element={<TestDetailPage />} />
 
@@ -167,6 +174,7 @@ const App = () => (
             />
             <Route path="revenue" element={<RevenueManagement />} />
             <Route path="tags" element={<TagsManagement />} />
+            <Route path="user-plans" element={<UserPlansManagement />} />
           </Route>
 
           {/* Seller Routes */}
@@ -190,6 +198,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+         </SubscriptionProvider>
         </PurchasesProvider>
       </WalletProvider>
     </CartProvider>
