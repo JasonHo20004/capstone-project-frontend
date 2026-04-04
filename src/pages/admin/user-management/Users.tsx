@@ -117,8 +117,21 @@ export default function UsersManagement() {
   });
 
   useEffect(() => {
-    if (usersResp?.data?.users) {
-      setUsers(usersResp.data.users);
+    if (usersResp) {
+      // usersResp = { success, data: User[], total, page, ... }
+      // usersResp.data could be an array directly, or wrapped in {users: [...]}
+      const raw = usersResp as any;
+      let userList: User[] = [];
+      
+      if (Array.isArray(raw.data)) {
+        // Backend returns { success, data: [...users], total }
+        userList = raw.data;
+      } else if (raw.data?.users && Array.isArray(raw.data.users)) {
+        // Backend returns { success, data: { users: [...], userCount } }
+        userList = raw.data.users;
+      }
+      
+      setUsers(userList);
     }
   }, [usersResp]);
 
@@ -138,8 +151,8 @@ export default function UsersManagement() {
   });
 
   const stats = {
-    totalUsers: usersResp?.data?.userCount || 0,
-    totalWalletBalance: usersResp?.data?.totalWallet || 0,
+    totalUsers: (usersResp as any)?.total || (usersResp as any)?.data?.userCount || users.length,
+    totalWalletBalance: (usersResp as any)?.data?.totalWallet || 0,
   };
 
   const formatCurrency = (value: number) => {

@@ -10,11 +10,13 @@ import {
   User,
   GraduationCap,
   ChevronRight,
+  DollarSign,
 } from 'lucide-react';
 
 const sidebarItems = [
   { title: 'Tổng quan', href: '/seller', icon: LayoutDashboard },
   { title: 'Khoá học của tôi', href: '/seller/courses', icon: BookOpen },
+  { title: 'Doanh thu', href: '/seller/earnings', icon: DollarSign },
   { title: 'Phí hằng tháng', href: '/seller/fees', icon: CreditCard },
   { title: 'Người học', href: '/seller/learners', icon: Users },
   { title: 'Bình luận', href: '/seller/comments', icon: MessageSquare },

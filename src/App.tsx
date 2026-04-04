@@ -61,6 +61,8 @@ import SpeakingTestForm from "./pages/admin/exam-management/SpeakingTestForm";
 import SpeakingTopicManager from "./pages/admin/exam-management/SpeakingTopicManager";
 import DictationManagement from "./pages/admin/exam-management/DictationManagement";
 import UserPlansManagement from "./pages/admin/management/UserPlansManagement";
+import CommissionManagement from "./pages/admin/revenue-management/CommissionManagement";
+import WithdrawalManagement from "./pages/admin/revenue-management/WithdrawalManagement";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -78,6 +80,7 @@ import SellerLayout from "./components/seller/SellerLayout";
 import SellerDashboard from "./pages/seller/dashboard/SellerDashboard";
 import SellerCourses from "./pages/seller/courses/SellerCourses";
 import SellerMonthlyFees from "./pages/seller/finance/SellerMonthlyFees";
+import SellerEarnings from "./pages/seller/finance/SellerEarnings";
 import SellerComments from "./pages/seller/interactions/SellerComments";
 import SellerLearners from "./pages/seller/learners/SellerLearners";
 import SellerProfile from "./pages/seller/account/SellerProfile";
@@ -173,6 +176,8 @@ const App = () => (
               element={<SubscriptionContractsManagement />}
             />
             <Route path="revenue" element={<RevenueManagement />} />
+            <Route path="commission" element={<CommissionManagement />} />
+            <Route path="withdrawals" element={<WithdrawalManagement />} />
             <Route path="tags" element={<TagsManagement />} />
             <Route path="user-plans" element={<UserPlansManagement />} />
           </Route>
@@ -187,6 +192,7 @@ const App = () => (
               <Route path="courses/:courseId/lessons/:lessonId" element={<LessonDetailPage />} />
               <Route path="courses/:id" element={<SellerCourseDetail />} />
               <Route path="fees" element={<SellerMonthlyFees />} />
+              <Route path="earnings" element={<SellerEarnings />} />
               <Route path="comments" element={<SellerComments />} />
               <Route path="learners" element={<SellerLearners />} />
               <Route path="profile" element={<SellerProfile />} />

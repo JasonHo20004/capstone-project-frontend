@@ -46,21 +46,21 @@ export interface UpdateUserRequest {
 class UserManagementService {
   async getUsers(): Promise<ApiResponse<GetUsersResponse>> {
     const response = await apiClient.get<ApiResponse<GetUsersResponse>>(
-      "admin/users"
+      "users"
     );
     return response.data;
   }
 
   async getUserById(userId: string): Promise<ApiResponse<User>> {
     const response = await apiClient.get<ApiResponse<User>>(
-      `admin/users/${userId}`
+      `users/${userId}`
     );
     return response.data;
   }
 
   async createUser(data: CreateUserRequest): Promise<ApiResponse<User>> {
     const response = await apiClient.post<ApiResponse<User>>(
-      "admin/users/create",
+      "users/create",
       data
     );
     return response.data;
@@ -68,7 +68,7 @@ class UserManagementService {
 
   async updateUser(data: UpdateUserRequest): Promise<ApiResponse<User>> {
     const response = await apiClient.put<ApiResponse<User>>(
-      `admin/users/update/${data.id}`,
+      `users/${data.id}`,
       data
     );
     return response.data;
@@ -76,7 +76,7 @@ class UserManagementService {
 
   async deleteUser(userId: string): Promise<ApiResponse<void>> {
     const response = await apiClient.delete<ApiResponse<void>>(
-      `admin/users/delete/${userId}`
+      `users/${userId}`
     );
     return response.data;
   }

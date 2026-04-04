@@ -16,7 +16,9 @@ import {
   Tag,
   ClipboardList,
   Headphones,
-  Crown
+  Crown,
+  Percent,
+  Landmark,
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -54,6 +56,16 @@ const sidebarItems = [
     title: 'Giao dịch',
     href: '/admin/transactions',
     icon: CreditCard,
+  },
+  {
+    title: 'Hoa hồng',
+    href: '/admin/commission',
+    icon: Percent,
+  },
+  {
+    title: 'Rút tiền (Payout)',
+    href: '/admin/withdrawals',
+    icon: Landmark,
   },
   {
     title: 'Đơn đăng ký',

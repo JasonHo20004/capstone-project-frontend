@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/utils';
-import { useSellerDashboard, useSellerMonthlyFees, useSellerLearners } from '@/hooks/api';
+import { useSellerDashboard, useSellerMonthlyFees, useSellerLearners, useSellerEarnings } from '@/hooks/api';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import ChartCard from '@/components/admin/ChartCard';
@@ -29,6 +29,7 @@ import {
   TrendingUp,
   DollarSign,
   Activity,
+  Wallet,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -94,6 +95,7 @@ export default function SellerDashboard() {
   const { data: dashboardStats, isLoading, error } = useSellerDashboard();
   const { data: feesData } = useSellerMonthlyFees({ limit: 200 });
   const { data: learnersData } = useSellerLearners({ limit: 500 });
+  const { data: earningsData } = useSellerEarnings({ limit: 200 });
 
   const revenueChartData = useMemo(
     () => aggregateFeesByMonth(feesData?.fees ?? []),
@@ -208,6 +210,33 @@ export default function SellerDashboard() {
             </Link>
           </CardContent>
         </Card>
+
+        {/* Earnings Card */}
+        <Link to="/seller/earnings" className="group block cursor-pointer">
+          <Card className="overflow-hidden border-emerald-500/20 bg-emerald-500/5 transition-all duration-200 hover:shadow-md hover:border-emerald-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Thu nhập ròng</CardTitle>
+              <div className="rounded-lg bg-emerald-500/15 p-2">
+                <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-400">
+                {formatVND(earningsData?.summary?.totalEarnings ?? 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Tổng thu nhập sau khi trừ phí cổng + platform fee</p>
+              {(earningsData?.summary?.totalPending ?? 0) > 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  🔒 Đang khoá: {formatVND(earningsData?.summary?.totalPending ?? 0)}
+                </p>
+              )}
+              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                Xem chi tiết
+                <ArrowRight className="h-3 w-3" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Charts: Revenue & Learner Activity */}

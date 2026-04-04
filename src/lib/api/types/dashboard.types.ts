@@ -7,6 +7,8 @@ import type { ApiResponse } from "../types";
 export interface DashboardStats {
   totalUsers: number;
   totalCourses: number;
+  activeCourses: number;
+  pendingCourses: number;
   totalRevenue: number;
   pendingApplications: number;
   monthlyGrowth: {
@@ -19,6 +21,7 @@ export interface DashboardStats {
 export interface MonthlyRevenueData {
   month: string;
   revenue: number;
+  orders: number;
 }
 
 export interface MonthlyUserGrowthData {
@@ -31,11 +34,29 @@ export interface CourseStatusData {
   value: number;
 }
 
+export interface TopCourseData {
+  id: string;
+  title: string;
+  price: number;
+  ratingCount: number;
+  thumbnailUrl: string;
+  lessonCount: number;
+  sellerName: string;
+}
+
+export interface UserBreakdown {
+  students: number;
+  sellers: number;
+  admins: number;
+}
+
 export interface DashboardData {
   stats: DashboardStats;
   revenueData: MonthlyRevenueData[];
   userGrowthData: MonthlyUserGrowthData[];
   courseStatusData: CourseStatusData[];
+  topCourses: TopCourseData[];
+  userBreakdown: UserBreakdown;
 }
 
 export interface RecentActivity {

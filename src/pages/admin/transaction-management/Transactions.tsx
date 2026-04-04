@@ -390,6 +390,7 @@ export default function TransactionsManagement() {
         data={transactions}
         columns={columns}
         emptyMessage="Không tìm thấy giao dịch nào"
+        enablePagination={false}
       />
 
       {/* Pagination */}
