@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { dictationService, type DictationExercise } from "@/lib/api/services/user/dictation/dictation.service";
-import { PremiumGate } from "@/components/premium/PremiumGate";
+import { useSubscription } from "@/context/SubscriptionContext";
 
 const LEVEL_COLORS: Record<string, { bg: string; text: string; glow: string }> = {
   A1: { bg: "from-green-400 to-emerald-500", text: "text-white", glow: "shadow-green-500/20" },
@@ -19,6 +19,10 @@ function DictationExercisesContent() {
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const { hasFeature } = useSubscription();
+  const navigate = useNavigate();
+  const isPro = hasFeature("dictation");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,7 +153,43 @@ function DictationExercisesContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {exs.map((ex) => {
                 const levelStyle = LEVEL_COLORS[ex.level || ""] || DEFAULT_LEVEL;
-                return (
+                const isLocked = ex.isPremium && !isPro;
+
+                return isLocked ? (
+                  // PRO locked card — button instead of Link
+                  <button
+                    key={ex.id}
+                    onClick={() => setShowUpgradeDialog(true)}
+                    className="group relative bg-white rounded-2xl border border-amber-200/80 ring-1 ring-amber-100 shadow-sm p-5 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 text-left cursor-pointer"
+                  >
+                    {/* PRO Badge */}
+                    <span className="absolute -top-2 -right-2 flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm z-10">
+                      <span className="material-symbols-outlined text-[13px]">diamond</span>
+                      PRO
+                    </span>
+
+                    <div className="mb-3">
+                      <h4 className="text-base font-bold text-slate-900 leading-tight pr-8">
+                        {ex.title}
+                      </h4>
+                      {ex.description && (
+                        <p className="text-sm text-slate-500 mt-1 line-clamp-2">{ex.description}</p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <span className="material-symbols-outlined text-[14px]">format_list_numbered</span>
+                        <span className="font-medium">{ex.totalSentences} câu</span>
+                      </div>
+                      <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">lock</span>
+                        PRO
+                      </span>
+                    </div>
+                  </button>
+                ) : (
+                  // Free/unlocked card — regular Link
                   <Link
                     key={ex.id}
                     to={`/dictation/${ex.id}`}
@@ -200,14 +240,37 @@ function DictationExercisesContent() {
           <p className="text-slate-400 text-sm">Quay lại sau để xem bài tập mới!</p>
         </div>
       )}
+
+      {/* ─── PRO Upgrade Dialog ─── */}
+      {showUpgradeDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowUpgradeDialog(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200/50">
+              <span className="material-symbols-outlined text-white text-[28px]">diamond</span>
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2">Bài tập PRO</h3>
+            <p className="text-sm text-slate-500 mb-6">Bài tập này dành cho gói Pro. Nâng cấp để truy cập tất cả bài Dictation.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowUpgradeDialog(false)}
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={() => navigate("/subscription")}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-200/30 hover:scale-105 transition-all cursor-pointer"
+              >
+                Nâng cấp Pro
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function DictationExercises() {
-  return (
-    <PremiumGate feature="dictation">
-      <DictationExercisesContent />
-    </PremiumGate>
-  );
+  return <DictationExercisesContent />;
 }

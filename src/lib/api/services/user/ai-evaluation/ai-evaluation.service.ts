@@ -249,6 +249,13 @@ class AiEvaluationService {
     );
     return response.data;
   }
+
+  async toggleSpeakingTopicPremium(id: string): Promise<ApiResponse<any>> {
+    const response = await apiClient.patch<ApiResponse<any>>(
+      `/ai/speaking-topics/${id}/toggle-premium`
+    );
+    return response.data;
+  }
 }
 
 export const aiEvaluationService = new AiEvaluationService();

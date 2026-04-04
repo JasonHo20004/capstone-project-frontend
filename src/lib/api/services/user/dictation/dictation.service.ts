@@ -14,6 +14,7 @@ export interface DictationExercise {
   level: string | null;
   category: string | null;
   totalSentences: number;
+  isPremium?: boolean;
   createdAt: string;
 }
 

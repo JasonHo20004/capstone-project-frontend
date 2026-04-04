@@ -7,6 +7,7 @@ interface SpeakingTopic {
   id: string;
   title: string;
   isActive: boolean;
+  isPremium: boolean;
   part1Questions: string[];
   part2Topic: string | null;
   part2Bullets: string[];
@@ -73,6 +74,12 @@ export default function SpeakingTopicManager() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       aiEvaluationService.updateSpeakingTopic(id, { isActive }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['speaking-topics'] }),
+  });
+
+  const togglePremiumMutation = useMutation({
+    mutationFn: (id: string) =>
+      aiEvaluationService.toggleSpeakingTopicPremium(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['speaking-topics'] }),
   });
 
@@ -292,6 +299,12 @@ export default function SpeakingTopicManager() {
                       }`}>
                         {topic.isActive ? 'Active' : 'Inactive'}
                       </span>
+                      {topic.isPremium && (
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-[11px]">diamond</span>
+                          PRO
+                        </span>
+                      )}
                       {topic._count && (
                         <span className="text-[10px] text-slate-400">{topic._count.sessions} sessions</span>
                       )}
@@ -316,6 +329,17 @@ export default function SpeakingTopicManager() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 ml-4">
+                    <button
+                      onClick={() => togglePremiumMutation.mutate(topic.id)}
+                      className={`p-2 rounded-lg transition cursor-pointer ${
+                        topic.isPremium
+                          ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                          : 'hover:bg-amber-50 text-slate-400 hover:text-amber-600'
+                      }`}
+                      title={topic.isPremium ? 'Bỏ PRO' : 'Đặt PRO'}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">diamond</span>
+                    </button>
                     <button
                       onClick={() => toggleMutation.mutate({ id: topic.id, isActive: !topic.isActive })}
                       className={`p-2 rounded-lg ${topic.isActive ? 'hover:bg-red-50 text-red-400 hover:text-red-600' : 'hover:bg-emerald-50 text-emerald-400 hover:text-emerald-600'} transition cursor-pointer`}

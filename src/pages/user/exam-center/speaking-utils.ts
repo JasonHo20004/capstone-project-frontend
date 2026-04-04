@@ -14,6 +14,7 @@ export interface TopicDisplay {
   icon: string;
   color: string;
   fromDb: boolean;
+  isPremium?: boolean;
 }
 
 // Icon/color map for known topic names (used for display styling only)

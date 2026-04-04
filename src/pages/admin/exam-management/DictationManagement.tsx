@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Trash2, Upload, MoreHorizontal, FileJson, Music, Eye, Plus, Pencil, Save, Link, Loader2 } from 'lucide-react';
+import { Trash2, Upload, MoreHorizontal, FileJson, Music, Eye, Plus, Pencil, Save, Link, Loader2, Diamond } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DataTable from '@/components/admin/DataTable';
@@ -56,6 +56,7 @@ interface DictationExercise {
   category: string | null;
   totalSentences: number;
   isPublished: boolean;
+  isPremium?: boolean;
   createdAt: string;
 }
 
@@ -240,6 +241,11 @@ export default function DictationManagement() {
     },
   });
 
+  const togglePremiumMutation = useMutation({
+    mutationFn: (ex: DictationExercise) => updateExerciseApi(ex.id, { isPremium: !ex.isPremium }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['adminDictation'] }),
+  });
+
   const resetUploadForm = () => {
     setShowUpload(false);
     setJsonData(null);
@@ -355,9 +361,17 @@ export default function DictationManagement() {
       key: 'title',
       header: 'Bài dictation',
       render: (ex: DictationExercise) => (
-        <div>
-          <div className="font-medium">{ex.title}</div>
-          <div className="text-xs text-muted-foreground">{ex.description || '—'}</div>
+        <div className="flex items-center gap-2">
+          <div>
+            <div className="font-medium">{ex.title}</div>
+            <div className="text-xs text-muted-foreground">{ex.description || '—'}</div>
+          </div>
+          {ex.isPremium && (
+            <Badge className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border-amber-200 text-[10px] gap-0.5">
+              <Diamond className="h-3 w-3" />
+              PRO
+            </Badge>
+          )}
         </div>
       ),
     },
@@ -424,6 +438,10 @@ export default function DictationManagement() {
             <DropdownMenuItem onClick={() => openEditDialog(ex)}>
               <Pencil className="mr-2 h-4 w-4" />
               Chỉnh sửa
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => togglePremiumMutation.mutate(ex)}>
+              <Diamond className={`mr-2 h-4 w-4 ${ex.isPremium ? 'text-amber-500' : ''}`} />
+              {ex.isPremium ? 'Bỏ PRO' : 'Đặt PRO'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-red-600" onClick={() => setDeleteTarget(ex)}>

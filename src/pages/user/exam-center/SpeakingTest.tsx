@@ -15,7 +15,8 @@ import {
   getBandColor,
 } from "./speaking-utils";
 import type { ConversationTurn, Screen, TopicDisplay } from "./speaking-utils";
-import { PremiumGate } from "@/components/premium/PremiumGate";
+import { useSubscription } from "@/context/SubscriptionContext";
+import { useNavigate } from "react-router-dom";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -54,6 +55,10 @@ function SpeakingTestContent() {
   const startSession = useStartSpeakingSession();
   const respondToSpeaking = useRespondToSpeaking();
   const finishSpeaking = useFinishSpeaking();
+  const { hasFeature } = useSubscription();
+  const navigate = useNavigate();
+  const isPro = hasFeature("ai_speaking");
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { data: result } = useSpeakingSessionResult(
     screen === "grading" ? sessionId : null
   );
@@ -71,6 +76,7 @@ function SpeakingTestContent() {
       icon: TOPIC_ICON_MAP[t.title]?.icon || "topic",
       color: TOPIC_ICON_MAP[t.title]?.color || "from-slate-500 to-slate-600",
       fromDb: true,
+      isPremium: t.isPremium ?? false,
     }));
   }, [dbTopicsRes]);
 
@@ -299,20 +305,61 @@ function SpeakingTestContent() {
             {displayTopics.map((t) => (
               <button
                 key={t.name}
-                onClick={() => handleStartSession(t.name)}
+                onClick={() => {
+                  if (t.isPremium && !isPro) {
+                    setShowUpgradeDialog(true);
+                    return;
+                  }
+                  handleStartSession(t.name);
+                }}
                 disabled={startSession.isPending}
-                className="group relative bg-white rounded-xl border border-slate-200 p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all text-left disabled:opacity-50 cursor-pointer overflow-hidden"
+                className={`group relative bg-white rounded-xl border p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all text-left disabled:opacity-50 cursor-pointer overflow-hidden ${
+                  t.isPremium ? "border-amber-200 ring-1 ring-amber-100" : "border-slate-200"
+                }`}
               >
                 <div className={`w-10 h-10 bg-gradient-to-br ${t.color} rounded-lg flex items-center justify-center text-white mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
                   <span className="material-symbols-outlined text-[20px]">{t.icon}</span>
                 </div>
                 <p className="text-xs font-bold text-slate-700 leading-tight">{t.name}</p>
-                {t.fromDb && (
+                {t.isPremium && (
+                  <span className="absolute top-2 right-2 flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-sm">
+                    <span className="material-symbols-outlined text-[12px]">diamond</span>
+                    PRO
+                  </span>
+                )}
+                {!t.isPremium && t.fromDb && (
                   <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" title="Admin-created" />
                 )}
               </button>
             ))}
           </div>
+
+          {/* Premium Upgrade Dialog */}
+          {showUpgradeDialog && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowUpgradeDialog(false)}>
+              <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200/50">
+                  <span className="material-symbols-outlined text-white text-[28px]">diamond</span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-2">Chủ đề PRO</h3>
+                <p className="text-sm text-slate-500 mb-6">Chủ đề này dành cho gói Pro. Nâng cấp để truy cập tất cả chủ đề Speaking.</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowUpgradeDialog(false)}
+                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    Đóng
+                  </button>
+                  <button
+                    onClick={() => navigate("/subscription")}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-200/30 hover:scale-105 transition-all cursor-pointer"
+                  >
+                    Nâng cấp Pro
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -670,9 +717,5 @@ function SpeakingTestContent() {
 }
 
 export default function SpeakingTest() {
-  return (
-    <PremiumGate feature="ai_speaking">
-      <SpeakingTestContent />
-    </PremiumGate>
-  );
+  return <SpeakingTestContent />;
 }
