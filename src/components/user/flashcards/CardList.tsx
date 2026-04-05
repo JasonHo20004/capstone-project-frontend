@@ -1,6 +1,7 @@
 import type { Flashcard } from "@/domain";
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, BookOpen, MessageSquare } from 'lucide-react';
+import { Edit, Trash2, BookOpen, MessageSquare, Volume2 } from 'lucide-react';
+import { useCallback, useRef } from 'react';
 
 interface CardListProps {
   cards: Flashcard[];
@@ -20,6 +21,37 @@ const CARD_COLORS = [
 const ACCENT_DOTS = [
   'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500',
 ];
+
+function AudioButton({ audioUrl }: { audioUrl: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handlePlay = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.play();
+    } catch (err) {
+      console.error('Audio playback error:', err);
+    }
+  }, [audioUrl]);
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-indigo-400 hover:text-indigo-600 transition-colors"
+      onClick={handlePlay}
+      title="Nghe phát âm"
+    >
+      <Volume2 className="w-3.5 h-3.5" />
+    </Button>
+  );
+}
 
 export function CardList({ cards, onEditCard, onDeleteCard }: CardListProps) {
   return (
@@ -43,6 +75,7 @@ export function CardList({ cards, onEditCard, onDeleteCard }: CardListProps) {
                 <div className="flex items-center gap-1.5 mb-1">
                   <BookOpen className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                   <span className="font-bold text-slate-800 truncate">{card.frontContent}</span>
+                  {card.audioUrl && <AudioButton audioUrl={card.audioUrl} />}
                 </div>
                 <p className="text-sm text-slate-600 line-clamp-2">{card.backContent}</p>
                 {card.exampleSentence && (

@@ -14,6 +14,7 @@ import Index from "./pages/user/home/Home";
 import Landing from "./pages/user/home/Landing";
 import CourseDetail from "./pages/user/courses/CourseDetail";
 import Flashcards from "./pages/user/learning/Flashcards";
+import RagGenerator from "./pages/user/learning/RagGenerator";
 import StudentLearningPage from "./pages/user/learning/StudentLearning";
 import Profile from "./pages/user/account/Profile";
 import Wallet from "./pages/user/account/Wallet";
@@ -116,6 +117,7 @@ const App = () => (
               <Route path="/dashboard" element={<Index />} />
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/flashcards" element={<Flashcards />} />
+              <Route path="/generate-flashcards" element={<RagGenerator />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/wallet" element={<Wallet />} />

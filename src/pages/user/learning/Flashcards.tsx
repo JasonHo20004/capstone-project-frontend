@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,10 +36,12 @@ import {
   Sparkles,
   Clock,
   RotateCcw,
+  Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FlashcardDeck, Flashcard, Tag } from "@/domain";
+import RagGenerator from "./RagGenerator";
 import { DeckList } from "@/components/user/flashcards/DeckList";
 import CardList from "@/components/user/flashcards/CardList";
 import StudyMode from "@/components/user/flashcards/StudyMode";
@@ -136,6 +138,7 @@ const Flashcards = () => {
   });
   const [studyDialogOpen, setStudyDialogOpen] = useState(false);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
+  const [ragDialogOpen, setRagDialogOpen] = useState(false);
 
   // Deck handlers
   const openCreateDeck = () => {
@@ -370,12 +373,21 @@ const Flashcards = () => {
                 <Layers className="w-6 h-6 text-indigo-500" />
                 Bộ thẻ của tôi
               </h2>
-              <Button
-                onClick={openCreateDeck}
-                className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 shadow-md shadow-indigo-500/20 transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
-              >
-                <Plus className="w-5 h-5 mr-1" /> Thêm bộ thẻ
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => setRagDialogOpen(true)}
+                  variant="outline"
+                  className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
+                >
+                  <Brain className="w-5 h-5 mr-1" /> AI Tạo thẻ
+                </Button>
+                <Button
+                  onClick={openCreateDeck}
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 shadow-md shadow-indigo-500/20 transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
+                >
+                  <Plus className="w-5 h-5 mr-1" /> Thêm bộ thẻ
+                </Button>
+              </div>
             </div>
 
             {isLoadingDecks ? (
@@ -851,6 +863,22 @@ const Flashcards = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* RAG Generator Dialog */}
+      <Dialog open={ragDialogOpen} onOpenChange={setRagDialogOpen}>
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-emerald-600" />
+              </div>
+              AI Flashcard Generator
+            </DialogTitle>
+            <DialogDescription>Upload file hoặc nhập văn bản để AI tự động tạo flashcard</DialogDescription>
+          </DialogHeader>
+          <RagGenerator embedded />
+        </DialogContent>
+      </Dialog>
 
       {/* Study Mode Dialog */}
       <Dialog open={studyDialogOpen} onOpenChange={(open) => {
