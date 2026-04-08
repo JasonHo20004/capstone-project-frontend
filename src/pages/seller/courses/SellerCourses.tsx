@@ -61,8 +61,6 @@ export default function SellerCourses() {
         return <Badge variant="destructive">Từ chối</Badge>;
       case 'INACTIVE':
         return <Badge className="bg-gray-600">Tạm dừng</Badge>;
-      case 'ACTIVE':
-        return <Badge className="bg-blue-600">Đã xuất bản</Badge>;
       case 'DRAFT':
         return <Badge className="bg-muted text-foreground">Bản nháp</Badge>;
       case 'DELETE':
@@ -125,7 +123,6 @@ export default function SellerCourses() {
               { value: 'PENDING', label: 'Chờ duyệt' },
               { value: 'REFUSE', label: 'Từ chối' },
               { value: 'INACTIVE', label: 'Tạm dừng' },
-              { value: 'ACTIVE', label: 'Hoạt động' },
               { value: 'DRAFT', label: 'Bản nháp' },
             ],
             placeholder: 'Trạng thái'
