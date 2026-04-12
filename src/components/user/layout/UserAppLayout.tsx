@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useMemo, useState, useCallback } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/api/use-auth";
 import { useUser } from "@/hooks/api/use-user";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { CartDropdown } from "./CartDropdown";
+import { AIAdvisorBanner } from "./AIAdvisorBanner";
+import { useAIAdvisor } from "@/hooks/use-ai-advisor";
 
 type NavItem = {
   name: string;
@@ -33,8 +35,19 @@ const aiNavItems: NavItem[] = [
 export default function UserAppLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useUser();
   const { logout } = useAuth();
+
+  // AI Advisor SSE connection
+  const { activeAction, dismiss } = useAIAdvisor({
+    userId: user?.id,
+    enabled: !!user?.id,
+  });
+
+  const handleCourseClick = useCallback((courseId: string) => {
+    navigate(`/courses/${courseId}`);
+  }, [navigate]);
 
   const allNavItems = useMemo(() => [...navItems, ...aiNavItems], []);
 
@@ -175,6 +188,15 @@ export default function UserAppLayout() {
             </NavLink>
           </div>
         </header>
+        )}
+
+        {/* AI Advisor Banner — appears between header and page content */}
+        {activeAction && !location.pathname.startsWith("/skill-tree") && (
+          <AIAdvisorBanner
+            action={activeAction}
+            onDismiss={dismiss}
+            onCourseClick={handleCourseClick}
+          />
         )}
 
         <div
