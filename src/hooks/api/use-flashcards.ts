@@ -65,9 +65,13 @@ export const useGetCards = (deckId: string | null) => {
   return useQuery({
     queryKey: flashcardKeys.cardsByDeck(deckId!), // Dùng `!` vì `enabled` sẽ lo
     queryFn: async () => (await flashcardService.getCardsByDeck(deckId!)).data,
-    
-    // Rất quan trọng: Chỉ chạy query này khi `deckId` tồn tại (không null)
-    enabled: !!deckId, 
+
+    enabled: !!deckId,
+    retry: (failureCount, error: unknown) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 403) return false;
+      return failureCount < 1;
+    },
   });
 };
 export const useCreateCard = () => {

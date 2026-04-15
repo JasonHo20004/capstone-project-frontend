@@ -54,6 +54,9 @@ function extractErrorMessage(error: unknown): string {
  * Use with QueryCache.onError and MutationCache.onError.
  */
 export function handleQueryError(error: unknown): void {
+  const err = error as ErrorWithDetails;
+  if (err?.response?.status === 403) return;
+
   const message = extractErrorMessage(error);
   toast.error(message, { id: "GLOBAL_QUERY_ERROR" });
 }

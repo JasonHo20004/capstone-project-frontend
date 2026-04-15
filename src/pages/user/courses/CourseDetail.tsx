@@ -41,7 +41,6 @@ const CourseDetail = () => {
 
   const { data: course, isLoading, isError } = useGetCourseDetail(id!);
   const { data: myCoursesData } = useGetMyCourses();
-  const myCourses = myCoursesData?.data || [];
 
   const addToCartMutation = useAddToCart();
   const directBuyMutation = useDirectBuy();
@@ -51,12 +50,15 @@ const CourseDetail = () => {
   const [myReports, setMyReports] = useState<Report[]>([]);
   const [tab, setTab] = useState<"overview" | "instructor" | "content">("overview");
 
-  const isPurchased = useMemo(() => {
+  const isEnrolledInApi = useMemo(() => {
     if (!course || !user) return false;
+    const myCourses = myCoursesData?.data ?? [];
     return myCourses.some((c) => c.id === course.id);
-  }, [course, myCourses, user]);
+  }, [course, myCoursesData?.data, user]);
 
-  const { data: courseContext } = useCourseContext(isPurchased ? id : undefined);
+  const isPurchased = isEnrolledInApi || directBuyMutation.isSuccess;
+
+  const { data: courseContext } = useCourseContext(isEnrolledInApi ? id : undefined);
 
   type InstructorInfo = {
     fullName: string;
@@ -140,7 +142,7 @@ const CourseDetail = () => {
       const nextLessonId = getNextLessonId();
       if (nextLessonId) { navigate(`/learning/courses/${id}/lessons/${nextLessonId}`); return; }
     }
-    navigate(`/learning/courses/${id}`);
+    navigate(`/learning/courses/${id}/lessons`);
   };
 
   // --- LOADING ---
