@@ -156,13 +156,14 @@ export default function SellerCreateCourse() {
       {/* ── Top Bar ── */}
       <div className="border-b bg-white/90 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => navigate('/seller/courses')}
-            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors rounded-xl h-9 px-3 -ml-3"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Quay lại</span>
-          </button>
+          </Button>
           <h1 className="text-base font-bold text-slate-900">Tạo khóa học mới</h1>
           <div className="w-20" /> {/* spacer */}
         </div>

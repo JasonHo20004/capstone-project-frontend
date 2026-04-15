@@ -190,13 +190,14 @@ export default function LessonDetailPage() {
       {/* Header */}
       <div className="border-b bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => navigate(`/seller/courses/${courseId}`)}
-            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-4"
+            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors mb-4 rounded-xl h-9 px-3 -ml-3"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Quay lại {course?.title ?? 'khóa học'}</span>
-          </button>
+          </Button>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -652,10 +653,7 @@ export default function LessonDetailPage() {
         </Card>
 
         {/* Bottom nav */}
-        <div className="flex items-center justify-between pt-2 pb-8">
-          <Button variant="outline" className="rounded-xl" onClick={() => navigate(`/seller/courses/${courseId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại khóa học
-          </Button>
+        <div className="flex items-center justify-end pt-2 pb-8">
           {isDirty && (
             <Button className="rounded-xl px-6 shadow-sm" onClick={handleSave}>
               <Save className="w-4 h-4 mr-2" /> Lưu cập nhật

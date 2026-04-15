@@ -263,13 +263,14 @@ export default function SellerCourseDetail() {
       <div className="border-b bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="py-3">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => navigate('/seller/courses')}
-              className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+              className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors rounded-xl h-9 px-3 -ml-3"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Quay lại danh sách</span>
-            </button>
+            </Button>
           </div>
 
           <div className="pb-6 flex flex-col sm:flex-row items-start gap-5">
