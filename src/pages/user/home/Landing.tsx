@@ -87,13 +87,13 @@ export default function Landing() {
         <Hero />
 
         {/* Stats */}
-        <section id="about" className="py-16 bg-background scroll-mt-24">
+        <section id="about" className="py-16 bg-white scroll-mt-24 border-y border-slate-100">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100">
               {stats.map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-4xl md:text-5xl font-bold text-primary mb-2">{stat.value}</div>
-                  <div className="text-slate-500">{stat.label}</div>
+                <div key={i} className="text-center py-4 px-6">
+                  <div className="text-4xl md:text-5xl font-black text-slate-900 mb-1 tracking-tight">{stat.value}</div>
+                  <div className="text-sm text-slate-500 font-medium">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -135,20 +135,23 @@ export default function Landing() {
         </section>
 
         {/* Values - Giá trị cốt lõi */}
-        <section className="py-20 bg-white">
+        <section className="py-24 bg-slate-50">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4">
+                Giá trị
+              </span>
               <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">Giá trị cốt lõi</h2>
               <p className="text-lg text-slate-500">Những nguyên tắc định hướng mọi hoạt động của chúng tôi</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {values.map((value, i) => (
-                <div key={i} className="bg-card rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all border border-slate-200">
-                  <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center mb-6 shadow-md">
-                    <value.icon className="w-7 h-7 text-white" />
+                <div key={i} className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 hover:border-primary/20">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary transition-colors duration-300">
+                    <value.icon className="w-6 h-6 text-primary group-hover:text-white transition-colors duration-300" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 font-display">{value.title}</h3>
-                  <p className="text-slate-500 leading-relaxed">{value.description}</p>
+                  <h3 className="text-lg font-bold mb-2.5 font-display text-slate-900">{value.title}</h3>
+                  <p className="text-slate-500 leading-relaxed text-sm">{value.description}</p>
                 </div>
               ))}
             </div>
@@ -232,21 +235,28 @@ export default function Landing() {
         </section>
 
         {/* Team */}
-        <section className="py-20 bg-white">
+        <section className="py-24 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4">
+                Đội ngũ
+              </span>
               <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">Đội ngũ giảng viên</h2>
               <p className="text-lg text-slate-500">Học với các chuyên gia giàu kinh nghiệm</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {team.map((m, i) => (
-                <div key={i} className="group text-center">
-                  <div className="relative mb-6 overflow-hidden rounded-2xl">
-                    <img src={m.image} alt={m.name} className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div key={i} className="group cursor-default">
+                  <div className="relative mb-5 overflow-hidden rounded-2xl aspect-square shadow-sm">
+                    <img src={m.image} alt={m.name} className="w-full h-full object-cover group-hover:scale-107 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="text-white font-semibold text-sm font-display">{m.name}</p>
+                      <p className="text-white/70 text-xs mt-0.5">{m.role}</p>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-1 font-display">{m.name}</h3>
-                  <p className="text-slate-500">{m.role}</p>
+                  <h3 className="text-base font-semibold text-slate-900 font-display group-hover:text-primary transition-colors">{m.name}</h3>
+                  <p className="text-sm text-slate-500 mt-0.5">{m.role}</p>
                 </div>
               ))}
             </div>
@@ -254,16 +264,35 @@ export default function Landing() {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-primary">
-          <div className="container mx-auto px-4 text-center">
+        <section className="py-24 bg-slate-900 relative overflow-hidden">
+          {/* Dot-grid pattern */}
+          <div className="absolute inset-0 opacity-[0.04]">
+            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 1.5px 1.5px, white 1.5px, transparent 0)', backgroundSize: '28px 28px' }} />
+          </div>
+          {/* Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/20 rounded-full blur-[80px] pointer-events-none" />
+
+          <div className="container mx-auto px-4 text-center relative z-10">
             <div className="max-w-3xl mx-auto space-y-6">
-              <h2 className="text-4xl md:text-5xl font-bold text-white font-display">Tham gia cộng đồng đang phát triển của chúng tôi</h2>
-              <p className="text-xl text-white/70">Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành từ các chuyên gia</p>
-              <Link to="/#courses">
-                <Button size="lg" variant="secondary" className="shadow-lg shadow-primary/20 text-lg h-14 px-8">
-                  Khám phá khóa học <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-bold uppercase tracking-widest border border-white/15">
+                Bắt đầu miễn phí
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold text-white font-display leading-tight">
+                Tham gia cộng đồng<br />đang phát triển của chúng tôi
+              </h2>
+              <p className="text-lg text-white/60">Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành từ các chuyên gia</p>
+              <div className="flex items-center justify-center gap-4 flex-wrap pt-2">
+                <Link to="/#courses">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/30 text-base h-12 px-8 rounded-xl transition-all duration-200 hover:scale-[1.02]">
+                    Khám phá khóa học <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Link to="/login?register=1">
+                  <Button size="lg" variant="ghost" className="text-white border border-white/20 hover:bg-white/10 h-12 px-8 rounded-xl text-base">
+                    Đăng ký miễn phí
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
