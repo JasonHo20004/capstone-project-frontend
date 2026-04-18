@@ -107,7 +107,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
               {!hideAddToCart && !purchased && (
                 <Button
                   size="icon"
-                  variant="pingo"
+                  variant="default"
                   className="h-9 w-9 rounded-full p-0"
                   onClick={handleAddToCart}
                   disabled={addToCartMutation.isPending}

@@ -7,7 +7,6 @@ import { useCourses } from '@/hooks/api';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { StatPill } from '@/components/ui/stat-pill';
-import { Pingo, PingoBubble } from '@/components/pingo';
 
 const Index = () => {
   const reduce = useReducedMotion();
@@ -61,7 +60,7 @@ const Index = () => {
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link to="/courses">
-                    <Button variant="pingo" size="lg">
+                    <Button variant="default" size="lg">
                       Bắt đầu học
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
@@ -74,12 +73,6 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="relative hidden items-center justify-end md:flex">
-                <PingoBubble side="right" className="absolute right-32 top-6">
-                  Chào cậu! Sẵn sàng học chưa?
-                </PingoBubble>
-                <Pingo pose="wave" size={180} float />
-              </div>
             </div>
           </motion.div>
         </section>

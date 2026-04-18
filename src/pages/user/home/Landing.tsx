@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Search, Loader2, ChevronLeft, ChevronRight, Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Pingo } from '@/components/pingo';
 import { useGetCourses, useEnrolledCourses } from '@/hooks/api/use-courses';
 import { useUser } from '@/hooks/api/use-user';
 import type { Course } from "@/domain";
@@ -131,9 +130,6 @@ export default function Landing() {
                 </div>
                 <div aria-hidden className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
                 <div aria-hidden className="absolute -right-6 -top-6 h-40 w-40 rounded-full bg-secondary/25 blur-3xl" />
-                <div className="pointer-events-none absolute -bottom-6 -right-6 hidden md:block">
-                  <Pingo pose="point" size={120} />
-                </div>
               </motion.div>
             </div>
           </div>
@@ -269,11 +265,10 @@ export default function Landing() {
           <div aria-hidden className="absolute -left-32 bottom-0 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
           <div className="container relative z-10 mx-auto px-4 text-center">
             <div className="mx-auto flex max-w-3xl flex-col items-center gap-6">
-              <Pingo pose="cheer" size={120} float />
-              <h2 className="font-display text-4xl font-bold md:text-5xl">Tham gia cộng đồng đang phát triển của chúng tôi</h2>
+<h2 className="font-display text-4xl font-bold md:text-5xl">Tham gia cộng đồng đang phát triển của chúng tôi</h2>
               <p className="text-lg text-white/80 md:text-xl">Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành từ các chuyên gia</p>
               <Link to="/#courses">
-                <Button variant="pingo" size="xl">
+                <Button variant="default" size="xl">
                   Khám phá khóa học <ArrowRight className="ml-1 h-5 w-5" />
                 </Button>
               </Link>
