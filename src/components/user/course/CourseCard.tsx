@@ -1,32 +1,30 @@
 import { Link } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Star, User, ShoppingCart, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Course } from "@/domain";
 import { formatVND } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-// MỚI: Import Hooks
 import { useAddToCart } from '@/hooks/api/use-cart';
 import { useUser } from '@/hooks/api/use-user';
 import { toast } from 'sonner';
 
 interface CourseCardProps {
   course: Course;
-  hideAddToCart?: boolean; // Prop để ẩn nút thêm giỏ (ví dụ khóa đã mua)
-  purchased?: boolean;     // Prop để hiện badge "Đã mua"
+  hideAddToCart?: boolean;
+  purchased?: boolean;
 }
 
 const CourseCard = ({ course, hideAddToCart = false, purchased = false }: CourseCardProps) => {
   const { user } = useUser();
-  
-  // Hook thêm vào giỏ
+  const reduce = useReducedMotion();
   const addToCartMutation = useAddToCart();
-
-  // Xử lý logic lấy thông tin giảng viên
-  const instructor = course.user || course.courseSeller || {};
+  const instructor: { profilePicture?: string; fullName?: string } =
+    course.user || course.courseSeller || {};
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault(); // Ngăn chặn chuyển trang khi bấm nút
+    e.preventDefault();
     e.stopPropagation();
 
     if (!user) {
@@ -38,101 +36,94 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
   };
 
   return (
-    <Link to={`/courses/${course.id}`}>
-      <div className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-200 h-full flex flex-col relative">
-        
-        {/* Thumbnail Placeholder */}
-        <div >
-            
-            
-            {/* Badge Đã mua */}
-            {purchased && (
-              <div className="absolute top-3 right-3">
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200">
-                  Đã sở hữu
-                </Badge>
-              </div>
-            )}
-        </div>
+    <Link to={`/courses/${course.id}`} className="block h-full">
+      <motion.div
+        whileHover={reduce ? undefined : { y: -4, scale: 1.01 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface-lowest shadow-md ring-1 ring-border/10 transition-shadow duration-300 ease-soft hover:shadow-card-hover"
+      >
+        {purchased && (
+          <div className="absolute right-3 top-3 z-10">
+            <Badge className="rounded-full bg-secondary/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground ring-1 ring-secondary/30 hover:bg-secondary/15">
+              Đã sở hữu
+            </Badge>
+          </div>
+        )}
 
-        {/* Content */}
-        <div className="p-5 flex flex-col flex-1">
-          {/* Level badge */}
+        {/* Accent strip */}
+        <div className="relative h-2 bg-gradient-to-r from-primary via-primary-light to-secondary" />
+
+        <div className="flex flex-1 flex-col p-5">
           {course.courseLevel && (
             <div className="mb-2">
-              <Badge variant="outline" className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              <Badge
+                variant="outline"
+                className="rounded-full bg-primary/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary ring-1 ring-primary/20"
+              >
                 {course.courseLevel}
               </Badge>
             </div>
           )}
 
-          {/* Title */}
-          <h3 className="text-lg font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:text-primary transition-colors font-display">
+          <h3 className="mb-1 line-clamp-2 font-display text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
             {course.title}
           </h3>
 
-          {/* Description */}
-          <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1">
+          <p className="mb-4 line-clamp-2 flex-1 text-xs leading-relaxed text-muted-foreground">
             {course.description}
           </p>
 
-          {/* Instructor */}
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200">
+          <div className="mb-4 flex items-center gap-3 border-b border-border/15 pb-4">
             {instructor.profilePicture ? (
               <img
                 src={instructor.profilePicture}
                 alt={instructor.fullName}
-                className="w-8 h-8 rounded-full object-cover"
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-surface-low"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                 <User className="w-4 h-4 text-primary" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <User className="h-4 w-4 text-primary" />
               </div>
             )}
-            
-            <span className="text-xs font-medium text-slate-500">
+            <span className="text-xs font-medium text-muted-foreground">
               {instructor.fullName || 'Unknown Instructor'}
             </span>
           </div>
 
-          {/* Rating & Price & AddToCart */}
-          <div className="flex items-center justify-between mt-auto">
+          <div className="mt-auto flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span className="text-xs font-bold">
+              <Star className="h-4 w-4 fill-secondary text-secondary" />
+              <span className="text-xs font-bold text-foreground">
                 {course.averageRating != null ? course.averageRating.toFixed(1) : '0.0'}
               </span>
-              <span className="text-xs text-slate-400">
-                ({course.ratingCount ?? 0})
-              </span>
+              <span className="text-xs text-muted-foreground">({course.ratingCount ?? 0})</span>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-lg font-bold text-primary">
+              <span className="font-display text-lg font-bold text-primary">
                 {formatVND(Number(course.price))}
               </span>
 
-              {/* Nút Add to Cart */}
               {!hideAddToCart && !purchased && (
                 <Button
                   size="icon"
-                  variant="secondary"
-                  className="h-9 w-9 rounded-full shadow-sm hover:bg-primary hover:text-white transition-colors"
+                  variant="pingo"
+                  className="h-9 w-9 rounded-full p-0"
                   onClick={handleAddToCart}
                   disabled={addToCartMutation.isPending}
                   title="Thêm vào giỏ hàng"
                 >
                   {addToCartMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <ShoppingCart className="w-4 h-4" />
+                    <ShoppingCart className="h-4 w-4" />
                   )}
                 </Button>
               )}
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </Link>
   );
 };
