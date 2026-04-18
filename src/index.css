@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --primary-light: 211 100% 46%;      /* #0070eb — hover glow */
     --primary-dark: 214 100% 29%;       /* #004493 */
 
-    --secondary: 33 100% 50%;           /* #fe9400 — Pingo Orange */
+    --secondary: 33 100% 50%;           /* #fe9400 — accent orange */
     --secondary-foreground: 30 100% 19%;/* #633700 */
     --secondary-light: 32 100% 72%;     /* #ffb874 */
 
@@ -340,15 +340,6 @@ All colors MUST be HSL.
 .surface-high   { background-color: hsl(var(--surface-high)); }
 .surface-dim    { background-color: hsl(var(--surface-dim)); }
 
-/* Soft-shell button inner-glow (used by Pingo variant) */
-.soft-shell-glow::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 50% 0;
-  background: linear-gradient(180deg, hsl(0 0% 100% / 0.18), transparent);
-  border-radius: inherit;
-  pointer-events: none;
-}
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {

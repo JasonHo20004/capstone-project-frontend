@@ -13,8 +13,6 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground rounded-xl shadow-md hover:bg-primary-light hover:-translate-y-0.5 hover:shadow-accent",
         primary:
           "bg-primary text-primary-foreground rounded-xl shadow-md hover:bg-primary-light hover:-translate-y-0.5 hover:shadow-accent",
-        pingo:
-          "soft-shell-glow bg-secondary text-secondary-foreground rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-glow-orange",
         destructive:
           "bg-destructive text-destructive-foreground rounded-xl hover:bg-destructive/90",
         outline:
