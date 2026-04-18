@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Play, Star, Users, BookOpen, TrendingUp, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Pingo, PingoBubble } from "@/components/pingo";
 
 const STATS = [
   { value: "50K+", label: "Học viên" },
@@ -78,7 +77,7 @@ const Hero = () => {
           {/* CTAs */}
           <div className="flex flex-wrap gap-4 pt-2">
             <Link to="/#courses">
-              <Button variant="pingo" size="xl">
+              <Button variant="default" size="xl">
                 <BookOpen className="mr-1 h-5 w-5" />
                 Khám phá khóa học
               </Button>
@@ -146,15 +145,7 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Pingo peek — breaks bounding box (intentional asymmetry) */}
-          <div className="pointer-events-none absolute -right-6 -top-10 hidden items-start gap-2 md:flex">
-            <PingoBubble side="left" className="pointer-events-auto mt-6">
-              Sẵn sàng chưa? Mình sẽ đồng hành cùng bạn!
-            </PingoBubble>
-            <Pingo pose="wave" size={140} float />
-          </div>
-
-          {/* Decorative glows */}
+{/* Decorative glows */}
           <div aria-hidden className="pointer-events-none absolute -top-8 -right-8 h-36 w-36 rounded-full bg-secondary/30 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-8 -left-8 h-44 w-44 rounded-full bg-primary-light/25 blur-3xl" />
         </motion.div>
