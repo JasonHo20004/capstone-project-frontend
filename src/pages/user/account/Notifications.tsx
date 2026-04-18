@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Bell, Eye, Filter, Search, CheckCheck } from 'lucide-react';
+import { Bell, Eye, Filter, Search, CheckCheck, Sparkles } from 'lucide-react';
 import { useUser } from '@/hooks/api/use-user';
 import {
   useMarkAllNotificationsAsRead,
@@ -16,6 +16,7 @@ import {
   getNotificationTypeConfig,
   getNotificationLink,
 } from '@/components/user/layout/NotificationDropdown';
+import { useAIInsights, type AIInsight } from '@/hooks/use-ai-insights';
 
 const formatDate = (date: string) => {
   try {
@@ -33,11 +34,26 @@ const formatDate = (date: string) => {
 
 const TYPE_FILTER_OPTIONS: { key: string; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
+  { key: 'ai_insight', label: '✨ AI Insight' },
   { key: 'course_comment', label: '💬 Bình luận' },
   { key: 'comment_reply', label: '↩️ Trả lời' },
   { key: 'course_enrollment', label: '👤 Đăng ký' },
   { key: 'course_update', label: '🔄 Cập nhật' },
 ];
+
+const AI_ACTION_LABEL: Record<string, string> = {
+  SHOW_BANNER: 'AI Insight',
+  SUGGEST_COURSE: 'Course Recommendation',
+  UNLOCK_TIP: 'Study Tip',
+  SEND_REMINDER: 'Study Reminder',
+};
+
+const AI_ACTION_COLOR: Record<string, { bg: string; text: string }> = {
+  SHOW_BANNER: { bg: 'bg-blue-50', text: 'text-blue-600' },
+  SUGGEST_COURSE: { bg: 'bg-violet-50', text: 'text-violet-600' },
+  UNLOCK_TIP: { bg: 'bg-amber-50', text: 'text-amber-600' },
+  SEND_REMINDER: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+};
 
 export default function Notifications() {
   const { user } = useUser();
@@ -65,6 +81,8 @@ export default function Notifications() {
 
   useNotificationRealtime(userId);
 
+  const { insights: aiInsights, markRead: markAIRead, markAllRead: markAllAIRead } = useAIInsights();
+
   const computedNotifications = useMemo(() => {
     return notificationsForUser
       .filter((n) => {
@@ -86,8 +104,24 @@ export default function Notifications() {
   }, [notificationsForUser, search, typeFilter, statusFilter]);
 
   const unreadCount = useMemo(() => {
-    return notificationsForUser.reduce((acc, n) => acc + (n.isRead ? 0 : 1), 0);
-  }, [notificationsForUser]);
+    const regularUnread = notificationsForUser.reduce((acc, n) => acc + (n.isRead ? 0 : 1), 0);
+    const aiUnread = aiInsights.filter((i) => !i.isRead).length;
+    return regularUnread + aiUnread;
+  }, [notificationsForUser, aiInsights]);
+
+  const filteredAIInsights = useMemo<AIInsight[]>(() => {
+    if (typeFilter !== 'all' && typeFilter !== 'ai_insight') return [];
+    return aiInsights.filter((i) => {
+      const matchSearch = (i.message + ' ' + i.evidence)
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      const matchStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'unseen' && !i.isRead) ||
+        (statusFilter === 'seen' && i.isRead);
+      return matchSearch && matchStatus;
+    });
+  }, [aiInsights, typeFilter, search, statusFilter]);
 
   const handleNotificationClick = (n: InAppNotification) => {
     if (!n.isRead) {
@@ -126,7 +160,10 @@ export default function Notifications() {
             {unreadCount > 0 && (
               <Button
                 variant="secondary"
-                onClick={() => markAllReadMutation(undefined)}
+                onClick={() => {
+                  markAllReadMutation(undefined);
+                  markAllAIRead();
+                }}
               >
                 <CheckCheck className="w-4 h-4 mr-2" /> Đọc tất cả
               </Button>
@@ -213,7 +250,58 @@ export default function Notifications() {
           {/* Notification list */}
           <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-4">
             <div className="space-y-2">
-              {computedNotifications.length === 0 && (
+
+              {/* ── AI Insights section ── */}
+              {filteredAIInsights.map((insight) => {
+                const colors = AI_ACTION_COLOR[insight.actionType] ?? AI_ACTION_COLOR.SHOW_BANNER;
+                const label = AI_ACTION_LABEL[insight.actionType] ?? 'AI Insight';
+                return (
+                  <div
+                    key={insight.id}
+                    onClick={() => markAIRead(insight.id)}
+                    className={`border rounded-xl p-4 flex items-start gap-4 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                      insight.isRead
+                        ? 'bg-white border-slate-200'
+                        : 'bg-blue-50/50 border-blue-200/60'
+                    }`}
+                  >
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${colors.bg}`}>
+                      <Sparkles className={`h-5 w-5 ${colors.text}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className={`font-semibold text-base line-clamp-1 ${insight.isRead ? 'text-slate-700' : 'text-slate-900'}`}>
+                          {insight.message}
+                        </h3>
+                        {!insight.isRead && (
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500" />
+                        )}
+                      </div>
+                      {insight.evidence && (
+                        <p className="text-slate-500 text-sm line-clamp-2">{insight.evidence}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${colors.bg} ${colors.text}`}>
+                          {label}
+                        </span>
+                        <span className="text-xs text-slate-400">{formatDate(insight.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Divider between AI insights and regular notifications */}
+              {filteredAIInsights.length > 0 && typeFilter === 'all' && computedNotifications.length > 0 && (
+                <div className="flex items-center gap-3 py-1">
+                  <div className="flex-1 h-px bg-slate-100" />
+                  <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Thông báo hệ thống</span>
+                  <div className="flex-1 h-px bg-slate-100" />
+                </div>
+              )}
+
+              {/* Regular notifications — hidden when ai_insight filter is active */}
+              {typeFilter !== 'ai_insight' && computedNotifications.length === 0 && filteredAIInsights.length === 0 && (
                 <div className="border border-dashed border-slate-200 rounded-xl p-12 text-center">
                   <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
                     <Bell className="w-6 h-6 text-slate-300" />
@@ -227,7 +315,17 @@ export default function Notifications() {
                 </div>
               )}
 
-              {computedNotifications.map((n) => {
+              {typeFilter === 'ai_insight' && filteredAIInsights.length === 0 && (
+                <div className="border border-dashed border-slate-200 rounded-xl p-12 text-center">
+                  <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
+                    <Sparkles className="w-6 h-6 text-blue-300" />
+                  </div>
+                  <p className="text-slate-500 font-medium">Chưa có AI Insight nào</p>
+                  <p className="text-slate-400 text-sm mt-1">AI sẽ gửi gợi ý khi phân tích kết quả học tập của bạn</p>
+                </div>
+              )}
+
+              {typeFilter !== 'ai_insight' && computedNotifications.map((n) => {
                 const typeConfig = getNotificationTypeConfig(n.type);
                 const IconComponent = typeConfig.icon;
                 const link = getNotificationLink(n);

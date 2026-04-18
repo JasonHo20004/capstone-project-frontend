@@ -3,7 +3,7 @@
 // Appears at the top of the main content area when advisor has an action.
 // =============================================================================
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AdvisorAction } from "@/lib/api/services/user/advisor/advisor.service";
 
 interface AIAdvisorBannerProps {
@@ -12,6 +12,8 @@ interface AIAdvisorBannerProps {
   onCourseClick?: (courseId: string) => void;
 }
 
+const DISMISS_AFTER = 15; // seconds
+
 const ACTION_CONFIG = {
   SHOW_BANNER: {
     icon: "auto_awesome",
@@ -19,6 +21,7 @@ const ACTION_CONFIG = {
     border: "border-blue-400/30",
     iconBg: "bg-blue-500/20",
     iconColor: "text-blue-400",
+    barColor: "bg-blue-400",
     label: "AI Insight",
     labelColor: "text-blue-400",
   },
@@ -28,6 +31,7 @@ const ACTION_CONFIG = {
     border: "border-violet-400/30",
     iconBg: "bg-violet-500/20",
     iconColor: "text-violet-400",
+    barColor: "bg-violet-400",
     label: "Course Recommendation",
     labelColor: "text-violet-400",
   },
@@ -37,6 +41,7 @@ const ACTION_CONFIG = {
     border: "border-amber-400/30",
     iconBg: "bg-amber-500/20",
     iconColor: "text-amber-400",
+    barColor: "bg-amber-400",
     label: "Study Tip",
     labelColor: "text-amber-400",
   },
@@ -46,6 +51,7 @@ const ACTION_CONFIG = {
     border: "border-emerald-400/30",
     iconBg: "bg-emerald-500/20",
     iconColor: "text-emerald-400",
+    barColor: "bg-emerald-400",
     label: "Study Reminder",
     labelColor: "text-emerald-400",
   },
@@ -58,42 +64,52 @@ export function AIAdvisorBanner({
 }: AIAdvisorBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [remaining, setRemaining] = useState(DISMISS_AFTER);
+  const hoveredRef = useRef(false);
   const config = ACTION_CONFIG[action.type] ?? ACTION_CONFIG.SHOW_BANNER;
 
   // Mount animation
   useEffect(() => {
-    const t = requestAnimationFrame(() => setIsVisible(true));
-    return () => cancelAnimationFrame(t);
+    const raf = requestAnimationFrame(() => setIsVisible(true));
+    return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Auto-dismiss after 12 seconds for reminders, keep others until dismissed
+  // Countdown — ticks every second, paused while hovered
   useEffect(() => {
-    if (action.type === "SEND_REMINDER") {
-      const t = setTimeout(handleDismiss, 12_000);
-      return () => clearTimeout(t);
-    }
-  }, [action.type]);
+    const id = setInterval(() => {
+      if (hoveredRef.current) return;
+      setRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(id);
+          handleDismiss();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleDismiss() {
     setIsLeaving(true);
-    setTimeout(onDismiss, 350); // wait for exit animation
+    setTimeout(onDismiss, 350);
   }
+
+  const progressPct = (remaining / DISMISS_AFTER) * 100;
 
   return (
     <div
       role="alert"
       aria-live="polite"
+      onMouseEnter={() => { hoveredRef.current = true; }}
+      onMouseLeave={() => { hoveredRef.current = false; }}
       className={[
-        // Layout
-        "mx-4 mt-3 rounded-2xl border px-4 py-3",
-        // Glassmorphism
+        "mx-4 mt-3 rounded-2xl border overflow-hidden",
         `bg-gradient-to-r ${config.gradient} backdrop-blur-md`,
         config.border,
-        // Shadow
         "shadow-lg shadow-black/5",
-        // Transition
         "transition-all duration-350 ease-out",
-        // Mount / unmount animation
         isVisible && !isLeaving
           ? "opacity-100 translate-y-0"
           : "opacity-0 -translate-y-3 pointer-events-none",
@@ -101,7 +117,7 @@ export function AIAdvisorBanner({
         .filter(Boolean)
         .join(" ")}
     >
-      <div className="flex items-start gap-3">
+      <div className="px-4 py-3 flex items-start gap-3">
         {/* AI Icon */}
         <div
           className={`flex-shrink-0 size-9 rounded-xl ${config.iconBg} flex items-center justify-center`}
@@ -114,9 +130,7 @@ export function AIAdvisorBanner({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span
-              className={`text-[10px] font-bold uppercase tracking-widest ${config.labelColor}`}
-            >
+            <span className={`text-[10px] font-bold uppercase tracking-widest ${config.labelColor}`}>
               {config.label}
             </span>
             <span className="text-[10px] text-slate-400 font-medium">· AI Advisor</span>
@@ -124,7 +138,6 @@ export function AIAdvisorBanner({
 
           <p className="text-sm font-medium text-slate-800 leading-snug">{action.message}</p>
 
-          {/* Evidence pill */}
           {action.evidence && (
             <p className="text-xs text-slate-500 mt-1 leading-relaxed">
               <span className="material-symbols-outlined text-[12px] align-middle mr-0.5 text-slate-400">
@@ -134,7 +147,6 @@ export function AIAdvisorBanner({
             </p>
           )}
 
-          {/* CTA for course suggestion */}
           {action.type === "SUGGEST_COURSE" && action.courseId && onCourseClick && (
             <button
               type="button"
@@ -150,15 +162,26 @@ export function AIAdvisorBanner({
           )}
         </div>
 
-        {/* Dismiss */}
-        <button
-          type="button"
-          onClick={handleDismiss}
-          aria-label="Dismiss advisor tip"
-          className="flex-shrink-0 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100/60 transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">close</span>
-        </button>
+        {/* Dismiss + countdown */}
+        <div className="flex-shrink-0 flex flex-col items-end gap-1">
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="Dismiss advisor tip"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100/60 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+          <span className="text-[10px] text-slate-400 tabular-nums pr-1">{remaining}s</span>
+        </div>
+      </div>
+
+      {/* Countdown progress bar — depletes over 15 s, pauses on hover */}
+      <div className="h-0.5 bg-black/5 w-full">
+        <div
+          className={`h-full ${config.barColor} transition-[width] duration-1000 ease-linear`}
+          style={{ width: `${progressPct}%` }}
+        />
       </div>
     </div>
   );
