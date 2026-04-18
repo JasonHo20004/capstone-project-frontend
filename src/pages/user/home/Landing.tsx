@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
 import { BackToTopButton } from '@/components/user/layout/BackToTopButton';
@@ -7,11 +8,10 @@ import Hero from '@/components/user/home/Hero';
 import Features from '@/components/user/home/Features';
 import CourseCard from '@/components/user/course/CourseCard';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Loader2, ChevronLeft, ChevronRight, Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
+import { Pingo } from '@/components/pingo';
 import { useGetCourses, useEnrolledCourses } from '@/hooks/api/use-courses';
 import { useUser } from '@/hooks/api/use-user';
 import type { Course } from "@/domain";
@@ -41,6 +41,7 @@ const team = [
 
 export default function Landing() {
   const location = useLocation();
+  const reduce = useReducedMotion();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -55,10 +56,7 @@ export default function Landing() {
   const limit = 9;
   const { user } = useUser();
 
-  // Fetch enrolled courses from backend
   const { data: enrolledCourses = [], isLoading: isLoadingEnrolled } = useEnrolledCourses();
-
-  // Fetch all published courses
   const { data: availableRes, isLoading: isLoadingAvailable, isPlaceholderData } = useGetCourses({
     page,
     limit,
@@ -68,164 +66,173 @@ export default function Landing() {
     sortOrder: 'desc',
   });
 
-  // Build a set of enrolled course IDs
   const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c: Course) => c.id)), [enrolledCourses]);
-
   const myCourses = user ? enrolledCourses : [];
-  // Filter out enrolled courses from explore section
   const allCourses = availableRes?.data ?? [];
   const availableCourses = user ? allCourses.filter((c: Course) => !enrolledIds.has(c.id)) : allCourses;
   const pagination = availableRes ? { total: availableRes.total, page: availableRes.page, limit: availableRes.limit, totalPages: availableRes.totalPages } : undefined;
   const isLoading = (!!user && isLoadingEnrolled) || isLoadingAvailable;
 
+  const reveal = (i = 0) => ({
+    initial: reduce ? { opacity: 0 } : { opacity: 0, y: 16 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: '-80px' },
+    transition: { duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] as const },
+  });
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
 
       <main className="flex-grow">
-        {/* Hero */}
         <Hero />
 
         {/* Stats */}
-        <section id="about" className="py-16 bg-white scroll-mt-24 border-y border-slate-100">
+        <section id="about" className="scroll-mt-24 bg-surface-low py-20">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100">
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
               {stats.map((stat, i) => (
-                <div key={i} className="text-center py-4 px-6">
-                  <div className="text-4xl md:text-5xl font-black text-slate-900 mb-1 tracking-tight">{stat.value}</div>
-                  <div className="text-sm text-slate-500 font-medium">{stat.label}</div>
-                </div>
+                <motion.div
+                  key={stat.label}
+                  {...reveal(i)}
+                  className="rounded-2xl bg-surface-lowest p-6 text-center shadow-md ring-1 ring-border/10 transition-all duration-300 ease-soft hover:-translate-y-1 hover:shadow-card-hover"
+                >
+                  <div className="font-display text-4xl font-extrabold text-primary md:text-5xl">{stat.value}</div>
+                  <div className="mt-2 text-sm text-muted-foreground">{stat.label}</div>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Features - Dịch vụ hệ thống */}
         <Features />
 
-        {/* Story - Về SkillBoost */}
-        <section className="py-20 bg-slate-50">
+        {/* Story — editorial asymmetric split */}
+        <section className="bg-surface py-24">
           <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-4xl font-bold mb-6 font-display">Câu chuyện của chúng tôi</h2>
-                <div className="space-y-4 text-slate-500 leading-relaxed">
-                  <p>
-                    Được thành lập năm 2020, SkillBoost ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.
-                  </p>
-                  <p>
-                    Bắt đầu từ một đội ngũ nhỏ đầy nhiệt huyết, chúng tôi đã phát triển thành nền tảng toàn cầu phục vụ hàng nghìn học viên tại hơn 50 quốc gia. Cam kết về chất lượng và thành công của học viên luôn được giữ vững.
-                  </p>
-                  <p>
-                    Ngày nay, chúng tôi tiếp tục đổi mới và cải tiến khóa học để đảm bảo mỗi học viên nhận được trải nghiệm học tập tốt nhất.
-                  </p>
+            <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
+              <motion.div {...reveal()} className="space-y-5">
+                <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">
+                  Câu chuyện
+                </span>
+                <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">
+                  Sinh ra từ một tầm nhìn đơn giản <span className="text-secondary">nhưng mạnh mẽ</span>
+                </h2>
+                <div className="space-y-4 text-base leading-relaxed text-muted-foreground">
+                  <p>Được thành lập năm 2020, SkillBoost ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.</p>
+                  <p>Bắt đầu từ một đội ngũ nhỏ đầy nhiệt huyết, chúng tôi đã phát triển thành nền tảng toàn cầu phục vụ hàng nghìn học viên tại hơn 50 quốc gia.</p>
+                  <p>Ngày nay, chúng tôi tiếp tục đổi mới và cải tiến khóa học để đảm bảo mỗi học viên nhận được trải nghiệm học tập tốt nhất.</p>
                 </div>
-              </div>
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=600&fit=crop"
-                  alt="Câu chuyện SkillBoost"
-                  className="rounded-2xl shadow-lg w-full"
-                />
-                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-                <div className="absolute -top-6 -right-6 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
-              </div>
+              </motion.div>
+
+              <motion.div {...reveal(1)} className="relative">
+                <div className="overflow-hidden rounded-[2rem] shadow-lg ring-1 ring-border/10">
+                  <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=600&fit=crop" alt="Câu chuyện SkillBoost" className="w-full" />
+                </div>
+                <div aria-hidden className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
+                <div aria-hidden className="absolute -right-6 -top-6 h-40 w-40 rounded-full bg-secondary/25 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-6 -right-6 hidden md:block">
+                  <Pingo pose="point" size={120} />
+                </div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Values - Giá trị cốt lõi */}
-        <section className="py-24 bg-slate-50">
+        {/* Values */}
+        <section className="bg-surface-low py-24">
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4">
-                Giá trị
-              </span>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">Giá trị cốt lõi</h2>
-              <p className="text-lg text-slate-500">Những nguyên tắc định hướng mọi hoạt động của chúng tôi</p>
+            <div className="mx-auto mb-16 max-w-3xl text-center">
+              <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">Giá trị cốt lõi</h2>
+              <p className="mt-3 text-lg text-muted-foreground">Những nguyên tắc định hướng mọi hoạt động của chúng tôi</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {values.map((value, i) => (
-                <div key={i} className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 hover:border-primary/20">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary transition-colors duration-300">
-                    <value.icon className="w-6 h-6 text-primary group-hover:text-white transition-colors duration-300" />
+                <motion.div
+                  key={value.title}
+                  {...reveal(i)}
+                  whileHover={reduce ? undefined : { y: -4 }}
+                  className="group rounded-2xl bg-surface-lowest p-7 shadow-md ring-1 ring-border/10 transition-shadow duration-300 ease-soft hover:shadow-card-hover"
+                >
+                  <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-accent transition-transform duration-300 group-hover:rotate-[-6deg]">
+                    <value.icon className="h-7 w-7" />
                   </div>
-                  <h3 className="text-lg font-bold mb-2.5 font-display text-slate-900">{value.title}</h3>
-                  <p className="text-slate-500 leading-relaxed text-sm">{value.description}</p>
-                </div>
+                  <h3 className="font-display text-xl font-bold">{value.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">{value.description}</p>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
         {/* Course Catalog */}
-        <section id="courses" className="py-20 bg-slate-50 scroll-mt-24">
+        <section id="courses" className="scroll-mt-24 bg-surface py-24">
           <div className="container mx-auto px-4">
-            <div className="relative rounded-3xl overflow-hidden bg-slate-900 text-white p-8 md:p-12 min-h-[200px] flex items-center mb-10">
-              <div className="absolute inset-0 opacity-35">
-                <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&q=80" alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/85 to-transparent" />
+            <motion.div {...reveal()} className="relative mb-10 flex min-h-[200px] items-center overflow-hidden rounded-3xl bg-hero-gradient p-8 text-white md:p-12">
+              <div aria-hidden className="absolute inset-0 opacity-30">
+                <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&q=80" alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-dark via-primary/80 to-transparent" />
               </div>
               <div className="relative z-10 max-w-2xl">
-                <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-full text-primary-light text-xs font-bold uppercase tracking-widest">Explore</span>
-                <h2 className="text-3xl md:text-4xl font-black mt-4 tracking-tight">Khám phá khoá học</h2>
-                <p className="text-slate-200 mt-2">Duyệt danh sách khoá học, lọc theo trình độ và tìm nội dung phù hợp.</p>
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white backdrop-blur-glass ring-1 ring-white/20">Explore</span>
+                <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight md:text-5xl">Khám phá khoá học</h2>
+                <p className="mt-3 text-white/85">Duyệt danh sách khoá học, lọc theo trình độ và tìm nội dung phù hợp.</p>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-5 flex flex-col md:flex-row gap-4 md:items-center md:justify-between mb-8">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input placeholder="Tìm khóa học, kỹ năng hoặc giảng viên..." className="pl-10 border-slate-200 bg-slate-50" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }} />
+            <div className="mb-8 flex flex-col gap-4 rounded-2xl bg-surface-lowest p-5 shadow-md ring-1 ring-border/10 md:flex-row md:items-center md:justify-between">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Tìm khóa học, kỹ năng hoặc giảng viên..." className="pl-10" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }} />
               </div>
               <div className="flex items-center gap-3">
                 <Select value={selectedLevel} onValueChange={(v) => { setSelectedLevel(v); setPage(1); }}>
-                  <SelectTrigger className="w-[160px] bg-white"><SelectValue placeholder="Trình độ" /></SelectTrigger>
+                  <SelectTrigger className="w-[160px] rounded-xl"><SelectValue placeholder="Trình độ" /></SelectTrigger>
                   <SelectContent>
                     {levels.map((l) => <SelectItem key={l} value={l}>{l === 'all' ? 'Tất cả' : l}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <span className="text-sm text-slate-500 whitespace-nowrap">{pagination?.total ?? 0} kết quả</span>
+                <span className="whitespace-nowrap text-sm text-muted-foreground">{pagination?.total ?? 0} kết quả</span>
               </div>
             </div>
 
             {isLoading ? (
-              <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>
+              <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
             ) : (
               <>
                 {user && myCourses.length > 0 && (
                   <div className="mb-14">
-                    <h3 className="text-xl font-bold text-slate-900 mb-4">Khóa học của bạn</h3>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <h3 className="mb-4 font-display text-xl font-bold">Khóa học của bạn</h3>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {myCourses.slice(0, 4).map((c) => <CourseCard key={c.id} course={c} purchased hideAddToCart />)}
                     </div>
-                    <Link to="/dashboard" className="inline-flex items-center gap-2 mt-4 text-primary font-medium hover:underline">
-                      Xem tất cả <ArrowRight className="w-4 h-4" />
+                    <Link to="/dashboard" className="mt-4 inline-flex items-center gap-2 font-medium text-primary hover:underline">
+                      Xem tất cả <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
                 )}
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">{user ? 'Khám phá thêm' : 'Danh sách khóa học'}</h3>
+                  <h3 className="mb-4 font-display text-xl font-bold">{user ? 'Khám phá thêm' : 'Danh sách khóa học'}</h3>
                   {availableCourses.length > 0 ? (
                     <>
-                      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {availableCourses.map((c) => <CourseCard key={c.id} course={c} />)}
                       </div>
                       {pagination && pagination.totalPages > 1 && (
-                        <div className="flex justify-center items-center gap-4 mt-8">
+                        <div className="mt-10 flex items-center justify-center gap-4">
                           <Button variant="outline" onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1}>
-                            <ChevronLeft className="w-4 h-4 mr-2" /> Trước
+                            <ChevronLeft className="mr-2 h-4 w-4" /> Trước
                           </Button>
                           <span className="text-sm font-medium">Trang {page} / {pagination.totalPages}</span>
                           <Button variant="outline" onClick={() => !isPlaceholderData && page < pagination.totalPages && setPage((p) => p + 1)} disabled={isPlaceholderData || page >= pagination.totalPages}>
-                            Sau <ChevronRight className="w-4 h-4 ml-2" />
+                            Sau <ChevronRight className="ml-2 h-4 w-4" />
                           </Button>
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="text-center py-20 bg-slate-100 rounded-xl border border-dashed border-slate-200">
-                      <p className="text-slate-500">Không tìm thấy khóa học nào phù hợp.</p>
+                    <div className="rounded-2xl bg-surface-low py-20 text-center ring-1 ring-border/10">
+                      <p className="text-muted-foreground">Không tìm thấy khóa học nào phù hợp.</p>
                     </div>
                   )}
                 </div>
@@ -235,64 +242,41 @@ export default function Landing() {
         </section>
 
         {/* Team */}
-        <section className="py-24 bg-white">
+        <section className="bg-surface-low py-24">
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4">
-                Đội ngũ
-              </span>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">Đội ngũ giảng viên</h2>
-              <p className="text-lg text-slate-500">Học với các chuyên gia giàu kinh nghiệm</p>
+            <div className="mx-auto mb-16 max-w-3xl text-center">
+              <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">Đội ngũ giảng viên</h2>
+              <p className="mt-3 text-lg text-muted-foreground">Học với các chuyên gia giàu kinh nghiệm</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
               {team.map((m, i) => (
-                <div key={i} className="group cursor-default">
-                  <div className="relative mb-5 overflow-hidden rounded-2xl aspect-square shadow-sm">
-                    <img src={m.image} alt={m.name} className="w-full h-full object-cover group-hover:scale-107 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <p className="text-white font-semibold text-sm font-display">{m.name}</p>
-                      <p className="text-white/70 text-xs mt-0.5">{m.role}</p>
-                    </div>
+                <motion.div key={m.name} {...reveal(i)} className="group text-center">
+                  <div className="relative mb-6 overflow-hidden rounded-2xl ring-1 ring-border/10">
+                    <img src={m.image} alt={m.name} className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900 font-display group-hover:text-primary transition-colors">{m.name}</h3>
-                  <p className="text-sm text-slate-500 mt-0.5">{m.role}</p>
-                </div>
+                  <h3 className="font-display text-xl font-bold">{m.name}</h3>
+                  <p className="mt-1 text-muted-foreground">{m.role}</p>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-slate-900 relative overflow-hidden">
-          {/* Dot-grid pattern */}
-          <div className="absolute inset-0 opacity-[0.04]">
-            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 1.5px 1.5px, white 1.5px, transparent 0)', backgroundSize: '28px 28px' }} />
-          </div>
-          {/* Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/20 rounded-full blur-[80px] pointer-events-none" />
-
-          <div className="container mx-auto px-4 text-center relative z-10">
-            <div className="max-w-3xl mx-auto space-y-6">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-bold uppercase tracking-widest border border-white/15">
-                Bắt đầu miễn phí
-              </span>
-              <h2 className="text-4xl md:text-5xl font-bold text-white font-display leading-tight">
-                Tham gia cộng đồng<br />đang phát triển của chúng tôi
-              </h2>
-              <p className="text-lg text-white/60">Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành từ các chuyên gia</p>
-              <div className="flex items-center justify-center gap-4 flex-wrap pt-2">
-                <Link to="/#courses">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/30 text-base h-12 px-8 rounded-xl transition-all duration-200 hover:scale-[1.02]">
-                    Khám phá khóa học <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link to="/login?register=1">
-                  <Button size="lg" variant="ghost" className="text-white border border-white/20 hover:bg-white/10 h-12 px-8 rounded-xl text-base">
-                    Đăng ký miễn phí
-                  </Button>
-                </Link>
-              </div>
+        <section className="relative overflow-hidden bg-hero-gradient py-24 text-white">
+          <div aria-hidden className="absolute -right-32 top-10 h-80 w-80 rounded-full bg-secondary/40 blur-3xl" />
+          <div aria-hidden className="absolute -left-32 bottom-0 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+          <div className="container relative z-10 mx-auto px-4 text-center">
+            <div className="mx-auto flex max-w-3xl flex-col items-center gap-6">
+              <Pingo pose="cheer" size={120} float />
+              <h2 className="font-display text-4xl font-bold md:text-5xl">Tham gia cộng đồng đang phát triển của chúng tôi</h2>
+              <p className="text-lg text-white/80 md:text-xl">Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành từ các chuyên gia</p>
+              <Link to="/#courses">
+                <Button variant="pingo" size="xl">
+                  Khám phá khóa học <ArrowRight className="ml-1 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
