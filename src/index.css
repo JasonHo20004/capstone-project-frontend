@@ -8,53 +8,71 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 240 13% 97%;
-    --foreground: 222 47% 11%;
+    /* ===== Penguin Guided E-Learning — Editorial Learning Architecture =====
+       Palette derived from Stitch design system. Surface-container scale
+       replaces hard borders; orange is a precision tool for primary CTAs. */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --background: 210 20% 98%;          /* #f7f9fb — surface */
+    --foreground: 200 8% 11%;           /* #191c1e — on-surface (never pure black) */
+
+    --card: 0 0% 100%;                  /* surface-container-lowest */
+    --card-foreground: 200 8% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 200 8% 11%;
 
-    --primary: 230 89% 50%;
+    --primary: 212 100% 37%;            /* #0058bc */
     --primary-foreground: 0 0% 100%;
-    --primary-light: 230 89% 60%;
-    --primary-dark: 230 85% 39%;
+    --primary-light: 211 100% 46%;      /* #0070eb — hover glow */
+    --primary-dark: 214 100% 29%;       /* #004493 */
 
-    --secondary: 215 16% 47%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-light: 215 16% 57%;
+    --secondary: 33 100% 50%;           /* #fe9400 — Pingo Orange */
+    --secondary-foreground: 30 100% 19%;/* #633700 */
+    --secondary-light: 32 100% 72%;     /* #ffb874 */
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 14% 96%;               /* surface-container-low */
+    --muted-foreground: 222 14% 30%;    /* #414755 on-surface-variant */
 
-    --accent: 230 89% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 33 100% 50%;              /* orange accent (sparingly) */
+    --accent-foreground: 30 100% 19%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 73% 42%;           /* #ba1a1a */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 230 89% 50%;
+    /* Ghost borders — use at ~15% opacity via /15 in Tailwind */
+    --border: 225 23% 80%;              /* #c1c6d7 outline-variant */
+    --input: 210 4% 89%;                /* surface-container-highest for field bg */
+    --ring: 212 100% 37%;               /* focus — primary */
 
-    --radius: 0.75rem;
+    --radius: 1rem;                     /* cards — 16px */
+    --radius-xl: 1.5rem;                /* buttons — soft-shell 24px */
+
+    /* Surface container tonal scale */
+    --surface: 210 20% 98%;             /* #f7f9fb */
+    --surface-lowest: 0 0% 100%;        /* #ffffff */
+    --surface-low: 210 14% 96%;         /* #f2f4f6 */
+    --surface-container: 210 8% 93%;    /* #eceef0 */
+    --surface-high: 210 6% 91%;         /* #e6e8ea */
+    --surface-highest: 210 4% 89%;      /* #e0e3e5 */
+    --surface-dim: 210 3% 85%;          /* #d8dadc — footer ground */
 
     /* Custom gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(230 89% 50%), hsl(230 85% 39%));
-    --gradient-secondary: linear-gradient(135deg, hsl(230 89% 50%), hsl(245 58% 51%));
-    --gradient-hero: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(230 50% 18%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(212 100% 37%), hsl(211 100% 46%));
+    --gradient-secondary: linear-gradient(135deg, hsl(33 100% 50%), hsl(32 100% 72%));
+    --gradient-hero: linear-gradient(135deg, hsl(212 100% 37%) 0%, hsl(211 100% 46%) 100%);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 3px hsl(222 47% 11% / 0.06), 0 1px 2px hsl(222 47% 11% / 0.04);
-    --shadow-md: 0 4px 6px hsl(222 47% 11% / 0.07), 0 2px 4px hsl(222 47% 11% / 0.04);
-    --shadow-lg: 0 10px 25px hsl(222 47% 11% / 0.1), 0 4px 10px hsl(222 47% 11% / 0.05);
-    --shadow-accent: 0 8px 24px hsl(230 89% 50% / 0.2);
+    /* Shadows — ambient tonal lifts, not directional drop shadows */
+    --shadow-sm: 0 2px 8px hsl(200 8% 11% / 0.04);
+    --shadow-md: 0 8px 24px hsl(200 8% 11% / 0.06);
+    --shadow-lg: 0 20px 40px hsl(200 8% 11% / 0.06);
+    --shadow-accent: 0 12px 32px hsl(212 100% 37% / 0.18);
+    --shadow-card-hover: 0 16px 40px hsl(212 100% 37% / 0.14);
+    --shadow-glow-orange: 0 10px 28px hsl(33 100% 50% / 0.28);
 
-    /* Transitions */
-    --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Motion */
+    --transition-base: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-smooth: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .dark {
@@ -277,6 +295,68 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: "Manrope", "Inter", system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: "Plus Jakarta Sans", "Lexend", sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ===== Editorial Learning Architecture — helpers ===== */
+
+/* Glassmorphic surfaces (nav, tip bubbles) */
+.glass {
+  background: hsl(var(--surface-lowest) / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--surface-lowest) / 0.5);
+}
+
+.glass-dark {
+  background: hsl(var(--foreground) / 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+}
+
+/* Ghost border (feel it, don't see it) */
+.ghost-border {
+  border: 1px solid hsl(var(--border) / 0.15);
+}
+
+/* Hero gradient at 135deg — "liquid" depth */
+.bg-hero-gradient {
+  background: var(--gradient-hero);
+}
+
+/* Tonal layering helpers */
+.surface-lowest { background-color: hsl(var(--surface-lowest)); }
+.surface-low    { background-color: hsl(var(--surface-low)); }
+.surface-container { background-color: hsl(var(--surface-container)); }
+.surface-high   { background-color: hsl(var(--surface-high)); }
+.surface-dim    { background-color: hsl(var(--surface-dim)); }
+
+/* Soft-shell button inner-glow (used by Pingo variant) */
+.soft-shell-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.18), transparent);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
