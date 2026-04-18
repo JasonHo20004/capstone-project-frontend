@@ -16,7 +16,6 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react';
-import { Pingo } from '@/components/pingo';
 
 export default function MyCourses() {
   const { items, isLoading, count } = usePurchases();
@@ -161,9 +160,8 @@ export default function MyCourses() {
         <section className="overflow-hidden rounded-2xl bg-surface-lowest shadow-md ring-1 ring-border/10">
           <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
             <div className="relative mb-8">
-              <Pingo pose="think" size={140} float />
-              <div className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-secondary/20 ring-2 ring-surface-lowest">
-                <Sparkles className="h-4 w-4 text-secondary" />
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/10">
+                <BookOpen className="h-12 w-12 text-primary/60" />
               </div>
             </div>
 
@@ -173,7 +171,7 @@ export default function MyCourses() {
             </p>
 
             <Link to="/courses">
-              <Button variant="pingo" size="lg">
+              <Button variant="default" size="lg">
                 <Sparkles className="mr-1 h-4 w-4" />
                 Khám phá khóa học
                 <ArrowRight className="ml-1 h-4 w-4" />

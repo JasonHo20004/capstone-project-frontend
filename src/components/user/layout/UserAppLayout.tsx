@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/api/use-auth";
 import { useUser } from "@/hooks/api/use-user";
@@ -6,6 +6,7 @@ import { NotificationDropdown } from "./NotificationDropdown";
 import { CartDropdown } from "./CartDropdown";
 import { AIAdvisorBanner } from "./AIAdvisorBanner";
 import { useAIAdvisor } from "@/hooks/use-ai-advisor";
+import { useAIInsights } from "@/hooks/use-ai-insights";
 
 type NavItem = {
   name: string;
@@ -44,6 +45,12 @@ export default function UserAppLayout() {
     userId: user?.id,
     enabled: !!user?.id,
   });
+
+  // Persist every incoming AI action so the Notifications page can display history
+  const { add: saveInsight } = useAIInsights();
+  useEffect(() => {
+    if (activeAction) saveInsight(activeAction);
+  }, [activeAction, saveInsight]);
 
   const handleCourseClick = useCallback((courseId: string) => {
     navigate(`/courses/${courseId}`);

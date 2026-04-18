@@ -11,11 +11,12 @@ interface MiniQuizQuestion {
   question: string;
   type: string;
   options?: string[];
+  pairs?: Array<{ left: string; right: string }>;
   correctIndex?: number;
   correctAnswer?: string;
   skill: string;
   tag: string;
-  listenText?: string; // TTS text for listening questions
+  listenText?: string;
 }
 
 interface MiniQuizDialogProps {
@@ -98,6 +99,140 @@ function TTSPlayer({ text }: { text: string }) {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Pair Match Question (Word Linking / Sentence Matching) ─────────────────────
+
+function PairMatchQuestion({
+  pairs,
+  value,
+  onChange,
+}: {
+  pairs: Array<{ left: string; right: string }>;
+  value: string | undefined;
+  onChange: (encoded: string) => void;
+}) {
+  const parseMatched = (v: string | undefined): Record<number, number> => {
+    if (!v) return {};
+    return Object.fromEntries(
+      v.split(",").filter(Boolean).map((p) => {
+        const [l, r] = p.split(":").map(Number);
+        return [l, r] as [number, number];
+      })
+    );
+  };
+
+  const [matched, setMatched] = useState<Record<number, number>>(() => parseMatched(value));
+  const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
+
+  // Deterministic shuffle: rotate right items by ceil(n/2) so answer isn't trivially visible
+  const shuffledRight = pairs.map((_, i) => (i + Math.ceil(pairs.length / 2)) % pairs.length);
+
+  const emit = (next: Record<number, number>) => {
+    setMatched(next);
+    const encoded = Object.entries(next).map(([l, r]) => `${l}:${r}`).join(",");
+    onChange(encoded);
+  };
+
+  const handleLeftClick = (idx: number) => {
+    if (matched[idx] !== undefined) {
+      const next = { ...matched };
+      delete next[idx];
+      emit(next);
+      setSelectedLeft(null);
+    } else {
+      setSelectedLeft((prev) => (prev === idx ? null : idx));
+    }
+  };
+
+  const handleRightClick = (pos: number) => {
+    if (selectedLeft === null) return;
+    const origIdx = shuffledRight[pos];
+    const next = { ...matched };
+    Object.keys(next).forEach((k) => {
+      if (next[Number(k)] === origIdx) delete next[Number(k)];
+    });
+    next[selectedLeft] = origIdx;
+    emit(next);
+    setSelectedLeft(null);
+  };
+
+  const matchedRightSet = new Set(Object.values(matched));
+  const matchCount = Object.keys(matched).length;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        {/* Left column — Terms */}
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Terms</p>
+          {pairs.map((pair, idx) => {
+            const isMatched = matched[idx] !== undefined;
+            const isSelected = selectedLeft === idx;
+            return (
+              <button
+                key={idx}
+                onClick={() => handleLeftClick(idx)}
+                className={`w-full text-left p-3 rounded-xl border-2 text-sm transition-all duration-200 ${
+                  isMatched
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-800 font-medium"
+                    : isSelected
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-800 font-semibold shadow-md"
+                    : "border-slate-200 hover:border-slate-300 text-slate-700"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      isMatched
+                        ? "border-emerald-400 bg-emerald-400 text-white"
+                        : isSelected
+                        ? "border-indigo-500 bg-indigo-500 text-white"
+                        : "border-slate-300 text-slate-400"
+                    }`}
+                  >
+                    {isMatched ? "✓" : String.fromCharCode(65 + idx)}
+                  </div>
+                  <span className="leading-snug">{pair.left}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right column — Matches (shuffled) */}
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Matches</p>
+          {shuffledRight.map((origIdx, pos) => {
+            const isMatched = matchedRightSet.has(origIdx);
+            return (
+              <button
+                key={origIdx}
+                onClick={() => handleRightClick(pos)}
+                className={`w-full text-left p-3 rounded-xl border-2 text-sm transition-all duration-200 ${
+                  isMatched
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-800"
+                    : selectedLeft !== null
+                    ? "border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 text-slate-700 cursor-pointer"
+                    : "border-slate-200 text-slate-500"
+                }`}
+              >
+                {pairs[origIdx].right}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="text-xs text-center text-slate-500">
+        {matchCount === pairs.length
+          ? `✅ All ${pairs.length} pairs matched!`
+          : selectedLeft !== null
+          ? "👆 Now tap the matching item on the right"
+          : `${matchCount}/${pairs.length} matched — tap a term on the left to start`}
+      </p>
     </div>
   );
 }
@@ -340,7 +475,7 @@ export default function MiniQuizDialog({
               )}
 
               {/* Gap fill (text input) */}
-              {currentQuestion.type === "GAP_FILL" && !currentQuestion.options && (
+              {currentQuestion.type === "GAP_FILL" && !currentQuestion.options && !currentQuestion.pairs && (
                 <input
                   type="text"
                   placeholder="Type your answer..."
@@ -349,6 +484,20 @@ export default function MiniQuizDialog({
                   className="w-full p-4 border-2 border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none transition-colors"
                 />
               )}
+
+              {/* Word linking / Sentence matching */}
+              {(currentQuestion.type === "WORD_LINKING" || currentQuestion.type === "SENTENCE_MATCHING") &&
+                currentQuestion.pairs &&
+                currentQuestion.pairs.length > 0 && (
+                  <PairMatchQuestion
+                    key={currentIndex}
+                    pairs={currentQuestion.pairs}
+                    value={answers[currentIndex] as string | undefined}
+                    onChange={(encoded) =>
+                      setAnswers((prev) => ({ ...prev, [currentIndex]: encoded }))
+                    }
+                  />
+                )}
 
               {/* Navigation */}
               <div className="flex items-center justify-between mt-8">

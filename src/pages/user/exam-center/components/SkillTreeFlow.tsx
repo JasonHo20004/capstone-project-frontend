@@ -55,20 +55,77 @@ export const NODE_THEME: Record<string, {
   practice: { bg: "#a78bfa", bgDark: "#7c3aed", border: "#c4b5fd", glow: "rgba(167,139,250,0.4)", icon: "✏️", ring: "#c4b5fd" },
 };
 
-// ─── Winding S-Curve Layout ─────────────────────────────────────────────────────
+// ─── Tree-Based Layout ──────────────────────────────────────────────────────────
+// Main path stays centered; remedial branches expand horizontally left/right.
 
-function computeLayout(nodeCount: number) {
-  const positions: Array<{ x: number; y: number }> = [];
-  const GAP = 130;
-  const CX = 220;
-  const AMP = 70;
+// H_GAP: horizontal distance between adjacent leaf-node centres
+const H_GAP = 180;
+const ROW_HEIGHT = 160;
+const START_Y = 80;
+const EDGE_PAD = 80;
 
-  for (let i = 0; i < nodeCount; i++) {
-    const x = CX + Math.sin((i * Math.PI) / 2) * AMP;
-    const y = 70 + i * GAP;
-    positions.push({ x, y });
+/**
+ * Recursive subtree-width layout (Reingold-Tilford style).
+ * Every node is centred over its subtree, so siblings always get
+ * distinct x coordinates regardless of node type.
+ */
+function computeTreeLayout(
+  nodes: Array<{ id: string; type: string }>,
+  edges: Array<{ source: string; target: string }>
+): Map<string, { x: number; y: number }> {
+  const posMap = new Map<string, { x: number; y: number }>();
+  if (nodes.length === 0) return posMap;
+
+  const childrenOf = new Map<string, string[]>();
+  const parentOf = new Map<string, string>();
+  nodes.forEach((n) => childrenOf.set(n.id, []));
+  edges.forEach((e) => {
+    childrenOf.get(e.source)?.push(e.target);
+    parentOf.set(e.target, e.source);
+  });
+
+  const root = nodes.find((n) => !parentOf.has(n.id)) ?? nodes[0];
+
+  // Memoised leaf-count for each subtree
+  const widthOf = new Map<string, number>();
+  function subtreeWidth(id: string): number {
+    if (widthOf.has(id)) return widthOf.get(id)!;
+    const children = childrenOf.get(id) ?? [];
+    const w = children.length === 0 ? 1 : children.reduce((s, c) => s + subtreeWidth(c), 0);
+    widthOf.set(id, w);
+    return w;
   }
-  return positions;
+
+  // Each node is centred over its full subtree span
+  const placed = new Set<string>();
+  function place(id: string, depth: number, centerX: number) {
+    if (placed.has(id)) return;
+    placed.add(id);
+    posMap.set(id, { x: centerX, y: START_Y + depth * ROW_HEIGHT });
+    const children = childrenOf.get(id) ?? [];
+    if (children.length === 0) return;
+    const total = children.reduce((s, c) => s + subtreeWidth(c), 0);
+    let left = centerX - (total * H_GAP) / 2;
+    for (const cid of children) {
+      const w = subtreeWidth(cid);
+      place(cid, depth + 1, left + (w * H_GAP) / 2);
+      left += w * H_GAP;
+    }
+  }
+
+  place(root.id, 0, 0);
+
+  // Fallback for nodes not reachable from root
+  nodes.forEach((n, i) => {
+    if (!posMap.has(n.id)) posMap.set(n.id, { x: 0, y: START_Y + i * ROW_HEIGHT });
+  });
+
+  // Shift so leftmost node is at EDGE_PAD
+  const minX = Math.min(...[...posMap.values()].map((p) => p.x));
+  const shift = EDGE_PAD - minX;
+  if (shift !== 0) posMap.forEach((p, id) => posMap.set(id, { x: p.x + shift, y: p.y }));
+
+  return posMap;
 }
 
 // ─── Curved SVG path ────────────────────────────────────────────────────────────
@@ -197,13 +254,13 @@ const NODE_R = NODE_SIZE / 2;
 export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNodeClick }: SkillTreeFlowProps) {
   injectStyles();
 
-  const positions = useMemo(() => computeLayout(rawNodes.length), [rawNodes.length]);
+  const posMap = useMemo(() => computeTreeLayout(rawNodes, rawEdges), [rawNodes, rawEdges]);
 
   const layoutNodes = useMemo(
     () =>
       rawNodes.map((node, i) => ({
         ...node,
-        pos: positions[i] || { x: 220, y: 70 + i * 130 },
+        pos: posMap.get(node.id) || { x: CENTER_X, y: START_Y + i * ROW_HEIGHT },
         theme: NODE_THEME[node.type] || NODE_THEME.lesson,
         data: {
           label: node.label,
@@ -214,15 +271,20 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
           description: node.description || "",
         } as SkillTreeNodeData,
       })),
-    [rawNodes, positions]
+    [rawNodes, posMap]
   );
 
   const nodeMap = useMemo(() => new Map(layoutNodes.map((n) => [n.id, n])), [layoutNodes]);
 
-  const canvasH = useMemo(
-    () => Math.max(600, rawNodes.length * 130 + 140),
-    [rawNodes.length]
-  );
+  const { canvasW, canvasH } = useMemo(() => {
+    if (layoutNodes.length === 0) return { canvasW: 440, canvasH: 600 };
+    const xs = layoutNodes.map((n) => n.pos.x);
+    const ys = layoutNodes.map((n) => n.pos.y);
+    return {
+      canvasW: Math.max(440, Math.max(...xs) + 70 + EDGE_PAD),
+      canvasH: Math.max(600, Math.max(...ys) + 140),
+    };
+  }, [layoutNodes]);
 
   const handleClick = (node: typeof layoutNodes[0]) => {
     if (onNodeClick && node.data.status !== "locked") {
@@ -230,15 +292,17 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
     }
   };
 
+  const rootX = layoutNodes[0]?.pos.x ?? canvasW / 2;
+
   return (
-    <div className="w-full">
-      <div className="relative mx-auto" style={{ width: 440, height: canvasH }}>
+    <div className="w-full overflow-x-auto">
+      <div className="relative mx-auto" style={{ width: canvasW, height: canvasH }}>
 
         {/* ── SVG Layer: trails ── */}
-        <svg className="absolute inset-0 pointer-events-none" width={440} height={canvasH}>
-          {/* Ambient vertical line */}
+        <svg className="absolute inset-0 pointer-events-none" width={canvasW} height={canvasH}>
+          {/* Ambient vertical line along main path */}
           <line
-            x1={220} y1={0} x2={220} y2={canvasH}
+            x1={rootX} y1={0} x2={rootX} y2={canvasH}
             stroke="#1e293b"
             strokeWidth={1}
             strokeDasharray="4 8"
@@ -270,9 +334,6 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
           const isCompleted = data.status === "completed";
           const isLocked = data.status === "locked";
           const isNew = data.status === "new";
-
-          // Determine which side label goes
-          const isRight = Math.sin((idx * Math.PI) / 2) >= 0;
 
           return (
             <div key={node.id}>
@@ -363,19 +424,17 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                 </span>
               </div>
 
-              {/* ── Label ── */}
+              {/* ── Label (centred below the node circle) ── */}
               <div
-                className={`absolute pointer-events-none transition-opacity duration-300`}
+                className="absolute pointer-events-none transition-opacity duration-300 text-center"
                 style={{
-                  top: pos.y - 10,
-                  ...(isRight
-                    ? { left: pos.x + NODE_R + 20 }
-                    : { right: 440 - pos.x + NODE_R + 20 }),
-                  maxWidth: 140,
+                  top: pos.y + NODE_R + 6,
+                  left: pos.x - 70,
+                  width: 140,
                   opacity: isLocked ? 0.25 : 0.95,
                 }}
               >
-                <p className="text-[13px] font-bold text-white leading-tight drop-shadow-sm">
+                <p className="text-[12px] font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
                   {data.label}
                 </p>
                 {isNew && (
