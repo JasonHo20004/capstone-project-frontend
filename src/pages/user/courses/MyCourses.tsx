@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import CourseCard from '@/components/user/course/CourseCard';
 import { usePurchases } from '@/context/PurchasesContext';
 import { Button } from '@/components/ui/button';
@@ -15,9 +16,11 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react';
+import { Pingo } from '@/components/pingo';
 
 export default function MyCourses() {
   const { items, isLoading, count } = usePurchases();
+  const reduce = useReducedMotion();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -27,114 +30,126 @@ export default function MyCourses() {
     return items.filter(
       ({ course }) =>
         course.title.toLowerCase().includes(q) ||
-        course.description?.toLowerCase().includes(q)
+        course.description?.toLowerCase().includes(q),
     );
   }, [items, searchQuery]);
 
-  // Stats
   const totalCourses = count;
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
+      <div className="flex flex-col items-center justify-center gap-4 py-32">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-        <p className="text-slate-500 font-medium">Đang tải khóa học của bạn...</p>
+        <p className="font-medium text-muted-foreground">Đang tải khóa học của bạn...</p>
       </div>
     );
   }
 
+  const reveal = (i = 0) => ({
+    initial: reduce ? { opacity: 0 } : { opacity: 0, y: 14 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: '-60px' },
+    transition: { duration: 0.45, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] as const },
+  });
+
   return (
     <div className="space-y-6">
       {/* Hero Header */}
-      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 md:p-10">
-        <div className="absolute inset-0 opacity-[0.07]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: '24px 24px'
-          }} />
-        </div>
-        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-500/10 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/4" />
+      <motion.section
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="relative overflow-hidden rounded-3xl bg-hero-gradient p-8 text-white md:p-10"
+      >
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+        <div aria-hidden className="absolute -right-16 top-0 h-80 w-80 rounded-full bg-secondary/30 blur-3xl" />
+        <div aria-hidden className="absolute -left-16 bottom-0 h-60 w-60 rounded-full bg-primary-light/40 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center backdrop-blur-sm border border-primary/20">
-                <GraduationCap className="w-5 h-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-glass ring-1 ring-white/20">
+                <GraduationCap className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xs font-bold text-primary uppercase tracking-widest">Thư viện học tập</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-secondary-light">
+                Thư viện học tập
+              </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">
               Khóa học của bạn
             </h1>
-            <p className="text-slate-400 text-sm max-w-md leading-relaxed">
+            <p className="max-w-md text-sm leading-relaxed text-white/80">
               Quản lý, theo dõi tiến độ và tiếp tục hành trình học tập của bạn tại đây.
             </p>
           </div>
 
-          {/* Stats Cards */}
           <div className="flex gap-3">
-            <div className="bg-white/[0.08] backdrop-blur-md border border-white/[0.1] rounded-xl px-5 py-4 min-w-[120px]">
-              <div className="flex items-center gap-2 mb-1">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <span className="text-xs text-slate-400 font-medium">Đã sở hữu</span>
+            <div className="glass min-w-[120px] rounded-xl px-5 py-4">
+              <div className="mb-1 flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">Đã sở hữu</span>
               </div>
-              <p className="text-2xl font-black text-white">{totalCourses}</p>
+              <p className="font-display text-2xl font-extrabold text-foreground">{totalCourses}</p>
             </div>
-            <div className="bg-white/[0.08] backdrop-blur-md border border-white/[0.1] rounded-xl px-5 py-4 min-w-[120px]">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs text-slate-400 font-medium">Trạng thái</span>
+            <div className="glass min-w-[120px] rounded-xl px-5 py-4">
+              <div className="mb-1 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-secondary" />
+                <span className="text-xs font-medium text-muted-foreground">Trạng thái</span>
               </div>
-              <p className="text-sm font-bold text-emerald-400 mt-1">
+              <p className="mt-1 text-sm font-bold text-secondary-foreground">
                 {totalCourses > 0 ? 'Đang học' : 'Chưa bắt đầu'}
               </p>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Action Bar */}
       {totalCourses > 0 && (
-        <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div className="flex-1 relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <section className="flex flex-col gap-3 rounded-2xl bg-surface-lowest p-4 shadow-md ring-1 ring-border/10 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative max-w-md flex-1">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Tìm kiếm trong khóa học của bạn..."
-              className="pl-10 bg-slate-50 border-slate-200 h-10"
+              className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-muted-foreground">
               {filteredItems.length} / {totalCourses} khóa học
             </span>
-            <div className="h-5 w-px bg-slate-200" />
-            <div className="flex bg-slate-100 rounded-lg p-0.5">
+            <div className="h-5 w-px bg-border/30" />
+            <div className="flex rounded-xl bg-surface-container p-0.5">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-all ${
+                className={`rounded-lg p-1.5 transition-all duration-200 ease-soft ${
                   viewMode === 'grid'
-                    ? 'bg-white shadow-sm text-primary'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'bg-surface-lowest text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-all ${
+                className={`rounded-lg p-1.5 transition-all duration-200 ease-soft ${
                   viewMode === 'list'
-                    ? 'bg-white shadow-sm text-primary'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'bg-surface-lowest text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <List className="w-4 h-4" />
+                <List className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -143,94 +158,77 @@ export default function MyCourses() {
 
       {/* Content */}
       {totalCourses === 0 ? (
-        /* === EMPTY STATE === */
-        <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-            {/* Animated Icon */}
+        <section className="overflow-hidden rounded-2xl bg-surface-lowest shadow-md ring-1 ring-border/10">
+          <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
             <div className="relative mb-8">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-blue-50 flex items-center justify-center border border-primary/10">
-                <BookOpen className="w-10 h-10 text-primary/60" />
-              </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center border-2 border-white shadow-sm">
-                <Sparkles className="w-4 h-4 text-amber-500" />
+              <Pingo pose="think" size={140} float />
+              <div className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-secondary/20 ring-2 ring-surface-lowest">
+                <Sparkles className="h-4 w-4 text-secondary" />
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">
-              Bắt đầu hành trình học tập
-            </h2>
-            <p className="text-slate-500 text-sm max-w-sm mb-8 leading-relaxed">
-              Bạn chưa sở hữu khóa học nào. Khám phá kho khóa học chất lượng và
-              bắt đầu chinh phục mục tiêu của bạn ngay hôm nay!
+            <h2 className="mb-2 font-display text-2xl font-bold">Bắt đầu hành trình học tập</h2>
+            <p className="mb-8 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Bạn chưa sở hữu khóa học nào. Khám phá kho khóa học chất lượng và bắt đầu chinh phục mục tiêu của bạn ngay hôm nay!
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/courses">
-                <Button
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 rounded-xl px-8 h-12 font-bold"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Khám phá khóa học
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
+            <Link to="/courses">
+              <Button variant="pingo" size="lg">
+                <Sparkles className="mr-1 h-4 w-4" />
+                Khám phá khóa học
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
 
-            {/* Feature hints */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12 max-w-2xl w-full">
+            <div className="mt-12 grid w-full max-w-2xl grid-cols-1 gap-4 sm:grid-cols-3">
               {[
                 { icon: BookOpen, title: 'Học mọi lúc', desc: 'Truy cập 24/7 trên mọi thiết bị' },
                 { icon: TrendingUp, title: 'Theo dõi tiến độ', desc: 'Biểu đồ học tập chi tiết' },
                 { icon: GraduationCap, title: 'Chứng chỉ', desc: 'Nhận chứng chỉ khi hoàn thành' },
-              ].map((feature) => (
-                <div
+              ].map((feature, i) => (
+                <motion.div
                   key={feature.title}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 border border-slate-100"
+                  {...reveal(i)}
+                  className="flex flex-col items-center gap-2 rounded-xl bg-surface-low p-4 ring-1 ring-border/10"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm border border-slate-100">
-                    <feature.icon className="w-4 h-4 text-primary" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-lowest shadow-sm">
+                    <feature.icon className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700">{feature.title}</span>
-                  <span className="text-xs text-slate-400">{feature.desc}</span>
-                </div>
+                  <span className="text-sm font-semibold text-foreground">{feature.title}</span>
+                  <span className="text-xs text-muted-foreground">{feature.desc}</span>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
       ) : filteredItems.length === 0 ? (
-        /* === NO SEARCH RESULTS === */
-        <section className="bg-white rounded-2xl border border-slate-200 p-6">
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-              <Search className="w-7 h-7 text-slate-400" />
+        <section className="rounded-2xl bg-surface-lowest p-6 shadow-md ring-1 ring-border/10">
+          <div className="py-16 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-container">
+              <Search className="h-7 w-7 text-muted-foreground" />
             </div>
-            <p className="text-lg font-semibold text-slate-700 mb-1">
-              Không tìm thấy kết quả
-            </p>
-            <p className="text-sm text-slate-400">
+            <p className="mb-1 font-display text-lg font-semibold">Không tìm thấy kết quả</p>
+            <p className="text-sm text-muted-foreground">
               Thử tìm với từ khóa khác hoặc{' '}
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-primary font-medium hover:underline"
-              >
+              <button onClick={() => setSearchQuery('')} className="font-medium text-primary hover:underline">
                 xóa bộ lọc
               </button>
             </p>
           </div>
         </section>
       ) : (
-        /* === COURSE GRID/LIST === */
-        <section className="bg-white rounded-2xl border border-slate-200 p-6">
+        <section className="rounded-2xl bg-surface-lowest p-6 shadow-md ring-1 ring-border/10">
           <div
             className={
               viewMode === 'grid'
-                ? 'grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5'
+                ? 'grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
                 : 'flex flex-col gap-4'
             }
           >
-            {filteredItems.map(({ id, course }) => (
-              <CourseCard key={id} course={course} hideAddToCart purchased />
+            {filteredItems.map(({ id, course }, i) => (
+              <motion.div key={id} {...reveal(i)}>
+                <CourseCard course={course} hideAddToCart purchased />
+              </motion.div>
             ))}
           </div>
         </section>

@@ -100,14 +100,19 @@ const StudentLearningPage = () => {
       <Navbar />
 
       <main className="pt-20 pb-12">
-        <section className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 py-10 text-primary-foreground">
-          <div className="container mx-auto px-4">
+        <section className="relative overflow-hidden bg-hero-gradient py-12 text-white">
+          <div aria-hidden className="absolute -right-20 top-0 h-72 w-72 rounded-full bg-secondary/25 blur-3xl" />
+          <div aria-hidden className="absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-primary-light/35 blur-3xl" />
+          <div className="container relative z-10 mx-auto px-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h1 className="font-display text-3xl font-bold md:text-4xl">
+                <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-secondary-light backdrop-blur-glass ring-1 ring-white/15">
+                  Học tập
+                </span>
+                <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
                   Phòng học trực tuyến
                 </h1>
-                <p className="mt-2 text-white/70">
+                <p className="mt-2 text-white/80">
                   Xem video, trao đổi và đánh giá khóa học bạn đã đăng ký.
                 </p>
               </div>
@@ -115,9 +120,9 @@ const StudentLearningPage = () => {
                 <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                   <DrawerTrigger asChild>
                     <Button
-                      variant="secondary"
+                      variant="glass"
                       size="sm"
-                      className="inline-flex items-center gap-2 rounded-full bg-white/10 text-white"
+                      className="inline-flex items-center gap-2 rounded-full text-white hover:text-foreground"
                     >
                       <Menu className="h-4 w-4" />
                       Bài học
