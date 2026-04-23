@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import ExamPreviewModal from '@/components/ExamPreviewModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ import {
   Link2 as LinkIcon,
 } from 'lucide-react';
 import apiClient from '@/lib/api/config';
+import { ragService } from '@/lib/api/services/rag.service';
+import type { GeneratedQuestion } from '@/lib/api/services/rag.service';
 
 type SkillType = 'READING' | 'LISTENING' | 'WRITING' | 'SPEAKING';
 type QuestionType = 'MULTIPLE_CHOICE' | 'MULTIPLE_CHOICE_MULTI_ANSWER' | 'GAP_FILL' | 'SHORT_ANSWER' | 'TRUE_FALSE_NOT_GIVEN' | 'YES_NO_NOT_GIVEN' | 'MATCHING';
@@ -79,12 +82,18 @@ const STEPS = [
 const QUESTION_TYPES: { label: string; value: QuestionType; desc: string }[] = [
   { label: 'Trắc nghiệm (MCQ)', value: 'MULTIPLE_CHOICE', desc: 'Chọn 1 đáp án đúng' },
   { label: 'Trắc nghiệm nhiều đáp án', value: 'MULTIPLE_CHOICE_MULTI_ANSWER', desc: 'Chọn nhiều đáp án đúng' },
-  { label: 'Điền vào chỗ trống', value: 'GAP_FILL', desc: 'Điền từ/cụm từ' },
+  { label: 'Điền vào chỗ trống (Gap Fill)', value: 'GAP_FILL', desc: 'Summary Completion / Sentence Completion' },
   { label: 'Trả lời ngắn', value: 'SHORT_ANSWER', desc: 'Trả lời ngắn gọn' },
   { label: 'True / False / Not Given', value: 'TRUE_FALSE_NOT_GIVEN', desc: 'Đúng / Sai / Không có thông tin' },
   { label: 'Yes / No / Not Given', value: 'YES_NO_NOT_GIVEN', desc: 'Có / Không / Không có thông tin' },
-  { label: 'Nối (Matching)', value: 'MATCHING', desc: 'Nối thông tin tương ứng' },
+  { label: 'Nối (Matching)', value: 'MATCHING', desc: 'Matching Headings / Information' },
 ];
+
+/** Parse {{N}} placeholders from summary text */
+const parseGapPlaceholders = (text: string): number[] => {
+  const matches = text.match(/\{\{(\d+)\}\}/g) || [];
+  return matches.map(m => parseInt(m.replace(/[{}]/g, '')));
+};
 
 const emptyQuestion = (order: number): QuestionData => ({
   questionText: '',
@@ -112,6 +121,7 @@ export default function ExamFormPage() {
   const isEditing = !!editId;
 
   const [step, setStep] = useState(1);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<SkillType | ''>('');
   const [uploading, setUploading] = useState(false);
   const [uploadingSectionIdx, setUploadingSectionIdx] = useState<number | null>(null);
@@ -121,6 +131,13 @@ export default function ExamFormPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [loadingEdit, setLoadingEdit] = useState(!!editId);
 
+  // ── AI Question Generation State ─────────────────────────────────────────
+  const [aiGenerating, setAiGenerating] = useState<number | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiNumQuestions, setAiNumQuestions] = useState(10);
+  const [aiDifficulty, setAiDifficulty] = useState('intermediate');
+  const [aiTypes, setAiTypes] = useState(['MULTIPLE_CHOICE', 'TRUE_FALSE_NOT_GIVEN', 'GAP_FILL']);
+  const [showAiConfig, setShowAiConfig] = useState<number | null>(null);
   const [form, setForm] = useState<TestFormData>({
     title: '',
     durationInMinutes: 60,
@@ -282,6 +299,54 @@ export default function ExamFormPage() {
     finally { setUploading(false); setUploadingSectionIdx(null); }
   };
 
+  // ── AI Question Generation Handler ──────────────────────────────────────
+  const handleAiGenerate = async (sIdx: number) => {
+    const passage = form.sections[sIdx]?.passageContent;
+    if (!passage || passage.length < 50) {
+      setAiError('Passage quá ngắn. Vui lòng nhập đoạn văn ở Step 2 trước (tối thiểu 50 ký tự).');
+      return;
+    }
+    setAiGenerating(sIdx);
+    setAiError(null);
+    try {
+      const resp = await ragService.generateReadingQuestions({
+        passage,
+        question_types: aiTypes,
+        num_questions: aiNumQuestions,
+        difficulty: aiDifficulty,
+      });
+      if (resp.success && resp.questions.length > 0) {
+        const existingCount = form.sections[sIdx].questions.length;
+        const newQuestions: QuestionData[] = resp.questions.map((q, i) => ({
+          questionText: q.questionText,
+          questionType: (q.questionType as QuestionType) || 'MULTIPLE_CHOICE',
+          options: q.options || [],
+          content: q.content || {},
+          answer: q.answer || {},
+          explanation: q.explanation || '',
+          questionOrder: existingCount + i + 1,
+          imageUrl: '',
+        }));
+        setForm(prev => {
+          const sections = [...prev.sections];
+          sections[sIdx] = {
+            ...sections[sIdx],
+            questions: [...sections[sIdx].questions, ...newQuestions],
+          };
+          return { ...prev, sections };
+        });
+        setShowAiConfig(null);
+      } else {
+        setAiError('AI không tạo được câu hỏi. Vui lòng thử lại.');
+      }
+    } catch (err: any) {
+      console.error('AI Generate error:', err);
+      setAiError(err?.response?.data?.detail || err?.message || 'Lỗi kết nối tới AI service. Kiểm tra Colab tunnel.');
+    } finally {
+      setAiGenerating(null);
+    }
+  };
+
   const handleImageUpload = async (file: File) => {
     if (!imageUploadTarget) return;
     setUploadingImage(true);
@@ -332,7 +397,22 @@ export default function ExamFormPage() {
           } else if (q.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER') {
             item.content = { options: q.options.filter(Boolean), text: q.questionText };
             item.answer = { correctIndices: (q.answer as any)?.correctIndices || [] };
-          } else if (q.questionType === 'GAP_FILL' || q.questionType === 'SHORT_ANSWER') {
+          } else if (q.questionType === 'GAP_FILL') {
+            // Summary Completion: content has summaryText + instruction
+            // answer is multi-gap format: { "1": ["ans1"], "2": ["ans2"] }
+            const summaryText = (q.content as any)?.summaryText || '';
+            const instruction = (q.content as any)?.instruction || '';
+            const gapAnswers = (q.answer as any)?.gaps || {};
+            if (summaryText && Object.keys(gapAnswers).length > 0) {
+              // Multi-gap Summary Completion
+              item.content = { text: q.questionText, summaryText, instruction };
+              item.answer = gapAnswers; // { "9": ["Ridgeway"], "10": ["manuscript"] }
+            } else {
+              // Single gap (legacy / simple fill-in)
+              item.content = { text: q.questionText };
+              item.answer = { text: [(q.answer as any)?.text?.[0] || ''] };
+            }
+          } else if (q.questionType === 'SHORT_ANSWER') {
             item.content = { text: q.questionText };
             item.answer = { text: [(q.answer as any)?.text?.[0] || ''] };
           } else if (q.questionType === 'TRUE_FALSE_NOT_GIVEN') {
@@ -342,8 +422,10 @@ export default function ExamFormPage() {
             item.content = { text: q.questionText };
             item.answer = { correctAnswer: (q.answer as any)?.correctAnswer || 'YES' };
           } else if (q.questionType === 'MATCHING') {
-            item.content = { text: q.questionText, options: q.options.filter(Boolean) };
-            item.answer = { text: [(q.answer as any)?.text?.[0] || ''] };
+            // Matching: options are the headings/items to match from
+            // answer is the correct option letter/text per question
+            item.content = { text: q.questionText, options: q.options.filter(Boolean), instruction: (q.content as any)?.instruction || '' };
+            item.answer = { correctOption: (q.answer as any)?.correctOption || (q.answer as any)?.text?.[0] || '' };
           }
           return item;
         }),
@@ -391,6 +473,10 @@ export default function ExamFormPage() {
               onClick={() => setForm(prev => ({ ...prev, status: prev.status === 'DRAFT' ? 'PUBLISHED' : 'DRAFT' }))}>
               {form.status === 'PUBLISHED' ? '● Đã xuất bản' : '○ Bản nháp'}
             </Badge>
+            <Button variant="outline" onClick={() => setPreviewOpen(true)} className="gap-2" disabled={form.sections.every(s => s.questions.length === 0)}>
+              <BookOpen className="h-4 w-4" />
+              Preview
+            </Button>
             <Button onClick={handleSubmit} disabled={isSaving || !form.title} className="gap-2">
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isEditing ? 'Lưu' : 'Tạo bài thi'}
@@ -651,6 +737,24 @@ export default function ExamFormPage() {
                             )}
                           </div>
                         )}
+
+                        {/* Transcript / script */}
+                        <div className="mt-4">
+                          <div className="flex items-center justify-between mb-1">
+                            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                              Transcript (script audio)
+                            </Label>
+                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                              Tuỳ chọn — dùng cho AI Tutor giải thích
+                            </span>
+                          </div>
+                          <Textarea
+                            className="mt-1 min-h-[140px] font-serif leading-relaxed text-sm"
+                            placeholder="Dán nội dung transcript / script audio vào đây để AI Tutor có thể cite cụ thể câu trong audio khi giải thích cho học sinh..."
+                            value={section.passageContent}
+                            onChange={(e) => updateSection(sIdx, 'passageContent', e.target.value)}
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div>
@@ -731,10 +835,87 @@ export default function ExamFormPage() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => addQuestion(sIdx)} className="gap-1.5 h-8">
-                    <Plus className="h-3.5 w-3.5" /> Thêm câu
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setShowAiConfig(showAiConfig === sIdx ? null : sIdx)}
+                      disabled={aiGenerating !== null}
+                      className="gap-1.5 h-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300">
+                      {aiGenerating === sIdx ? (
+                        <><Loader2 className="h-3.5 w-3.5 animate-spin" /> AI đang tạo...</>
+                      ) : (
+                        <><span className="text-base">🤖</span> AI Tạo câu hỏi</>
+                      )}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => addQuestion(sIdx)} className="gap-1.5 h-8">
+                      <Plus className="h-3.5 w-3.5" /> Thêm câu
+                    </Button>
+                  </div>
                 </div>
+
+                {/* AI Config Panel */}
+                {showAiConfig === sIdx && (
+                  <div className="px-5 py-4 border-b bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-lg">🤖</span>
+                      <h4 className="font-semibold text-sm text-indigo-800 dark:text-indigo-300">AI Tự động tạo câu hỏi từ Passage</h4>
+                    </div>
+                    {!form.sections[sIdx]?.passageContent && (
+                      <div className="mb-3 px-3 py-2 bg-amber-100 border border-amber-200 rounded-lg text-xs text-amber-800">
+                        ⚠️ Vui lòng nhập nội dung passage ở Step 2 trước khi dùng AI.
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Số câu hỏi</Label>
+                        <Input type="number" min={1} max={40} value={aiNumQuestions}
+                          onChange={(e) => setAiNumQuestions(Number(e.target.value))}
+                          className="mt-1 h-8" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Độ khó</Label>
+                        <Select value={aiDifficulty} onValueChange={setAiDifficulty}>
+                          <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="easy">Dễ (Band 4-5)</SelectItem>
+                            <SelectItem value="intermediate">Trung bình (Band 5-6.5)</SelectItem>
+                            <SelectItem value="hard">Khó (Band 7+)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Loại câu</Label>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {['MULTIPLE_CHOICE', 'TRUE_FALSE_NOT_GIVEN', 'GAP_FILL', 'MATCHING', 'SHORT_ANSWER'].map(t => (
+                            <button key={t}
+                              onClick={() => setAiTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                aiTypes.includes(t)
+                                  ? 'bg-indigo-600 text-white'
+                                  : 'bg-white border text-muted-foreground hover:border-indigo-300'
+                              }`}>
+                              {t.replace(/_/g, ' ').slice(0, 12)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    {aiError && (
+                      <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+                        ❌ {aiError}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" className="gap-1.5 bg-indigo-600 hover:bg-indigo-700"
+                        disabled={aiGenerating !== null || !form.sections[sIdx]?.passageContent}
+                        onClick={() => handleAiGenerate(sIdx)}>
+                        {aiGenerating === sIdx
+                          ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang tạo... (có thể mất 30-60s)</>
+                          : <><span className="text-sm">✨</span> Tạo {aiNumQuestions} câu hỏi</>
+                        }
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setShowAiConfig(null)}>Hủy</Button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Questions inside section */}
                 <div className="p-4 space-y-3">
@@ -807,10 +988,18 @@ export default function ExamFormPage() {
                                   </SelectContent>
                                 </Select>
                               )}
-                              {(q.questionType === 'GAP_FILL' || q.questionType === 'MATCHING' || q.questionType === 'SHORT_ANSWER') && (
+                              {q.questionType === 'SHORT_ANSWER' && (
                                 <Input className="mt-1" placeholder="Nhập đáp án đúng"
                                   value={(q.answer as any)?.text?.[0] || ''}
                                   onChange={(e) => updateQuestion(sIdx, qIdx, 'answer', { text: [e.target.value] })} />
+                              )}
+                              {q.questionType === 'MATCHING' && (
+                                <Input className="mt-1" placeholder="Đáp án (VD: A, B, C)"
+                                  value={(q.answer as any)?.correctOption || (q.answer as any)?.text?.[0] || ''}
+                                  onChange={(e) => updateQuestion(sIdx, qIdx, 'answer', { correctOption: e.target.value })} />
+                              )}
+                              {q.questionType === 'GAP_FILL' && (
+                                <p className="mt-1 text-xs text-muted-foreground italic">Thiết lập đáp án trong Summary Builder bên dưới ↓</p>
                               )}
                               {(q.questionType === 'MULTIPLE_CHOICE' || q.questionType === 'MULTIPLE_CHOICE_MULTI_ANSWER') && (
                                 <p className="mt-2 text-xs text-muted-foreground italic">Chọn đáp án đúng bên dưới ↓</p>
@@ -871,6 +1060,116 @@ export default function ExamFormPage() {
                             </div>
                           )}
 
+                          {/* ── GAP_FILL: Summary Builder ── */}
+                          {q.questionType === 'GAP_FILL' && (
+                            <div className="space-y-3 pt-2 border-t">
+                              <div>
+                                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[14px]">description</span>
+                                  Hướng dẫn (Instructions)
+                                </Label>
+                                <Input className="mt-1" placeholder="VD: Complete the summary below. Choose ONE WORD ONLY from the passage."
+                                  value={(q.content as any)?.instruction || ''}
+                                  onChange={(e) => updateQuestion(sIdx, qIdx, 'content', { ...q.content, instruction: e.target.value })} />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[14px]">article</span>
+                                  Summary Text
+                                  <Badge variant="outline" className="text-[10px] ml-1">Dùng {'{{N}}'} cho chỗ trống</Badge>
+                                </Label>
+                                <Textarea className="mt-1 min-h-[120px] font-serif text-sm leading-relaxed"
+                                  placeholder={`VD: The Uffington White Horse is located near an ancient road known as the {{9}} ...... Dating shows the first reference appears in {{10}} ......`}
+                                  value={(q.content as any)?.summaryText || ''}
+                                  onChange={(e) => {
+                                    updateQuestion(sIdx, qIdx, 'content', { ...q.content, summaryText: e.target.value });
+                                  }} />
+                              </div>
+                              {/* Auto-detected gaps with answer inputs */}
+                              {(() => {
+                                const gaps = parseGapPlaceholders((q.content as any)?.summaryText || '');
+                                if (gaps.length === 0) return (
+                                  <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                                    💡 Nhập <code className="bg-muted px-1 rounded">{'{{9}}'}</code>, <code className="bg-muted px-1 rounded">{'{{10}}'}</code>... trong Summary Text để tạo chỗ trống
+                                  </p>
+                                );
+                                const gapAnswers = (q.answer as any)?.gaps || {};
+                                return (
+                                  <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">Đáp án cho {gaps.length} chỗ trống</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {gaps.map(gapNum => (
+                                        <div key={gapNum} className="flex items-center gap-2">
+                                          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 rounded-md px-2 py-1 shrink-0 w-10 text-center">{gapNum}</span>
+                                          <Input className="h-8 text-sm" placeholder={`Đáp án cho gap ${gapNum}`}
+                                            value={gapAnswers[gapNum]?.[0] || ''}
+                                            onChange={(e) => {
+                                              const updated = { ...gapAnswers, [gapNum]: [e.target.value] };
+                                              updateQuestion(sIdx, qIdx, 'answer', { ...q.answer, gaps: updated });
+                                            }} />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
+
+                          {/* ── MATCHING: Headings/Options list ── */}
+                          {q.questionType === 'MATCHING' && (
+                            <div className="space-y-3 pt-2 border-t">
+                              <div>
+                                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[14px]">description</span>
+                                  Hướng dẫn
+                                </Label>
+                                <Input className="mt-1" placeholder="VD: Match each paragraph with the correct heading."
+                                  value={(q.content as any)?.instruction || ''}
+                                  onChange={(e) => updateQuestion(sIdx, qIdx, 'content', { ...q.content, instruction: e.target.value })} />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Danh sách lựa chọn (Headings)</Label>
+                                <div className="space-y-1.5 mt-1">
+                                  {q.options.map((opt, optIdx) => (
+                                    <div key={optIdx} className="flex items-center gap-2">
+                                      <span className="text-xs font-bold text-muted-foreground w-5">{String.fromCharCode(65 + optIdx)}.</span>
+                                      <Input className="h-8 text-sm" placeholder={`Heading ${String.fromCharCode(65 + optIdx)}`}
+                                        value={opt}
+                                        onChange={(e) => updateOption(sIdx, qIdx, optIdx, e.target.value)} />
+                                      {q.options.length > 2 && (
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0"
+                                          onClick={() => {
+                                            setForm(prev => {
+                                              const sections = [...prev.sections];
+                                              const qs = [...sections[sIdx].questions];
+                                              qs[qIdx] = { ...qs[qIdx], options: qs[qIdx].options.filter((_, i) => i !== optIdx) };
+                                              sections[sIdx] = { ...sections[sIdx], questions: qs };
+                                              return { ...prev, sections };
+                                            });
+                                          }}>
+                                          <X className="h-3 w-3 text-muted-foreground" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  ))}
+                                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1"
+                                    onClick={() => {
+                                      setForm(prev => {
+                                        const sections = [...prev.sections];
+                                        const qs = [...sections[sIdx].questions];
+                                        qs[qIdx] = { ...qs[qIdx], options: [...qs[qIdx].options, ''] };
+                                        sections[sIdx] = { ...sections[sIdx], questions: qs };
+                                        return { ...prev, sections };
+                                      });
+                                    }}>
+                                    <Plus className="h-3 w-3" /> Thêm heading
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Question Image Upload */}
                           <div>
                             <Label className="text-xs text-muted-foreground">Hình ảnh kèm câu hỏi</Label>
@@ -912,7 +1211,6 @@ export default function ExamFormPage() {
           </div>
           );
         })()}
-
         {/* Bottom Navigation */}
         <div className="flex items-center justify-between mt-10 pt-6 border-t">
           <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : navigate('/admin/exams')}
@@ -946,6 +1244,20 @@ export default function ExamFormPage() {
           if (file) handleImageUpload(file);
           e.target.value = '';
         }} />
+
+      <ExamPreviewModal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={form.title}
+        sections={form.sections.map(s => ({
+          title: s.title,
+          skill: selectedSkill || undefined,
+          passageContent: s.passageContent,
+          mediaUrl: s.mediaUrl || undefined,
+          imageUrl: s.imageUrl || undefined,
+          questions: s.questions,
+        }))}
+      />
     </div>
   );
 }

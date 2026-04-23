@@ -69,6 +69,9 @@ import WithdrawalManagement from "./pages/admin/revenue-management/WithdrawalMan
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 import { SellerProtectedRoute } from "./components/auth/SellerProtectedRoute";
+// Payment result
+import PaymentResultPage from "./pages/user/payment/PaymentResult";
+
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
@@ -201,6 +204,9 @@ const App = () => (
             </Route>
           </Route>
           
+          {/* VNPay payment result callback */}
+          <Route path="/payment/result" element={<PaymentResultPage />} />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

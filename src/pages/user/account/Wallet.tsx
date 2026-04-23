@@ -1,19 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   AlertCircle,
   ArrowDownLeft,
   ArrowUpRight,
-  CheckCircle2,
   ChevronRight,
   CreditCard,
+  ExternalLink,
   History,
   Loader2,
   ShieldCheck,
   Sparkles,
   Wallet,
 } from 'lucide-react';
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -22,17 +20,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProfile } from '@/hooks/api/use-user';
-import { useCreateTopupOrder, useTopupOrderStatus } from '@/hooks/api/use-topup';
+import { useCreateTopupOrder } from '@/hooks/api/use-topup';
 import { useWallet, useWalletSummary, useWalletTransactions } from '@/hooks/api/use-wallet';
 import type { Transaction } from '@/domain';
 import { formatVND } from '@/lib/utils';
 
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
-const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null;
-const STATUS_POLL_INTERVAL = 2500;
-const STATUS_POLL_ATTEMPTS = 10;
-const MINIMUM_TOPUP_AMOUNT = 15000;
-const QUICK_TOPUP_AMOUNTS = [15000, 50000, 100000, 200000];
+const MINIMUM_TOPUP_AMOUNT = 10000;
+const QUICK_TOPUP_AMOUNTS = [10000, 50000, 100000, 200000];
 const TRANSACTIONS_PAGE_SIZE = 6;
 
 interface BalanceCardProps {
@@ -128,8 +122,8 @@ function WalletHero({ currentBalance }: WalletHeroProps) {
               <span className="font-medium text-white">Course checkout</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <span>Experience</span>
-              <span className="font-medium text-white">Integrated wallet flow</span>
+              <span>Gateway</span>
+              <span className="font-medium text-white">VNPay</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <span>Minimum top-up</span>
@@ -144,12 +138,12 @@ function WalletHero({ currentBalance }: WalletHeroProps) {
 
 interface CreatePaymentCardProps {
   amount: string;
-  isCreatingIntent: boolean;
+  isCreating: boolean;
   onAmountChange: (value: string) => void;
   onStartPayment: () => Promise<void>;
 }
 
-function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPayment }: CreatePaymentCardProps) {
+function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment }: CreatePaymentCardProps) {
   return (
     <Card className="group rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_26px_80px_-48px_rgba(15,23,42,0.38)] backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_36px_96px_-48px_rgba(15,23,42,0.42)] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -160,7 +154,7 @@ function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPa
           </div>
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">Add funds to your wallet</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Choose a quick amount or enter a custom value to move into checkout with less friction and a cleaner payment summary.
+            Choose a quick amount or enter a custom value, then you'll be redirected to VNPay to complete the payment securely.
           </p>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700 shadow-sm">
@@ -181,7 +175,7 @@ function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPa
               placeholder="Example: 50000"
               value={amount}
               onChange={(event) => onAmountChange(event.target.value)}
-              disabled={isCreatingIntent}
+              disabled={isCreating}
               className="h-14 rounded-2xl border-slate-200 text-lg shadow-sm transition-all duration-300 focus-visible:ring-slate-900/20"
             />
             <p className="text-xs text-slate-500">Minimum amount: {formatVND(MINIMUM_TOPUP_AMOUNT)}.</p>
@@ -192,7 +186,6 @@ function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPa
             <div className="flex flex-wrap gap-3">
               {QUICK_TOPUP_AMOUNTS.map((presetAmount) => {
                 const isActive = Number(amount) === presetAmount;
-
                 return (
                   <Button
                     key={presetAmount}
@@ -200,7 +193,7 @@ function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPa
                     variant={isActive ? 'default' : 'outline'}
                     className="h-11 min-w-[128px] rounded-full border-slate-200 transition-all duration-300 hover:-translate-y-0.5"
                     onClick={() => onAmountChange(String(presetAmount))}
-                    disabled={isCreatingIntent}
+                    disabled={isCreating}
                   >
                     {formatVND(presetAmount)}
                   </Button>
@@ -219,7 +212,7 @@ function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPa
             </div>
             <div className="flex items-center justify-between">
               <span>Method</span>
-              <span className="font-medium text-slate-950">Card payment</span>
+              <span className="font-medium text-slate-950">VNPay</span>
             </div>
             <div className="flex items-center justify-between">
               <span>Status</span>
@@ -228,9 +221,9 @@ function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPa
           </div>
 
           <div className="mt-6 rounded-3xl border border-sky-100 bg-sky-50/80 p-4 text-sm text-sky-950">
-            <p className="font-medium">Recommended flow</p>
+            <p className="font-medium">Secure redirect</p>
             <p className="mt-1 leading-6 text-sky-900/80">
-              Choose {formatVND(50000)} or {formatVND(100000)} for a faster checkout experience during testing and review.
+              You'll be redirected to VNPay's secure payment page. After completing, you'll return here automatically.
             </p>
           </div>
         </div>
@@ -240,155 +233,22 @@ function CreatePaymentCard({ amount, isCreatingIntent, onAmountChange, onStartPa
         <Button
           type="button"
           onClick={onStartPayment}
-          disabled={isCreatingIntent || Number(amount) < MINIMUM_TOPUP_AMOUNT}
+          disabled={isCreating || Number(amount) < MINIMUM_TOPUP_AMOUNT}
           className="h-12 min-w-[220px] rounded-full bg-slate-950 px-6 text-white shadow-lg shadow-slate-950/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
         >
-          {isCreatingIntent ? (
+          {isCreating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating payment...
+              Creating order...
             </>
           ) : (
-            'Continue to payment'
+            <>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Pay with VNPay
+            </>
           )}
         </Button>
       </div>
-    </Card>
-  );
-}
-
-interface StripeCheckoutCardProps {
-  amount: number;
-  orderId: string;
-  onReset: () => void;
-}
-
-function StripeCheckoutCard({ amount, orderId, onReset }: StripeCheckoutCardProps) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const orderStatusMutation = useTopupOrderStatus();
-  const [isConfirming, setIsConfirming] = useState(false);
-
-  const pollOrderStatus = async () => {
-    for (let attempt = 0; attempt < STATUS_POLL_ATTEMPTS; attempt += 1) {
-      const result = await orderStatusMutation.mutateAsync(orderId);
-
-      if (result?.status === 'SUCCESS') {
-        return;
-      }
-
-      if (result?.status === 'FAILED') {
-        throw new Error('Payment failed.');
-      }
-
-      await new Promise((resolve) => window.setTimeout(resolve, STATUS_POLL_INTERVAL));
-    }
-
-    toast.message('Your payment was confirmed. Balance updates may take a few more seconds to appear.');
-  };
-
-  const handleConfirmPayment = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsConfirming(true);
-
-    try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        redirect: 'if_required',
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'processing') {
-        await pollOrderStatus();
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to confirm payment.';
-      toast.error(message);
-    } finally {
-      setIsConfirming(false);
-    }
-  };
-
-  return (
-    <Card className="group rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_26px_80px_-48px_rgba(15,23,42,0.38)] backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_36px_96px_-48px_rgba(15,23,42,0.42)] animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 transition-colors duration-300 group-hover:bg-slate-900 group-hover:text-white">
-            <ShieldCheck className="h-4 w-4" />
-            Payment step
-          </div>
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">Complete your top-up</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Review the amount, enter your card details, and finish checkout without leaving the wallet workspace.
-          </p>
-        </div>
-        <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700 shadow-sm">
-          <p className="font-medium text-slate-950">Order summary</p>
-          <p className="mt-1 text-slate-600">Instant confirmation with clear post-payment status updates.</p>
-        </div>
-      </div>
-
-      <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md">
-          <PaymentElement />
-        </div>
-
-        <div className="space-y-4 rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 transition-all duration-300 hover:border-slate-300 hover:bg-white">
-          <div className="flex items-center gap-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            <div>
-              <p className="font-medium">Protected checkout</p>
-              <p className="mt-1 text-emerald-900/80">Your payment is verified before the wallet balance is finalized.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>Order reference</span>
-            <span className="max-w-[180px] truncate font-medium text-slate-950">{orderId}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>Top-up amount</span>
-            <span className="font-medium text-slate-950">{formatVND(amount)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button
-          type="submit"
-          form="stripe-wallet-form"
-          disabled={!stripe || isConfirming}
-          className="h-12 min-w-[200px] rounded-full bg-slate-950 px-6 text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800"
-        >
-          {isConfirming ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Confirming payment...
-            </>
-          ) : (
-            'Confirm payment'
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onReset}
-          disabled={isConfirming}
-          className="h-12 rounded-full border-slate-200 px-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300"
-        >
-          Start over
-        </Button>
-      </div>
-
-      <form id="stripe-wallet-form" onSubmit={handleConfirmPayment} className="hidden" />
     </Card>
   );
 }
@@ -493,15 +353,9 @@ function RecentTransactionsCard({
 
         <Tabs value={activeFilter} onValueChange={(value) => onFilterChange(value as 'ALL' | 'DEPOSIT' | 'PAYMENT')}>
           <TabsList className="h-auto rounded-full border border-slate-200 bg-slate-100/90 p-1">
-            <TabsTrigger value="ALL" className="rounded-full px-4 py-2 data-[state=active]:bg-white">
-              All
-            </TabsTrigger>
-            <TabsTrigger value="DEPOSIT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">
-              Deposit
-            </TabsTrigger>
-            <TabsTrigger value="PAYMENT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">
-              Payment
-            </TabsTrigger>
+            <TabsTrigger value="ALL" className="rounded-full px-4 py-2 data-[state=active]:bg-white">All</TabsTrigger>
+            <TabsTrigger value="DEPOSIT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">Deposit</TabsTrigger>
+            <TabsTrigger value="PAYMENT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">Payment</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -570,8 +424,6 @@ export default function WalletPage() {
   });
   const createOrderMutation = useCreateTopupOrder();
   const [amount, setAmount] = useState(String(QUICK_TOPUP_AMOUNTS[1]));
-  const [clientSecret, setClientSecret] = useState('');
-  const [orderId, setOrderId] = useState<string | null>(null);
 
   const currentBalance = Number(wallet?.balance ?? user?.wallet?.allowance) || 0;
   const monthlyTopupAmount = Number(walletSummary?.monthlyTopupAmount ?? 0);
@@ -579,35 +431,13 @@ export default function WalletPage() {
   const allTransactions = transactionsResponse?.data ?? [];
   const pagination = transactionsResponse?.pagination;
   const filteredTransactions = allTransactions.filter((transaction) => {
-    if (activeFilter === 'ALL') {
-      return true;
-    }
-
-    if (activeFilter === 'DEPOSIT') {
-      return transaction.transactionType === 'DEPOSIT';
-    }
-
+    if (activeFilter === 'ALL') return true;
+    if (activeFilter === 'DEPOSIT') return transaction.transactionType === 'DEPOSIT';
     return transaction.transactionType !== 'DEPOSIT';
   });
   const canLoadMore = (pagination?.total ?? 0) > transactionLimit;
 
-  useEffect(() => {
-    if (!STRIPE_PUBLISHABLE_KEY) {
-      toast.error('Missing VITE_STRIPE_PUBLISHABLE_KEY in the frontend environment.');
-    }
-  }, []);
-
-  const stripeOptions = useMemo(
-    () => ({
-      clientSecret,
-      appearance: {
-        theme: 'stripe' as const,
-      },
-    }),
-    [clientSecret]
-  );
-
-  const handleCreatePaymentIntent = async () => {
+  const handleCreateOrder = async () => {
     const realMoney = Number(amount);
 
     if (!accessToken) {
@@ -620,37 +450,25 @@ export default function WalletPage() {
       return;
     }
 
-    if (!STRIPE_PUBLISHABLE_KEY || !stripePromise) {
-      toast.error('Stripe publishable key is invalid or unavailable in the frontend environment.');
-      return;
-    }
-
     try {
       const response = await createOrderMutation.mutateAsync({ realMoney });
       const data = response.data;
 
-      if (!data?.clientSecret) {
-        throw new Error('Missing client secret from the payment response.');
+      if (!data?.paymentUrl) {
+        throw new Error('Missing payment URL from the server response.');
       }
 
-      setClientSecret(data.clientSecret);
-      setOrderId(data.orderId);
-      toast.success('Payment request created. Continue with your card details.');
+      toast.success('Redirecting to VNPay...');
+      window.location.href = data.paymentUrl;
     } catch (error) {
-      const fallbackMessage = 'Unable to create payment request.';
       const apiMessage =
         typeof error === 'object' && error !== null && 'response' in error
           ? (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.message ||
             (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.error
           : undefined;
-      const message = error instanceof Error ? apiMessage || error.message : apiMessage || fallbackMessage;
+      const message = error instanceof Error ? apiMessage || error.message : apiMessage || 'Unable to create payment order.';
       toast.error(message);
     }
-  };
-
-  const resetCheckout = () => {
-    setClientSecret('');
-    setOrderId(null);
   };
 
   const handleLoadMoreTransactions = () => {
@@ -690,19 +508,12 @@ export default function WalletPage() {
             monthlyTopupAmount={monthlyTopupAmount}
             monthlySuccessfulTransactions={monthlySuccessfulTransactions}
           />
-
-          {clientSecret && stripePromise && orderId ? (
-            <Elements stripe={stripePromise} options={stripeOptions}>
-              <StripeCheckoutCard amount={Number(amount) || 0} orderId={orderId} onReset={resetCheckout} />
-            </Elements>
-          ) : (
-            <CreatePaymentCard
-              amount={amount}
-              isCreatingIntent={createOrderMutation.isPending}
-              onAmountChange={setAmount}
-              onStartPayment={handleCreatePaymentIntent}
-            />
-          )}
+          <CreatePaymentCard
+            amount={amount}
+            isCreating={createOrderMutation.isPending}
+            onAmountChange={setAmount}
+            onStartPayment={handleCreateOrder}
+          />
         </div>
 
         <RecentTransactionsCard

@@ -7,20 +7,19 @@ export interface CreateTopupRequest {
 
 export interface CreateTopupResponse {
   orderId: string;
-  paymentIntentId: string;
-  clientSecret: string | null;
-  publishableKey?: string;
+  paymentUrl: string;
+  txnRef: string;
   amount: number;
   currency: string;
+  minimumAmount: number;
 }
 
 export interface TopupOrderStatus {
   id: string;
   status: 'PENDING' | 'SUCCESS' | 'FAILED';
-  paymentMethod: 'STRIPE' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
+  paymentMethod: 'VNPAY' | 'ZALOPAY' | 'BANKING' | 'APPLEPAY';
   amount: number;
-  clientSecret: string | null;
-  paymentIntentId: string | null;
+  txnRef: string | null;
 }
 
 class TopupService {

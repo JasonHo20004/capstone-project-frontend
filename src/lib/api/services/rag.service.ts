@@ -22,6 +22,29 @@ export interface AskQuestionResponse {
   relevant_chunks: string[];
 }
 
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ExplainPayload {
+  passage: string;
+  question_text: string;
+  question_type: string;
+  options: string[];
+  correct_answer: string;
+  user_answer: string;
+  test_skill?: string;
+  conversation_history?: ChatMessage[];
+}
+
+export interface ExplainResponse {
+  success: boolean;
+  explanation: string;
+  passage_reference: string;
+  tips: string;
+}
+
 class RagService {
   async generateFlashcards(
     file: File,
@@ -38,7 +61,7 @@ class RagService {
     const response = await apiClient.post<GenerateFlashcardsResponse>(
       "/rag/generate/flashcards",
       formData,
-      { timeout: 300000 }, // 5 min — LLM generation takes time
+      { timeout: 300000 },
     );
     return response.data;
   }
@@ -57,7 +80,7 @@ class RagService {
         user_id: userId,
         save_to_service: saveToService,
       },
-      { timeout: 300000 }, // 5 min — LLM generation takes time
+      { timeout: 300000 },
     );
     return response.data;
   }
@@ -66,9 +89,147 @@ class RagService {
     const response = await apiClient.post<AskQuestionResponse>("/rag/ask", {
       doc_id: docId,
       question,
-    }, { timeout: 120000 }); // 2 min for Q&A
+    }, { timeout: 120000 });
     return response.data;
   }
+
+  /** Legacy non-streaming explain */
+  async explainAnswer(payload: ExplainPayload): Promise<ExplainResponse> {
+    const response = await apiClient.post<ExplainResponse>(
+      "/rag/explain",
+      payload,
+      { timeout: 180000 },
+    );
+    return response.data;
+  }
+
+  /**
+   * SSE streaming explain — streams tokens from AI in real-time.
+   * @param payload - The explain request body
+   * @param onToken - Called for each token as it arrives
+   * @param onDone - Called when streaming is complete, with the full response
+   * @param onError - Called on error
+   * @returns AbortController to cancel the stream
+   */
+  explainAnswerStream(
+    payload: ExplainPayload,
+    onToken: (token: string) => void,
+    onDone: (fullResponse: string) => void,
+    onError: (error: string) => void,
+  ): AbortController {
+    const controller = new AbortController();
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+    const token = localStorage.getItem("accessToken");
+
+    fetch(`${baseUrl}/rag/explain/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          onError(`Server error: ${response.status}`);
+          return;
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          onError("No response body");
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete SSE events (separated by \n\n)
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || ""; // Keep incomplete event in buffer
+
+          for (const event of events) {
+            if (!event.trim()) continue;
+
+            const lines = event.split("\n");
+            let eventType = "message";
+            let eventData = "";
+
+            for (const line of lines) {
+              if (line.startsWith("event: ")) {
+                eventType = line.slice(7).trim();
+              } else if (line.startsWith("data: ")) {
+                eventData = line.slice(6);
+              }
+            }
+
+            if (!eventData) continue;
+
+            try {
+              const parsed = JSON.parse(eventData);
+
+              if (eventType === "error") {
+                onError(parsed.error || "Unknown error");
+                return;
+              }
+
+              if (eventType === "done" || parsed.done) {
+                onDone(parsed.full_response || "");
+                return;
+              }
+
+              // Regular token
+              if (parsed.token) {
+                onToken(parsed.token);
+              }
+            } catch {
+              // Skip malformed JSON
+            }
+          }
+        }
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") return; // User cancelled
+        onError(err.message || "Connection failed");
+      });
+
+    return controller;
+  }
+
+  // ── AI Reading Question Generator ────────────────────────────────────────
+
+  async generateReadingQuestions(payload: {
+    passage: string;
+    question_types?: string[];
+    num_questions?: number;
+    difficulty?: string;
+  }): Promise<ReadingGenResponse> {
+    const resp = await apiClient.post("/rag/reading/generate", payload);
+    return resp.data;
+  }
+}
+
+export interface GeneratedQuestion {
+  questionText: string;
+  questionType: string;
+  options: string[];
+  content: Record<string, any>;
+  answer: Record<string, any>;
+  explanation: string;
+  questionOrder: number;
+}
+
+export interface ReadingGenResponse {
+  success: boolean;
+  questions: GeneratedQuestion[];
+  summary: string;
 }
 
 export const ragService = new RagService();

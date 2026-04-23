@@ -4,6 +4,24 @@ import apiClient from "@/lib/api/config";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
 import SpeakingTestLayout from "./SpeakingTestLayout";
 
+// ─── Section-level instructions (Cambridge IELTS format) ─────────────────────
+const SECTION_INSTRUCTIONS: Record<string, string> = {
+  TRUE_FALSE_NOT_GIVEN:
+    "Do the following statements agree with the information given in the passage?\n\nWrite:\nTRUE   —   if the statement agrees with the information\nFALSE   —   if the statement contradicts the information\nNOT GIVEN   —   if there is no information on this",
+  YES_NO_NOT_GIVEN:
+    "Do the following statements agree with the views/claims of the writer?\n\nWrite:\nYES   —   if the statement agrees with the claims of the writer\nNO   —   if the statement contradicts the claims of the writer\nNOT GIVEN   —   if it is impossible to say what the writer thinks about this",
+  MULTIPLE_CHOICE:
+    "Choose the correct letter, A, B, C or D.",
+  MULTIPLE_CHOICE_MULTI_ANSWER:
+    "Choose TWO letters, A–E.",
+  GAP_FILL:
+    "Complete the sentences below.\n\nChoose NO MORE THAN TWO WORDS AND/OR A NUMBER from the passage for each answer.",
+  SHORT_ANSWER:
+    "Answer the questions below.\n\nChoose NO MORE THAN THREE WORDS from the passage for each answer.",
+  MATCHING:
+    "Look at the following statements and match each one with the correct option in the list below.",
+};
+
 // ─── Highlight Colors ────────────────────────────────────────────────────────
 const HIGHLIGHT_COLORS = [
   { name: 'Yellow', color: '#fef08a', border: '#eab308', icon: '🟡' },
@@ -781,10 +799,40 @@ export default function IeltsTestModule() {
           )}
 
           <div ref={passageRef} onMouseUp={handleTextSelect}
-            className={`prose prose-sm text-slate-700 leading-relaxed whitespace-pre-line ${highlightMode ? 'cursor-text select-text' : ''}`}
+            className={highlightMode ? 'cursor-text select-text' : ''}
             style={highlightMode ? { userSelect: 'text' } : undefined}
           >
-            {passageContent || "No passage content available."}
+            {(() => {
+              if (!passageContent) return <p className="text-slate-400 italic text-sm">No passage content available.</p>;
+              const paragraphs = passageContent.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+              // If only 1 paragraph or very short, render as-is
+              if (paragraphs.length < 2) {
+                return <p className="text-slate-700 text-sm leading-[1.9] whitespace-pre-line">{passageContent}</p>;
+              }
+              return (
+                <div className="space-y-4">
+                  {paragraphs.map((para, i) => {
+                    // Detect title/heading: short line (≤90 chars), no trailing period, or ALL CAPS
+                    const isHeading = para.length <= 90 && (!para.endsWith('.')) && i === 0;
+                    if (isHeading) {
+                      return (
+                        <div key={i}>
+                          <h2 className="font-bold text-slate-900 text-base leading-snug mb-1">{para}</h2>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={i} className="flex gap-3">
+                        <span className="font-bold text-slate-400 text-sm w-5 shrink-0 pt-[3px] select-none">
+                          {String.fromCharCode(64 + i)} {/* A=65, but skip title so offset by -1 if title exists */}
+                        </span>
+                        <p className="text-slate-700 text-sm leading-[1.9] flex-1">{para}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Highlight Color Popover */}
@@ -825,11 +873,43 @@ export default function IeltsTestModule() {
         <div className="w-1/2 flex flex-col overflow-hidden">
           <div ref={questionsRef} onMouseUp={handleTextSelect} className="flex-1 bg-slate-50 p-6 overflow-y-auto">
           <div className="space-y-5">
-            {currentQuestions.map((q) => {
+            {(() => {
+              // Group consecutive same-type questions
+              const groups: { type: string; questions: typeof currentQuestions }[] = [];
+              for (const q of currentQuestions) {
+                const last = groups[groups.length - 1];
+                if (last && last.type === q.questionType) {
+                  last.questions.push(q);
+                } else {
+                  groups.push({ type: q.questionType, questions: [q] });
+                }
+              }
+
+              return groups.map((group) => {
+                const first = group.questions[0];
+                const last = group.questions[group.questions.length - 1];
+                const rangeLabel = first.questionOrder === last.questionOrder
+                  ? `Question ${first.questionOrder}`
+                  : `Questions ${first.questionOrder}–${last.questionOrder}`;
+                const instruction = SECTION_INSTRUCTIONS[group.type];
+
+                return (
+                  <div key={`group-${first.id}`} className="space-y-4">
+                    {/* Cambridge-style section instruction block (reading only) */}
+                    {instruction && !isListeningTest && (
+                      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{rangeLabel}</p>
+                        <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{instruction}</p>
+                      </div>
+                    )}
+
+                    {group.questions.map((q) => {
               const qText = q.content?.text || q.questionText || "";
               const qOptions = q.content?.options || [];
               const qType = q.questionType;
               const qImage = q.imageUrl;
+              const qInstruction = (q.content as any)?.instruction || '';
+              const qSummaryText = (q.content as any)?.summaryText || '';
 
               return (
                 <div key={q.id} id={`question-${q.id}`} className={`bg-white rounded-xl border p-5 transition-colors relative ${
@@ -837,9 +917,16 @@ export default function IeltsTestModule() {
                     ? 'border-amber-400 ring-1 ring-amber-200'
                     : answers[q.id] ? 'border-indigo-300 shadow-sm' : 'border-slate-200'
                 }`}>
+                  {/* Instruction banner (for Summary Completion, Matching, etc.) */}
+                  {qInstruction && (
+                    <div className="mb-3 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
+                      <p className="text-xs text-indigo-700 font-medium italic">{qInstruction}</p>
+                    </div>
+                  )}
+
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <p className="font-medium text-sm text-slate-800">
-                      <span className="text-indigo-600 font-bold mr-2">Q{q.questionOrder}.</span>
+                      <span className="text-slate-500 font-bold mr-2">{q.questionOrder}.</span>
                       {qText}
                     </p>
                     <button
@@ -861,6 +948,31 @@ export default function IeltsTestModule() {
                   {qImage && (
                     <div className="mb-3">
                       <img src={qImage} alt={`Question ${q.questionOrder}`} className="max-w-full rounded-lg border border-slate-200 shadow-sm" />
+                    </div>
+                  )}
+
+                  {/* Summary inline view for GAP_FILL with summaryText */}
+                  {qType === 'GAP_FILL' && qSummaryText && (
+                    <div className="mb-3 p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm leading-relaxed">
+                      {qSummaryText.split(/(\{\{\d+\}\})/).map((part: string, i: number) => {
+                        const match = part.match(/^\{\{(\d+)\}\}$/);
+                        if (match) {
+                          const gapNum = match[1];
+                          return (
+                            <span key={i} className="inline-flex items-center mx-0.5">
+                              <span className="text-[10px] font-bold text-indigo-600 mr-0.5">{gapNum}</span>
+                              <input
+                                type="text"
+                                value={answers[q.id + '_gap_' + gapNum] || answers[q.id] || ''}
+                                onChange={(e) => setAnswer(q.id, e.target.value)}
+                                className="w-28 border-b-2 border-indigo-300 bg-white px-1.5 py-0.5 text-sm outline-none focus:border-indigo-500 rounded-sm"
+                                placeholder="..........."
+                              />
+                            </span>
+                          );
+                        }
+                        return <span key={i}>{part}</span>;
+                      })}
                     </div>
                   )}
 
@@ -904,7 +1016,8 @@ export default function IeltsTestModule() {
                     </div>
                   )}
 
-                  {(qType === "GAP_FILL" || qType === "SHORT_ANSWER") && (
+                  {/* GAP_FILL: simple input (when no summaryText) or SHORT_ANSWER */}
+                  {((qType === "GAP_FILL" && !qSummaryText) || qType === "SHORT_ANSWER") && (
                     <input type="text" value={answers[q.id] || ""} onChange={e => setAnswer(q.id, e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
                       placeholder="Type your answer..." />
@@ -923,14 +1036,41 @@ export default function IeltsTestModule() {
                     </div>
                   )}
 
+                  {/* MATCHING: Dropdown selector instead of text input */}
                   {qType === "MATCHING" && (
-                    <input type="text" value={answers[q.id] || ""} onChange={e => setAnswer(q.id, e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="Type your answer (e.g., A, B, C)..." />
+                    qOptions.length > 0 ? (
+                      <div className="relative">
+                        <select
+                          value={answers[q.id] || ''}
+                          onChange={(e) => setAnswer(q.id, e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2.5 text-sm outline-none appearance-none bg-white cursor-pointer transition-colors ${
+                            answers[q.id]
+                              ? 'border-indigo-400 bg-indigo-50 text-indigo-800 font-medium'
+                              : 'border-slate-200 text-slate-500 hover:border-indigo-200'
+                          }`}
+                        >
+                          <option value="">-- Chọn đáp án --</option>
+                          {qOptions.map((opt, idx) => (
+                            <option key={idx} value={String.fromCharCode(65 + idx)}>
+                              {String.fromCharCode(65 + idx)}. {opt}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[16px] text-slate-400 pointer-events-none">expand_more</span>
+                      </div>
+                    ) : (
+                      <input type="text" value={answers[q.id] || ""} onChange={e => setAnswer(q.id, e.target.value)}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                        placeholder="Nhập đáp án (VD: A, B, C)..." />
+                    )
                   )}
                 </div>
               );
             })}
+                  </div>
+                );
+              });
+            })()}
           </div>
           </div>
 
