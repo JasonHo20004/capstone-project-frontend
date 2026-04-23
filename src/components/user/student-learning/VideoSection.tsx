@@ -1,7 +1,7 @@
 import { Clock, MessageSquare, PlayCircle } from "lucide-react";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -117,9 +117,7 @@ export const VideoSection = ({
                   key={comment.id}
                   className="flex items-start gap-3 rounded-2xl bg-background/80 p-3"
                 >
-                  <Avatar className="h-9 w-9 border">
-                    <AvatarFallback>{getInitials(comment.user.fullName)}</AvatarFallback>
-                  </Avatar>
+                  <UserAvatar src={undefined} name={comment.user.fullName} className="h-9 w-9 border" />
                   <div className="space-y-1 text-sm">
                     <p className="font-medium leading-none">{comment.user.fullName}</p>
                     <p className="text-muted-foreground">{comment.content}</p>

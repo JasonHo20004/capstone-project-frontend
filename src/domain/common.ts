@@ -56,6 +56,7 @@ export interface Flashcard {
   backContent: string;
   exampleSentence?: string;
   audioUrl?: string;
+  videoUrl?: string;
   deckId: string;
   queueType?: FlashcardStatus;
 }

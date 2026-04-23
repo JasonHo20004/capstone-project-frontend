@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Loader2, Volume2, RotateCw, Trophy, Zap, Star,
-  X, Clock, AlertTriangle, Timer,
+  X, Clock, AlertTriangle, Timer, Video,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -26,13 +26,23 @@ const gradeToQualityMap: Record<string, ReviewQuality> = {
 
 const CONFETTI_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
 
-const playAudio = (audioUrl: string, e?: React.MouseEvent) => {
+const playAudio = (word: string, audioUrl?: string | null, e?: React.MouseEvent) => {
   if (e) e.stopPropagation();
-  try {
-    const audio = new Audio(audioUrl);
-    audio.play();
-  } catch (err) {
-    console.error(err);
+  if (audioUrl) {
+    try {
+      new Audio(audioUrl).play();
+      return;
+    } catch {
+      // fall through to Web Speech API
+    }
+  }
+  // Fallback: browser built-in TTS
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(word);
+    utt.lang = 'en-US';
+    utt.rate = 0.9;
+    window.speechSynthesis.speak(utt);
   }
 };
 
@@ -336,35 +346,56 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               <div className={`flip-card-inner ${showBack ? 'flipped' : ''}`}>
 
                 {/* FRONT */}
-                <div className="flip-card-front relative">
+                <div className="flip-card-front relative overflow-hidden">
+                  {/* Pexels video background */}
+                  {currentCard.videoUrl && (
+                    <>
+                      <video
+                        key={currentCard.videoUrl}
+                        autoPlay muted loop playsInline
+                        className="absolute inset-0 w-full h-full object-cover opacity-40 rounded-[inherit]"
+                        src={currentCard.videoUrl}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/50 rounded-[inherit]" />
+                    </>
+                  )}
+
                   <div className="absolute top-4 left-4 z-10">
                     {renderStatusBadge(currentCard.queueType)}
                   </div>
 
-                  {currentCard.audioUrl && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-4 right-4 rounded-full bg-white/10 hover:bg-white/20 text-white z-20 transition-all duration-200"
-                      onClick={(e) => playAudio(currentCard.audioUrl!, e)}
-                    >
-                      <Volume2 className="w-5 h-5" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-4 right-4 rounded-full bg-white/10 hover:bg-white/20 text-white z-20 transition-all duration-200"
+                    onClick={(e) => playAudio(currentCard.frontContent, currentCard.audioUrl, e)}
+                  >
+                    <Volume2 className="w-5 h-5" />
+                  </Button>
 
                   <div className="flex flex-col items-center gap-4 relative z-10">
                     <h2 className="text-3xl md:text-4xl font-black text-center break-words px-4 text-white drop-shadow-sm">
                       {currentCard.frontContent}
                     </h2>
-                    <p className="text-sm text-indigo-300/70 absolute bottom-[-2rem] flex items-center gap-1.5 animate-pulse font-medium">
-                      <RotateCw className="w-3.5 h-3.5" /> Chạm để lật
-                    </p>
                   </div>
+
+                  {/* "Tap to flip" hint — direct child of flip-card-front so absolute bottom works */}
+                  <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-indigo-300/70 flex items-center gap-1.5 animate-pulse font-medium z-10 whitespace-nowrap pointer-events-none">
+                    <RotateCw className="w-3.5 h-3.5" /> Chạm để lật
+                  </p>
+
+                  {/* Pexels attribution badge */}
+                  {currentCard.videoUrl && (
+                    <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1 text-[10px] text-white/35 font-medium pointer-events-none">
+                      <Video className="w-3 h-3" />
+                      Pexels
+                    </div>
+                  )}
                 </div>
 
                 {/* BACK */}
                 <div className="flip-card-back relative">
-                  <div className="flex flex-col items-center gap-4 w-full px-4 overflow-y-auto max-h-full relative z-10">
+                  <div className="flex flex-col items-center gap-4 w-full px-4 relative z-10">
                     <div className="text-sm text-indigo-300/60 border-b border-indigo-400/20 pb-2 mb-2 w-full text-center font-medium">
                       {currentCard.frontContent}
                     </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Send, SortAsc, SortDesc } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateLessonComment, useLessonComments } from "@/hooks/api/use-student-learning";
@@ -121,9 +121,7 @@ export const LessonComments = ({ courseId, lessonId }: LessonCommentsProps) => {
               key={comment.id}
               className="flex items-start gap-3 rounded-2xl border bg-muted/40 p-3"
             >
-              <Avatar className="h-8 w-8 border">
-                <AvatarFallback>{getInitials(comment.user.fullName)}</AvatarFallback>
-              </Avatar>
+              <UserAvatar src={undefined} name={comment.user.fullName} className="h-8 w-8 border" />
               <div className="flex-1 space-y-1 text-sm">
                 <p className="font-medium leading-none">{comment.user.fullName}</p>
                 <p className="text-muted-foreground">{comment.content}</p>

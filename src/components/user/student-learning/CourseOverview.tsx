@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { formatDate } from "@/lib/utils";
@@ -77,19 +77,7 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border bg-muted/40 p-4">
-          <Avatar className="h-12 w-12 border">
-            {course.instructor.profilePicture && (
-              <AvatarImage src={course.instructor.profilePicture} alt={course.instructor.fullName} />
-            )}
-            <AvatarFallback>
-              {course.instructor.fullName
-                .split(" ")
-                .map((part) => part[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar src={course.instructor.profilePicture} name={course.instructor.fullName} className="h-12 w-12 border" />
           <div className="space-y-1">
             <p className="text-sm font-semibold">Giảng viên</p>
             <p className="text-sm leading-tight">{course.instructor.fullName}</p>

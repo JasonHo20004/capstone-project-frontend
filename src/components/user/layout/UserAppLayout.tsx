@@ -7,6 +7,7 @@ import { CartDropdown } from "./CartDropdown";
 import { AIAdvisorBanner } from "./AIAdvisorBanner";
 import { useAIAdvisor } from "@/hooks/use-ai-advisor";
 import { useAIInsights } from "@/hooks/use-ai-insights";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type NavItem = {
   name: string;
@@ -177,15 +178,7 @@ export default function UserAppLayout() {
               to="/profile"
               className="flex items-center gap-3 pl-2 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <div className="size-9 rounded-full bg-slate-200 overflow-hidden bg-cover bg-center">
-                {user?.profilePicture ? (
-                  <img
-                    src={user.profilePicture}
-                    alt={user.fullName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : null}
-              </div>
+              <UserAvatar src={user?.profilePicture} name={user?.fullName} className="size-9" />
               <div className="hidden md:block text-left mr-2">
                 <p className="text-sm font-semibold text-slate-900 leading-none">
                   {user?.fullName ?? "Learner"}

@@ -27,7 +27,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   MoreHorizontal,
   Eye,
@@ -367,10 +367,7 @@ export default function UsersManagement() {
       header: "Người dùng",
       render: (user: User) => (
         <div className="flex items-center space-x-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.profilePicture} />
-            <AvatarFallback>{user.fullName.charAt(0)}</AvatarFallback>
-          </Avatar>
+          <UserAvatar src={user.profilePicture} name={user.fullName} className="h-8 w-8" />
           <div>
             <div className="font-medium">{user.fullName}</div>
             <div className="text-sm text-muted-foreground">{user.email}</div>
@@ -516,12 +513,7 @@ export default function UsersManagement() {
           {selectedUser && (
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={selectedUser.profilePicture} />
-                  <AvatarFallback className="text-lg">
-                    {selectedUser.fullName.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar src={selectedUser.profilePicture} name={selectedUser.fullName} className="h-16 w-16" />
                 <div>
                   <h3 className="text-lg font-semibold">
                     {selectedUser.fullName}
@@ -1063,12 +1055,7 @@ export default function UsersManagement() {
           {deletingUser && (
             <div className="py-4">
               <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={deletingUser.profilePicture} />
-                  <AvatarFallback>
-                    {deletingUser.fullName.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar src={deletingUser.profilePicture} name={deletingUser.fullName} className="h-10 w-10" />
                 <div>
                   <div className="font-medium">{deletingUser.fullName}</div>
                   <div className="text-sm text-muted-foreground">

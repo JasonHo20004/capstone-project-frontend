@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { formatVND } from '@/lib/utils';
 import { useProfile } from '@/hooks/api/use-user';
@@ -38,10 +38,7 @@ export default function SellerProfile() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user.profilePicture || ''} alt={user.fullName || 'Seller'} />
-              <AvatarFallback>{(user.fullName || 'SE').slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <UserAvatar src={user.profilePicture} name={user.fullName} className="h-20 w-20" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
               <div className="space-y-1">
                 <div className="text-xl font-semibold">{user.fullName || 'Seller'}</div>

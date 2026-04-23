@@ -30,7 +30,7 @@ import {
 import { dashboardService } from "@/lib/api/services/admin";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 const CHART_COLORS = {
   primary: "#6366f1",
@@ -430,12 +430,7 @@ export default function AdminDashboard() {
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex-shrink-0 relative">
-                      <Avatar className="h-10 w-10 rounded-lg">
-                        <AvatarImage src={course.thumbnailUrl} className="object-cover" />
-                        <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-xs font-bold">
-                          #{index + 1}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar src={course.thumbnailUrl} name={`#${index + 1}`} className="h-10 w-10 rounded-lg" />
                       <Badge className="absolute -top-1 -left-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-primary">
                         {index + 1}
                       </Badge>
