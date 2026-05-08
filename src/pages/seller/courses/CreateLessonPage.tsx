@@ -5,8 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload, X, ArrowLeft, BookOpen, Film, FileText, Hash } from 'lucide-react';
+import { Upload, X, ArrowLeft, BookOpen, Film, FileText, Hash } from 'lucide-react';
 import { useCreateLesson, useCourse, useModules } from '@/hooks/api';
+import { UploadProgress } from '@/components/seller/UploadProgress';
+
+type UploadStatus = 'idle' | 'uploading' | 'done' | 'error';
 
 export default function CreateLessonPage() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -18,15 +21,14 @@ export default function CreateLessonPage() {
   const { data: modules = [] } = useModules(courseId);
   const createLessonMutation = useCreateLesson();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastFormDataRef = useRef<FormData | null>(null);
 
-  // Find module name if moduleId is provided
   const moduleName = useMemo(() => {
     if (!moduleId || !modules) return null;
     const mod = (modules as any[]).find((m) => m.id === moduleId);
     return mod?.title ?? null;
   }, [moduleId, modules]);
 
-  // Calculate next lesson order
   const existingLessons = useMemo(() => {
     if (!course?.lessons) return [];
     return (course.lessons as any[])
@@ -40,7 +42,6 @@ export default function CreateLessonPage() {
     return maxOrder + 1;
   }, [existingLessons]);
 
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -48,10 +49,10 @@ export default function CreateLessonPage() {
     durationInSeconds: '',
     videoFile: null as File | null,
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
+  const [uploadPercent, setUploadPercent] = useState(0);
 
-  // Validate
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!formData.title.trim()) {
@@ -87,7 +88,6 @@ export default function CreateLessonPage() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       handleChange('videoFile', file);
-
       const videoEl = document.createElement('video');
       videoEl.preload = 'metadata';
       videoEl.onloadedmetadata = () => {
@@ -102,10 +102,7 @@ export default function CreateLessonPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate() || !courseId) return;
-
+  const buildFormData = (): FormData => {
     const fd = new FormData();
     fd.append('title', formData.title.trim());
     if (formData.description.trim()) fd.append('description', formData.description.trim());
@@ -113,16 +110,42 @@ export default function CreateLessonPage() {
     if (formData.durationInSeconds) fd.append('durationInSeconds', formData.durationInSeconds);
     if (formData.videoFile) fd.append('video', formData.videoFile);
     if (moduleId) fd.append('moduleId', moduleId);
-
-    createLessonMutation.mutate(
-      { courseId, formData: fd },
-      {
-        onSuccess: () => {
-          navigate(`/seller/courses/${courseId}`, { state: { tab: 'lessons' } });
-        },
-      }
-    );
+    return fd;
   };
+
+  const doUpload = async (fd: FormData) => {
+    if (!courseId) return;
+    setUploadStatus('uploading');
+    setUploadPercent(0);
+    lastFormDataRef.current = fd;
+    try {
+      await createLessonMutation.mutateAsync({
+        courseId,
+        formData: fd,
+        onProgress: setUploadPercent,
+      });
+      setUploadStatus('done');
+      setTimeout(() => {
+        navigate(`/seller/courses/${courseId}`, { state: { tab: 'lessons' } });
+      }, 800);
+    } catch {
+      setUploadStatus('error');
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate() || !courseId) return;
+    doUpload(buildFormData());
+  };
+
+  const handleRetry = () => {
+    if (lastFormDataRef.current) {
+      doUpload(lastFormDataRef.current);
+    }
+  };
+
+  const isUploading = uploadStatus === 'uploading';
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 to-white">
@@ -160,7 +183,7 @@ export default function CreateLessonPage() {
       {/* Form */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
+          {/* Basic info */}
           <Card className="border-0 shadow-sm overflow-hidden">
             <CardContent className="p-6 space-y-5">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-700 pb-2 border-b border-slate-100">
@@ -178,10 +201,16 @@ export default function CreateLessonPage() {
                   placeholder="VD: Bài 1: Giới thiệu về IELTS Writing"
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
-                  disabled={createLessonMutation.isPending}
+                  disabled={isUploading}
                   maxLength={100}
                 />
-                {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
+                <div className="flex items-center justify-between">
+                  {errors.title
+                    ? <p className="text-sm text-red-500">{errors.title}</p>
+                    : <span />
+                  }
+                  <span className="text-xs text-slate-400">{formData.title.length}/100</span>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -192,7 +221,7 @@ export default function CreateLessonPage() {
                   placeholder="Mô tả chi tiết về nội dung bài học..."
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
-                  disabled={createLessonMutation.isPending}
+                  disabled={isUploading}
                   rows={4}
                 />
               </div>
@@ -208,11 +237,11 @@ export default function CreateLessonPage() {
                   type="number"
                   value={formData.lessonOrder || nextLessonOrder}
                   onChange={(e) => handleChange('lessonOrder', parseInt(e.target.value) || 1)}
-                  disabled={createLessonMutation.isPending}
+                  disabled={isUploading}
                   min="1"
                 />
                 <p className="text-xs text-slate-400">
-                  Bài học tiếp theo sẽ có thứ tự: {nextLessonOrder}. Bạn có thể thay đổi nếu muốn.
+                  Bài học tiếp theo sẽ có thứ tự: {nextLessonOrder}.
                 </p>
                 {errors.lessonOrder && <p className="text-sm text-red-500">{errors.lessonOrder}</p>}
               </div>
@@ -227,66 +256,75 @@ export default function CreateLessonPage() {
                 Video bài giảng
               </div>
 
-              {/* Duration display */}
               {formData.videoFile && formData.durationInSeconds && (
                 <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-xl text-sm">
                   <span className="text-emerald-600 font-medium">✓ Thời lượng tự động:</span>
                   <span className="font-bold text-emerald-700">
-                    {Math.floor(parseFloat(formData.durationInSeconds) / 60)} phút {Math.round(parseFloat(formData.durationInSeconds) % 60)} giây
+                    {Math.floor(parseFloat(formData.durationInSeconds) / 60)} phút{' '}
+                    {Math.round(parseFloat(formData.durationInSeconds) % 60)} giây
                   </span>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">Video bài học (tùy chọn)</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/mp4,video/mpeg,video/quicktime,video/x-msvideo,video/webm"
-                  onChange={handleFileChange}
-                  disabled={createLessonMutation.isPending}
-                  className="hidden"
+              {uploadStatus !== 'idle' && formData.videoFile ? (
+                <UploadProgress
+                  percent={uploadPercent}
+                  fileName={formData.videoFile.name}
+                  fileSizeMB={formData.videoFile.size / 1024 / 1024}
+                  status={uploadStatus}
+                  onRetry={handleRetry}
                 />
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all text-center group"
-                >
-                  <div className="p-4 bg-blue-50 group-hover:bg-blue-100 rounded-2xl mb-4 transition-colors">
-                    <Upload className="w-7 h-7 text-blue-500" />
-                  </div>
-                  {formData.videoFile ? (
-                    <div className="space-y-2 w-full">
-                      <p className="text-sm font-semibold text-slate-800">{formData.videoFile.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {(formData.videoFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleChange('videoFile', null);
-                          setFormData((prev) => ({ ...prev, durationInSeconds: '' }));
-                          if (fileInputRef.current) fileInputRef.current.value = '';
-                        }}
-                        className="mt-2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Xóa file
-                      </Button>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">Video bài học (tùy chọn)</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/mp4,video/mpeg,video/quicktime,video/x-msvideo,video/webm"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all text-center group"
+                  >
+                    <div className="p-4 bg-blue-50 group-hover:bg-blue-100 rounded-2xl mb-4 transition-colors">
+                      <Upload className="w-7 h-7 text-blue-500" />
                     </div>
-                  ) : (
-                    <>
-                      <p className="text-sm font-semibold text-slate-700">Kéo thả hoặc nhấn để tải lên video</p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Hỗ trợ MP4, MPEG, MOV, AVI, WEBM (Tối đa 100MB)
-                      </p>
-                    </>
-                  )}
+                    {formData.videoFile ? (
+                      <div className="space-y-2 w-full">
+                        <p className="text-sm font-semibold text-slate-800">{formData.videoFile.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {(formData.videoFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleChange('videoFile', null);
+                            setFormData((prev) => ({ ...prev, durationInSeconds: '' }));
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          className="mt-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4 mr-2" /> Xóa file
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-slate-700">Kéo thả hoặc nhấn để tải lên video</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Hỗ trợ MP4, MPEG, MOV, AVI, WEBM (Tối đa 100MB)
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  {errors.videoFile && <p className="text-sm text-red-500">{errors.videoFile}</p>}
                 </div>
-                {errors.videoFile && <p className="text-sm text-red-500">{errors.videoFile}</p>}
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -295,12 +333,9 @@ export default function CreateLessonPage() {
             <Button
               type="submit"
               className="rounded-xl px-8 shadow-sm"
-              disabled={createLessonMutation.isPending}
+              disabled={isUploading || uploadStatus === 'done'}
             >
-              {createLessonMutation.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
-              Tạo bài học
+              {isUploading ? 'Đang tải lên...' : 'Tạo bài học'}
             </Button>
           </div>
         </form>
