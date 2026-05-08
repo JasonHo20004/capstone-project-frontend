@@ -139,9 +139,7 @@ class CourseService {
       `/courses/${courseId}/lessons`,
       data,
       {
-        // Don't set Content-Type header - axios will set it automatically with boundary for FormData
-        // Increased timeout to 5 minutes (300000ms) for large video file uploads
-        timeout: 300000,
+        timeout: 3600000,
       }
     );
     return response.data;

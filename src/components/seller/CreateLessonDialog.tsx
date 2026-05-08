@@ -78,9 +78,9 @@ export default function CreateLessonDialog({
 
 
     if (formData.videoFile) {
-      const maxSize = 100 * 1024 * 1024; // 100MB
+      const maxSize = 1024 * 1024 * 1024; // 1GB
       if (formData.videoFile.size > maxSize) {
-        newErrors.videoFile = 'Kích thước video không được vượt quá 100MB';
+        newErrors.videoFile = 'Kích thước video không được vượt quá 1GB';
       }
       const allowedTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
       if (!allowedTypes.includes(formData.videoFile.type)) {
