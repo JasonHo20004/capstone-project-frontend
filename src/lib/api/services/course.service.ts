@@ -1,5 +1,4 @@
 import apiClient from '../config';
-import type { Course, Lesson } from "@/domain";
 import type {
   CreateCourseRequest,
   UpdateCourseRequest,
@@ -133,13 +132,17 @@ class CourseService {
    */
   async createLesson(
     courseId: string,
-    data: FormData
+    data: FormData,
+    onProgress?: (percent: number) => void
   ): Promise<GetLessonDetailResponse> {
     const response = await apiClient.post<GetLessonDetailResponse>(
       `/courses/${courseId}/lessons`,
       data,
       {
         timeout: 3600000,
+        onUploadProgress: onProgress
+          ? (e) => onProgress(Math.round((e.loaded * 100) / (e.total ?? 1)))
+          : undefined,
       }
     );
     return response.data;
@@ -280,6 +283,14 @@ class CourseService {
       `/courses/${courseId}/modules/${moduleId}`
     );
     return response.data;
+  }
+
+  async reorderModules(courseId: string, modules: { id: string; moduleOrder: number }[]): Promise<void> {
+    await Promise.all(
+      modules.map(({ id, moduleOrder }) =>
+        apiClient.put(`/courses/${courseId}/modules/${id}`, { moduleOrder })
+      )
+    );
   }
 }
 
