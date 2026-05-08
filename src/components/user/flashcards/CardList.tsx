@@ -7,6 +7,7 @@ interface CardListProps {
   cards: Flashcard[];
   onEditCard: (card: Flashcard) => void;
   onDeleteCard: (card: Flashcard) => void;
+  readOnly?: boolean;
 }
 
 const CARD_COLORS = [
@@ -53,7 +54,7 @@ function AudioButton({ audioUrl }: { audioUrl: string }) {
   );
 }
 
-export function CardList({ cards, onEditCard, onDeleteCard }: CardListProps) {
+export function CardList({ cards, onEditCard, onDeleteCard, readOnly = false }: CardListProps) {
   return (
     <div className="grid md:grid-cols-2 gap-3">
       {cards.map((card, i) => {
@@ -86,24 +87,26 @@ export function CardList({ cards, onEditCard, onDeleteCard }: CardListProps) {
                 )}
               </div>
 
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-slate-400 hover:text-indigo-600"
-                  onClick={() => onEditCard(card)}
-                >
-                  <Edit className="w-3 h-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-lg hover:bg-red-100/80 text-slate-400 hover:text-red-500"
-                  onClick={() => onDeleteCard(card)}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
+              {!readOnly && (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-slate-400 hover:text-indigo-600"
+                    onClick={() => onEditCard(card)}
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-lg hover:bg-red-100/80 text-slate-400 hover:text-red-500"
+                    onClick={() => onDeleteCard(card)}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         );

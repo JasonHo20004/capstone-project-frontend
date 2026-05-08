@@ -37,6 +37,9 @@ import {
   Clock,
   RotateCcw,
   Brain,
+  Globe,
+  Search,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,6 +54,7 @@ import { formatDate, formatDateForInput } from "@/lib/utils";
 
 import {
   useGetDecks,
+  useGetPublicDecks,
   useGetCards,
   useGetReviewQueue,
   useCreateDeck,
@@ -61,6 +65,7 @@ import {
   useDeleteCard,
   useResetProgress
 } from "@/hooks/api/use-flashcards";
+import { useUser } from "@/hooks/api/use-user";
 import { useGetTags } from "@/hooks/api/use-tags";
 import { DeckFormDTO, CardFormDTO } from "@/lib/api/services/user/flashcard/flashcard.service";
 import { cn } from "@/lib/utils";
@@ -80,6 +85,12 @@ import {
 } from "@/components/ui/popover";
 
 const Flashcards = () => {
+  const { user } = useUser();
+
+  // ── Tab ────────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'mine' | 'explore'>('mine');
+
+  // ── My Decks ───────────────────────────────────────────────────────────────
   const { data: decksData, isLoading: isLoadingDecks } = useGetDecks();
   const decks = useMemo(() => decksData || [], [decksData]);
 
@@ -139,6 +150,24 @@ const Flashcards = () => {
   const [studyDialogOpen, setStudyDialogOpen] = useState(false);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
   const [ragDialogOpen, setRagDialogOpen] = useState(false);
+
+  // ── Explore (public decks) ─────────────────────────────────────────────────
+  const [publicSearch, setPublicSearch] = useState('');
+  const [publicSearchInput, setPublicSearchInput] = useState('');
+  const [selectedPublicDeckId, setSelectedPublicDeckId] = useState<string | null>(null);
+  const [isPublicSheetOpen, setIsPublicSheetOpen] = useState(false);
+  const [publicStudyOpen, setPublicStudyOpen] = useState(false);
+
+  const { data: publicDecks, isLoading: isLoadingPublic } = useGetPublicDecks(publicSearch);
+  const { data: publicCardsData, isLoading: isLoadingPublicCards } = useGetCards(selectedPublicDeckId);
+  const publicCards = useMemo(() => publicCardsData || [], [publicCardsData]);
+  const { data: publicQueueData } = useGetReviewQueue(selectedPublicDeckId);
+  const publicQueueCount = publicQueueData?.length ?? 0;
+
+  const selectedPublicDeck = useMemo(
+    () => (publicDecks ?? []).find((d) => d.id === selectedPublicDeckId) ?? null,
+    [publicDecks, selectedPublicDeckId]
+  );
 
   // Deck handlers
   const openCreateDeck = () => {
@@ -365,7 +394,116 @@ const Flashcards = () => {
           </div>
         </section>
 
+        {/* Tab switcher */}
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit mt-6">
+          <button
+            onClick={() => setActiveTab('mine')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === 'mine'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Lock className="w-4 h-4" /> Bộ thẻ của tôi
+          </button>
+          <button
+            onClick={() => setActiveTab('explore')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === 'explore'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Globe className="w-4 h-4" /> Khám phá
+          </button>
+        </div>
+
+        {/* ── Explore tab ──────────────────────────────────────────────────── */}
+        {activeTab === 'explore' && (
+          <section className="py-8">
+            <div className="container mx-auto px-0">
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  <Globe className="w-6 h-6 text-indigo-500" />
+                  Bộ thẻ cộng đồng
+                </h2>
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Tìm bộ thẻ..."
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 bg-white"
+                    value={publicSearchInput}
+                    onChange={(e) => setPublicSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && setPublicSearch(publicSearchInput)}
+                  />
+                </div>
+              </div>
+
+              {isLoadingPublic ? (
+                <div className="flex justify-center py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+                </div>
+              ) : !publicDecks || publicDecks.length === 0 ? (
+                <div className="flex flex-col items-center gap-4 py-20 text-center border-2 border-dashed border-indigo-100 rounded-3xl bg-indigo-50/30">
+                  <Globe className="w-12 h-12 text-indigo-200" />
+                  <p className="font-semibold text-slate-600">Chưa có bộ thẻ công khai nào</p>
+                  <p className="text-sm text-slate-400">Tạo bộ thẻ và bật công khai để chia sẻ với cộng đồng!</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {publicDecks.map((deck) => {
+                    const isOwn = deck.userId === user?.id;
+                    return (
+                      <div
+                        key={deck.id}
+                        className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                        onClick={() => {
+                          setSelectedPublicDeckId(deck.id);
+                          setIsPublicSheetOpen(true);
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <h3 className="font-bold text-slate-800 leading-snug line-clamp-2 flex-1 group-hover:text-indigo-700 transition-colors">
+                            {deck.title}
+                          </h3>
+                          {isOwn ? (
+                            <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full shrink-0">Của tôi</span>
+                          ) : (
+                            <Globe className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          )}
+                        </div>
+                        {deck.description && (
+                          <p className="text-sm text-slate-500 line-clamp-2 mb-3">{deck.description}</p>
+                        )}
+                        {deck.deckTags?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {deck.deckTags.slice(0, 3).map((dt: any) => (
+                              <span key={dt.tag?.id ?? dt.id} className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                                {dt.tag?.name ?? dt.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                          <span className="text-xs text-slate-400">
+                            {new Date(deck.createdAt).toLocaleDateString('vi-VN')}
+                          </span>
+                          <span className="text-xs font-semibold text-indigo-600 group-hover:underline">
+                            Xem & Học →
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Content */}
+        {activeTab === 'mine' && (
         <section className="py-8">
           <div className="container mx-auto px-0">
             <div className="flex items-center justify-between mb-8">
@@ -418,7 +556,121 @@ const Flashcards = () => {
             )}
           </div>
         </section>
+        )}
       </main>
+
+      {/* ── Public Deck Sheet (Explore / read-only) ───────────────────────── */}
+      <Sheet open={isPublicSheetOpen} onOpenChange={setIsPublicSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh] sm:h-[90vh] rounded-t-2xl p-0 shadow-2xl flex flex-col gap-0 overflow-hidden bg-slate-50/50 backdrop-blur-xl border-none">
+          <div className="bg-white p-6 md:p-8 flex-shrink-0 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
+            <div className="relative z-10 max-w-5xl mx-auto flex flex-col md:flex-row gap-6 md:items-end md:justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl">
+                    <Globe className="w-6 h-6" />
+                  </div>
+                  <SheetTitle className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    {selectedPublicDeck?.title || "Bộ thẻ cộng đồng"}
+                  </SheetTitle>
+                </div>
+                <SheetDescription className="text-base text-slate-500 mt-2 max-w-2xl text-left">
+                  {selectedPublicDeck?.description || "Không có mô tả."}
+                </SheetDescription>
+                {selectedPublicDeck?.deckTags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {selectedPublicDeck.deckTags.map((dt: any) => (
+                      <span key={dt.tag?.id ?? dt.id} className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2.5 py-0.5 rounded-full">
+                        {dt.tag?.name ?? dt.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {publicCards.length > 0 && (
+                  <div className="flex items-center gap-2 mt-4">
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold ${
+                      publicQueueCount > 0
+                        ? 'bg-amber-50 border-amber-200 text-amber-700'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    }`}>
+                      {publicQueueCount > 0 ? <Clock className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                      {publicQueueCount > 0 ? `${publicQueueCount} thẻ cần ôn tập` : 'Đã ôn hết! 🎉'}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3 relative group">
+                <Button
+                  onClick={() => setPublicStudyOpen(true)}
+                  disabled={!selectedPublicDeckId || publicCards.length === 0}
+                  size="lg"
+                  className="h-14 px-8 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 shadow-xl shadow-emerald-500/20 text-white rounded-2xl text-lg font-bold transition-all duration-300 hover:scale-105 active:scale-95"
+                >
+                  <Play className="w-6 h-6 mr-2 fill-white" /> HỌC THẺ
+                </Button>
+                {publicQueueCount > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[28px] h-7 flex items-center justify-center text-xs font-black bg-red-500 text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white">
+                    {publicQueueCount}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
+            <div className="max-w-5xl mx-auto space-y-6">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-500" />
+                Danh sách thẻ ({publicCards.length})
+                <span className="ml-2 text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Chỉ xem</span>
+              </h3>
+
+              {isLoadingPublicCards ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                </div>
+              ) : publicCards.length === 0 ? (
+                <div className="border border-dashed border-slate-300 rounded-2xl p-12 text-center">
+                  <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">Bộ thẻ này chưa có thẻ nào.</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+                  <CardList
+                    cards={publicCards}
+                    onEditCard={() => {}}
+                    onDeleteCard={() => {}}
+                    readOnly
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Public Study Mode Dialog */}
+      <Dialog open={publicStudyOpen} onOpenChange={(open) => {
+        setPublicStudyOpen(open);
+        if (!open && selectedPublicDeckId) {
+          import("@/hooks/api/use-flashcards").then(module => {
+            queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedPublicDeckId) });
+          });
+        }
+      }}>
+        <DialogContent className="sm:max-w-2xl p-0 bg-transparent border-0 shadow-none" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Chế độ học thẻ</DialogTitle>
+          <StudyMode
+            deckId={selectedPublicDeckId!}
+            onClose={() => {
+              setPublicStudyOpen(false);
+              import("@/hooks/api/use-flashcards").then(module => {
+                queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedPublicDeckId!) });
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Kahoot-style Detail Sheet */}
       <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>

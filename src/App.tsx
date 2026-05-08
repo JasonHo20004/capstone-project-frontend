@@ -24,6 +24,9 @@ import Blog from "./pages/user/info/Blog";
 import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
 import Subscription from "./pages/user/account/Subscription";
+import LiveRoomList from "./pages/user/livestream/LiveRoomList";
+import LiveRoom from "./pages/user/livestream/LiveRoom";
+import LiveReplay from "./pages/user/livestream/LiveReplay";
 
 // Exam center (static UI integration)
 import SpeakingTest from "./pages/user/exam-center/SpeakingTest";
@@ -137,6 +140,9 @@ const App = () => (
               <Route path="/dictation" element={<DictationExercises />} />
               <Route path="/dictation/:exerciseId" element={<DictationPractice />} />
               <Route path="/learning-path" element={<LearningPath />} />
+              <Route path="/live" element={<LiveRoomList />} />
+              <Route path="/live/:roomId" element={<LiveRoom />} />
+              <Route path="/live/replay/:roomId" element={<LiveReplay />} />
             </Route>
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
 

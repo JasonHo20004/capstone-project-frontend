@@ -105,6 +105,20 @@ class FlashcardService {
     );
     return response.data;
   }
+
+  async getPublicDecks(params?: {
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: FlashcardDeck[]; total: number; totalPages: number }> {
+    const query = new URLSearchParams({ isPublic: 'true' });
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', String(params.page));
+    query.set('limit', String(params?.limit ?? 20));
+    const response = await apiClient.get(`/flashcard-decks?${query.toString()}`);
+    const { data, total, totalPages } = response.data;
+    return { data: data ?? [], total: total ?? 0, totalPages: totalPages ?? 1 };
+  }
 }
 
 export const flashcardService = new FlashcardService();

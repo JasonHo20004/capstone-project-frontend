@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 // Tạo key factory giúp quản lý key nhất quán
 export const flashcardKeys = {
   allDecks: ['flashcardDecks', 'me'] as const,
+  publicDecks: (search?: string) => ['flashcardDecks', 'public', search ?? ''] as const,
   cardsByDeck: (deckId: string) => ['flashcards', 'byDeck', deckId] as const,
-  // 🔽 THÊM key mới
   reviewQueue: (deckId: string) => ['flashcardQueue', 'byDeck', deckId] as const,
 };
 
@@ -16,6 +16,17 @@ export const useGetDecks = () => {
   return useQuery({
     queryKey: flashcardKeys.allDecks,
     queryFn: async () => (await flashcardService.getMyDecks()).data,
+  });
+};
+
+/**
+ * Hook 1b: Fetch public decks from all users (for Explore tab)
+ */
+export const useGetPublicDecks = (search?: string) => {
+  return useQuery({
+    queryKey: flashcardKeys.publicDecks(search),
+    queryFn: async () => (await flashcardService.getPublicDecks({ search, limit: 24 })).data,
+    staleTime: 30_000,
   });
 };
 export const useCreateDeck = () => {

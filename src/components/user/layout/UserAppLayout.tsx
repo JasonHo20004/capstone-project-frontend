@@ -32,6 +32,7 @@ const aiNavItems: NavItem[] = [
   { name: "Dictation", path: "/dictation", icon: "hearing" },
   { name: "Learning Path", path: "/learning-path", icon: "route" },
   { name: "AI Flashcard", path: "/generate-flashcards", icon: "auto_awesome" },
+  { name: "Live Classroom", path: "/live", icon: "cast_for_education" },
 ];
 
 export default function UserAppLayout() {
