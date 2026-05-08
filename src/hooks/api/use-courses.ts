@@ -209,8 +209,15 @@ export const useCreateLesson = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ courseId, formData }: { courseId: string; formData: FormData }) =>
-      courseService.createLesson(courseId, formData),
+    mutationFn: ({
+      courseId,
+      formData,
+      onProgress,
+    }: {
+      courseId: string;
+      formData: FormData;
+      onProgress?: (percent: number) => void;
+    }) => courseService.createLesson(courseId, formData, onProgress),
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: ['course', variables.courseId] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
@@ -287,6 +294,22 @@ export const useDeleteModule = () => {
       queryClient.invalidateQueries({ queryKey: ['modules', vars.courseId] });
       queryClient.invalidateQueries({ queryKey: ['course', vars.courseId] });
       toast.success('Xóa module thành công!');
+    },
+  });
+};
+
+export const useReorderModules = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      courseId,
+      modules,
+    }: {
+      courseId: string;
+      modules: { id: string; moduleOrder: number }[];
+    }) => courseService.reorderModules(courseId, modules),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['modules', vars.courseId] });
     },
   });
 };

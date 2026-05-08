@@ -17,6 +17,7 @@ export {
   useCreateModule,
   useUpdateModule,
   useDeleteModule,
+  useReorderModules,
 } from './use-courses';
 export {
   useSellerDashboard,
