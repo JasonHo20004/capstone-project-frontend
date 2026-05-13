@@ -26,24 +26,44 @@ const gradeToQualityMap: Record<string, ReviewQuality> = {
 
 const CONFETTI_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
 
-const playAudio = (word: string, audioUrl?: string | null, e?: React.MouseEvent) => {
-  if (e) e.stopPropagation();
-  if (audioUrl) {
-    try {
-      new Audio(audioUrl).play();
+// Shared Audio element — reused across plays to avoid leaking dozens of HTMLAudioElement
+// instances on rapid clicks (low-end mobiles can OOM-crash otherwise).
+let sharedAudio: HTMLAudioElement | null = null;
+
+const speakWithBrowserTTS = (word: string) => {
+  try {
+    if (!('speechSynthesis' in window)) {
+      console.warn('[Flashcard] Browser does not support speech synthesis');
       return;
-    } catch {
-      // fall through to Web Speech API
     }
-  }
-  // Fallback: browser built-in TTS
-  if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(word);
     utt.lang = 'en-US';
     utt.rate = 0.9;
     window.speechSynthesis.speak(utt);
+  } catch (err) {
+    console.warn('[Flashcard] TTS error:', err);
   }
+};
+
+const playAudio = (word: string, audioUrl?: string | null, e?: React.MouseEvent) => {
+  if (e) e.stopPropagation();
+  if (audioUrl) {
+    try {
+      if (!sharedAudio) sharedAudio = new Audio();
+      sharedAudio.pause();
+      sharedAudio.src = audioUrl;
+      sharedAudio.currentTime = 0;
+      void sharedAudio.play().catch((err) => {
+        console.warn('[Flashcard] audio play failed, falling back to TTS:', err);
+        speakWithBrowserTTS(word);
+      });
+      return;
+    } catch (err) {
+      console.warn('[Flashcard] audio init error, falling back to TTS:', err);
+    }
+  }
+  speakWithBrowserTTS(word);
 };
 
 function spawnConfetti(container: HTMLElement) {
@@ -196,6 +216,31 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
       timerRef.current = null;
     }
   }, [finished]);
+
+  // Keyboard shortcuts: Space = flip, 1-4 = grade (again/hard/good/easy)
+  useEffect(() => {
+    if (finished) return;
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        setShowBack((v) => !v);
+        return;
+      }
+      if (!showBack) return;
+      const gradeKey: Record<string, 'again' | 'hard' | 'good' | 'easy'> = {
+        '1': 'again', '2': 'hard', '3': 'good', '4': 'easy',
+      };
+      const g = gradeKey[e.key];
+      if (g) {
+        e.preventDefault();
+        onGrade(g);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [finished, showBack, onGrade]);
 
   if (isLoadingQueue) {
     return (

@@ -111,6 +111,7 @@ const CourseDetail = () => {
 
   const handleAddToCart = () => {
     if (!user) { alert("Vui lòng đăng nhập để thêm vào giỏ hàng"); return; }
+    if (addToCartMutation.isPending) return;
     if (course) addToCartMutation.mutate(course.id);
   };
 
@@ -120,6 +121,7 @@ const CourseDetail = () => {
   };
 
   const handleConfirmPayment = () => {
+    if (directBuyMutation.isPending) return;
     if (course) {
       directBuyMutation.mutate(course.id, {
         onSuccess: () => { setBuyOpen(false); setTab("content"); },

@@ -29,18 +29,58 @@ interface Message {
   isStreaming?: boolean;
 }
 
-/** Converts **bold** and *italic* markdown to React elements safely. */
+/** Converts a small subset of markdown to React: code blocks, inline code, bold, italic, bullet/ordered lines. */
 function renderMarkdown(text: string): React.ReactNode[] {
-  const parts = text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+  if (!text) return [];
+
+  // 1. Split on fenced code blocks first (```...```) so their contents are preserved verbatim.
+  const blocks = text.split(/(```[\s\S]*?```)/g);
+
+  const nodes: React.ReactNode[] = [];
+  blocks.forEach((block, bi) => {
+    if (block.startsWith("```") && block.endsWith("```")) {
+      const code = block.slice(3, -3).replace(/^\w*\n/, "");
+      nodes.push(
+        <pre key={`code-${bi}`} className="bg-slate-100 border border-slate-200 rounded-md p-2 my-1 text-[12px] overflow-x-auto font-mono whitespace-pre-wrap">
+          {code}
+        </pre>
+      );
+      return;
     }
-    if (part.startsWith("*") && part.endsWith("*")) {
-      return <em key={i}>{part.slice(1, -1)}</em>;
-    }
-    return <span key={i}>{part}</span>;
+
+    const lines = block.split("\n");
+    lines.forEach((line, li) => {
+      const isBullet = /^\s*[-•]\s+/.test(line);
+      const orderedMatch = line.match(/^\s*(\d+)\.\s+(.*)$/);
+      const stripped = isBullet
+        ? line.replace(/^\s*[-•]\s+/, "")
+        : orderedMatch ? orderedMatch[2] : line;
+
+      const parts = stripped.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g);
+      const inline = parts.map((part, i) => {
+        if (part.startsWith("`") && part.endsWith("`")) {
+          return <code key={i} className="bg-slate-100 px-1 py-0.5 rounded text-[12px] font-mono">{part.slice(1, -1)}</code>;
+        }
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return <strong key={i}>{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+          return <em key={i}>{part.slice(1, -1)}</em>;
+        }
+        return <span key={i}>{part}</span>;
+      });
+
+      const key = `b${bi}-l${li}`;
+      if (isBullet) {
+        nodes.push(<div key={key} className="flex gap-2 pl-1"><span className="text-slate-400 shrink-0">•</span><span>{inline}</span></div>);
+      } else if (orderedMatch) {
+        nodes.push(<div key={key} className="flex gap-2 pl-1"><span className="text-slate-400 shrink-0">{orderedMatch[1]}.</span><span>{inline}</span></div>);
+      } else {
+        nodes.push(<span key={key}>{inline}{li < lines.length - 1 ? <br /> : null}</span>);
+      }
+    });
   });
+  return nodes;
 }
 
 export default function AiTutorPanel({
@@ -173,19 +213,19 @@ export default function AiTutorPanel({
       // onError
       (error: string) => {
         console.error("[AI Tutor Stream] Error:", error);
+        const finalText = accumulated || `⚠️ Lỗi: ${error}`;
         setMessages(prev => {
           const updated = [...prev];
           const lastIdx = updated.length - 1;
           if (lastIdx >= 0) {
-            updated[lastIdx] = {
-              role: "assistant",
-              content: accumulated || `❌ Lỗi: ${error}. Kiểm tra Colab tunnel.`,
-            };
+            updated[lastIdx] = { role: "assistant", content: finalText };
           }
           return updated;
         });
         setIsLoading(false);
         abortRef.current = null;
+        // Persist error/partial response so conversation history isn't broken on reopen.
+        persistMessage("assistant", finalText);
       },
     );
 

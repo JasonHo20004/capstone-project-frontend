@@ -438,6 +438,7 @@ export default function WalletPage() {
   const canLoadMore = (pagination?.total ?? 0) > transactionLimit;
 
   const handleCreateOrder = async () => {
+    if (createOrderMutation.isPending) return;
     const realMoney = Number(amount);
 
     if (!accessToken) {

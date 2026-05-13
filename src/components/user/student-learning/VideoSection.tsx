@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Clock, MessageSquare, PlayCircle } from "lucide-react";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -42,6 +43,43 @@ export const VideoSection = ({
   );
   const isVideoLesson = Boolean(videoAsset?.assetUrl);
 
+  // Persist playback position so refresh/tab-close doesn't lose progress.
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const lessonId = lesson?.id;
+  const storageKey = lessonId ? `lesson_video_pos_${lessonId}` : null;
+
+  useEffect(() => {
+    if (!storageKey || !videoRef.current) return;
+    const video = videoRef.current;
+    const onLoaded = () => {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        const t = saved ? Number(saved) : 0;
+        if (t > 0 && t < (video.duration || Infinity) - 1) {
+          video.currentTime = t;
+        }
+      } catch { /* ignore */ }
+    };
+    const save = () => {
+      try {
+        if (video.currentTime > 0) {
+          localStorage.setItem(storageKey, String(Math.floor(video.currentTime)));
+        }
+      } catch { /* quota or private mode */ }
+    };
+    video.addEventListener('loadedmetadata', onLoaded);
+    video.addEventListener('pause', save);
+    const interval = setInterval(() => { if (!video.paused) save(); }, 5000);
+    window.addEventListener('beforeunload', save);
+    return () => {
+      save();
+      clearInterval(interval);
+      video.removeEventListener('loadedmetadata', onLoaded);
+      video.removeEventListener('pause', save);
+      window.removeEventListener('beforeunload', save);
+    };
+  }, [storageKey, videoAsset?.assetUrl]);
+
   return (
     <div className="rounded-3xl border bg-background shadow-lg">
       <div className="p-2 sm:p-4">
@@ -51,6 +89,7 @@ export const VideoSection = ({
           <AspectRatio ratio={16 / 9}>
             {isVideoLesson ? (
               <video
+                ref={videoRef}
                 controls
                 className="h-full w-full rounded-2xl bg-black object-cover"
                 src={videoAsset?.assetUrl}

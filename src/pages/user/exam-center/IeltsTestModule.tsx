@@ -85,7 +85,36 @@ export default function IeltsTestModule() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [gradingResult, setGradingResult] = useState<any>(null);
+
+  const autoSaveKey = testId ? `ielts_draft_${testId}` : null;
+
+  // Restore draft answers on mount (F5/tab close protection)
+  useEffect(() => {
+    if (!autoSaveKey) return;
+    try {
+      const raw = localStorage.getItem(autoSaveKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.answers && typeof parsed.answers === 'object') {
+          setAnswers(parsed.answers);
+        }
+      }
+    } catch { /* ignore parse errors */ }
+  }, [autoSaveKey]);
+
+  // Auto-save answers with debounce
+  useEffect(() => {
+    if (!autoSaveKey || submitted) return;
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(autoSaveKey, JSON.stringify({ answers, savedAt: new Date().toISOString() }));
+      } catch { /* quota or private mode — ignore */ }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [answers, autoSaveKey, submitted]);
 
   // Audio refs for listening sections
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -234,7 +263,9 @@ export default function IeltsTestModule() {
   // ─── Submit ─────────────────────────────────────────────────────────────────
   const navigate = useNavigate();
   const handleSubmit = useCallback(async () => {
-    if (!testData) return;
+    if (!testData || isSubmitting || submitted) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
     try {
       // Extract userId from JWT
       let userId: string | undefined;
@@ -247,6 +278,9 @@ export default function IeltsTestModule() {
       } catch {}
       const resp = await apiClient.post(`/tests/${testData.id}/submit`, { submissions: answers, userId });
       const sessionId = resp.data?.data?.sessionId;
+      if (autoSaveKey) {
+        try { localStorage.removeItem(autoSaveKey); } catch {}
+      }
       if (sessionId) {
         navigate(`/practice/${testData.id}/result/${sessionId}`);
       } else {
@@ -254,10 +288,13 @@ export default function IeltsTestModule() {
         setGradingResult(resp.data?.data);
         setSubmitted(true);
       }
-    } catch {
-      setSubmitted(true);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Không thể nộp bài. Vui lòng kiểm tra mạng và thử lại.";
+      setSubmitError(msg);
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [testData, answers, navigate]);
+  }, [testData, answers, navigate, isSubmitting, submitted, autoSaveKey]);
 
   // ─── Navigation ─────────────────────────────────────────────────────────────
   const goNext = () => {
@@ -721,9 +758,20 @@ export default function IeltsTestModule() {
               Next Section →
             </button>
           ) : (
-            <button onClick={handleSubmit} className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-700 cursor-pointer">
-              Submit All
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting || submitted}
+              className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isSubmitting ? 'Đang nộp...' : submitted ? 'Đã nộp' : 'Submit All'}
             </button>
+          )}
+          {submitError && (
+            <div className="absolute top-14 right-6 bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded-md text-xs shadow-lg max-w-sm z-50">
+              <strong className="block mb-0.5">Nộp bài thất bại</strong>
+              <span>{submitError}</span>
+              <button onClick={() => setSubmitError(null)} className="ml-2 text-red-500 hover:text-red-700 font-bold">×</button>
+            </div>
           )}
         </div>
       </header>

@@ -29,13 +29,16 @@ function AudioButton({ audioUrl }: { audioUrl: string }) {
   const handlePlay = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+      // Reuse the same Audio element to avoid leaking dozens of instances on rapid clicks.
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
       }
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      audio.play();
+      audioRef.current.pause();
+      audioRef.current.src = audioUrl;
+      audioRef.current.currentTime = 0;
+      void audioRef.current.play().catch((err) => {
+        console.warn('Audio playback failed:', err);
+      });
     } catch (err) {
       console.error('Audio playback error:', err);
     }

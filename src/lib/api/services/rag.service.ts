@@ -121,6 +121,20 @@ class RagService {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
     const token = localStorage.getItem("accessToken");
 
+    // Idle-timeout guard: if no chunk arrives within 60s, abort and report.
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    const resetIdleTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        try { controller.abort(); } catch {}
+        onError("AI phản hồi quá chậm. Vui lòng kiểm tra kết nối hoặc thử lại.");
+      }, 60000);
+    };
+    const clearIdleTimer = () => {
+      if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    };
+    resetIdleTimer();
+
     fetch(`${baseUrl}/rag/explain/stream`, {
       method: "POST",
       headers: {
@@ -132,12 +146,14 @@ class RagService {
     })
       .then(async (response) => {
         if (!response.ok) {
+          clearIdleTimer();
           onError(`Server error: ${response.status}`);
           return;
         }
 
         const reader = response.body?.getReader();
         if (!reader) {
+          clearIdleTimer();
           onError("No response body");
           return;
         }
@@ -148,6 +164,7 @@ class RagService {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
+          resetIdleTimer();
 
           buffer += decoder.decode(value, { stream: true });
 
@@ -176,11 +193,13 @@ class RagService {
               const parsed = JSON.parse(eventData);
 
               if (eventType === "error") {
+                clearIdleTimer();
                 onError(parsed.error || "Unknown error");
                 return;
               }
 
               if (eventType === "done" || parsed.done) {
+                clearIdleTimer();
                 onDone(parsed.full_response || "");
                 return;
               }
@@ -196,8 +215,12 @@ class RagService {
         }
       })
       .catch((err) => {
-        if (err.name === "AbortError") return; // User cancelled
-        onError(err.message || "Connection failed");
+        clearIdleTimer();
+        if (err?.name === "AbortError") return; // User cancelled or idle timeout already handled
+        const isNetwork = err instanceof TypeError;
+        onError(isNetwork
+          ? "Không kết nối được máy chủ AI. Kiểm tra mạng hoặc thử lại."
+          : (err?.message || "Connection failed"));
       });
 
     return controller;
