@@ -59,6 +59,7 @@ interface SectionData {
   skill?: SkillType;
   passageContent: string;
   mediaUrl: string;
+  audioTranscript: string;
   imageUrl: string;
   questions: QuestionData[];
   collapsed: boolean;
@@ -110,6 +111,7 @@ const emptySection = (idx: number): SectionData => ({
   title: `Section ${idx + 1}`,
   passageContent: '',
   mediaUrl: '',
+  audioTranscript: '',
   imageUrl: '',
   questions: [emptyQuestion(1)],
   collapsed: false,
@@ -173,7 +175,6 @@ export default function ExamFormPage() {
       apiClient.get(`/tests/${editId}?includeAnswers=true`).then((resp) => {
         const test = resp.data?.data;
         if (test) {
-          console.log('[ExamForm] Loaded test data:', JSON.stringify(test.sections?.[0]?.questions?.slice(0, 3), null, 2));
           setForm({
             title: test.title,
             durationInMinutes: test.durationInMinutes || 60,
@@ -184,6 +185,7 @@ export default function ExamFormPage() {
               title: s.title,
               passageContent: s.passages?.[0]?.content || '',
               mediaUrl: s.mediaUrl || '',
+              audioTranscript: s.audioTranscript || '',
               imageUrl: s.imageUrl || '',
               questions: s.questions?.map((q: any) => ({
                 questionText: q.questionText || '',
@@ -382,6 +384,7 @@ export default function ExamFormPage() {
         title: section.title || `Section ${idx + 1}`,
         skill: selectedSkill || undefined,
         mediaUrl: section.mediaUrl || undefined,
+        audioTranscript: section.audioTranscript || undefined,
         imageUrl: section.imageUrl || undefined,
         passageContent: section.passageContent || undefined,
         questions: section.questions.map((q) => {
@@ -431,7 +434,6 @@ export default function ExamFormPage() {
         }),
       })),
     };
-    console.log('[ExamForm] Submit payload:', JSON.stringify(payload, null, 2));
     isEditing ? updateMutation.mutate(payload) : createMutation.mutate(payload);
   };
 
@@ -652,6 +654,30 @@ export default function ExamFormPage() {
                             <audio controls className="w-full h-9" src={section.mediaUrl} preload="metadata">
                               Your browser does not support audio.
                             </audio>
+
+                            {/* Audio transcript — shown to student AFTER submission */}
+                            <div className="mt-3 pt-3 border-t border-primary/10">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                                  <FileText className="h-3.5 w-3.5" />
+                                  Transcript (hiển thị sau khi học viên nộp bài)
+                                </Label>
+                                {section.audioTranscript && (
+                                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                    ✓ Đã có
+                                  </span>
+                                )}
+                              </div>
+                              <Textarea
+                                placeholder="Dán transcript của audio ở đây. Học viên sẽ thấy nội dung này sau khi nộp bài để tự kiểm tra kỹ năng nghe."
+                                value={section.audioTranscript}
+                                onChange={(e) => updateSection(sIdx, 'audioTranscript', e.target.value)}
+                                className="min-h-[120px] text-sm resize-y font-mono"
+                              />
+                              <p className="text-[11px] text-muted-foreground mt-1.5">
+                                💡 Có thể paste trực tiếp transcript chuẩn của Cambridge IELTS để học viên đối chiếu sau bài thi.
+                              </p>
+                            </div>
                           </div>
                         ) : (
                           <div className="mt-1">

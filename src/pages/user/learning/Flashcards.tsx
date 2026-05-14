@@ -21,6 +21,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Edit,
@@ -726,24 +727,40 @@ const Flashcards = () => {
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto relative group">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => {
-                        if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ tiến độ học của bộ thẻ này? Hành động này không thể hoàn tác.")) {
-                          resetProgressMutation.mutate(selectedDeckId!);
-                        }
-                      }}
-                      disabled={!selectedDeckId || resetProgressMutation.isPending}
-                      className="h-14 w-14 md:w-14 rounded-2xl border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0"
-                      title="Xóa tiến độ học"
-                    >
-                      {resetProgressMutation.isPending ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      ) : (
-                        <RotateCcw className="w-6 h-6" />
-                      )}
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          disabled={!selectedDeckId || resetProgressMutation.isPending}
+                          className="h-14 w-14 md:w-14 rounded-2xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
+                          aria-label="Xóa tiến độ học bộ thẻ này"
+                        >
+                          {resetProgressMutation.isPending ? (
+                            <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <RotateCcw className="w-6 h-6" aria-hidden="true" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Xóa toàn bộ tiến độ?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Toàn bộ tiến độ học của bộ thẻ này sẽ bị xóa và bạn sẽ học lại từ đầu. Hành động này không thể hoàn tác.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Hủy</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => selectedDeckId && resetProgressMutation.mutate(selectedDeckId)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Xóa tiến độ
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                     <Button
                       onClick={() => setStudyDialogOpen(true)}
                       disabled={!selectedDeckId || selectedDeckCards.length === 0}

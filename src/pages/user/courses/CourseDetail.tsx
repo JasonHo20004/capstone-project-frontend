@@ -23,6 +23,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 import { formatVND } from '@/lib/utils';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
 import CourseReportDialog from '@/components/user/course/CourseReportDialog';
@@ -110,13 +111,23 @@ const CourseDetail = () => {
   const thumbnailUrl = course?.thumbnailUrl || "";
 
   const handleAddToCart = () => {
-    if (!user) { alert("Vui lòng đăng nhập để thêm vào giỏ hàng"); return; }
+    if (!user) {
+      toast.warning("Bạn cần đăng nhập để thêm vào giỏ hàng", {
+        action: { label: "Đăng nhập", onClick: () => navigate('/login') },
+      });
+      return;
+    }
     if (addToCartMutation.isPending) return;
     if (course) addToCartMutation.mutate(course.id);
   };
 
   const handleBuyNowClick = () => {
-    if (!user) { alert("Vui lòng đăng nhập để mua khóa học"); return; }
+    if (!user) {
+      toast.warning("Bạn cần đăng nhập để mua khóa học", {
+        action: { label: "Đăng nhập", onClick: () => navigate('/login') },
+      });
+      return;
+    }
     setBuyOpen(true);
   };
 

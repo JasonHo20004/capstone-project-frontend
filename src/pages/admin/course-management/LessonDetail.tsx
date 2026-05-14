@@ -108,13 +108,20 @@ export default function AdminLessonDetail() {
       // Validate file type
       const allowedTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Vui lòng chọn file video hợp lệ (MP4, MPEG, MOV, AVI, WebM)');
+        toast({
+          variant: "destructive",
+          title: "Định dạng không hỗ trợ",
+          description: "Vui lòng chọn file MP4, MPEG, MOV, AVI hoặc WebM.",
+        });
         return;
       }
-      // Validate file size (max 500MB)
-      const maxSize = 500 * 1024 * 1024; // 500MB
+      const maxSize = 500 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert('File video quá lớn. Vui lòng chọn file nhỏ hơn 500MB');
+        toast({
+          variant: "destructive",
+          title: "File quá lớn",
+          description: "Vui lòng chọn file nhỏ hơn 500MB.",
+        });
         return;
       }
       setSelectedVideoFile(file);

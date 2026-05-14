@@ -13,8 +13,22 @@ import {
   getUserId,
   formatTime,
   getBandColor,
+  PART2_MAX_SECONDS,
+  PART2_WARN_SECONDS,
+  PART2_PREP_SECONDS,
 } from "./speaking-utils";
-import type { ConversationTurn, Screen, TopicDisplay } from "./speaking-utils";
+import type {
+  ConversationTurn,
+  Screen,
+  TopicDisplay,
+  VocabSuggestion,
+} from "./speaking-utils";
+import {
+  Waveform,
+  VolumeMeter,
+  Countdown,
+  Part2Timer,
+} from "./SpeakingComponents";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { useNavigate } from "react-router-dom";
 
@@ -37,14 +51,23 @@ function SpeakingTestContent() {
 
   // ─── Recording ────────────────────────────────────────────────────────────
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingBlob, setPendingBlob] = useState<Blob | null>(null);
   const [pendingAudioUrl, setPendingAudioUrl] = useState<string | null>(null);
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [liveStream, setLiveStream] = useState<MediaStream | null>(null);
+  const [micCheckStream, setMicCheckStream] = useState<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // ─── Vocab Tips ───────────────────────────────────────────────────────────
+  const [vocabSuggestions, setVocabSuggestions] = useState<VocabSuggestion[]>([]);
+  const [vocabLoading, setVocabLoading] = useState(false);
+  const [showVocabPanel, setShowVocabPanel] = useState(false);
 
   // ─── Notes ────────────────────────────────────────────────────────────────
   const [showNotes, setShowNotes] = useState(false);
@@ -109,14 +132,16 @@ function SpeakingTestContent() {
 
   // ─── Recording Timer ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (isRecording) {
+    if (isRecording && !isPaused) {
       timerRef.current = setInterval(() => setRecordingTime(p => p + 1), 1000);
-    } else {
+    } else if (!isRecording) {
       if (timerRef.current) clearInterval(timerRef.current);
       setRecordingTime(0);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [isRecording]);
+  }, [isRecording, isPaused]);
 
   // ─── Start Session Handler ───────────────────────────────────────────────
   const handleStartSession = useCallback(async (selectedTopic?: string) => {
@@ -125,28 +150,73 @@ function SpeakingTestContent() {
       const res = await startSession.mutateAsync({ userId, topic: selectedTopic });
       const data = res.data as any;
       setSessionId(data.sessionId);
-      setTopic(data.topic || selectedTopic || "Random");
+      const finalTopic = data.topic || selectedTopic || "Random";
+      setTopic(finalTopic);
       setCurrentPart(data.currentPart || 1);
       setCurrentStep(data.currentStep || 0);
       if (data.cueCard) setCueCard(data.cueCard);
 
-      if (data.examinerQuestion) {
+      const firstQuestion = data.examinerQuestion || data.question;
+      if (firstQuestion) {
         setTurns([{
           role: "examiner",
-          content: data.examinerQuestion,
+          content: firstQuestion,
           timestamp: new Date().toISOString(),
         }]);
       }
-      setScreen("conversation");
+
+      setVocabLoading(true);
+      aiEvaluationService.getSpeakingVocabSuggestions(finalTopic)
+        .then(r => {
+          const vocab = (r.data as any)?.vocabulary || [];
+          setVocabSuggestions(vocab);
+        })
+        .catch(() => { /* non-blocking */ })
+        .finally(() => setVocabLoading(false));
+
+      setScreen("mic-check");
     } catch (err) {
       console.error("Failed to start session:", err);
     }
   }, [startSession]);
 
-  // ─── Audio Recording ─────────────────────────────────────────────────────
-  const startRecording = useCallback(async () => {
+  // ─── Mic Check Handler ───────────────────────────────────────────────────
+  const initMicCheck = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicCheckStream(stream);
+    } catch (err) {
+      console.error("Mic access error:", err);
+    }
+  }, []);
+
+  const proceedToConversation = useCallback(() => {
+    if (micCheckStream) {
+      micCheckStream.getTracks().forEach(t => t.stop());
+      setMicCheckStream(null);
+    }
+    setScreen("conversation");
+  }, [micCheckStream]);
+
+  useEffect(() => {
+    if (screen === "mic-check" && !micCheckStream) {
+      initMicCheck();
+    }
+  }, [screen, micCheckStream, initMicCheck]);
+
+  useEffect(() => {
+    return () => {
+      if (micCheckStream) {
+        micCheckStream.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, [micCheckStream]);
+
+  // ─── Audio Recording ─────────────────────────────────────────────────────
+  const beginActualRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setLiveStream(stream);
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -159,20 +229,44 @@ function SpeakingTestContent() {
         setPendingBlob(blob);
         setPendingAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach(t => t.stop());
+        setLiveStream(null);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      setIsPaused(false);
     } catch (err) {
       console.error("Mic access error:", err);
     }
   }, []);
 
+  const startRecording = useCallback(() => {
+    setShowCountdown(true);
+  }, []);
+
+  const handleCountdownDone = useCallback(() => {
+    setShowCountdown(false);
+    beginActualRecording();
+  }, [beginActualRecording]);
+
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current?.state === "recording") {
+    if (mediaRecorderRef.current?.state === "recording" || mediaRecorderRef.current?.state === "paused") {
       mediaRecorderRef.current.stop();
     }
     setIsRecording(false);
+    setIsPaused(false);
+  }, []);
+
+  const togglePause = useCallback(() => {
+    const rec = mediaRecorderRef.current;
+    if (!rec) return;
+    if (rec.state === "recording") {
+      rec.pause();
+      setIsPaused(true);
+    } else if (rec.state === "paused") {
+      rec.resume();
+      setIsPaused(false);
+    }
   }, []);
 
   // ─── Send Audio (S3 upload flow) ─────────────────────────────────────────
@@ -213,7 +307,7 @@ function SpeakingTestContent() {
         if (data.currentStep !== undefined) setCurrentStep(data.currentStep);
         if (data.cueCard) {
           setCueCard(data.cueCard);
-          setPrepTimer(60);
+          setPrepTimer(PART2_PREP_SECONDS);
         }
         if (data.examinerResponse) {
           setTurns(prev => [...prev, {
@@ -366,6 +460,125 @@ function SpeakingTestContent() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // SCREEN 1.5: MIC CHECK (test mic + show vocab tips before starting)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (screen === "mic-check") {
+    return (
+      <div className="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
+        <header className="h-20 flex items-center justify-between px-4 sm:px-8 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (micCheckStream) micCheckStream.getTracks().forEach(t => t.stop());
+                setMicCheckStream(null);
+                setScreen("topic");
+              }}
+              className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-500 cursor-pointer"
+              title="Quay lại"
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </button>
+            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+              <span className="material-symbols-outlined">mic</span>
+            </div>
+            <div>
+              <h1 className="font-bold text-base sm:text-lg tracking-tight text-slate-900">Kiểm tra mic & Chuẩn bị</h1>
+              <p className="text-xs text-slate-500">Chủ đề: {topic}</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+          {/* Mic Test */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-500">graphic_eq</span>
+                Test microphone
+              </h2>
+              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                micCheckStream ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500"
+              }`}>
+                {micCheckStream ? "Mic OK" : "Đang chờ quyền..."}
+              </span>
+            </div>
+            <p className="text-sm text-slate-500 mb-4">Hãy nói thử vài câu — nếu thanh dưới chuyển sang xanh/cam là mic đang hoạt động tốt.</p>
+            <VolumeMeter stream={micCheckStream} />
+            {!micCheckStream && (
+              <button
+                onClick={initMicCheck}
+                className="mt-4 text-sm font-bold text-indigo-600 hover:text-indigo-700 underline cursor-pointer"
+              >
+                Cấp quyền microphone
+              </button>
+            )}
+          </div>
+
+          {/* Vocab Tips */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-500">lightbulb</span>
+                Từ vựng band 7+ cho chủ đề này
+              </h2>
+              {vocabLoading && (
+                <div className="w-5 h-5 border-2 border-amber-200 border-t-amber-500 rounded-full animate-spin" />
+              )}
+            </div>
+            <p className="text-sm text-slate-500 mb-4">Cố gắng dùng những từ này khi nói — AI Examiner sẽ cộng điểm Lexical Resource.</p>
+            {vocabLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : vocabSuggestions.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {vocabSuggestions.map((v, i) => (
+                  <div key={i} className="border border-amber-200 bg-amber-50/50 rounded-xl p-4">
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                      <span className="font-black text-amber-700 text-sm">{v.word}</span>
+                      <span className="text-[10px] text-amber-600 font-bold">B7+</span>
+                    </div>
+                    <p className="text-xs text-slate-600 mb-2">{v.meaning}</p>
+                    <p className="text-xs italic text-slate-500 leading-relaxed">"{v.example}"</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 italic">Chưa có gợi ý — bạn vẫn có thể bắt đầu bài thi.</p>
+            )}
+          </div>
+
+          {/* Instructions */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
+            <h3 className="text-sm font-black text-indigo-900 mb-2 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">info</span>
+              Hướng dẫn nhanh
+            </h3>
+            <ul className="text-xs text-indigo-900/80 space-y-1.5 leading-relaxed">
+              <li>• <b>Part 1</b>: 4-5 câu hỏi cá nhân, mỗi câu trả lời ~30 giây</li>
+              <li>• <b>Part 2</b>: 1 cue card — bạn có <b>1 phút chuẩn bị</b>, sau đó nói liên tục <b>1-2 phút</b></li>
+              <li>• <b>Part 3</b>: Câu hỏi mở thảo luận, mỗi câu trả lời 45-60 giây</li>
+              <li>• Bạn có thể <b>tạm dừng</b> hoặc <b>kết thúc sớm</b> bất cứ lúc nào</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={proceedToConversation}
+            disabled={!micCheckStream}
+            className="w-full px-6 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-amber-500/20 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined">play_arrow</span>
+            Bắt đầu thi Speaking
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // SCREEN 2: CONVERSATION
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -378,17 +591,17 @@ function SpeakingTestContent() {
 
     return (
       <div className="bg-slate-50 h-screen flex flex-col font-sans text-slate-900 overflow-hidden">
-        <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+        <header className="h-16 flex items-center justify-between px-3 sm:px-6 border-b border-slate-200 bg-white shrink-0 shadow-sm z-10 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center text-white shadow-sm shrink-0">
               <span className="material-symbols-outlined text-[18px]">mic</span>
             </div>
-            <div>
-              <p className="text-sm font-black text-slate-800 tracking-tight">{topic}</p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{partLabels[currentPart] || `Part ${currentPart}`}</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-black text-slate-800 tracking-tight truncate">{topic}</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">{partLabels[currentPart] || `Part ${currentPart}`}</p>
             </div>
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="flex items-center gap-1.5">
               {[1, 2, 3].map(p => (
                 <div key={p} className={`w-10 h-2 rounded-full transition-all duration-500 ${
@@ -396,28 +609,66 @@ function SpeakingTestContent() {
                 }`} title={`Part ${p}`} />
               ))}
             </div>
+            {vocabSuggestions.length > 0 && (
+              <button
+                onClick={() => setShowVocabPanel(!showVocabPanel)}
+                className={`hidden sm:inline-flex text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer shadow-sm items-center gap-1 ${
+                  showVocabPanel
+                    ? "bg-amber-500 text-white border-amber-500"
+                    : "text-amber-600 hover:bg-amber-50 border-amber-200"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">lightbulb</span>
+                Mẹo từ vựng
+              </button>
+            )}
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer shadow-sm mr-2 ${
-                showHistory 
-                  ? "bg-indigo-500 text-white border-indigo-500" 
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer shadow-sm ${
+                showHistory
+                  ? "bg-indigo-500 text-white border-indigo-500"
                   : "text-indigo-600 hover:bg-indigo-50 border-indigo-200"
               }`}
             >
-              {showHistory ? "Ẩn Transcript" : "Xem Transcript"}
+              <span className="hidden sm:inline">{showHistory ? "Ẩn" : "Xem"} Transcript</span>
+              <span className="sm:hidden material-symbols-outlined text-[16px]">history</span>
             </button>
             <button
               onClick={handleFinishEarly}
               className="text-xs font-bold text-red-500 hover:text-white px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-500 transition-all cursor-pointer shadow-sm"
             >
-              Kết thúc sớm
+              <span className="hidden sm:inline">Kết thúc sớm</span>
+              <span className="sm:hidden material-symbols-outlined text-[16px]">stop_circle</span>
             </button>
           </div>
         </header>
 
-        <div className={`flex-1 flex flex-col p-8 bg-white overflow-y-auto w-full relative ${showHistory ? 'justify-start' : 'items-center justify-center'}`}>
+        <div className={`flex-1 flex flex-col p-4 sm:p-8 bg-white overflow-y-auto w-full relative ${showHistory || showVocabPanel ? 'justify-start' : 'items-center justify-center'}`}>
           <div className="absolute inset-0 bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
           
+          {showVocabPanel && vocabSuggestions.length > 0 && (
+            <div className="w-full max-w-3xl mx-auto mb-8 border border-amber-200 rounded-3xl bg-amber-50/60 backdrop-blur-sm p-6 shadow-inner z-20 animate-in slide-in-from-top-4">
+              <div className="flex justify-between items-center mb-4 border-b border-amber-200 pb-3">
+                <h3 className="font-black text-slate-800 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-500">lightbulb</span>
+                  Từ vựng band 7+
+                </h3>
+                <button onClick={() => setShowVocabPanel(false)} className="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center cursor-pointer">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-1">
+                {vocabSuggestions.map((v, i) => (
+                  <div key={i} className="border border-amber-200 bg-white rounded-xl p-3">
+                    <p className="font-black text-amber-700 text-sm mb-1">{v.word}</p>
+                    <p className="text-xs text-slate-600 mb-1.5">{v.meaning}</p>
+                    <p className="text-xs italic text-slate-500">"{v.example}"</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {showHistory && (
             <div className="w-full max-w-3xl mx-auto mb-8 border border-slate-200 rounded-3xl bg-slate-50/80 backdrop-blur-sm p-6 shadow-inner z-20 animate-in slide-in-from-top-4">
               <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-4">
@@ -471,34 +722,34 @@ function SpeakingTestContent() {
             ) : (
               <div className="w-full max-w-3xl mx-auto text-center">
                 {currentPart === 2 && cueCard ? (
-                  <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50 p-10 mb-4 w-full relative overflow-hidden animate-in slide-in-from-bottom-8 duration-700 fade-in">
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-5 sm:p-10 mb-4 w-full relative overflow-hidden animate-in slide-in-from-bottom-8 duration-700 fade-in">
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 to-orange-500" />
-                    
-                    <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
-                      <span className="bg-amber-100 text-amber-700 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl">Part 2 — Cue Card</span>
+
+                    <div className="flex items-center justify-between mb-5 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-100 gap-2 flex-wrap">
+                      <span className="bg-amber-100 text-amber-700 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl">Part 2 — Cue Card</span>
                       {prepTimer !== null && prepTimer > 0 && (
-                        <span className="flex items-center gap-2 text-sm font-mono font-black text-red-600 bg-red-50 border border-red-100 px-4 py-2 rounded-xl animate-pulse">
+                        <span className="flex items-center gap-2 text-sm font-mono font-black text-red-600 bg-red-50 border border-red-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl animate-pulse">
                           <span className="material-symbols-outlined text-[18px]">timer</span>
-                          00:{prepTimer.toString().padStart(2, '0')}
+                          Prep 00:{prepTimer.toString().padStart(2, '0')}
                         </span>
                       )}
                     </div>
-                    
-                    <h3 className="text-3xl font-black text-slate-800 mb-10 leading-tight text-left">{cueCard.topic}</h3>
-                    
-                    <div className="text-left space-y-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+
+                    <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-6 sm:mb-10 leading-tight text-left">{cueCard.topic}</h3>
+
+                    <div className="text-left space-y-4 sm:space-y-6 bg-slate-50 p-4 sm:p-6 rounded-2xl border border-slate-100">
                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest">You should say:</p>
-                      <ul className="space-y-5">
+                      <ul className="space-y-3 sm:space-y-5">
                         {cueCard.bulletPoints.map((bp, i) => (
-                          <li key={i} className="text-lg text-slate-700 flex items-start gap-4">
-                            <span className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 text-sm font-black shadow-md shadow-amber-500/20">{i + 1}</span>
+                          <li key={i} className="text-base sm:text-lg text-slate-700 flex items-start gap-3 sm:gap-4">
+                            <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 text-xs sm:text-sm font-black shadow-md shadow-amber-500/20">{i + 1}</span>
                             <span className="font-medium leading-relaxed">{bp}</span>
                           </li>
                         ))}
                       </ul>
                       {cueCard.finalPrompt && (
-                        <div className="mt-8 pt-6 border-t border-slate-200">
-                          <p className="text-lg text-slate-800 font-bold flex items-start gap-3">
+                        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-200">
+                          <p className="text-base sm:text-lg text-slate-800 font-bold flex items-start gap-3">
                             <span className="material-symbols-outlined text-amber-500 mt-1">forum</span>
                             {cueCard.finalPrompt}
                           </p>
@@ -547,24 +798,55 @@ function SpeakingTestContent() {
           </div>
         </div>
 
-        <div className="border-t border-slate-200 bg-white px-6 py-8 shrink-0 relative z-10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
-          <div className="max-w-md mx-auto flex flex-col items-center justify-center gap-4">
+        <div className="border-t border-slate-200 bg-white px-4 sm:px-6 py-6 sm:py-8 shrink-0 relative z-10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+          <div className="max-w-2xl mx-auto flex flex-col items-center justify-center gap-4">
             {isRecording ? (
-              <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                <div className="relative flex items-center justify-center w-28 h-28 mb-4">
-                  <div className="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-20" />
-                  <div className="absolute inset-2 bg-red-500 rounded-full animate-ping opacity-30 animation-delay-300" />
+              <div className="flex flex-col items-center w-full animate-in zoom-in duration-300 gap-4">
+                {currentPart === 2 ? (
+                  <Part2Timer
+                    seconds={recordingTime}
+                    max={PART2_MAX_SECONDS}
+                    warnAt={PART2_WARN_SECONDS}
+                  />
+                ) : (
+                  <span className={`text-xl font-mono font-black px-6 py-2 rounded-2xl border shadow-sm ${
+                    isPaused
+                      ? "text-slate-500 bg-slate-50 border-slate-200"
+                      : "text-red-600 bg-red-50 border-red-100 animate-pulse"
+                  }`}>
+                    {isPaused ? "PAUSED" : formatTime(recordingTime)}
+                  </span>
+                )}
+
+                <div className="w-full max-w-md">
+                  <Waveform
+                    stream={liveStream}
+                    active={isRecording && !isPaused}
+                    height={64}
+                    color={isPaused ? "#94a3b8" : "#ef4444"}
+                  />
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={togglePause}
+                    className="w-14 h-14 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-700 shadow transition-all hover:scale-105 cursor-pointer border-2 border-white"
+                    title={isPaused ? "Tiếp tục" : "Tạm dừng"}
+                  >
+                    <span className="material-symbols-outlined text-[26px]">
+                      {isPaused ? "play_arrow" : "pause"}
+                    </span>
+                  </button>
                   <button
                     onClick={stopRecording}
-                    className="relative z-10 w-20 h-20 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-xl shadow-red-500/40 transition-all hover:scale-105 cursor-pointer border-4 border-white"
+                    className="w-20 h-20 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-xl shadow-red-500/40 transition-all hover:scale-105 cursor-pointer border-4 border-white"
                   >
                     <span className="material-symbols-outlined text-[36px]">stop</span>
                   </button>
                 </div>
-                <span className="text-xl font-mono text-red-600 font-black animate-pulse bg-red-50 px-6 py-2 rounded-2xl border border-red-100 shadow-sm">
-                  {formatTime(recordingTime)}
-                </span>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-4">Nhấn để kết thúc câu trả lời</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest text-center">
+                  {isPaused ? "Đang tạm dừng" : "Nhấn STOP để kết thúc"}
+                </p>
               </div>
             ) : (
               <div className="flex flex-col items-center">
@@ -582,6 +864,8 @@ function SpeakingTestContent() {
             )}
           </div>
         </div>
+
+        {showCountdown && <Countdown from={3} onDone={handleCountdownDone} />}
       </div>
     );
   }
@@ -701,6 +985,8 @@ function SpeakingTestContent() {
                 setPrepTimer(null);
                 setCurrentPart(1);
                 setCurrentStep(0);
+                setVocabSuggestions([]);
+                setShowVocabPanel(false);
               }}
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:scale-105 transition-all cursor-pointer"
             >

@@ -51,8 +51,9 @@ function AudioButton({ audioUrl }: { audioUrl: string }) {
       className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-indigo-400 hover:text-indigo-600 transition-colors"
       onClick={handlePlay}
       title="Nghe phát âm"
+      aria-label="Phát âm thanh từ vựng"
     >
-      <Volume2 className="w-3.5 h-3.5" />
+      <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
     </Button>
   );
 }

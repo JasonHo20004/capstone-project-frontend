@@ -179,10 +179,10 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
     // Visual feedback
     if (grade === 'again' || grade === 'hard') {
       setFeedbackClass('kahoot-shake');
-      setFeedbackText(grade === 'again' ? '😤 Thử lại!' : '💪 Cố lên!');
+      setFeedbackText(grade === 'again' ? 'Sẽ ôn lại sớm' : 'Đã đánh dấu khó');
     } else {
       setFeedbackClass('kahoot-glow-correct');
-      setFeedbackText(grade === 'easy' ? '🔥 Tuyệt vời!' : '✨ Tốt lắm!');
+      setFeedbackText(grade === 'easy' ? 'Quá tốt!' : 'Tốt lắm');
       if (cardContainerRef.current) {
         spawnConfetti(cardContainerRef.current);
       }
@@ -262,7 +262,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
           <Star className="w-8 h-8 text-emerald-400" />
         </div>
         <h3 className="text-xl font-bold text-white">Không có thẻ cần ôn tập!</h3>
-        <p className="text-indigo-300 text-sm">Tất cả thẻ đã được ôn. Hẹn gặp lại vào phiên học tiếp theo 🎉</p>
+        <p className="text-indigo-300 text-sm">Tất cả thẻ đã được ôn. Hẹn gặp lại ở phiên học tiếp theo.</p>
         <button
           className="mx-auto flex items-center gap-2 h-12 px-8 rounded-xl font-bold text-white
             bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500
@@ -414,8 +414,9 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
                     size="icon"
                     className="absolute top-4 right-4 rounded-full bg-white/10 hover:bg-white/20 text-white z-20 transition-all duration-200"
                     onClick={(e) => playAudio(currentCard.frontContent, currentCard.audioUrl, e)}
+                    aria-label="Phát âm thanh từ vựng"
                   >
-                    <Volume2 className="w-5 h-5" />
+                    <Volume2 className="w-5 h-5" aria-hidden="true" />
                   </Button>
 
                   <div className="flex flex-col items-center gap-4 relative z-10">
@@ -536,7 +537,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
 
             <div className="space-y-2 kahoot-score-pop" style={{ animationDelay: '0.3s' }}>
               <h3 className="text-3xl font-black text-white">
-                Hoàn thành xuất sắc! 🎉
+                Hoàn thành xuất sắc!
               </h3>
               <p className="text-indigo-300 text-lg font-medium">
                 Bạn đã hoàn thành tất cả {sessionQueue.length} thẻ trong phiên này.

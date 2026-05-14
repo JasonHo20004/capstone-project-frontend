@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -269,7 +270,7 @@ export default function DictationManagement() {
       const url = await uploadAudioApi(file);
       setUrl(url);
     } catch {
-      alert('Upload thất bại. Kiểm tra kết nối S3.');
+      toast.error('Upload thất bại', { description: 'Kiểm tra kết nối S3 và thử lại.' });
     }
     setUploading(false);
   };
@@ -296,7 +297,7 @@ export default function DictationManagement() {
         setLevel(data.level || 'B2');
         setCategory(data.category || '');
       } catch {
-        alert('File JSON không hợp lệ');
+        toast.error('File JSON không hợp lệ', { description: 'Vui lòng kiểm tra cú pháp file và thử lại.' });
       }
     };
     reader.readAsText(file);

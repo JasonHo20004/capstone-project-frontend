@@ -56,6 +56,7 @@ interface SectionData {
   title: string;
   skill?: string;
   mediaUrl?: string | null;
+  audioTranscript?: string | null;
   imageUrl?: string | null;
   orderIndex?: number;
   passages: PassageData[];
@@ -121,6 +122,44 @@ export default function IeltsTestModule() {
   const passageRef = useRef<HTMLDivElement | null>(null);
   const questionsRef = useRef<HTMLDivElement | null>(null);
 
+  // IELTS rule: audio plays exactly once per section. Track which sections have already played.
+  const [playedSections, setPlayedSections] = useState<Set<string>>(new Set());
+  const [audioStarted, setAudioStarted] = useState(false);
+  const [showTranscript, setShowTranscript] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setAudioStarted(false);
+  }, [currentSectionIdx]);
+
+  const handleAudioPlay = useCallback(() => {
+    setAudioStarted(true);
+  }, []);
+
+  const handleAudioEnded = useCallback(() => {
+    const sid = testData?.sections?.[currentSectionIdx]?.id;
+    if (sid) setPlayedSections(prev => new Set(prev).add(sid));
+  }, [testData, currentSectionIdx]);
+
+  const handleAudioSeeking = useCallback(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const sid = testData?.sections?.[currentSectionIdx]?.id;
+    if (sid && playedSections.has(sid)) {
+      try { el.pause(); el.currentTime = el.duration || 0; } catch { /* noop */ }
+      return;
+    }
+    if (audioStarted && el.currentTime < (el as any)._lastTime - 0.5) {
+      el.currentTime = (el as any)._lastTime || 0;
+    }
+    (el as any)._lastTime = el.currentTime;
+  }, [audioStarted, playedSections, testData, currentSectionIdx]);
+
+  const handleAudioTimeUpdate = useCallback(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    (el as any)._lastTime = el.currentTime;
+  }, []);
+
   // ─── Highlight State ────────────────────────────────────────────────────────
   const [highlightPopover, setHighlightPopover] = useState<{ x: number; y: number; range: Range } | null>(null);
   const [highlightMode, setHighlightMode] = useState(false);
@@ -175,7 +214,6 @@ export default function IeltsTestModule() {
               if (newSessionId) {
                 setSessionId(newSessionId);
                 window.history.replaceState(null, "", `/exam/test/${testId}/session/${newSessionId}`);
-                console.log(`📝 Session started: ${newSessionId}`);
               }
             }
           } catch (err) {
@@ -716,7 +754,13 @@ export default function IeltsTestModule() {
               placeholder={activeWSection.taskType === 1 ? 'The chart/diagram illustrates...' : 'In today\'s society, the issue of...'}
               value={currentWEssay}
               onChange={(e) => setWritingEssays(prev => ({ ...prev, [activeWritingTab]: e.target.value }))}
+              aria-label="Khu vực soạn bài viết"
             />
+            {wWordCount < activeWSection.wordCountMin && (
+              <div className="px-5 py-2 border-t border-amber-100 bg-amber-50/70 text-[11px] text-amber-800 shrink-0">
+                Cần viết thêm <strong>{activeWSection.wordCountMin - wWordCount}</strong> từ nữa để đạt mức tối thiểu ({activeWSection.wordCountMin} từ).
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -736,26 +780,26 @@ export default function IeltsTestModule() {
           <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase ${isListeningTest ? "bg-teal-100 text-teal-700" : "bg-indigo-100 text-indigo-700"}`}>
             {testSkillLabel}
           </span>
-          <span className="text-xs text-slate-400 ml-2">{answeredCount}/{currentQuestions.length} answered</span>
+          <span className="text-xs text-slate-400 ml-2">Đã trả lời {answeredCount}/{currentQuestions.length}</span>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-slate-500">
-            Section {currentSectionIdx + 1} / {sections.length}
+            Phần {currentSectionIdx + 1} / {sections.length}
           </span>
           <span className="text-xs text-slate-400">
-            Total: {totalAnswered}/{allQuestions.length}
+            Tổng: {totalAnswered}/{allQuestions.length}
           </span>
           <div className={`px-3 py-1 rounded-md font-mono font-bold text-sm ${timeLeft < 60 ? "bg-red-100 text-red-700 animate-pulse" : timeLeft < 120 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
             {formatTime(timeLeft)}
           </div>
           {currentSectionIdx > 0 && (
             <button onClick={goPrev} className="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300 cursor-pointer">
-              ← Prev
+              ← Phần trước
             </button>
           )}
           {currentSectionIdx < sections.length - 1 ? (
             <button onClick={goNext} className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-700 cursor-pointer">
-              Next Section →
+              Phần tiếp →
             </button>
           ) : (
             <button
@@ -763,7 +807,7 @@ export default function IeltsTestModule() {
               disabled={isSubmitting || submitted}
               className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed cursor-pointer"
             >
-              {isSubmitting ? 'Đang nộp...' : submitted ? 'Đã nộp' : 'Submit All'}
+              {isSubmitting ? 'Đang nộp...' : submitted ? 'Đã nộp' : 'Nộp bài'}
             </button>
           )}
           {submitError && (
@@ -781,26 +825,76 @@ export default function IeltsTestModule() {
         {/* Left Panel: Passage / Audio */}
         <div className="w-1/2 bg-white border-r border-slate-200 p-6 overflow-y-auto relative">
           {/* Audio Player for Listening */}
-          {currentSection.mediaUrl && (
-            <div className="mb-6 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="material-symbols-outlined text-teal-600 text-xl">headphones</span>
-                <h3 className="text-sm font-bold text-teal-800">{currentSection.title} — Audio</h3>
+          {currentSection.mediaUrl && (() => {
+            const sid = currentSection.id;
+            const alreadyPlayed = playedSections.has(sid);
+            return (
+              <div className={`mb-6 border rounded-xl p-4 ${
+                alreadyPlayed
+                  ? "bg-slate-50 border-slate-200"
+                  : "bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200"
+              }`}>
+                <div className="flex items-center justify-between mb-3 gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-xl ${alreadyPlayed ? "text-slate-400" : "text-teal-600"}`}>headphones</span>
+                    <h3 className={`text-sm font-bold ${alreadyPlayed ? "text-slate-500" : "text-teal-800"}`}>{currentSection.title} — Audio</h3>
+                  </div>
+                  {alreadyPlayed && (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
+                      Đã phát xong
+                    </span>
+                  )}
+                </div>
+                <audio
+                  key={sid}
+                  ref={audioRef}
+                  controls
+                  controlsList="nodownload noplaybackrate"
+                  onContextMenu={(e) => e.preventDefault()}
+                  onPlay={handleAudioPlay}
+                  onEnded={handleAudioEnded}
+                  onSeeking={handleAudioSeeking}
+                  onTimeUpdate={handleAudioTimeUpdate}
+                  className={`w-full h-10 ${alreadyPlayed ? "opacity-50 pointer-events-none" : ""}`}
+                  src={currentSection.mediaUrl}
+                  preload="auto"
+                >
+                  Your browser does not support audio.
+                </audio>
+                <p className={`text-xs mt-2 ${alreadyPlayed ? "text-slate-500" : "text-teal-600"}`}>
+                  {alreadyPlayed
+                    ? "🔒 Section này đã nghe xong — không thể nghe lại (chuẩn IELTS)."
+                    : "💡 Đây là bài thi IELTS thật — bạn chỉ được nghe MỘT lần, không tua lại được."}
+                </p>
+
+                {/* Transcript reveal — only after submission */}
+                {submitted && currentSection.audioTranscript && (
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <button
+                      onClick={() => setShowTranscript(prev => ({ ...prev, [sid]: !prev[sid] }))}
+                      className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        {showTranscript[sid] ? "visibility_off" : "subtitles"}
+                      </span>
+                      {showTranscript[sid] ? "Ẩn transcript" : "Hiện transcript"}
+                    </button>
+                    {showTranscript[sid] && (
+                      <div className="mt-3 bg-white border border-slate-200 rounded-xl p-4 max-h-[400px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                          <span className="material-symbols-outlined text-indigo-500 text-[16px]">subtitles</span>
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transcript — {currentSection.title}</p>
+                        </div>
+                        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">
+                          {currentSection.audioTranscript}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <audio
-                ref={audioRef}
-                controls
-                className="w-full h-10"
-                src={currentSection.mediaUrl}
-                preload="auto"
-              >
-                Your browser does not support audio.
-              </audio>
-              <p className="text-xs text-teal-600 mt-2">
-                💡 Tip: You can only listen to the audio once in a real IELTS test.
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Highlight Toolbar */}
           <div className="flex items-center justify-between mb-3">

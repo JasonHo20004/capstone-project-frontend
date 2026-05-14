@@ -7,7 +7,12 @@ export interface ConversationTurn {
   timestamp: string;
 }
 
-export type Screen = "topic" | "conversation" | "grading" | "result";
+export type Screen =
+  | "topic"
+  | "mic-check"
+  | "conversation"
+  | "grading"
+  | "result";
 
 export interface TopicDisplay {
   name: string;
@@ -15,6 +20,18 @@ export interface TopicDisplay {
   color: string;
   fromDb: boolean;
   isPremium?: boolean;
+}
+
+export interface VocabSuggestion {
+  word: string;
+  meaning: string;
+  example: string;
+}
+
+export interface ErrorHighlight {
+  original: string;
+  suggestion: string;
+  type: "grammar" | "vocab" | "coherence";
 }
 
 // Icon/color map for known topic names (used for display styling only)
@@ -53,11 +70,54 @@ export function formatTime(seconds: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-export function getBandColor(band: number | null): string {
+export function getBandColor(band: number | null | undefined): string {
   if (!band) return "text-slate-400";
   if (band >= 8) return "text-emerald-600";
   if (band >= 7) return "text-teal-600";
   if (band >= 6) return "text-blue-600";
   if (band >= 5) return "text-amber-600";
   return "text-red-500";
+}
+
+export function getBandBg(band: number | null | undefined): string {
+  if (!band) return "bg-slate-50 border-slate-200";
+  if (band >= 8) return "bg-emerald-50 border-emerald-200";
+  if (band >= 7) return "bg-teal-50 border-teal-200";
+  if (band >= 6) return "bg-blue-50 border-blue-200";
+  if (band >= 5) return "bg-amber-50 border-amber-200";
+  return "bg-red-50 border-red-200";
+}
+
+// Part 2 IELTS - chuan la 2 phut noi lien tuc
+export const PART2_MAX_SECONDS = 120;
+export const PART2_WARN_SECONDS = 30;
+export const PART2_PREP_SECONDS = 60;
+
+// Highlight inline errors in transcript text.
+export function highlightErrors(
+  text: string,
+  errors: ErrorHighlight[]
+): Array<{ text: string; error?: ErrorHighlight }> {
+  if (!errors || errors.length === 0) return [{ text }];
+
+  const segments: Array<{ text: string; error?: ErrorHighlight }> = [];
+  let cursor = 0;
+  const lower = text.toLowerCase();
+
+  const indexed = errors
+    .map((e) => ({ err: e, idx: lower.indexOf(e.original.toLowerCase()) }))
+    .filter((x) => x.idx >= 0)
+    .sort((a, b) => a.idx - b.idx);
+
+  for (const { err, idx } of indexed) {
+    if (idx < cursor) continue;
+    if (idx > cursor) segments.push({ text: text.slice(cursor, idx) });
+    segments.push({
+      text: text.slice(idx, idx + err.original.length),
+      error: err,
+    });
+    cursor = idx + err.original.length;
+  }
+  if (cursor < text.length) segments.push({ text: text.slice(cursor) });
+  return segments;
 }

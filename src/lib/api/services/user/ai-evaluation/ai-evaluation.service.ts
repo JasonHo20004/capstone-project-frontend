@@ -167,6 +167,42 @@ class AiEvaluationService {
     return response.data;
   }
 
+  async getSpeakingVocabSuggestions(topic: string): Promise<ApiResponse<{
+    vocabulary: Array<{ word: string; meaning: string; example: string }>;
+  }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/speaking-sessions/vocab-suggestions',
+      { topic }
+    );
+    return response.data;
+  }
+
+  async getSpeakingModelAnswer(data: {
+    question: string;
+    transcript?: string;
+    part?: 1 | 2 | 3;
+  }): Promise<ApiResponse<{
+    modelAnswer: string;
+    keyVocab: Array<{ word: string; meaning: string; example: string }>;
+    improvement: string;
+  }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/speaking-sessions/model-answer',
+      data
+    );
+    return response.data;
+  }
+
+  async highlightSpeakingErrors(transcript: string): Promise<ApiResponse<{
+    errors: Array<{ original: string; suggestion: string; type: 'grammar' | 'vocab' | 'coherence' }>;
+  }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/speaking-sessions/highlight-errors',
+      { transcript }
+    );
+    return response.data;
+  }
+
   // ============== Writing Assistant (Real-time) ==============
 
   async getWritingAssistance(data: {
@@ -253,6 +289,20 @@ class AiEvaluationService {
   async toggleSpeakingTopicPremium(id: string): Promise<ApiResponse<any>> {
     const response = await apiClient.patch<ApiResponse<any>>(
       `/ai/speaking-topics/${id}/toggle-premium`
+    );
+    return response.data;
+  }
+
+  async autoGenerateSpeakingTopic(title: string): Promise<ApiResponse<{
+    part1Questions: string[];
+    part2Topic: string;
+    part2Bullets: string[];
+    part2FinalPrompt: string;
+    part3Questions: string[];
+  }>> {
+    const response = await apiClient.post<ApiResponse<any>>(
+      '/ai/speaking-topics/auto-generate',
+      { title }
     );
     return response.data;
   }

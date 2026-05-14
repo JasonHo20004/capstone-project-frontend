@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { AIAvatar } from '@/components/user/livestream/AIAvatar';
+import { AIAvatarAnime } from '@/components/user/livestream/AIAvatarAnime';
 import { Users, Radio, Plus, LogIn, Clock, PlayCircle, BookOpen } from 'lucide-react';
 
 const RAG_BASE = import.meta.env.VITE_RAG_SERVICE_URL ?? 'http://localhost:8000';
@@ -29,8 +30,10 @@ const RAG_BASE = import.meta.env.VITE_RAG_SERVICE_URL ?? 'http://localhost:8000'
 interface Room {
   id: string;
   topic: string;
+  lesson_prompt?: string;
   level: string;
   level_label: string;
+  language: string;
   host_name: string;
   participant_count: number;
   status: 'waiting' | 'live' | 'completed';
@@ -78,7 +81,9 @@ export default function LiveRoomList() {
   const { user } = useUser();
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState('');
+  const [lessonPrompt, setLessonPrompt] = useState('');
   const [level, setLevel] = useState('intermediate');
+  const [language, setLanguage] = useState('en');
   const [tab, setTab] = useState<'live' | 'recordings'>('live');
 
   const { data, isLoading, refetch } = useQuery({
@@ -107,7 +112,9 @@ export default function LiveRoomList() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topic: topic.trim(),
+          lesson_prompt: lessonPrompt.trim(),
           level,
+          language,
           host_id: user?.id ?? 'guest',
           host_name: user?.fullName ?? 'Teacher',
         }),
@@ -117,6 +124,7 @@ export default function LiveRoomList() {
     onSuccess: ({ room_id }) => {
       setOpen(false);
       setTopic('');
+      setLessonPrompt('');
       navigate(`/live/${room_id}`);
     },
   });
@@ -145,23 +153,43 @@ export default function LiveRoomList() {
               Create Room
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Create a Live Classroom</DialogTitle>
+              <DialogTitle>Tạo phòng livestream</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
+              {/* Title */}
               <div className="space-y-1.5">
-                <Label htmlFor="topic">Lesson Topic</Label>
+                <Label htmlFor="topic">Tiêu đề lớp học</Label>
                 <Input
                   id="topic"
-                  placeholder="e.g. IELTS Writing Task 2, Phrasal Verbs, Business English…"
+                  placeholder="Ví dụ: IELTS Speaking Part 2, Phrasal Verbs, Business Email…"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && topic.trim() && createRoom.mutate()}
                 />
+                <p className="text-xs text-slate-400">Hiển thị công khai — học viên sẽ thấy tiêu đề này trên danh sách phòng.</p>
               </div>
+
+              {/* Lesson prompt */}
               <div className="space-y-1.5">
-                <Label>English Level</Label>
+                <Label htmlFor="lesson-prompt">
+                  Nội dung muốn AI dạy
+                  <span className="ml-1.5 text-xs font-normal text-slate-400">(tuỳ chọn)</span>
+                </Label>
+                <Textarea
+                  id="lesson-prompt"
+                  placeholder={`Ví dụ: Làm thế nào để phát triển idea trong IELTS Speaking Part 2? Tập trung vào cấu trúc câu trả lời, cách dùng linking words và các mẫu câu thông dụng.`}
+                  value={lessonPrompt}
+                  onChange={(e) => setLessonPrompt(e.target.value)}
+                  rows={4}
+                  className="resize-none text-sm"
+                />
+                <p className="text-xs text-slate-400">AI sẽ bám sát hướng dẫn này để sinh nội dung bài giảng. Nếu để trống, AI sẽ tự thiết kế bài dựa theo tiêu đề.</p>
+              </div>
+
+              {/* Level */}
+              <div className="space-y-1.5">
+                <Label>Trình độ học viên</Label>
                 <Select value={level} onValueChange={setLevel}>
                   <SelectTrigger>
                     <SelectValue />
@@ -173,12 +201,32 @@ export default function LiveRoomList() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Language */}
+              <div className="space-y-1.5">
+                <Label>Ngôn ngữ giảng dạy</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">🇬🇧 Tiếng Anh</SelectItem>
+                    <SelectItem value="vi">🇻🇳 Tiếng Việt</SelectItem>
+                  </SelectContent>
+                </Select>
+                {language === 'vi' && (
+                  <p className="text-xs text-slate-400">
+                    Giảng viên AI sẽ giải thích bằng tiếng Việt — phù hợp cho người mới bắt đầu.
+                  </p>
+                )}
+              </div>
+
               <Button
                 className="w-full bg-indigo-600 hover:bg-indigo-700"
                 disabled={!topic.trim() || createRoom.isPending}
                 onClick={() => createRoom.mutate()}
               >
-                {createRoom.isPending ? <LoadingSpinner className="w-4 h-4" /> : 'Start Classroom'}
+                {createRoom.isPending ? <LoadingSpinner className="w-4 h-4" /> : 'Bắt đầu livestream'}
               </Button>
             </div>
           </DialogContent>
@@ -282,7 +330,7 @@ export default function LiveRoomList() {
         </div>
       ) : rooms.length === 0 ? (
         <div className="flex flex-col items-center gap-5 py-20 text-center">
-          <AIAvatar isSpeaking={false} className="w-28 h-28 opacity-60" />
+          <AIAvatarAnime isSpeaking={false} className="w-28 h-28" />
           <div>
             <p className="font-medium text-slate-700">No live classrooms yet</p>
             <p className="text-sm text-slate-400 mt-1">Be the first to create one!</p>
@@ -299,9 +347,14 @@ export default function LiveRoomList() {
               className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">
-                  {room.topic}
-                </h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-slate-900 leading-snug line-clamp-2">
+                    {room.topic}
+                  </h3>
+                  {room.lesson_prompt && (
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{room.lesson_prompt}</p>
+                  )}
+                </div>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[room.status]}`}>
                   {room.status === 'live' && (
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1 animate-pulse" />
@@ -317,6 +370,9 @@ export default function LiveRoomList() {
                 >
                   {room.level_label}
                 </Badge>
+                <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                  {room.language === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}
+                </span>
                 <span className="text-xs text-slate-400 flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   {room.participant_count} joined
