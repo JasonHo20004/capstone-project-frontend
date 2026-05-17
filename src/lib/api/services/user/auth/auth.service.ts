@@ -7,6 +7,9 @@ import type {
   RefreshTokenRequest,
   RefreshTokenApiResponse,
   LogoutApiResponse,
+  ResendVerificationRequest,
+  ResendVerificationApiResponse,
+  VerifyEmailApiResponse,
 } from '@/lib/api/types/auth.types';
 
 class AuthService {
@@ -51,6 +54,29 @@ class AuthService {
   async logout(): Promise<LogoutApiResponse> {
     const response = await apiClient.post<LogoutApiResponse>(
       '/auth/logout',
+    );
+    return response.data;
+  }
+
+  /**
+   * Verify email and receive a session (auto-login)
+   */
+  async verifyEmail(token: string): Promise<VerifyEmailApiResponse> {
+    const response = await apiClient.get<VerifyEmailApiResponse>('/auth/verify', {
+      params: { token },
+    });
+    return response.data;
+  }
+
+  /**
+   * Resend verification email by email address
+   */
+  async resendVerification(
+    data: ResendVerificationRequest
+  ): Promise<ResendVerificationApiResponse> {
+    const response = await apiClient.post<ResendVerificationApiResponse>(
+      '/auth/resend-verification',
+      data
     );
     return response.data;
   }

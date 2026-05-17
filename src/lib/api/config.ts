@@ -66,7 +66,17 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
-    
+
+    // Public auth pages handle their own session state. Don't let a 401 from
+    // some background fetch trigger a refresh/logout cascade that boots the
+    // user back to /login mid-verify or mid-register.
+    const path = window.location.pathname;
+    const isPublicAuthPage =
+      path.startsWith("/auth/") || path === "/login" || path === "/register";
+    if (error.response?.status === 401 && isPublicAuthPage) {
+      return Promise.reject(error);
+    }
+
     // Skip retry for /auth/refresh - if refresh fails, we must logout immediately to avoid deadlock/infinite loading
     const isRefreshRequest = originalRequest?.url?.includes("/auth/refresh");
     if (error.response?.status === 401 && isRefreshRequest) {

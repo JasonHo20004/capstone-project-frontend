@@ -70,7 +70,7 @@ const Register = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -84,6 +84,28 @@ const Register = () => {
         return newErrors;
       });
     }
+  };
+
+  const validateEmailField = (email: string) => {
+    const emailSchema = z.string().min(1, "Email là bắt buộc").email("Email không hợp lệ");
+    const result = emailSchema.safeParse(email);
+
+    if (!result.success) {
+      const errorMessage = result.error.issues[0]?.message || "Email không hợp lệ";
+      setErrors(prev => ({ ...prev, email: errorMessage }));
+      return false;
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.email;
+        return newErrors;
+      });
+      return true;
+    }
+  };
+
+  const handleEmailBlur = () => {
+    validateEmailField(formData.email);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -200,6 +222,7 @@ const Register = () => {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={handleEmailBlur}
                   placeholder="email@example.com"
                   className={`pl-9 ${errors.email ? 'border-destructive' : ''}`}
                 />

@@ -48,6 +48,19 @@ export interface RefreshTokenResponse {
   accessToken: string;
 }
 
+export interface ResendVerificationRequest {
+  email: string;
+}
+
+// Backend returns flat fields under `data` for verifyEmail success
+export interface VerifyEmailResponse {
+  accessToken: string;
+  userId: string;
+  email: string;
+  fullName: string;
+  role: string | null;
+}
+
 // Response aliases for better readability
 
 export type LoginApiResponse = ApiResponse<LoginResponse>;
@@ -57,4 +70,8 @@ export type RegisterApiResponse = ApiResponse<RegisterResponse>;
 export type RefreshTokenApiResponse = ApiResponse<RefreshTokenResponse>;
 
 export type LogoutApiResponse = ApiResponse<EmptyResponse>;
+
+export type ResendVerificationApiResponse = ApiResponse<EmptyResponse>;
+
+export type VerifyEmailApiResponse = ApiResponse<VerifyEmailResponse>;
 

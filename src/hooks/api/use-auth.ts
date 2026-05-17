@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 import {
   authService,
   type LoginRequest,
   type RegisterRequest,
   type LoginResponse,
 } from "@/lib/api/services/user";
+import type { VerifyEmailResponse } from "@/lib/api/types/auth.types";
 
 /**
  * Custom hook cho Authentication với React Query
@@ -39,11 +41,15 @@ export const useAuth = () => {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
-    onSuccess: () => {
+    onSuccess: (_response, variables) => {
       toast.success("Đăng ký thành công!", {
         description: "Vui lòng kiểm tra email để xác thực tài khoản.",
       });
-      navigate("/auth/verify?pending=true");
+      const params = new URLSearchParams({
+        pending: "true",
+        email: variables.email,
+      });
+      navigate(`/auth/verify?${params.toString()}`);
     },
   });
 
@@ -70,13 +76,60 @@ export const useAuth = () => {
     },
   });
 
+  // Verify email mutation — backend returns a session, so we auto-login
+  const verifyEmailMutation = useMutation({
+    mutationFn: (token: string) => authService.verifyEmail(token),
+    onSuccess: (response) => {
+      const data = (response as { data?: VerifyEmailResponse })?.data;
+      if (!data) return;
+
+      const user = {
+        id: data.userId,
+        email: data.email,
+        fullName: data.fullName,
+        role: data.role ?? "",
+      };
+
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(user));
+      queryClient.setQueryData(["user", "me"], user);
+      window.dispatchEvent(new Event("auth-change"));
+    },
+  });
+
+  // Resend verification mutation — surface 429 cooldown to the caller
+  const resendVerificationMutation = useMutation({
+    mutationFn: (email: string) => authService.resendVerification({ email }),
+    onSuccess: () => {
+      toast.success("Verification email sent", {
+        description: "Please check your inbox.",
+      });
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<{ error?: string; retryAfterSeconds?: number }>;
+      if (axiosError?.response?.status === 429) {
+        const seconds = axiosError.response.data?.retryAfterSeconds;
+        toast.error("Please wait before trying again", {
+          description: seconds ? `You can request another email in ${seconds}s.` : undefined,
+        });
+        return;
+      }
+      const message = axiosError?.response?.data?.error ?? "Failed to send verification email.";
+      toast.error(message);
+    },
+  });
+
   return {
     login: loginMutation.mutate,
     register: registerMutation.mutate,
     logout: logoutMutation.mutate,
+    verifyEmail: verifyEmailMutation.mutateAsync,
+    resendVerification: resendVerificationMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     isRegistering: registerMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
+    isVerifying: verifyEmailMutation.isPending,
+    isResending: resendVerificationMutation.isPending,
     registerError: registerMutation.error,
   };
 };
