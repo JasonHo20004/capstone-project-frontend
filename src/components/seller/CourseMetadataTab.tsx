@@ -1,19 +1,9 @@
-import { useBlocker } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Save, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CourseLevel, CourseStatus } from '@/domain';
@@ -56,28 +46,17 @@ export function CourseMetadataTab({
   const st = statusConfig[merged.status] ?? statusConfig.DRAFT;
   const isDirty = Object.keys(draft).length > 0;
 
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isDirty && currentLocation.pathname !== nextLocation.pathname
-  );
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
 
   return (
     <>
-      <AlertDialog open={blocker.state === 'blocked'}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Chưa lưu thay đổi</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có thay đổi chưa được lưu. Rời khỏi trang sẽ mất tất cả thay đổi này.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>Ở lại</AlertDialogCancel>
-            <AlertDialogAction onClick={() => blocker.proceed?.()}>Rời khỏi</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <div className="space-y-5">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Cập nhật khóa học</h2>
