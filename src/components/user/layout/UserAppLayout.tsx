@@ -183,7 +183,11 @@ export default function UserAppLayout() {
                 <p className="text-sm font-semibold text-slate-900 leading-none">
                   {user?.fullName ?? "Learner"}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">{user?.englishLevel ?? "Student"}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {user?.role === 'ADMINISTRATOR' ? 'Quản trị viên'
+                    : user?.role === 'COURSESELLER' ? 'Giảng viên'
+                    : 'Học viên'}
+                </p>
               </div>
             </NavLink>
           </div>
