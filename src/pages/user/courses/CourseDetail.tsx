@@ -31,7 +31,7 @@ import type { Lesson, Report, CourseLesson } from "@/domain";
 import type { Test, Section } from "@/types/type";
 
 import { useGetCourseDetail, useGetMyCourses } from '@/hooks/api/use-courses';
-import { useAddToCart, useDirectBuy } from '@/hooks/api/use-cart';
+import { useAddToCart, useDirectBuy, useIsInCart } from '@/hooks/api/use-cart';
 import { useUser } from '@/hooks/api/use-user';
 import { useCourseContext } from '@/hooks/api/use-student-learning';
 
@@ -44,6 +44,7 @@ const CourseDetail = () => {
   const { data: myCoursesData } = useGetMyCourses();
 
   const addToCartMutation = useAddToCart();
+  const isInCart = useIsInCart(course?.id);
   const directBuyMutation = useDirectBuy();
 
   const [buyOpen, setBuyOpen] = useState(false);
@@ -118,7 +119,14 @@ const CourseDetail = () => {
       return;
     }
     if (addToCartMutation.isPending) return;
-    if (course) addToCartMutation.mutate(course.id);
+    if (course) {
+      addToCartMutation.mutate({
+        id: course.id,
+        title: course.title,
+        price: course.price,
+        thumbnailUrl: course.thumbnailUrl,
+      });
+    }
   };
 
   const handleBuyNowClick = () => {
@@ -672,15 +680,17 @@ const CourseDetail = () => {
                           size="lg"
                           variant="outline"
                           className="w-full text-base rounded-xl h-12 border-slate-300"
-                          onClick={handleAddToCart}
+                          onClick={isInCart ? () => navigate('/cart') : handleAddToCart}
                           disabled={directBuyMutation.isPending || addToCartMutation.isPending}
                         >
                           {addToCartMutation.isPending ? (
                             <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                          ) : isInCart ? (
+                            <CheckCircle2 className="w-5 h-5 mr-2 text-emerald-600" />
                           ) : (
                             <ShoppingCart className="w-5 h-5 mr-2" />
                           )}
-                          Thêm vào giỏ
+                          {isInCart ? 'Đã có trong giỏ — Xem giỏ hàng' : 'Thêm vào giỏ'}
                         </Button>
                       </div>
                     )}

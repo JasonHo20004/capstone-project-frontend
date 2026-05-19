@@ -5,6 +5,7 @@ export enum UserRole {
 }
 
 export enum PaymentMethod {
+  STRIPE = 'STRIPE',
   VNPAY = 'VNPAY',
   ZALOPAY = 'ZALOPAY',
   BANKING = 'BANKING',

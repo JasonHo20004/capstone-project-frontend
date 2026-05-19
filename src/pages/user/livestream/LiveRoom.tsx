@@ -900,7 +900,7 @@ export default function LiveRoom() {
                         </div>
                         <div className="max-w-[80%] bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
                           <p className="text-[11px] text-slate-400 mb-0.5">Trả lời {msg.user_name}</p>
-                          <p className="text-sm text-slate-800 leading-relaxed">{msg.answer}</p>
+                          <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap break-words">{msg.answer}</p>
                         </div>
                       </div>
                     )}

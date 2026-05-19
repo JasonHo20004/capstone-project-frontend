@@ -46,6 +46,18 @@ class CartService {
       });
       return response.data;
   }
+
+  // DELETE /carts/items/:cartItemId
+  public async removeFromCart(cartItemId: string): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.delete<ApiResponse<Cart>>(`/carts/items/${cartItemId}`);
+    return response.data;
+  }
+
+  // DELETE /carts
+  public async clearCart(): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.delete<ApiResponse<Cart>>('/carts');
+    return response.data;
+  }
 }
 
 export const cartService = new CartService();

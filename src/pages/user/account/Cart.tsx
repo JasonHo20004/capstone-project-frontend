@@ -1,15 +1,19 @@
 // src/pages/user/account/Cart.tsx
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { formatVND } from '@/lib/utils';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
-import { Trash2, Loader2 } from 'lucide-react';
-import { useGetUserCart, useCheckoutFullCart, useCheckoutPartial } from '@/hooks/api/use-cart';
-// Note: You might still need CartContext for 'removeItem' if you implement delete endpoint, 
-// or implement a delete mutation in use-cart.ts similar to checkout.
-// For now, I'll assume you only want fetch & checkout.
+import { Trash2, Loader2, ShoppingCart } from 'lucide-react';
+import {
+  useGetUserCart,
+  useCheckoutFullCart,
+  useCheckoutPartial,
+  useRemoveCartItem,
+  useClearCart,
+} from '@/hooks/api/use-cart';
 
 const CartPage = () => {
   // 1. Fetch Cart Data
@@ -19,6 +23,8 @@ const CartPage = () => {
   // 2. Mutations
   const checkoutFullMutation = useCheckoutFullCart();
   const checkoutPartialMutation = useCheckoutPartial();
+  const removeMutation = useRemoveCartItem();
+  const clearMutation = useClearCart();
 
   // 3. Selection State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -99,21 +105,45 @@ const CartPage = () => {
           <div className="container mx-auto px-0 grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2 space-y-4">
               {cartItems.length === 0 ? (
-                <div className="text-center py-8">
+                <div className="flex flex-col items-center text-center py-12">
+                    <ShoppingCart className="w-12 h-12 text-slate-300 mb-3" />
                     <p className="text-slate-500">Giỏ hàng trống.</p>
                     <p className="text-sm text-slate-500 mt-1">Hãy thêm khoá học từ danh sách khoá học.</p>
+                    <Button asChild className="mt-4">
+                      <Link to="/courses">Khám phá khoá học</Link>
+                    </Button>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
-                    <Checkbox 
-                        checked={allSelected} 
-                        onCheckedChange={(v) => toggleSelectAll(Boolean(v))} 
-                        id="select-all"
-                    />
-                    <label htmlFor="select-all" className="text-sm cursor-pointer select-none">
-                        Chọn tất cả ({cartItems.length} khóa học)
-                    </label>
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={(v) => toggleSelectAll(Boolean(v))}
+                          id="select-all"
+                      />
+                      <label htmlFor="select-all" className="text-sm cursor-pointer select-none">
+                          Chọn tất cả ({cartItems.length} khóa học)
+                      </label>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      disabled={clearMutation.isPending}
+                      onClick={() => {
+                        clearMutation.mutate(undefined, {
+                          onSuccess: () => setSelectedIds([]),
+                        });
+                      }}
+                    >
+                      {clearMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      Xoá tất cả
+                    </Button>
                   </div>
                   
                   <div className="space-y-4">
@@ -134,13 +164,20 @@ const CartPage = () => {
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            // You need to implement useRemoveCartItem mutation if you want this to work with backend
+                            disabled={removeMutation.isPending && removeMutation.variables === item.id}
                             onClick={() => {
-                                // Implement remove logic here
-                                console.log("Remove item", item.id);
+                              removeMutation.mutate(item.id, {
+                                onSuccess: () => {
+                                  setSelectedIds((prev) => prev.filter((x) => x !== item.id));
+                                },
+                              });
                             }}
                         >
-                            <Trash2 className="w-4 h-4 mr-2" />
+                            {removeMutation.isPending && removeMutation.variables === item.id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4 mr-2" />
+                            )}
                             Xoá
                         </Button>
                         </div>

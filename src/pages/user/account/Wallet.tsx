@@ -123,7 +123,7 @@ function WalletHero({ currentBalance }: WalletHeroProps) {
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <span>Gateway</span>
-              <span className="font-medium text-white">VNPay</span>
+              <span className="font-medium text-white">Stripe</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <span>Minimum top-up</span>
@@ -154,7 +154,7 @@ function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment 
           </div>
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">Add funds to your wallet</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Choose a quick amount or enter a custom value, then you'll be redirected to VNPay to complete the payment securely.
+            Choose a quick amount or enter a custom value, then you'll be redirected to Stripe to complete the payment securely.
           </p>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700 shadow-sm">
@@ -212,7 +212,7 @@ function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment 
             </div>
             <div className="flex items-center justify-between">
               <span>Method</span>
-              <span className="font-medium text-slate-950">VNPay</span>
+              <span className="font-medium text-slate-950">Stripe</span>
             </div>
             <div className="flex items-center justify-between">
               <span>Status</span>
@@ -223,7 +223,7 @@ function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment 
           <div className="mt-6 rounded-3xl border border-sky-100 bg-sky-50/80 p-4 text-sm text-sky-950">
             <p className="font-medium">Secure redirect</p>
             <p className="mt-1 leading-6 text-sky-900/80">
-              You'll be redirected to VNPay's secure payment page. After completing, you'll return here automatically.
+              You'll be redirected to Stripe's secure payment page. After completing, you'll return here automatically.
             </p>
           </div>
         </div>
@@ -244,7 +244,7 @@ function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment 
           ) : (
             <>
               <ExternalLink className="mr-2 h-4 w-4" />
-              Pay with VNPay
+              Pay with Stripe
             </>
           )}
         </Button>
@@ -459,7 +459,7 @@ export default function WalletPage() {
         throw new Error('Missing payment URL from the server response.');
       }
 
-      toast.success('Redirecting to VNPay...');
+      toast.success('Redirecting to Stripe...');
       window.location.href = data.paymentUrl;
     } catch (error) {
       const apiMessage =

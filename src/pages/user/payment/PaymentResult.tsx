@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, Wallet } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,6 +17,7 @@ export default function PaymentResultPage() {
   const amount = amountParam ? Number(amountParam) : null;
 
   const isSuccess = status === 'success';
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
     if (isSuccess) {
@@ -27,6 +28,16 @@ export default function PaymentResultPage() {
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
     }
   }, [isSuccess, queryClient]);
+
+  // Auto-redirect back to wallet after countdown — works for both cancel and failure.
+  useEffect(() => {
+    if (countdown <= 0) {
+      navigate('/wallet', { replace: true });
+      return;
+    }
+    const timer = window.setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [countdown, navigate]);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,hsl(210_40%_98%)_0%,hsl(201_100%_97%)_100%)] flex items-center justify-center p-6">
@@ -56,6 +67,9 @@ export default function PaymentResultPage() {
                   ? 'Your wallet has been topped up. The balance will reflect shortly.'
                   : 'Your payment could not be completed. No funds were deducted.'}
               </p>
+              <p className="text-xs text-slate-500">
+                Returning to your wallet in {countdown}s…
+              </p>
             </div>
 
             <div className="w-full rounded-[20px] border border-slate-200 bg-white/80 p-5 space-y-3 text-sm text-slate-600">
@@ -73,7 +87,7 @@ export default function PaymentResultPage() {
               )}
               <div className="flex items-center justify-between">
                 <span>Gateway</span>
-                <span className="font-medium text-slate-950">VNPay</span>
+                <span className="font-medium text-slate-950">Stripe</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Status</span>

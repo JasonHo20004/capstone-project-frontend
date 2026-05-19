@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useGetUserCart, useAddToCart, cartKeys } from '@/hooks/api/use-cart';
-import { cartService } from '@/lib/api/services/user';
-import { toast } from 'sonner';
+import {
+  useGetUserCart,
+  useAddToCart,
+  useRemoveCartItem,
+  useClearCart,
+} from '@/hooks/api/use-cart';
 import type { Course as AdminCourse } from '@/domain';
 
 export type CartItem = {
@@ -15,6 +17,7 @@ export type CartItem = {
     id: string;
     title: string;
     price: number;
+    thumbnailUrl?: string;
   };
 };
 
@@ -31,9 +34,10 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const queryClient = useQueryClient();
   const { data: cart, isLoading } = useGetUserCart();
   const addToCartMutation = useAddToCart();
+  const removeCartItemMutation = useRemoveCartItem();
+  const clearCartMutation = useClearCart();
 
   const items: CartItem[] = useMemo(() => {
     if (!cart?.cartItems) return [];
@@ -55,28 +59,26 @@ export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const addItem = useCallback(
     (course: AdminCourse) => {
-      addToCartMutation.mutate(course.id);
+      addToCartMutation.mutate({
+        id: course.id,
+        title: course.title,
+        price: course.price,
+        thumbnailUrl: course.thumbnailUrl,
+      });
     },
     [addToCartMutation]
   );
 
   const removeItem = useCallback(
-    async (courseId: string) => {
-      try {
-        // Note: If backend supports remove, call it here
-        // For now, invalidate and refetch
-        toast.info('Đã xoá khỏi giỏ hàng');
-        queryClient.invalidateQueries({ queryKey: cartKeys.userCart });
-      } catch {
-        toast.error('Không thể xoá khỏi giỏ hàng');
-      }
+    (cartItemId: string) => {
+      removeCartItemMutation.mutate(cartItemId);
     },
-    [queryClient]
+    [removeCartItemMutation]
   );
 
   const clear = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: cartKeys.userCart });
-  }, [queryClient]);
+    clearCartMutation.mutate();
+  }, [clearCartMutation]);
 
   const value: CartContextValue = {
     items,

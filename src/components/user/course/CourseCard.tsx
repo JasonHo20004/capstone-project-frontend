@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Star, User, ShoppingCart, Loader2 } from 'lucide-react';
+import { Star, User, ShoppingCart, Loader2, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Course } from "@/domain";
 import { formatVND } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-import { useAddToCart } from '@/hooks/api/use-cart';
+import { useAddToCart, useIsInCart } from '@/hooks/api/use-cart';
 import { useUser } from '@/hooks/api/use-user';
 import { toast } from 'sonner';
 
@@ -20,6 +20,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
   const { user } = useUser();
   const reduce = useReducedMotion();
   const addToCartMutation = useAddToCart();
+  const isInCart = useIsInCart(course.id);
   const instructor: { profilePicture?: string; fullName?: string } =
     course.user || course.courseSeller || {};
 
@@ -32,7 +33,12 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
       return;
     }
 
-    addToCartMutation.mutate(course.id);
+    addToCartMutation.mutate({
+      id: course.id,
+      title: course.title,
+      price: course.price,
+      thumbnailUrl: course.thumbnailUrl,
+    });
   };
 
   return (
@@ -107,14 +113,16 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
               {!hideAddToCart && !purchased && (
                 <Button
                   size="icon"
-                  variant="default"
+                  variant={isInCart ? "secondary" : "default"}
                   className="h-9 w-9 rounded-full p-0"
                   onClick={handleAddToCart}
-                  disabled={addToCartMutation.isPending}
-                  title="Thêm vào giỏ hàng"
+                  disabled={addToCartMutation.isPending || isInCart}
+                  title={isInCart ? "Đã có trong giỏ hàng" : "Thêm vào giỏ hàng"}
                 >
                   {addToCartMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isInCart ? (
+                    <Check className="h-4 w-4" />
                   ) : (
                     <ShoppingCart className="h-4 w-4" />
                   )}
