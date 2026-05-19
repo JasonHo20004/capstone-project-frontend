@@ -241,9 +241,6 @@ export default function Profile() {
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
                   <h1 className="text-xl font-bold text-slate-900 leading-tight truncate">{user.fullName}</h1>
-                  <p className="text-sm font-medium text-indigo-600 mt-0.5">
-                    {ROLE_LABELS[userRole] ?? 'Học viên'}
-                  </p>
                   <p className="text-xs text-slate-400 truncate mt-0.5">{user.email}</p>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {form.englishLevel && (

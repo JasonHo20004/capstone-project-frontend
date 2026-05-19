@@ -32,7 +32,10 @@ export interface Course {
   updatedAt?: string;
   averageRating?: number;
   sellerName?: string;
+  lessonCount?: number;
   thumbnailUrl?: string;
+  requirements?: string[];
+  targetAudiences?: string[];
   /** Optional relations - populated by API when requested */
   lessons?: Lesson[];
   user?: Pick<User, 'fullName' | 'id'>;

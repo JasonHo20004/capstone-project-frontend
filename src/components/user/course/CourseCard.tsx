@@ -42,7 +42,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
   };
 
   return (
-    <Link to={`/courses/${course.id}`} className="block h-full">
+    <Link to={purchased ? `/learning/courses/${course.id}/lessons` : `/courses/${course.id}`} className="block h-full">
       <motion.div
         whileHover={reduce ? undefined : { y: -4, scale: 1.01 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
