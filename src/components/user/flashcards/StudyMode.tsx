@@ -71,19 +71,16 @@ function spawnConfetti(container: HTMLElement) {
     const particle = document.createElement('div');
     particle.className = 'kahoot-confetti-particle';
     particle.style.backgroundColor = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
-    particle.style.left = `${40 + Math.random() * 20}%`;
-    particle.style.top = `${40 + Math.random() * 20}%`;
+    const leftPct = 20 + Math.random() * 60;
+    particle.style.left = `${leftPct}%`;
+    particle.style.top = `0`;
     particle.style.width = `${4 + Math.random() * 8}px`;
     particle.style.height = `${4 + Math.random() * 8}px`;
-    particle.style.animationDuration = `${0.6 + Math.random() * 0.6}s`;
-    particle.style.animationDelay = `${Math.random() * 0.2}s`;
 
-    const angle = Math.random() * 360;
-    const distance = 60 + Math.random() * 80;
-    const tx = Math.cos(angle * Math.PI / 180) * distance;
-    const ty = -Math.abs(Math.sin(angle * Math.PI / 180) * distance) - 20;
-    particle.style.setProperty('--tx', `${tx}px`);
-    particle.style.setProperty('--ty', `${ty}px`);
+    const horizontalDir = leftPct < 50 ? -1 : 1;
+    const tx = horizontalDir * (30 + Math.random() * 80);
+    const ty = -(50 + Math.random() * 80);
+
     particle.animate([
       { opacity: 1, transform: 'scale(1) rotate(0deg)' },
       { opacity: 0, transform: `translate(${tx}px, ${ty}px) scale(0) rotate(${360 + Math.random() * 360}deg)` },
@@ -119,6 +116,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const cardContainerRef = useRef<HTMLDivElement>(null);
+  const feedbackBandRef = useRef<HTMLDivElement>(null);
 
   // Snapshot queue ONCE at session start — never reset mid-session
   useEffect(() => {
@@ -183,8 +181,8 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
     } else {
       setFeedbackClass('kahoot-glow-correct');
       setFeedbackText(grade === 'easy' ? 'Quá tốt!' : 'Tốt lắm');
-      if (cardContainerRef.current) {
-        spawnConfetti(cardContainerRef.current);
+      if (feedbackBandRef.current) {
+        spawnConfetti(feedbackBandRef.current);
       }
     }
 
@@ -373,15 +371,6 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
         {!finished && currentCard ? (
           <div className="relative z-10 space-y-5">
 
-            {/* Floating feedback text — WHITE text for dark bg visibility */}
-            {feedbackText && (
-              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none">
-                <span className="kahoot-float-up text-4xl font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-                  {feedbackText}
-                </span>
-              </div>
-            )}
-
             {/* === FLIP CARD === */}
             <div
               key={cardKey}
@@ -459,6 +448,31 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
                 </div>
 
               </div>
+            </div>
+
+            <div
+              ref={feedbackBandRef}
+              className="relative h-0 z-30 pointer-events-none"
+              aria-live="polite"
+            >
+              {feedbackText && (
+                <div
+                  className="kahoot-feedback-chip absolute left-1/2 top-0 inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-white text-sm shadow-2xl whitespace-nowrap border border-white/20 backdrop-blur-sm"
+                  style={{
+                    background:
+                      feedbackClass === 'kahoot-glow-correct'
+                        ? 'linear-gradient(90deg, #10b981, #22c55e)'
+                        : 'linear-gradient(90deg, #f59e0b, #ef4444)',
+                  }}
+                >
+                  {feedbackClass === 'kahoot-glow-correct' ? (
+                    <Star className="w-4 h-4" aria-hidden="true" />
+                  ) : (
+                    <RotateCw className="w-4 h-4" aria-hidden="true" />
+                  )}
+                  {feedbackText}
+                </div>
+              )}
             </div>
 
             {/* === GRADE BUTTONS — Kahoot 4-color grid === */}
