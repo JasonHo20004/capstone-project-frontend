@@ -43,6 +43,7 @@ import ProgressAnalytics from "./pages/user/exam-center/ProgressAnalytics";
 import TestResultPage from "./pages/user/exam-center/TestResultPage";
 import TestDetailPage from "./pages/user/exam-center/TestDetailPage";
 import SpeakingResultPage from "./pages/user/exam-center/SpeakingResultPage";
+import PlacementTest from "./pages/user/placement-test/PlacementTest";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
@@ -144,6 +145,7 @@ const App = () => (
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
 
             {/* AI Test routes (full-page, no sidebar — immersive test mode) */}
+            <Route path="/placement-test" element={<PlacementTest />} />
             <Route path="/exam/test/speaking" element={<SpeakingTest />} />
             <Route path="/exam/test/:testId" element={<IeltsTestModule />} />
             <Route path="/exam/test/:testId/session/:sessionId" element={<IeltsTestModule />} />
