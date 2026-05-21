@@ -17,7 +17,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const value = useMemo<SubscriptionContextValue>(() => {
     const plan = subscriptionData?.plan ?? null;
     const features = plan?.features ?? [];
-    const isProUser = subscriptionData?.isProUser ?? false;
+    const isProUser = !!subscriptionData?.isProUser || subscriptionData?.plan?.type === 'PRO';
 
     return {
       subscription: subscriptionData ?? null,

@@ -6,6 +6,7 @@ import Footer from '@/components/user/layout/Footer';
 import { BackToTopButton } from '@/components/user/layout/BackToTopButton';
 import Hero from '@/components/user/home/Hero';
 import Features from '@/components/user/home/Features';
+import Pricing from '@/components/user/home/Pricing';
 import CourseCard from '@/components/user/course/CourseCard';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, ChevronLeft, ChevronRight, Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
@@ -236,6 +237,9 @@ export default function Landing() {
             )}
           </div>
         </section>
+
+        {/* Pricing */}
+        <Pricing />
 
         {/* Team */}
         <section className="bg-surface-low py-24">

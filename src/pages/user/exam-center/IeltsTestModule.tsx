@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import apiClient from "@/lib/api/config";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
@@ -163,6 +163,7 @@ export default function IeltsTestModule() {
   // ─── Highlight State ────────────────────────────────────────────────────────
   const [highlightPopover, setHighlightPopover] = useState<{ x: number; y: number; range: Range } | null>(null);
   const [highlightMode, setHighlightMode] = useState(false);
+  const [savedHighlights, setSavedHighlights] = useState<Record<string, string>>({});
 
   // ─── Question Navigator State ──────────────────────────────────────────────
   const [showNavigator, setShowNavigator] = useState(true);
@@ -243,7 +244,7 @@ export default function IeltsTestModule() {
   const { result: assistantResult, isLoading: assistantLoading, analyze: analyzeWriting } = useWritingAssistant();
 
   // ─── Derived data ──────────────────────────────────────────────────────────
-  const sections = testData?.sections || [];
+  const sections = useMemo(() => testData?.sections || [], [testData]);
   const currentSection = sections[currentSectionIdx];
   const allQuestions = sections.flatMap(s => s.questions);
   const isListeningTest = testData?.testSkills?.some((s: any) => s.skill === 'LISTENING')
@@ -334,15 +335,47 @@ export default function IeltsTestModule() {
     }
   }, [testData, answers, navigate, isSubmitting, submitted, autoSaveKey]);
 
+  // ─── Highlight Handlers (must be before any early returns!) ──────────────
+  const attachMarkRemovalHandler = useCallback((mark: HTMLElement) => {
+    mark.addEventListener('click', function onClick(e) {
+      e.stopPropagation();
+      const parent = mark.parentNode;
+      if (parent) {
+        while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+        parent.removeChild(mark);
+        parent.normalize();
+      }
+    });
+  }, []);
+
+  const snapshotCurrentHighlights = useCallback(() => {
+    const sectionId = sections[currentSectionIdx]?.id;
+    if (!passageRef.current || !sectionId) return;
+    const hasMarks = passageRef.current.querySelector('mark[data-highlight]') !== null;
+    setSavedHighlights(prev => {
+      if (hasMarks) {
+        return { ...prev, [sectionId]: passageRef.current!.innerHTML };
+      }
+      if (prev[sectionId] === undefined) return prev;
+      const { [sectionId]: _removed, ...rest } = prev;
+      return rest;
+    });
+  }, [sections, currentSectionIdx]);
+
+  // Single navigation entrypoint — snapshots highlights, then changes index.
+  const navigateToSection = useCallback((next: number | ((prev: number) => number)) => {
+    snapshotCurrentHighlights();
+    setCurrentSectionIdx(next);
+  }, [snapshotCurrentHighlights]);
+
   // ─── Navigation ─────────────────────────────────────────────────────────────
   const goNext = () => {
-    if (currentSectionIdx < sections.length - 1) setCurrentSectionIdx(prev => prev + 1);
+    if (currentSectionIdx < sections.length - 1) navigateToSection(prev => prev + 1);
   };
   const goPrev = () => {
-    if (currentSectionIdx > 0) setCurrentSectionIdx(prev => prev - 1);
+    if (currentSectionIdx > 0) navigateToSection(prev => prev - 1);
   };
 
-  // ─── Highlight Handlers (must be before any early returns!) ──────────────
   const handleTextSelect = useCallback(() => {
     if (!highlightMode) return;
     const selection = window.getSelection();
@@ -371,20 +404,18 @@ export default function IeltsTestModule() {
       mark.style.cursor = 'pointer';
       mark.dataset.highlight = 'true';
       mark.title = 'Click to remove highlight';
-      mark.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const parent = mark.parentNode;
-        if (parent) {
-          while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
-          parent.removeChild(mark);
-          parent.normalize();
-        }
-      });
+      attachMarkRemovalHandler(mark);
       range.surroundContents(mark);
+      // Persist immediately — protects against navigation paths we might miss.
+      const sectionId = sections[currentSectionIdx]?.id;
+      if (sectionId && passageRef.current) {
+        const html = passageRef.current.innerHTML;
+        setSavedHighlights(prev => ({ ...prev, [sectionId]: html }));
+      }
     } catch { /* skip if range crosses element boundaries */ }
     window.getSelection()?.removeAllRanges();
     setHighlightPopover(null);
-  }, [highlightPopover]);
+  }, [highlightPopover, attachMarkRemovalHandler, sections, currentSectionIdx]);
 
   const clearAllHighlights = useCallback(() => {
     if (!passageRef.current) return;
@@ -397,7 +428,31 @@ export default function IeltsTestModule() {
         parent.normalize();
       }
     });
-  }, []);
+    // Drop the saved entry so a future navigation away doesn't reintroduce them.
+    const sectionId = sections[currentSectionIdx]?.id;
+    if (sectionId) {
+      setSavedHighlights(prev => {
+        if (prev[sectionId] === undefined) return prev;
+        const { [sectionId]: _removed, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [sections, currentSectionIdx]);
+
+  // Restore highlights after React re-renders the passage for a new section.
+  // Runs whenever the rendered section changes; if we have a saved HTML
+  // snapshot for it, swap the passage DOM and re-bind removal handlers.
+  useEffect(() => {
+    const sectionId = sections[currentSectionIdx]?.id;
+    if (!sectionId || !passageRef.current) return;
+    const saved = savedHighlights[sectionId];
+    if (!saved) return;
+    if (passageRef.current.innerHTML === saved) return;
+    passageRef.current.innerHTML = saved;
+    passageRef.current
+      .querySelectorAll<HTMLElement>('mark[data-highlight]')
+      .forEach(attachMarkRemovalHandler);
+  }, [currentSectionIdx, sections, savedHighlights, attachMarkRemovalHandler]);
 
   // Close popover on click outside
   useEffect(() => {
@@ -477,7 +532,7 @@ export default function IeltsTestModule() {
       testData={testData}
       sections={sections}
       currentSectionIdx={currentSectionIdx}
-      setCurrentSectionIdx={setCurrentSectionIdx}
+      setCurrentSectionIdx={navigateToSection}
       answers={answers}
       setAnswer={setAnswer}
       formatTime={formatTime}
@@ -1257,7 +1312,7 @@ export default function IeltsTestModule() {
                           <button
                             key={q.id}
                             onClick={() => {
-                              if (secIdx !== currentSectionIdx) setCurrentSectionIdx(secIdx);
+                              if (secIdx !== currentSectionIdx) navigateToSection(secIdx);
                               setTimeout(() => {
                                 const el = document.getElementById(`question-${q.id}`);
                                 el?.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -59,7 +59,7 @@ const Index = () => {
                   Khám phá khoá học, theo dõi tiến độ và học theo nhịp của bạn với giao diện trực quan hơn.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link to="/courses">
+                  <Link to="/#courses">
                     <Button variant="default" size="lg">
                       Bắt đầu học
                       <ArrowRight className="ml-1 h-4 w-4" />
