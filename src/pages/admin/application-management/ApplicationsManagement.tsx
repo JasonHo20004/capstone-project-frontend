@@ -2,6 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,21 +20,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   MoreHorizontal,
   Eye,
   Check,
   X,
   FileText,
-  User
+  User,
 } from 'lucide-react';
-import type { CourseSellerApplication } from "@/domain";
+import type { CourseSellerApplication } from '@/domain';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import { applicationManagementService } from '@/lib/api/services/admin/application-management/application.service';
@@ -45,34 +40,47 @@ export default function ApplicationsManagement() {
   const [selectedApplication, setSelectedApplication] = useState<CourseSellerApplication | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewStatus, setReviewStatus] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
+  const [rejectionReason, setRejectionReason] = useState('');
 
-  // Fetch applications
-  const { data: applicationsResp, isLoading } = useQuery({
+  const { data: applicationsResp } = useQuery({
     queryKey: ['applications'],
     queryFn: () => applicationManagementService.getApplications(),
   });
 
   const applications = applicationsResp?.data || [];
 
-  // Mutation for updating application status
   const updateStatusMutation = useMutation({
-    mutationFn: ({ applicationId, status }: { applicationId: string; status: 'APPROVED' | 'REJECTED' }) =>
-      applicationManagementService.updateApplicationStatus(applicationId, status),
+    mutationFn: ({
+      applicationId,
+      status,
+      rejectionReason,
+    }: {
+      applicationId: string;
+      status: 'APPROVED' | 'REJECTED';
+      rejectionReason?: string;
+    }) =>
+      applicationManagementService.updateApplicationStatus(applicationId, {
+        status,
+        rejectionReason,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       toast.success(reviewStatus === 'APPROVED' ? 'Đã duyệt đơn đăng ký' : 'Đã từ chối đơn đăng ký');
       setReviewDialogOpen(false);
       setSelectedApplication(null);
+      setRejectionReason('');
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        (err instanceof Error ? err.message : 'Có lỗi xảy ra');
+      toast.error(msg);
     },
   });
 
-  const fetchApplicationMutation = useMutation({
-    mutationFn: (applicationId: string) =>
-      applicationManagementService.getApplicationById(applicationId),
-  });
-
-  const filteredApplications = applications.filter(app => {
-    const matchesSearch = !searchTerm ||
+  const filteredApplications = applications.filter((app) => {
+    const matchesSearch =
+      !searchTerm ||
       app.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
@@ -95,24 +103,24 @@ export default function ApplicationsManagement() {
   const handleReview = (application: CourseSellerApplication, status: 'APPROVED' | 'REJECTED') => {
     setSelectedApplication(application);
     setReviewStatus(status);
+    setRejectionReason('');
     setReviewDialogOpen(true);
   };
 
-  const handleViewApplication = (applicationId: string) => {
-    fetchApplicationMutation.mutate(applicationId, {
-      onSuccess: (response) => {
-        if (response.data) {
-          setSelectedApplication(response.data);
-        }
-      },
-    });
+  const handleViewApplication = (application: CourseSellerApplication) => {
+    setSelectedApplication(application);
   };
 
   const submitReview = () => {
     if (!selectedApplication) return;
+    if (reviewStatus === 'REJECTED' && !rejectionReason.trim()) {
+      toast.error('Vui lòng nhập lý do từ chối');
+      return;
+    }
     updateStatusMutation.mutate({
       applicationId: selectedApplication.id,
       status: reviewStatus,
+      rejectionReason: reviewStatus === 'REJECTED' ? rejectionReason.trim() : undefined,
     });
   };
 
@@ -179,7 +187,7 @@ export default function ApplicationsManagement() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => handleViewApplication(app.id)}>
+            <DropdownMenuItem onClick={() => handleViewApplication(app)}>
               <Eye className="mr-2 h-4 w-4" />
               Xem chi tiết
             </DropdownMenuItem>
@@ -298,10 +306,38 @@ export default function ApplicationsManagement() {
                   </div>
                   <div>
                     <label className="text-sm font-medium">Chứng chỉ</label>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedApplication.certification.length > 0 ? selectedApplication.certification.join(', ') : 'Chưa có chứng chỉ'}
-                    </p>
+                    {selectedApplication.certification.length > 0 ? (
+                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {selectedApplication.certification.map((url, idx) => (
+                          <a
+                            key={idx}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Nhấn để xem ảnh gốc"
+                            className="block aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-white hover:shadow-md transition-all"
+                          >
+                            <img
+                              src={url}
+                              alt={`Chứng chỉ ${idx + 1}`}
+                              className="w-full h-full object-contain"
+                              loading="lazy"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Chưa có chứng chỉ</p>
+                    )}
                   </div>
+                  {selectedApplication.rejectionReason && (
+                    <div>
+                      <label className="text-sm font-medium text-destructive">Lý do từ chối</label>
+                      <p className="text-sm text-destructive bg-destructive/5 p-2.5 rounded-lg border border-destructive/20 whitespace-pre-wrap">
+                        {selectedApplication.rejectionReason}
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <label className="text-sm font-medium">Tin nhắn</label>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -359,20 +395,43 @@ export default function ApplicationsManagement() {
             <DialogDescription>
               {reviewStatus === 'APPROVED'
                 ? 'Xác nhận duyệt đơn đăng ký này?'
-                : 'Xác nhận từ chối đơn đăng ký này?'
-              }
+                : 'Vui lòng nhập lý do từ chối để người nộp đơn biết và cải thiện.'}
             </DialogDescription>
           </DialogHeader>
+
+          {reviewStatus === 'REJECTED' && (
+            <div className="space-y-2 py-2">
+              <Label htmlFor="rejection-reason">
+                Lý do từ chối <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="VD: Chứng chỉ không rõ, chuyên môn chưa phù hợp..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                maxLength={500}
+                disabled={updateStatusMutation.isPending}
+              />
+              <p className="text-xs text-muted-foreground text-right">{rejectionReason.length}/500</p>
+            </div>
+          )}
+
           <div className="flex space-x-2">
             <Button
               onClick={submitReview}
               className="flex-1"
-              disabled={updateStatusMutation.isPending}
+              disabled={
+                updateStatusMutation.isPending ||
+                (reviewStatus === 'REJECTED' && !rejectionReason.trim())
+              }
+              variant={reviewStatus === 'REJECTED' ? 'destructive' : 'default'}
             >
               {updateStatusMutation.isPending
                 ? 'Đang xử lý...'
-                : (reviewStatus === 'APPROVED' ? 'Xác nhận duyệt' : 'Xác nhận từ chối')
-              }
+                : reviewStatus === 'APPROVED'
+                ? 'Xác nhận duyệt'
+                : 'Xác nhận từ chối'}
             </Button>
             <Button
               variant="outline"

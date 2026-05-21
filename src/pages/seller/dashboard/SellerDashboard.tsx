@@ -1,9 +1,15 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/utils';
-import { useSellerDashboard, useSellerMonthlyFees, useSellerLearners, useSellerEarnings } from '@/hooks/api';
+import {
+  useSellerDashboard,
+  useSellerMonthlyFees,
+  useSellerLearners,
+  useSellerEarnings,
+  useSellerWithdrawalHistory,
+} from '@/hooks/api';
+import { useWallet } from '@/hooks/api/use-wallet';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import ChartCard from '@/components/admin/ChartCard';
@@ -22,7 +28,6 @@ import {
   BookOpen,
   Users,
   MessageSquare,
-  CreditCard,
   Plus,
   ArrowRight,
   Sparkles,
@@ -63,19 +68,13 @@ const statCards = [
   },
 ] as const;
 
-function aggregateFeesByMonth(fees: { amount: number; createdAt: string; status: string }[]) {
-  const map = new Map<string, number>();
-  fees
-    .filter((f) => f.status === 'SUCCESS')
-    .forEach((f) => {
-      const d = new Date(f.createdAt);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      map.set(key, (map.get(key) ?? 0) + f.amount);
-    });
-  return Array.from(map.entries())
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-12)
-    .map(([name, amount]) => ({ name, amount }));
+function aggregateFeesByMonth(fees: { month: number; year: number; netAmount: number }[]) {
+  return fees
+    .filter((f) => f.netAmount > 0)
+    .map((f) => ({
+      name: `${f.year}-${String(f.month).padStart(2, '0')}`,
+      amount: f.netAmount,
+    }));
 }
 
 function aggregateLearnersByMonth(learners: { purchasedAt: string }[]) {
@@ -93,9 +92,20 @@ function aggregateLearnersByMonth(learners: { purchasedAt: string }[]) {
 
 export default function SellerDashboard() {
   const { data: dashboardStats, isLoading, error } = useSellerDashboard();
-  const { data: feesData } = useSellerMonthlyFees({ limit: 200 });
+  const { data: feesData } = useSellerMonthlyFees();
   const { data: learnersData } = useSellerLearners({ limit: 500 });
   const { data: earningsData } = useSellerEarnings({ limit: 200 });
+  const { data: wallet } = useWallet();
+  const { data: withdrawalsResp } = useSellerWithdrawalHistory({ page: 1, limit: 50 });
+
+  const pendingWithdrawals = useMemo(() => {
+    const items = (withdrawalsResp?.data ?? []) as Array<{ status: string; amount: number | string }>;
+    const pending = items.filter((w) => w.status === 'PENDING');
+    return {
+      count: pending.length,
+      total: pending.reduce((sum, w) => sum + Number(w.amount), 0),
+    };
+  }, [withdrawalsResp]);
 
   const revenueChartData = useMemo(
     () => aggregateFeesByMonth(feesData?.fees ?? []),
@@ -122,14 +132,7 @@ export default function SellerDashboard() {
     return <ErrorMessage message="Không có dữ liệu dashboard." />;
   }
 
-  const { coursesCount, learnersCount, commentsCount, subscription } = dashboardStats;
-  const subscriptionData = subscription ?? {
-    planName: 'Chưa đăng ký',
-    monthlyFee: 0,
-    status: false,
-    expiresAt: null,
-  };
-  const contractStatus = subscriptionData.status ? 'Đang hoạt động' : 'Hết hạn';
+  const { coursesCount, learnersCount, commentsCount } = dashboardStats;
 
   const statValues = {
     courses: coursesCount,
@@ -183,53 +186,42 @@ export default function SellerDashboard() {
           </Link>
         ))}
 
-        {/* Subscription Card */}
-        <Card className="overflow-hidden border-primary/20 bg-primary/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Gói đăng ký</CardTitle>
-            <div className="rounded-lg bg-primary/15 p-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold font-display">{subscriptionData.planName}</span>
-              <Badge variant={subscriptionData.status ? 'default' : 'destructive'} className="shrink-0">
-                {contractStatus}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Phí hằng tháng: {formatVND(subscriptionData.monthlyFee)}
-            </p>
-            <Link
-              to="/seller/fees"
-              className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-            >
-              Xem lịch sử thanh toán
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Earnings Card */}
+        {/* Earnings Card — total + pending lock + available cash + pending withdraw */}
         <Link to="/seller/earnings" className="group block cursor-pointer">
           <Card className="overflow-hidden border-emerald-500/20 bg-emerald-500/5 transition-all duration-200 hover:shadow-md hover:border-emerald-500/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Thu nhập ròng</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Số dư có thể rút</CardTitle>
               <div className="rounded-lg bg-emerald-500/15 p-2">
                 <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-400">
-                {formatVND(earningsData?.summary?.totalEarnings ?? 0)}
+                {formatVND(Number(wallet?.allowance ?? wallet?.balance ?? 0))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Tổng thu nhập sau khi trừ phí cổng + platform fee</p>
-              {(earningsData?.summary?.totalPending ?? 0) > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">Số tiền đã clear, có thể rút ngay</p>
+
+              {(Number(wallet?.pendingBalance ?? 0) > 0 ||
+                (earningsData?.summary?.totalPending ?? 0) > 0) && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  🔒 Đang khoá: {formatVND(earningsData?.summary?.totalPending ?? 0)}
+                  🔒 Đang khoá:{' '}
+                  {formatVND(
+                    Number(wallet?.pendingBalance ?? earningsData?.summary?.totalPending ?? 0)
+                  )}
                 </p>
               )}
+
+              {pendingWithdrawals.count > 0 && (
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  ⏳ {pendingWithdrawals.count} đơn rút đang chờ:{' '}
+                  {formatVND(pendingWithdrawals.total)}
+                </p>
+              )}
+
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Tổng thu nhập từ trước đến nay: {formatVND(earningsData?.summary?.totalEarnings ?? 0)}
+              </p>
+
               <div className="mt-3 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
                 Xem chi tiết
                 <ArrowRight className="h-3 w-3" />
@@ -242,8 +234,8 @@ export default function SellerDashboard() {
       {/* Charts: Revenue & Learner Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard
-          title="Chi phí đăng ký theo tháng"
-          description="Tổng phí đã thanh toán thành công theo tháng"
+          title="Doanh thu theo tháng"
+          description="Số tiền nhận sau khi trừ phí nền tảng, theo tháng"
         >
           <div className="h-[280px] w-full">
             {revenueChartData.length > 0 ? (

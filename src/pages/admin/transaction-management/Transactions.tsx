@@ -120,7 +120,6 @@ export default function TransactionsManagement() {
     const typeMap = {
       DEPOSIT: { label: "Nạp tiền", variant: "default" as const },
       PAYMENT: { label: "Thanh toán", variant: "secondary" as const },
-      MONTHLYFEE: { label: "Phí hàng tháng", variant: "outline" as const },
       WITHDRAW: { label: "Rút tiền", variant: "destructive" as const },
     };
 
@@ -137,8 +136,6 @@ export default function TransactionsManagement() {
         return <Wallet className="h-4 w-4 text-green-600" />;
       case "PAYMENT":
         return <CreditCard className="h-4 w-4 text-blue-600" />;
-      case "MONTHLYFEE":
-        return <CreditCard className="h-4 w-4 text-orange-600" />;
       case "WITHDRAW":
         return <Wallet className="h-4 w-4 text-red-600" />;
       default:
@@ -261,7 +258,6 @@ export default function TransactionsManagement() {
     { value: "all", label: "Tất cả loại" },
     { value: "DEPOSIT", label: "Nạp tiền" },
     { value: "PAYMENT", label: "Thanh toán" },
-    { value: "MONTHLYFEE", label: "Phí hàng tháng" },
     { value: "WITHDRAW", label: "Rút tiền" },
   ];
 

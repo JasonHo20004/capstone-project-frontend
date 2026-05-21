@@ -7,7 +7,10 @@ import type { OrderStatus, PaymentMethod, TransactionStatus, TransactionType } f
 export interface Wallet {
   id: string;
   allowance: number;
+  /** Convenience alias for `allowance` exposed by some endpoints */
   balance?: number;
+  /** Money earned but locked until clearance period passes */
+  pendingBalance?: number;
   userId: string;
 }
 
@@ -20,7 +23,6 @@ export interface Transaction {
   walletId: string;
   transactionType: TransactionType;
   topupOrderId?: string;
-  subscriptionContractId?: string;
   orderId?: string;
 }
 

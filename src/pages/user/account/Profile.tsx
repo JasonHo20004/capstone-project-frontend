@@ -464,11 +464,22 @@ export default function Profile() {
                     {app.certification && app.certification.length > 0 && (
                       <div>
                         <p className="text-xs font-medium text-slate-500 mb-1.5">Chứng chỉ</p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                           {app.certification.map((url, idx) => (
-                            <a key={idx} href={url} target="_blank" rel="noopener noreferrer"
-                              className="block w-16 h-16 rounded-lg overflow-hidden border border-slate-200 hover:opacity-80 transition-opacity">
-                              <img src={url} alt={`Cert ${idx + 1}`} className="w-full h-full object-cover" />
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Nhấn để xem ảnh gốc"
+                              className="block aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-white hover:opacity-90 hover:shadow-md transition-all"
+                            >
+                              <img
+                                src={url}
+                                alt={`Cert ${idx + 1}`}
+                                className="w-full h-full object-contain"
+                                loading="lazy"
+                              />
                             </a>
                           ))}
                         </div>
@@ -484,7 +495,7 @@ export default function Profile() {
       <CourseSellerApplicationDialog
         open={applicationOpen}
         onOpenChange={setApplicationOpen}
-        userId={user.id}
+        existingApplication={myApplications[0] ?? null}
         onSubmitted={() => {
           toast.success('Nộp đơn thành công!');
           queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
