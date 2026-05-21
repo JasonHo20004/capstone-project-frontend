@@ -24,11 +24,12 @@ const Navbar = () => {
   const isLoggedIn = !!user;
   const isHomePage = location.pathname === '/';
 
-  // Group 1: Page scroll (homepage sections)
+  // Group 1: Page scroll (homepage sections) — order mirrors landing page top-to-bottom
   const scrollLinks = [
     { to: '/', hash: '', label: 'Trang chủ' },
-    { to: '/#courses', hash: 'courses', label: 'Khóa học' },
     { to: '/#about', hash: 'about', label: 'Giới thiệu' },
+    { to: '/#courses', hash: 'courses', label: 'Khóa học' },
+    { to: '/#pricing', hash: 'pricing', label: 'Bảng giá' },
   ];
 
   // Group 2: Page navigation (separate routes)

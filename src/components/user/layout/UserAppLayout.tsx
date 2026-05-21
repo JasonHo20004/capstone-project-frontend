@@ -8,6 +8,9 @@ import { AIAdvisorBanner } from "./AIAdvisorBanner";
 import { useAIAdvisor } from "@/hooks/use-ai-advisor";
 import { useAIInsights } from "@/hooks/use-ai-insights";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useSubscription } from "@/context/SubscriptionContext";
+import { UpgradeToProButton } from "./UpgradeToProButton";
+import { ProAvatar, ProBadge } from "./ProAvatar";
 
 type NavItem = {
   name: string;
@@ -21,7 +24,6 @@ const navItems: NavItem[] = [
   { name: "Flashcards", path: "/flashcards", icon: "style" },
   { name: "Cart", path: "/cart", icon: "shopping_cart" },
   { name: "Wallet", path: "/wallet", icon: "account_balance_wallet" },
-  { name: "Pricing", path: "/subscription", icon: "workspace_premium" },
   { name: "Notifications", path: "/notifications", icon: "notifications" },
 ];
 
@@ -40,6 +42,7 @@ export default function UserAppLayout() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { logout } = useAuth();
+  const { isProUser } = useSubscription();
 
   // AI Advisor SSE connection
   const { activeAction, dismiss } = useAIAdvisor({
@@ -171,18 +174,26 @@ export default function UserAppLayout() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!isProUser && <UpgradeToProButton />}
             <NotificationDropdown userId={user?.id} />
             <CartDropdown />
             <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
             <NavLink
               to="/profile"
-              className="flex items-center gap-3 pl-2 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
+              className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <UserAvatar src={user?.profilePicture} name={user?.fullName} className="size-9" />
+              {isProUser ? (
+                <ProAvatar src={user?.profilePicture} name={user?.fullName} />
+              ) : (
+                <UserAvatar src={user?.profilePicture} name={user?.fullName} className="size-9" />
+              )}
               <div className="hidden md:block text-left mr-2">
-                <p className="text-sm font-semibold text-slate-900 leading-none">
-                  {user?.fullName ?? "Learner"}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-slate-900 leading-none">
+                    {user?.fullName ?? "Learner"}
+                  </p>
+                  {isProUser && <ProBadge />}
+                </div>
                 <p className="text-xs text-slate-500 mt-1">
                   {user?.role === 'ADMINISTRATOR' ? 'Quản trị viên'
                     : user?.role === 'COURSESELLER' ? 'Giảng viên'
