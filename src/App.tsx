@@ -53,8 +53,6 @@ import ReportsManagement from "./pages/admin/management/ReportsManagement";
 import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
 import RevenueManagement from "./pages/admin/revenue-management/Revenues";
-import SubscriptionPlansManagement from "./pages/admin/management/SubscriptionPlansManagement";
-import SubscriptionContractsManagement from "./pages/admin/management/SubscriptionContractsManagement";
 import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
 import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 import TagsManagement from "./pages/admin/tag-management/Tags";
@@ -177,14 +175,6 @@ const App = () => (
             <Route path="dictation" element={<DictationManagement />} />
             <Route path="reports" element={<ReportsManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
-            <Route
-              path="subscription-plans"
-              element={<SubscriptionPlansManagement />}
-            />
-            <Route
-              path="subscription-contracts"
-              element={<SubscriptionContractsManagement />}
-            />
             <Route path="revenue" element={<RevenueManagement />} />
             <Route path="commission" element={<CommissionManagement />} />
             <Route path="withdrawals" element={<WithdrawalManagement />} />

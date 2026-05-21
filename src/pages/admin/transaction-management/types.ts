@@ -10,7 +10,7 @@ import type { TransactionWithRelations } from "@/lib/api/types/transaction.types
 export interface TransactionFilterFormValues {
   searchText: string;
   status: TransactionStatus | "all";
-  transactionType: "DEPOSIT" | "PAYMENT" | "MONTHLYFEE" | "WITHDRAW" | "all";
+  transactionType: "DEPOSIT" | "PAYMENT" | "WITHDRAW" | "all";
   startDate: string;
   endDate: string;
 }

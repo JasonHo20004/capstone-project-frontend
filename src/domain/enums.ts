@@ -23,7 +23,6 @@ export enum OrderStatus {
 export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
   PAYMENT = 'PAYMENT',
-  MONTHLYFEE = 'MONTHLYFEE',
   WITHDRAW = 'WITHDRAW',
   SUBSCRIPTION = 'SUBSCRIPTION'
 }

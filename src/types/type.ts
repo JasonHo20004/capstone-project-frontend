@@ -21,7 +21,6 @@ export enum OrderStatus {
 export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
   PAYMENT = 'PAYMENT',
-  MONTHLYFEE = 'MONTHLYFEE',
   WITHDRAW = 'WITHDRAW'
 }
 
@@ -123,7 +122,6 @@ export interface User {
   practiceSessions?: PracticeSession[];
   ratings?: Rating[];
   reports?: Report[];
-  subscriptionContracts?: SubscriptionContract[];
   topupOrders?: TopupOrder[];
   userActivities?: UserActivity[];
   userAnswers?: UserAnswer[];
@@ -170,17 +168,6 @@ export interface Tag {
   
   // Relations
   deckTags?: DeckTag[];
-}
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description?: string;
-  maxCourses: number;
-  monthlyFee: number; // Decimal as number
-  
-  // Relations
-  subscriptionContracts?: SubscriptionContract[];
 }
 
 export interface CourseSellerProfile {
@@ -450,25 +437,6 @@ export interface PracticeSession {
   userAnswers?: UserAnswer[];
 }
 
-export interface SubscriptionContract {
-  id: string;
-  courseSellerId: string;
-  status: boolean;
-  subscriptionPlanId: string;
-  createdAt: string;
-  expiresAt: string;
-  updatedAt?: string;
-  renewalCount: number;
-  lastRenewalAt?: string;
-  notes?: string;
-  lastNotificationAt?: string;
-  
-  // Relations
-  user?: User;
-  subscriptionPlan?: SubscriptionPlan;
-  transactions?: Transaction[];
-}
-
 export interface Rating {
   id: string;
   score: number;
@@ -494,13 +462,11 @@ export interface Transaction {
   walletId: string;
   transactionType: TransactionType;
   topupOrderId?: string;
-  subscriptionContractId?: string;
   orderId?: string;
-  
+
   // Relations
   wallet?: Wallet;
   topupOrder?: TopupOrder;
-  subscriptionContract?: SubscriptionContract;
   userActivities?: UserActivity[];
   order?: Order;
 }

@@ -5,12 +5,7 @@ export interface SellerDashboardStats {
   coursesCount: number;
   learnersCount: number;
   commentsCount: number;
-  subscription: {
-    planName: string;
-    monthlyFee: number;
-    status: boolean;
-    expiresAt: string | null;
-  };
+  averageRating: number;
 }
 
 export interface SellerLearner {
@@ -37,13 +32,17 @@ export interface SellerComment {
   createdAt: string;
 }
 
+/**
+ * Monthly commission/revenue breakdown returned by GET /seller/fees.
+ * grossAmount = total course price collected; platformFee = commission taken;
+ * netAmount = grossAmount - platformFee (what reaches the seller).
+ */
 export interface SellerMonthlyFee {
-  id: string;
-  amount: number;
-  status: string;
-  createdAt: string;
-  description?: string;
-  planName: string;
+  month: number;
+  year: number;
+  grossAmount: number;
+  platformFee: number;
+  netAmount: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -78,12 +77,7 @@ export interface GetCommentsResponse {
 
 export interface GetMonthlyFeesResponse {
   fees: SellerMonthlyFee[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  year: number;
 }
 
 class SellerService {
@@ -134,20 +128,18 @@ class SellerService {
   }
 
   /**
-   * Get seller's monthly fees
+   * Get seller's monthly commission/revenue breakdown for a given year.
+   * Returns 12 entries (Jan..Dec). Defaults to current year if `year` is omitted.
    */
   async getMonthlyFees(params?: {
-    page?: number;
-    limit?: number;
+    year?: number;
   }): Promise<ApiResponse<GetMonthlyFeesResponse>> {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.year) queryParams.append('year', params.year.toString());
 
     const response = await apiClient.get<ApiResponse<GetMonthlyFeesResponse>>(
       `/seller/fees?${queryParams.toString()}`
     );
-    console.log("response", response)
     return response.data;
   }
 }

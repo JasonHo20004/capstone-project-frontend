@@ -52,11 +52,10 @@ export const useSellerComments = (params?: {
 };
 
 /**
- * Hook để lấy danh sách phí hằng tháng của seller
+ * Hook để lấy thống kê doanh thu theo tháng của seller (commission-based).
  */
 export const useSellerMonthlyFees = (params?: {
-  page?: number;
-  limit?: number;
+  year?: number;
 }) => {
   return useQuery({
     queryKey: ['seller', 'fees', params],

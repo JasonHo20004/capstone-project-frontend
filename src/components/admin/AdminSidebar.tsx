@@ -93,16 +93,6 @@ const sidebarItems = [
   //   icon: Bell,
   // },
   // {
-  //   title: 'Gói đăng ký',
-  //   href: '/admin/subscription-plans',
-  //   icon: Package,
-  // },
-  // {
-  //   title: 'Hợp đồng',
-  //   href: '/admin/subscription-contracts',
-  //   icon: ScrollText,
-  // },
-  // {
   //   title: 'Cài đặt',
   //   href: '/admin/settings',
   //   icon: Settings,

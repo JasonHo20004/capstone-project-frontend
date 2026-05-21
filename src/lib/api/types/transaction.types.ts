@@ -65,7 +65,6 @@ export interface TransactionStats {
   byType: {
     DEPOSIT: number;
     PAYMENT: number;
-    MONTHLYFEE: number;
     WITHDRAW: number;
   };
 }
