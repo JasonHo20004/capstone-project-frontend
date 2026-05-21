@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
@@ -21,37 +21,55 @@ import {
   Award,
   AlertTriangle,
   CheckCircle2,
+  CheckCheck,
+  Users,
+  ListChecks,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { formatVND } from '@/lib/utils';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
 import CourseReportDialog from '@/components/user/course/CourseReportDialog';
-import type { Lesson, Report, CourseLesson } from "@/domain";
-import type { Test, Section } from "@/types/type";
+import CourseDetailReviews from '@/components/user/course/CourseDetailReviews';
+import AllRatingsModal from '@/components/user/course/AllRatingsModal';
+import type { Lesson, Report, CourseLesson, Course } from '@/domain';
+import type { Test, Section } from '@/types/type';
 
-import { useGetCourseDetail, useGetMyCourses } from '@/hooks/api/use-courses';
+import { useGetCourseDetail, useGetMyCourses, useModules, useSellerCourses } from '@/hooks/api/use-courses';
 import { useAddToCart, useDirectBuy, useIsInCart } from '@/hooks/api/use-cart';
 import { useUser } from '@/hooks/api/use-user';
-import { useCourseContext } from '@/hooks/api/use-student-learning';
+import { useCourseContext, useCourseRatings } from '@/hooks/api/use-student-learning';
 
 const CourseDetail = () => {
   const { id } = useParams();
   const { user } = useUser();
   const navigate = useNavigate();
 
+  // ── Core data ─────────────────────────────────────────────────────────────
   const { data: course, isLoading, isError } = useGetCourseDetail(id!);
   const { data: myCoursesData } = useGetMyCourses();
 
+  // ── Purchase hooks ─────────────────────────────────────────────────────────
   const addToCartMutation = useAddToCart();
   const isInCart = useIsInCart(course?.id);
   const directBuyMutation = useDirectBuy();
 
+  // ── Modules / lessons (for content preview) ───────────────────────────────
+  const { data: modulesData } = useModules(id);
+
+  // ── Ratings (for hero average display) ────────────────────────────────────
+  const { data: ratingsData } = useCourseRatings(id);
+
+  // ── UI state ───────────────────────────────────────────────────────────────
   const [buyOpen, setBuyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [allRatingsOpen, setAllRatingsOpen] = useState(false);
   const [myReports, setMyReports] = useState<Report[]>([]);
-  const [tab, setTab] = useState<"overview" | "instructor" | "content">("overview");
+  const [tab, setTab] = useState<'overview' | 'instructor' | 'content'>('overview');
+  const [highlightSidebar, setHighlightSidebar] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
+  // ── Enrollment check ───────────────────────────────────────────────────────
   const isEnrolledInApi = useMemo(() => {
     if (!course || !user) return false;
     const myCourses = myCoursesData?.data ?? [];
@@ -60,8 +78,26 @@ const CourseDetail = () => {
 
   const isPurchased = isEnrolledInApi || directBuyMutation.isSuccess;
 
+  // ── Redirect owned courses to learning page (skip detail for enrolled) ────
+  // Only redirect if the user was ALREADY enrolled before visiting — not when
+  // they've just purchased on this page (directBuyMutation.isSuccess).
+  useEffect(() => {
+    if (isEnrolledInApi && id && !directBuyMutation.isSuccess) {
+      navigate(`/learning/courses/${id}/lessons`);
+    }
+  }, [isEnrolledInApi, id, navigate, directBuyMutation.isSuccess]);
+
+  // ── Course context (syllabus + progress) — only for enrolled ──────────────
   const { data: courseContext } = useCourseContext(isEnrolledInApi ? id : undefined);
 
+  // ── Instructor other courses ───────────────────────────────────────────────
+  const { data: sellerCoursesData } = useSellerCourses(course?.courseSellerId);
+  const instructorCourses: Course[] = useMemo(() => {
+    const list = sellerCoursesData?.data ?? [];
+    return list.filter((c) => c.id !== id).slice(0, 3);
+  }, [sellerCoursesData, id]);
+
+  // ── Derived data ───────────────────────────────────────────────────────────
   type InstructorInfo = {
     fullName: string;
     id?: string;
@@ -70,29 +106,33 @@ const CourseDetail = () => {
     phoneNumber?: string;
     englishLevel?: string;
   };
+
   const instructor = useMemo((): InstructorInfo | null => {
     if (!course) return null;
-    const src = course.user ?? course.courseSeller;
-    if (src) {
-      return {
-        fullName: src.fullName,
-        id: src.id,
-        ...(src as Record<string, unknown>),
-      } as InstructorInfo;
+    const name = course.sellerName ?? (course.user ?? course.courseSeller)?.fullName;
+    if (name) {
+      const src = course.user ?? course.courseSeller ?? {};
+      return { fullName: name, ...(src as Record<string, unknown>) } as InstructorInfo;
     }
-    return { fullName: "Unknown Instructor", email: "", profilePicture: null, phoneNumber: "", englishLevel: "" };
+    return { fullName: 'Giảng viên', email: '', profilePicture: null, phoneNumber: '', englishLevel: '' };
   }, [course]);
 
   const courseLessons: Lesson[] = useMemo(() => {
+    if (modulesData && modulesData.length > 0) {
+      return (modulesData as { moduleOrder?: number; lessons?: Lesson[] }[])
+        .slice()
+        .sort((a, b) => (a.moduleOrder ?? 0) - (b.moduleOrder ?? 0))
+        .flatMap((m) => m.lessons ?? []);
+    }
     const raw = course?.lessons ?? [];
     return raw
       .map((item) => {
         const cl = item as CourseLesson;
         if (cl.lesson) return cl.lesson;
-        return "id" in item && "title" in item ? (item as unknown as Lesson) : null;
+        return 'id' in item && 'title' in item ? (item as unknown as Lesson) : null;
       })
       .filter((l): l is Lesson => l != null);
-  }, [course]);
+  }, [modulesData, course]);
 
   const relatedTests = useMemo(() => {
     const c = course as { test?: Test } | undefined;
@@ -100,39 +140,35 @@ const CourseDetail = () => {
   }, [course]);
 
   const averageRating = useMemo(() => {
-    if (!course) return 0;
-    if (course.averageRating != null) return Number(course.averageRating.toFixed(1));
-    const c = course as { ratings?: { score?: number }[] };
-    const ratings = c.ratings ?? [];
-    if (ratings.length === 0) return 0;
-    const sum = ratings.reduce((acc, r) => acc + (r.score ?? 0), 0);
-    return Number((sum / ratings.length).toFixed(1));
-  }, [course]);
+    if (ratingsData?.averageScore != null) return Number(ratingsData.averageScore.toFixed(1));
+    if (course?.averageRating != null) return Number(course.averageRating.toFixed(1));
+    return 0;
+  }, [ratingsData, course]);
 
-  const thumbnailUrl = course?.thumbnailUrl || "";
+  const totalRatings = course?.ratingCount ?? 0;
+  const thumbnailUrl = course?.thumbnailUrl ?? '';
 
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleAddToCart = () => {
     if (!user) {
-      toast.warning("Bạn cần đăng nhập để thêm vào giỏ hàng", {
-        action: { label: "Đăng nhập", onClick: () => navigate('/login') },
+      toast.warning('Bạn cần đăng nhập để thêm vào giỏ hàng', {
+        action: { label: 'Đăng nhập', onClick: () => navigate('/login') },
       });
       return;
     }
-    if (addToCartMutation.isPending) return;
-    if (course) {
-      addToCartMutation.mutate({
-        id: course.id,
-        title: course.title,
-        price: course.price,
-        thumbnailUrl: course.thumbnailUrl,
-      });
-    }
+    if (addToCartMutation.isPending || !course) return;
+    addToCartMutation.mutate({
+      id: course.id,
+      title: course.title,
+      price: course.price,
+      thumbnailUrl: course.thumbnailUrl,
+    });
   };
 
   const handleBuyNowClick = () => {
     if (!user) {
-      toast.warning("Bạn cần đăng nhập để mua khóa học", {
-        action: { label: "Đăng nhập", onClick: () => navigate('/login') },
+      toast.warning('Bạn cần đăng nhập để mua khóa học', {
+        action: { label: 'Đăng nhập', onClick: () => navigate('/login') },
       });
       return;
     }
@@ -140,33 +176,48 @@ const CourseDetail = () => {
   };
 
   const handleConfirmPayment = () => {
-    if (directBuyMutation.isPending) return;
-    if (course) {
-      directBuyMutation.mutate(course.id, {
-        onSuccess: () => { setBuyOpen(false); setTab("content"); },
-      });
-    }
+    if (directBuyMutation.isPending || !course) return;
+    directBuyMutation.mutate(course.id, {
+      onSuccess: () => {
+        setBuyOpen(false);
+        setTab('content');
+      },
+    });
   };
 
   const getNextLessonId = (): string | null => {
-    if (!courseContext?.syllabus || courseContext.syllabus.length === 0) return null;
-    const sorted = [...courseContext.syllabus].sort((a, b) => (a.lessonOrder ?? 999) - (b.lessonOrder ?? 999));
+    if (!courseContext?.syllabus?.length) return null;
+    const sorted = [...courseContext.syllabus].sort(
+      (a, b) => (a.lessonOrder ?? 999) - (b.lessonOrder ?? 999)
+    );
     const firstIncomplete = sorted.find((l) => !l.isCompleted);
     if (firstIncomplete) return firstIncomplete.id;
-    if (sorted.length > 0) return sorted[sorted.length - 1].id;
-    return sorted[0]?.id || null;
+    return sorted[sorted.length - 1]?.id ?? sorted[0]?.id ?? null;
   };
 
   const handleStartLearning = () => {
     if (!id) return;
-    if (courseContext) {
-      const nextLessonId = getNextLessonId();
-      if (nextLessonId) { navigate(`/learning/courses/${id}/lessons/${nextLessonId}`); return; }
-    }
-    navigate(`/learning/courses/${id}/lessons`);
+    const nextLessonId = getNextLessonId();
+    navigate(
+      nextLessonId
+        ? `/learning/courses/${id}/lessons/${nextLessonId}`
+        : `/learning/courses/${id}/lessons`
+    );
   };
 
-  // --- LOADING ---
+  const handleLessonClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!isPurchased) {
+      sidebarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightSidebar(true);
+      setTimeout(() => setHighlightSidebar(false), 2000);
+    }
+  };
+
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -182,7 +233,7 @@ const CourseDetail = () => {
     );
   }
 
-  // --- ERROR ---
+  // ── Error state ────────────────────────────────────────────────────────────
   if (isError || !course) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -205,22 +256,22 @@ const CourseDetail = () => {
     );
   }
 
-  // --- MAIN RENDER ---
+  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50/50">
       <Navbar />
 
       <main className="pt-20">
-        {/* ═══════════════════════════════════════════════════════════════════
-            HERO SECTION
-        ═══════════════════════════════════════════════════════════════════ */}
+        {/* ═══════════════ HERO ═══════════════ */}
         <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
-          {/* Decorative background */}
           <div className="absolute inset-0 opacity-[0.06]">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-              backgroundSize: '28px 28px'
-            }} />
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+                backgroundSize: '28px 28px',
+              }}
+            />
           </div>
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px] -translate-y-1/3 translate-x-1/4" />
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/4" />
@@ -262,7 +313,6 @@ const CourseDetail = () => {
                 )}
               </div>
 
-              {/* Title */}
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-black mb-4 tracking-tight leading-tight">
                 {course.title}
               </h1>
@@ -272,16 +322,16 @@ const CourseDetail = () => {
                 </p>
               )}
 
-              {/* Meta Stats */}
+              {/* Meta stats */}
               <div className="flex flex-wrap gap-5 mb-8 items-center">
                 <div className="flex items-center gap-2 bg-white/[0.07] backdrop-blur-sm rounded-lg px-3.5 py-2 border border-white/[0.08]">
                   <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <span className="font-bold text-sm">{averageRating}</span>
-                  <span className="text-white/50 text-sm">({course.ratingCount ?? 0} đánh giá)</span>
+                  <span className="text-white/50 text-sm">({totalRatings} đánh giá)</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/[0.07] backdrop-blur-sm rounded-lg px-3.5 py-2 border border-white/[0.08]">
                   <PlayCircle className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">{courseLessons.length} bài học</span>
+                  <span className="text-sm font-medium">{course.lessonCount ?? courseLessons.length} bài học</span>
                 </div>
               </div>
 
@@ -299,7 +349,9 @@ const CourseDetail = () => {
                   </div>
                 )}
                 <div>
-                  <div className="text-xs text-white/40 font-medium uppercase tracking-wider">Giảng viên</div>
+                  <div className="text-xs text-white/40 font-medium uppercase tracking-wider">
+                    Giảng viên
+                  </div>
                   <div className="font-semibold text-sm">{instructor?.fullName}</div>
                 </div>
               </div>
@@ -307,28 +359,37 @@ const CourseDetail = () => {
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            MAIN CONTENT
-        ═══════════════════════════════════════════════════════════════════ */}
+        {/* ═══════════════ MAIN CONTENT ═══════════════ */}
         <div className="container mx-auto px-4 py-10">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* ── Left Column: Tabs ── */}
-            <div className="lg:col-span-2">
+            {/* ── Left column ── */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Tabs */}
               <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
                 <TabsList className="bg-white border border-slate-200 shadow-sm rounded-xl p-1 h-auto grid w-full grid-cols-3">
-                  <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold">
+                  <TabsTrigger
+                    value="overview"
+                    className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold"
+                  >
                     Tổng quan
                   </TabsTrigger>
-                  <TabsTrigger value="instructor" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold">
+                  <TabsTrigger
+                    value="instructor"
+                    className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold"
+                  >
                     Giảng viên
                   </TabsTrigger>
-                  <TabsTrigger value="content" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold">
+                  <TabsTrigger
+                    value="content"
+                    className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold"
+                  >
                     Nội dung
                   </TabsTrigger>
                 </TabsList>
 
                 {/* ── Overview Tab ── */}
                 <TabsContent value="overview" className="space-y-6 mt-6">
+                  {/* Description */}
                   {course.description && (
                     <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                       <h3 className="text-xl font-bold mb-4 text-slate-900 flex items-center gap-2">
@@ -346,12 +407,15 @@ const CourseDetail = () => {
                     <h3 className="text-xl font-bold mb-5 text-slate-900">Bạn sẽ nhận được</h3>
                     <div className="grid sm:grid-cols-2 gap-4">
                       {[
-                        { icon: PlayCircle, text: `${courseLessons.length} bài học video`, color: 'text-blue-500 bg-blue-50' },
+                        { icon: PlayCircle, text: `${course.lessonCount ?? courseLessons.length} bài học video`, color: 'text-blue-500 bg-blue-50' },
                         { icon: Shield, text: 'Truy cập trọn đời', color: 'text-emerald-500 bg-emerald-50' },
                         { icon: RefreshCw, text: 'Cập nhật miễn phí', color: 'text-orange-500 bg-orange-50' },
                         { icon: Award, text: 'Chứng chỉ hoàn thành', color: 'text-purple-500 bg-purple-50' },
                       ].map((item) => (
-                        <div key={item.text} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                        <div
+                          key={item.text}
+                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
+                        >
                           <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.color}`}>
                             <item.icon className="w-4 h-4" />
                           </div>
@@ -361,12 +425,52 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
-                  {/* Reports section (only if purchased) */}
+                  {/* Requirements */}
+                  {course.requirements && course.requirements.length > 0 && (
+                    <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+                      <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
+                        <ListChecks className="w-5 h-5 text-primary" />
+                        Yêu cầu
+                      </h3>
+                      <ul className="space-y-3">
+                        {course.requirements.map((req, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <CheckCheck className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-slate-600 leading-relaxed">{req}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Who this course is for */}
+                  {course.targetAudiences && course.targetAudiences.length > 0 && (
+                    <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+                      <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-primary" />
+                        Khóa học này dành cho ai?
+                      </h3>
+                      <ul className="space-y-3">
+                        {course.targetAudiences.map((audience, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                            <span className="text-sm text-slate-600 leading-relaxed">{audience}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Reports (purchased users only) */}
                   {isPurchased && (
                     <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                       <div className="flex items-center justify-between mb-5">
                         <h3 className="text-xl font-bold text-slate-900">Báo cáo của bạn</h3>
-                        <Button size="sm" onClick={() => setReportOpen(true)} className="rounded-lg">
+                        <Button
+                          size="sm"
+                          onClick={() => setReportOpen(true)}
+                          className="rounded-lg"
+                        >
                           <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
                           Viết báo cáo
                         </Button>
@@ -374,19 +478,26 @@ const CourseDetail = () => {
                       {myReports.length > 0 ? (
                         <ul className="space-y-3">
                           {myReports.map((report) => (
-                            <li key={report.id} className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                            <li
+                              key={report.id}
+                              className="border border-slate-200 rounded-xl p-4 bg-slate-50/50"
+                            >
                               <div className="text-xs text-slate-400 mb-1">
-                                {new Date(report.createdAt).toLocaleString("vi-VN")}
+                                {new Date(report.createdAt).toLocaleString('vi-VN')}
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs">{report.reasonType}</Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {report.reasonType}
+                                </Badge>
                                 <span className="text-sm text-slate-600">{report.content}</span>
                               </div>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-slate-400 text-sm">Bạn chưa có báo cáo nào cho khóa học này.</p>
+                        <p className="text-slate-400 text-sm">
+                          Bạn chưa có báo cáo nào cho khóa học này.
+                        </p>
                       )}
                     </div>
                   )}
@@ -397,15 +508,20 @@ const CourseDetail = () => {
                   <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                     <div className="flex items-start gap-6 mb-6">
                       {instructor?.profilePicture ? (
-                        <img src={instructor.profilePicture} alt={instructor.fullName}
-                          className="w-20 h-20 rounded-2xl object-cover shadow-md ring-2 ring-slate-100" />
+                        <img
+                          src={instructor.profilePicture}
+                          alt={instructor.fullName}
+                          className="w-20 h-20 rounded-2xl object-cover shadow-md ring-2 ring-slate-100"
+                        />
                       ) : (
                         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/10 to-blue-50 flex items-center justify-center ring-2 ring-slate-100">
                           <User className="w-8 h-8 text-primary/60" />
                         </div>
                       )}
                       <div className="flex-1">
-                        <h3 className="text-2xl font-bold mb-1 text-slate-900">{instructor?.fullName}</h3>
+                        <h3 className="text-2xl font-bold mb-1 text-slate-900">
+                          {instructor?.fullName}
+                        </h3>
                         <div className="flex flex-col gap-2 mt-3">
                           {instructor?.email && (
                             <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -422,7 +538,9 @@ const CourseDetail = () => {
                           {instructor?.englishLevel && (
                             <div className="flex items-center gap-2 text-sm text-slate-500">
                               <span className="font-medium text-slate-700">Trình độ:</span>
-                              <Badge variant="outline" className="text-xs">{instructor.englishLevel}</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {instructor.englishLevel}
+                              </Badge>
                             </div>
                           )}
                         </div>
@@ -433,73 +551,72 @@ const CourseDetail = () => {
 
                 {/* ── Content Tab ── */}
                 <TabsContent value="content" className="mt-6">
-                  {!isPurchased ? (
-                    <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm text-center py-16">
-                      <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                        <Lock className="w-7 h-7 text-slate-400" />
-                      </div>
-                      <h3 className="text-2xl font-bold mb-2 text-slate-900">Nội dung bị khóa</h3>
-                      <p className="text-slate-500 mb-7 max-w-md mx-auto text-sm leading-relaxed">
-                        Bạn cần mua khoá học để truy cập {courseLessons.length} bài học và các bài kiểm tra liên quan.
-                      </p>
-                      <Button size="lg" onClick={handleBuyNowClick} className="rounded-xl px-8 shadow-lg shadow-primary/20">
-                        <Zap className="w-4 h-4 mr-2" />
-                        Mua ngay để học
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {/* Lessons */}
-                      <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
-                        <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
-                          <PlayCircle className="w-5 h-5 text-primary" />
-                          Bài học ({courseLessons.length})
-                        </h3>
-                        {courseLessons.length > 0 ? (
-                          <ul className="space-y-3">
-                            {courseLessons.map((lesson, index) => (
-                              <li
-                                key={lesson.id}
-                                className="flex items-start justify-between gap-4 border border-slate-200 rounded-xl p-4 hover:border-primary/40 hover:bg-primary/[0.02] transition-all group cursor-pointer"
-                              >
-                                <div className="flex gap-4">
-                                  <div className="flex-shrink-0 w-9 h-9 bg-gradient-to-br from-primary/10 to-primary/5 text-primary rounded-xl flex items-center justify-center font-bold text-sm mt-0.5">
-                                    {lesson.lessonOrder ?? index + 1}
+                  <div className="space-y-6">
+                    {/* Lessons */}
+                    <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+                      <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
+                        <PlayCircle className="w-5 h-5 text-primary" />
+                        Bài học ({course.lessonCount ?? courseLessons.length})
+                      </h3>
+                      {courseLessons.length > 0 ? (
+                        <ul className="space-y-3">
+                          {courseLessons.map((lesson, index) => (
+                            <li
+                              key={lesson.id}
+                              onClick={() => {
+                                if (isPurchased) {
+                                  navigate(`/learning/courses/${id}/lessons/${lesson.id}`);
+                                } else {
+                                  handleLessonClick();
+                                }
+                              }}
+                              className="flex items-start justify-between gap-4 border border-slate-200 rounded-xl p-4 hover:border-primary/40 hover:bg-primary/[0.02] transition-all group cursor-pointer"
+                            >
+                              <div className="flex gap-4">
+                                <div className="flex-shrink-0 w-9 h-9 bg-gradient-to-br from-primary/10 to-primary/5 text-primary rounded-xl flex items-center justify-center font-bold text-sm mt-0.5">
+                                  {lesson.lessonOrder ?? index + 1}
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-slate-900 group-hover:text-primary transition-colors flex items-center gap-2">
+                                    {lesson.title}
+                                    {!isPurchased && <Lock className="w-3 h-3 text-slate-400 flex-shrink-0" />}
                                   </div>
-                                  <div>
-                                    <div className="font-semibold text-slate-900 group-hover:text-primary transition-colors">
-                                      {lesson.title}
-                                    </div>
-                                    {lesson.description && (
-                                      <p className="text-sm text-slate-500 mt-1 line-clamp-2">{lesson.description}</p>
+                                  {lesson.description && (
+                                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">
+                                      {lesson.description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-3 text-xs text-slate-400 mt-2">
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {lesson.durationInSeconds
+                                        ? `${Math.round(lesson.durationInSeconds / 60)} phút`
+                                        : '—'}
+                                    </span>
+                                    {(lesson.materials?.length ?? 0) > 0 && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{lesson.materials!.length} tài liệu</span>
+                                      </>
                                     )}
-                                    <div className="flex items-center gap-3 text-xs text-slate-400 mt-2">
-                                      <span className="flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {lesson.durationInSeconds
-                                          ? `${Math.round(lesson.durationInSeconds / 60)} phút`
-                                          : "—"}
-                                      </span>
-                                      <span>•</span>
-                                      <span>{lesson.materials?.length ?? 0} tài liệu</span>
-                                    </div>
                                   </div>
                                 </div>
-                                {lesson.videoUrl && (
-                                  <Button asChild variant="ghost" size="sm" className="text-primary hover:bg-primary/10 rounded-lg">
-                                    <a href={lesson.videoUrl} target="_blank" rel="noopener noreferrer">
-                                      <PlayCircle className="w-4 h-4 mr-1" />
-                                      Xem
-                                    </a>
-                                  </Button>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-slate-400 text-center py-6 text-sm">Chưa có bài học nào.</p>
-                        )}
-                      </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-slate-400 text-center py-6 text-sm">
+                          Chưa có bài học nào.
+                        </p>
+                      )}
+                      {!isPurchased && courseLessons.length > 0 && (
+                        <p className="mt-4 text-xs text-slate-400 text-center">
+                          <Lock className="w-3 h-3 inline mr-1" />
+                          Mua khóa học để mở khóa toàn bộ nội dung
+                        </p>
+                      )}
+                    </div>
 
                       {/* Tests */}
                       <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
@@ -510,7 +627,10 @@ const CourseDetail = () => {
                         {relatedTests.length > 0 ? (
                           <div className="space-y-4">
                             {relatedTests.map((test: Test) => (
-                              <div key={test.id} className="border border-slate-200 rounded-xl p-5 hover:border-blue-200 transition-colors">
+                              <div
+                                key={test.id}
+                                className="border border-slate-200 rounded-xl p-5 hover:border-blue-200 transition-colors"
+                              >
                                 <div className="flex items-start justify-between gap-4 mb-3">
                                   <div>
                                     <div className="font-semibold text-lg flex items-center gap-2 text-slate-900">
@@ -519,17 +639,27 @@ const CourseDetail = () => {
                                     </div>
                                     <div className="text-sm text-slate-500 mt-1 flex items-center gap-2">
                                       <Clock className="w-3.5 h-3.5" />
-                                      {test.durationInMinutes} phút • Điểm tối đa: {test.totalScore}
+                                      {test.durationInMinutes} phút • Điểm tối đa:{' '}
+                                      {test.totalScore}
                                     </div>
                                   </div>
-                                  <Button variant="outline" size="sm" className="rounded-lg">Làm bài</Button>
+                                  <Button variant="outline" size="sm" className="rounded-lg">
+                                    Làm bài
+                                  </Button>
                                 </div>
                                 {test.sections && test.sections.length > 0 && (
                                   <ul className="grid sm:grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
                                     {test.sections.map((section: Section) => (
-                                      <li key={section.id} className="bg-slate-50 rounded-lg p-3 text-sm">
-                                        <div className="font-medium text-slate-700">{section.title}</div>
-                                        <div className="text-xs text-slate-400 mt-0.5">{section.totalQuestions ?? 0} câu hỏi</div>
+                                      <li
+                                        key={section.id}
+                                        className="bg-slate-50 rounded-lg p-3 text-sm"
+                                      >
+                                        <div className="font-medium text-slate-700">
+                                          {section.title}
+                                        </div>
+                                        <div className="text-xs text-slate-400 mt-0.5">
+                                          {section.totalQuestions ?? 0} câu hỏi
+                                        </div>
                                       </li>
                                     ))}
                                   </ul>
@@ -538,11 +668,13 @@ const CourseDetail = () => {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-slate-400 text-center py-6 text-sm">Chưa có bài kiểm tra nào.</p>
+                          <p className="text-slate-400 text-center py-6 text-sm">
+                            Chưa có bài kiểm tra nào.
+                          </p>
                         )}
                       </div>
 
-                      {/* Final Test */}
+                      {/* Final test */}
                       {course.finalTestId && (
                         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-7 border border-amber-200 shadow-sm">
                           <h3 className="text-xl font-bold mb-3 text-slate-900 flex items-center gap-2">
@@ -550,19 +682,21 @@ const CourseDetail = () => {
                             Bài kiểm tra cuối khóa
                           </h3>
                           <p className="text-sm text-slate-600 mb-4">
-                            Hoàn thành bài kiểm tra này để xác nhận bạn đã nắm vững kiến thức của khóa học.
+                            Hoàn thành bài kiểm tra này để xác nhận bạn đã nắm vững kiến thức.
                           </p>
-
                           {(() => {
                             const totalLessons = courseLessons.length;
-                            const completedLessons = courseContext?.progress?.completedLessons ?? 0;
-                            const allCompleted = totalLessons > 0 && completedLessons >= totalLessons;
-
+                            const completedLessons =
+                              courseContext?.progress?.completedLessons ?? 0;
+                            const allCompleted =
+                              totalLessons > 0 && completedLessons >= totalLessons;
                             if (allCompleted) {
                               return (
                                 <div className="flex items-center gap-3">
                                   <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                  <span className="text-sm font-medium text-green-700">Bạn đã hoàn thành tất cả bài học!</span>
+                                  <span className="text-sm font-medium text-green-700">
+                                    Bạn đã hoàn thành tất cả bài học!
+                                  </span>
                                   <Button
                                     className="ml-auto rounded-xl shadow-lg shadow-amber-200/50"
                                     onClick={() => navigate(`/tests/${course.finalTestId}`)}
@@ -573,7 +707,6 @@ const CourseDetail = () => {
                                 </div>
                               );
                             }
-
                             return (
                               <div className="flex items-center gap-3 bg-white/60 rounded-xl p-4 border border-amber-200/50">
                                 <Lock className="w-5 h-5 text-amber-500 flex-shrink-0" />
@@ -589,7 +722,9 @@ const CourseDetail = () => {
                                   <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                                     <div
                                       className="h-full bg-amber-400 rounded-full transition-all"
-                                      style={{ width: `${totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0}%` }}
+                                      style={{
+                                        width: `${totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0}%`,
+                                      }}
                                     />
                                   </div>
                                 </div>
@@ -599,16 +734,85 @@ const CourseDetail = () => {
                         </div>
                       )}
                     </div>
-                  )}
                 </TabsContent>
               </Tabs>
+
+              {/* ── Reviews section ── */}
+              {id && (
+                <CourseDetailReviews
+                  courseId={id}
+                  averageRating={averageRating}
+                  totalRatings={totalRatings}
+                  onShowAll={() => setAllRatingsOpen(true)}
+                />
+              )}
+
+              {/* ── More from instructor ── */}
+              {instructorCourses.length > 0 && instructor && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="px-7 py-5 border-b border-slate-100">
+                    <h2 className="text-xl font-bold text-slate-900">
+                      Thêm khóa học từ{' '}
+                      <span className="text-primary">{instructor.fullName}</span>
+                    </h2>
+                  </div>
+                  <div className="p-5 grid sm:grid-cols-3 gap-4">
+                    {instructorCourses.map((c) => (
+                      <Link
+                        key={c.id}
+                        to={`/courses/${c.id}`}
+                        className="group rounded-xl border border-slate-100 overflow-hidden hover:border-primary/30 hover:shadow-md transition-all"
+                      >
+                        {/* Thumbnail */}
+                        <div className="h-28 bg-slate-100 overflow-hidden">
+                          {c.thumbnailUrl ? (
+                            <img
+                              src={c.thumbnailUrl}
+                              alt={c.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <BookOpen className="w-8 h-8 text-slate-300" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <h4 className="text-sm font-semibold text-slate-800 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
+                            {c.title}
+                          </h4>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              <span className="text-xs font-semibold text-slate-700">
+                                {c.averageRating != null
+                                  ? c.averageRating.toFixed(1)
+                                  : '—'}
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold text-primary">
+                              {formatVND(Number(c.price))}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* ── Right Column: Sticky Sidebar ── */}
+            {/* ── Right column: sticky sidebar ── */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-5">
-                {/* Price Card */}
-                <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-200">
+                <div
+                  ref={sidebarRef}
+                  className={`bg-white rounded-2xl overflow-hidden shadow-lg border transition-all duration-500 ${
+                    highlightSidebar
+                      ? 'border-primary ring-2 ring-primary/40 shadow-primary/25 shadow-xl'
+                      : 'border-slate-200'
+                  }`}
+                >
                   {/* Thumbnail */}
                   <div className="h-52 w-full bg-gradient-to-br from-slate-100 to-slate-50 border-b overflow-hidden relative group">
                     {thumbnailUrl ? (
@@ -663,7 +867,7 @@ const CourseDetail = () => {
                       <div className="space-y-3">
                         <Button
                           size="lg"
-                          className="w-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-base font-bold rounded-xl h-12"
+                          className={`w-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-base font-bold rounded-xl h-12 ${highlightSidebar ? 'animate-pulse' : ''}`}
                           onClick={handleBuyNowClick}
                           disabled={directBuyMutation.isPending || addToCartMutation.isPending}
                         >
@@ -702,7 +906,10 @@ const CourseDetail = () => {
                         { icon: RefreshCw, text: 'Cập nhật miễn phí' },
                         { icon: Award, text: 'Chứng chỉ hoàn thành' },
                       ].map((item) => (
-                        <div key={item.text} className="flex items-center gap-2.5 text-xs text-slate-500">
+                        <div
+                          key={item.text}
+                          className="flex items-center gap-2.5 text-xs text-slate-500"
+                        >
                           <item.icon className="w-3.5 h-3.5 text-slate-400" />
                           <span>{item.text}</span>
                         </div>
@@ -716,12 +923,12 @@ const CourseDetail = () => {
         </div>
       </main>
 
-      {/* Dialogs */}
+      {/* ── Dialogs / Modals ── */}
       <CourseReportDialog
         open={reportOpen}
         onOpenChange={setReportOpen}
         course={course}
-        userId={user?.id || ""}
+        userId={user?.id ?? ''}
         onSubmitted={(report) => setMyReports((prev) => [report, ...prev])}
       />
 
@@ -731,9 +938,18 @@ const CourseDetail = () => {
         amount={Number(course.price) || 0}
         title="Xác nhận thanh toán nhanh"
         items={[{ title: course.title, price: Number(course.price) || 0 }]}
-        confirmLabel={directBuyMutation.isPending ? "Đang xử lý..." : "Thanh toán ngay"}
+        confirmLabel={directBuyMutation.isPending ? 'Đang xử lý...' : 'Thanh toán ngay'}
         onConfirm={handleConfirmPayment}
       />
+
+      {id && (
+        <AllRatingsModal
+          open={allRatingsOpen}
+          onOpenChange={setAllRatingsOpen}
+          courseId={id}
+          courseName={course.title}
+        />
+      )}
 
       <Footer />
     </div>

@@ -157,6 +157,13 @@ All colors MUST be HSL.
   100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
 }
 
+@keyframes kahoot-feedback-chip {
+  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 14px)) scale(0.7); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, calc(-50% - 18px)) scale(0.95); }
+}
+
 /* Slide-in for cards from bottom */
 @keyframes kahoot-slide-up {
   0% { opacity: 0; transform: translateY(30px); }
@@ -196,6 +203,14 @@ All colors MUST be HSL.
 
 .kahoot-float-up {
   animation: kahoot-float-up 1.2s ease-out forwards;
+}
+
+.kahoot-feedback-chip {
+  /* Anchor: chip is absolutely positioned at its band line; the keyframes carry
+     translate(-50%,-50%) so it stays centered while it rises and fades. */
+  transform: translate(-50%, -50%);
+  animation: kahoot-feedback-chip 0.65s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  will-change: transform, opacity;
 }
 
 .kahoot-slide-up {

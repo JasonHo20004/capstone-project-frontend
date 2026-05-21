@@ -101,9 +101,12 @@ const Flashcards = () => {
     useGetCards(selectedDeckId);
   const selectedDeckCards = useMemo(() => cardsData || [], [cardsData]);
 
-  // Review queue — shows how many cards are due for the selected deck
   const { data: reviewQueueData, isLoading: isLoadingQueue } = useGetReviewQueue(selectedDeckId);
   const reviewQueueCount = reviewQueueData?.length ?? 0;
+  const hasOnlyNewCards = useMemo(
+    () => reviewQueueCount > 0 && (reviewQueueData ?? []).every((c) => c.queueType === 'NEW'),
+    [reviewQueueData, reviewQueueCount]
+  );
 
   const queryClient = useQueryClient();
 
@@ -164,6 +167,10 @@ const Flashcards = () => {
   const publicCards = useMemo(() => publicCardsData || [], [publicCardsData]);
   const { data: publicQueueData } = useGetReviewQueue(selectedPublicDeckId);
   const publicQueueCount = publicQueueData?.length ?? 0;
+  const publicHasOnlyNewCards = useMemo(
+    () => publicQueueCount > 0 && (publicQueueData ?? []).every((c) => c.queueType === 'NEW'),
+    [publicQueueData, publicQueueCount]
+  );
 
   const selectedPublicDeck = useMemo(
     () => (publicDecks ?? []).find((d) => d.id === selectedPublicDeckId) ?? null,
@@ -590,12 +597,24 @@ const Flashcards = () => {
                 {publicCards.length > 0 && (
                   <div className="flex items-center gap-2 mt-4">
                     <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold ${
-                      publicQueueCount > 0
-                        ? 'bg-amber-50 border-amber-200 text-amber-700'
-                        : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      publicQueueCount === 0
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        : publicHasOnlyNewCards
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        : 'bg-amber-50 border-amber-200 text-amber-700'
                     }`}>
-                      {publicQueueCount > 0 ? <Clock className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-                      {publicQueueCount > 0 ? `${publicQueueCount} thẻ cần ôn tập` : 'Đã ôn hết! 🎉'}
+                      {publicQueueCount === 0 ? (
+                        <Check className="w-4 h-4" />
+                      ) : publicHasOnlyNewCards ? (
+                        <Sparkles className="w-4 h-4" />
+                      ) : (
+                        <Clock className="w-4 h-4" />
+                      )}
+                      {publicQueueCount === 0
+                        ? 'Đã ôn hết! 🎉'
+                        : publicHasOnlyNewCards
+                        ? `${publicQueueCount} thẻ mới — sẵn sàng để học 🌱`
+                        : `${publicQueueCount} thẻ cần ôn tập`}
                     </div>
                   </div>
                 )}
@@ -610,7 +629,9 @@ const Flashcards = () => {
                   <Play className="w-6 h-6 mr-2 fill-white" /> HỌC THẺ
                 </Button>
                 {publicQueueCount > 0 && (
-                  <span className="absolute -top-2 -right-2 min-w-[28px] h-7 flex items-center justify-center text-xs font-black bg-red-500 text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white">
+                  <span className={`absolute -top-2 -right-2 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
+                    publicHasOnlyNewCards ? 'bg-indigo-500' : 'bg-red-500'
+                  }`}>
                     {publicQueueCount}
                   </span>
                 )}
@@ -696,30 +717,42 @@ const Flashcards = () => {
                     {selectedDeck?.description || "Không có mô tả."}
                   </SheetDescription>
                   
-                  {/* Status Indicator inside Sheet Header */}
+                  {/* Status Indicator inside Sheet Header.
+                      Three meaningful states (drives both copy & color):
+                       • loading           → slate / spinner
+                       • queue empty       → emerald / "Đã ôn hết"
+                       • queue all NEW     → indigo / welcoming "ready to learn"
+                                              (first-time user or freshly-added cards)
+                       • queue has due     → amber / "needs review now" */}
                   {selectedDeckId && selectedDeckCards.length > 0 && (
                     <div className="flex flex-wrap items-center gap-3 mt-4">
                       <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold shadow-sm transition-all duration-300 ${
                           isLoadingQueue
                             ? 'bg-slate-50 border-slate-200 text-slate-500 animate-pulse'
-                            : reviewQueueCount > 0
-                            ? 'bg-amber-50 border-amber-200 text-amber-700'
-                            : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            : reviewQueueCount === 0
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            : hasOnlyNewCards
+                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                            : 'bg-amber-50 border-amber-200 text-amber-700'
                         }`}
                       >
                         {isLoadingQueue ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : reviewQueueCount > 0 ? (
-                          <Clock className="w-4 h-4" />
-                        ) : (
+                        ) : reviewQueueCount === 0 ? (
                           <Check className="w-4 h-4" />
+                        ) : hasOnlyNewCards ? (
+                          <Sparkles className="w-4 h-4" />
+                        ) : (
+                          <Clock className="w-4 h-4" />
                         )}
                         <span>
                           {isLoadingQueue
                             ? 'Đang tính toán thẻ cần ôn...'
-                            : reviewQueueCount > 0
-                            ? `${reviewQueueCount} thẻ cần ôn tập ngay bây giờ`
-                            : 'Đã ôn hết! Hẹn gặp lại vào lần tới 🎉'}
+                            : reviewQueueCount === 0
+                            ? 'Đã ôn hết! Hẹn gặp lại vào lần tới 🎉'
+                            : hasOnlyNewCards
+                            ? `${reviewQueueCount} thẻ mới — sẵn sàng cho buổi học đầu tiên 🌱`
+                            : `${reviewQueueCount} thẻ cần ôn tập ngay bây giờ`}
                         </span>
                       </div>
                     </div>
@@ -773,9 +806,14 @@ const Flashcards = () => {
                       <Play className="w-6 h-6 mr-2 fill-white" /> HỌC THẺ
                     </Button>
                     
-                    {/* Badge moved outside the button to prevent clipping from overflow-hidden */}
+                    {/* Counter badge — red urgency for due cards, indigo welcome
+                        for first-time users (queue all NEW). */}
                     {reviewQueueCount > 0 && (
-                        <span className="absolute -top-2 -right-2 md:-right-4 min-w-[28px] h-7 flex items-center justify-center text-xs font-black bg-red-500 text-white rounded-full px-2 shadow-md shadow-red-500/40 animate-pulse pointer-events-none z-10 border-2 border-white">
+                        <span className={`absolute -top-2 -right-2 md:-right-4 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
+                          hasOnlyNewCards
+                            ? 'bg-indigo-500 shadow-indigo-500/40'
+                            : 'bg-red-500 shadow-red-500/40'
+                        }`}>
                           {reviewQueueCount}
                         </span>
                     )}
