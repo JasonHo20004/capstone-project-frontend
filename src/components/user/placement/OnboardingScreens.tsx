@@ -1,46 +1,161 @@
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-interface ScreenProps {
+interface BaseScreenProps {
   onContinue: () => void;
+  onBack?: () => void;
 }
 
-export function WelcomeScreen({
-  onStart,
-  isLoading,
-  error,
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+function BackToHubButton({ onBack }: { onBack?: () => void }) {
+  if (!onBack) return null;
+  return (
+    <button
+      type="button"
+      onClick={onBack}
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+    >
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Back to Learning Hub
+    </button>
+  );
+}
+
+function ScreenShell({
+  onBack,
+  children,
 }: {
-  onStart: () => void;
-  isLoading: boolean;
-  error: string | null;
+  onBack?: () => void;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-6 py-12 text-center">
-      <h1 className="text-5xl font-bold tracking-tight text-slate-900">
-        English Placement Test
-      </h1>
-      <p className="text-lg text-teal-600 font-medium">
-        50 questions · ~40 minutes · Discover your level
-      </p>
-      <p className="text-base leading-relaxed text-slate-600">
-        This test evaluates your Grammar, Vocabulary, Reading, and Listening skills to
-        determine your English proficiency level (CEFR A1–C2).
-      </p>
-      {error && (
-        <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-      )}
-      <button
-        type="button"
-        onClick={onStart}
-        disabled={isLoading}
-        className="rounded-full bg-teal-500 px-10 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isLoading ? "Preparing exam…" : "Start Test"}
-      </button>
+    <div className="relative mx-auto min-h-[80vh] max-w-3xl px-6 py-6">
+      <div className="mb-4 flex items-center justify-between">
+        <BackToHubButton onBack={onBack} />
+      </div>
+      {children}
     </div>
   );
 }
 
-export function AudioCheckScreen({ onContinue }: ScreenProps) {
+const containerStagger = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+};
+
+const itemRise = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
+};
+
+export function WelcomeScreen({
+  onStart,
+  onBack,
+  isLoading,
+  error,
+}: {
+  onStart: () => void;
+  onBack?: () => void;
+  isLoading: boolean;
+  error: string | null;
+}) {
+  return (
+    <ScreenShell onBack={onBack}>
+      <motion.div
+        variants={containerStagger}
+        initial="hidden"
+        animate="show"
+        className="mx-auto flex max-w-2xl flex-col items-center gap-7 pt-8 text-center"
+      >
+        <motion.div
+          variants={itemRise}
+          className="relative inline-flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-teal-400 to-blue-500 shadow-xl"
+        >
+          <div className="absolute inset-0 animate-pulse rounded-3xl bg-teal-400/30 blur-2xl" />
+          <svg className="relative h-12 w-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M22 4L12 14.01l-3-3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </motion.div>
+
+        <motion.div variants={itemRise} className="space-y-3">
+          <h1 className="text-5xl font-bold tracking-tight text-slate-900">
+            English Placement Test
+          </h1>
+          <p className="text-base font-medium text-teal-600">
+            50 questions · ~40 minutes · Discover your CEFR level
+          </p>
+        </motion.div>
+
+        <motion.p variants={itemRise} className="max-w-xl text-base leading-relaxed text-slate-600">
+          This test evaluates your Grammar, Vocabulary, Reading, and Listening skills to determine
+          your English proficiency level (CEFR A1–C2). You'll see your result and IELTS/TOEIC
+          equivalents as soon as you finish.
+        </motion.p>
+
+        <motion.div variants={itemRise} className="grid w-full max-w-md grid-cols-3 gap-3 pt-2">
+          {[
+            { v: "50", l: "Questions" },
+            { v: "~40m", l: "Duration" },
+            { v: "A1-C2", l: "Levels" },
+          ].map((s) => (
+            <div key={s.l} className="rounded-2xl bg-slate-50 px-3 py-4 text-center">
+              <div className="text-2xl font-bold text-slate-900">{s.v}</div>
+              <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{s.l}</div>
+            </div>
+          ))}
+        </motion.div>
+
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="w-full rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div variants={itemRise} className="flex w-full flex-col items-center gap-3 pt-2">
+          <motion.button
+            type="button"
+            onClick={onStart}
+            disabled={isLoading}
+            whileTap={!isLoading ? { scale: 0.97 } : {}}
+            whileHover={!isLoading ? { scale: 1.02 } : {}}
+            className="rounded-full bg-teal-500 px-12 py-4 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Preparing exam…
+              </span>
+            ) : (
+              "Start Test"
+            )}
+          </motion.button>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-sm font-medium text-slate-500 hover:text-slate-700"
+            >
+              Not now, take me back to the Learning Hub
+            </button>
+          )}
+        </motion.div>
+      </motion.div>
+    </ScreenShell>
+  );
+}
+
+export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
   const [tried, setTried] = useState(false);
   const [problem, setProblem] = useState(false);
 
@@ -58,140 +173,243 @@ export function AudioCheckScreen({ onContinue }: ScreenProps) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-6 py-12">
-      <h2 className="text-3xl font-bold text-slate-900">Audio check</h2>
-      <p className="text-slate-600">
-        If you can hear the audio clearly, your sound is working properly.
-      </p>
-      <div className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-8">
-        <button
-          onClick={playSample}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-teal-500 text-white shadow-lg hover:bg-teal-600"
-          aria-label="Play sample audio"
+    <ScreenShell onBack={onBack}>
+      <motion.div
+        variants={containerStagger}
+        initial="hidden"
+        animate="show"
+        className="mx-auto max-w-2xl space-y-6"
+      >
+        <motion.div variants={itemRise}>
+          <h2 className="text-3xl font-bold text-slate-900">Audio check</h2>
+          <p className="mt-1 text-slate-600">
+            Tap play. If you can hear the sample clearly, you're good to go.
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={itemRise}
+          className="relative flex flex-col items-center gap-4 overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-teal-50/40 p-8"
         >
-          <svg className="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </button>
-        <div className="flex h-8 items-center gap-1">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <span
-              key={i}
-              className="w-1.5 rounded-full bg-teal-400/70"
-              style={{ height: `${10 + (i % 3) * 8}px` }}
-            />
-          ))}
-        </div>
-        <p className="rounded-xl bg-white p-4 text-center text-sm text-slate-700">
-          “Welcome to the English placement test. Please make sure you can hear this
-          message clearly before proceeding.”
-        </p>
-      </div>
-      {problem && (
-        <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
-          Try: increase your volume, plug in headphones, or switch to a different browser.
-        </div>
-      )}
-      <div className="flex gap-3">
-        <button
-          onClick={onContinue}
-          disabled={!tried}
-          className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          I can hear it ✓
-        </button>
-        <button
-          onClick={() => setProblem(true)}
-          className="rounded-full border-2 border-slate-300 px-6 py-3 font-medium text-slate-700"
-        >
-          I can't hear it
-        </button>
-      </div>
-    </div>
+          <motion.button
+            type="button"
+            onClick={playSample}
+            whileTap={{ scale: 0.94 }}
+            whileHover={{ scale: 1.06 }}
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-teal-500 text-white shadow-lg hover:bg-teal-600"
+            aria-label="Play sample audio"
+          >
+            <svg className="h-9 w-9" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </motion.button>
+
+          <div className="flex h-10 items-end gap-1">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <motion.span
+                key={i}
+                className="w-1.5 rounded-full bg-teal-400/70"
+                animate={tried ? { height: [10, 28, 14, 24, 12] } : { height: 12 }}
+                transition={
+                  tried
+                    ? { duration: 0.9, repeat: Infinity, delay: i * 0.07, ease: "easeInOut" }
+                    : {}
+                }
+                style={{ height: 12 }}
+              />
+            ))}
+          </div>
+
+          <p className="rounded-xl bg-white px-4 py-3 text-center text-sm text-slate-700 shadow-sm">
+            "Welcome to the English placement test. Please make sure you can hear this message
+            clearly before proceeding."
+          </p>
+        </motion.div>
+
+        <AnimatePresence>
+          {problem && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              Try: increase your volume, plug in headphones, or switch to a different browser.
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div variants={itemRise} className="flex gap-3">
+          <motion.button
+            onClick={onContinue}
+            disabled={!tried}
+            whileTap={tried ? { scale: 0.97 } : {}}
+            whileHover={tried ? { scale: 1.02 } : {}}
+            className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            I can hear it ✓
+          </motion.button>
+          <button
+            onClick={() => setProblem(true)}
+            className="rounded-full border-2 border-slate-300 px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
+          >
+            I can't hear it
+          </button>
+        </motion.div>
+      </motion.div>
+    </ScreenShell>
   );
 }
 
-export function BrightnessCheckScreen({ onContinue }: ScreenProps) {
+export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
   const [problem, setProblem] = useState(false);
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-6 py-12">
-      <h2 className="text-3xl font-bold text-slate-900">Brightness check</h2>
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8">
-        <p
-          className="text-xl text-center"
-          style={{ color: "#e6e6e6", background: "#f3f3f3" }}
+    <ScreenShell onBack={onBack}>
+      <motion.div
+        variants={containerStagger}
+        initial="hidden"
+        animate="show"
+        className="mx-auto max-w-2xl space-y-6"
+      >
+        <motion.div variants={itemRise}>
+          <h2 className="text-3xl font-bold text-slate-900">Brightness check</h2>
+          <p className="mt-1 text-slate-600">
+            Make sure your screen is bright enough to read the test comfortably.
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={itemRise}
+          className="rounded-3xl border border-slate-200 p-8"
+          style={{ background: "#f3f3f3" }}
         >
-          If you can see this text clearly, your screen brightness is set correctly
-          for the test.
-        </p>
-      </div>
-      <div className="rounded-xl bg-slate-100 p-4">
-        <span className="text-sm font-medium uppercase text-slate-500">Reference</span>
-        <p className="text-base text-slate-800">
-          If you can see this text clearly, your screen brightness is set correctly
-          for the test.
-        </p>
-      </div>
-      {problem && (
-        <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
-          Try increasing your screen brightness in your OS or monitor settings.
-        </div>
-      )}
-      <div className="flex gap-3">
-        <button
-          onClick={onContinue}
-          className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow"
-        >
-          I can see it ✓
-        </button>
-        <button
-          onClick={() => setProblem(true)}
-          className="rounded-full border-2 border-slate-300 px-6 py-3 font-medium text-slate-700"
-        >
-          I can't see it
-        </button>
-      </div>
-    </div>
+          <p className="text-center text-xl" style={{ color: "#e6e6e6" }}>
+            If you can see this text clearly, your screen brightness is set correctly for the test.
+          </p>
+        </motion.div>
+
+        <motion.div variants={itemRise} className="rounded-2xl bg-slate-50 p-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Reference
+          </span>
+          <p className="text-base text-slate-800">
+            If you can see this text clearly, your screen brightness is set correctly for the test.
+          </p>
+        </motion.div>
+
+        <AnimatePresence>
+          {problem && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              Try increasing your screen brightness in your OS or monitor settings.
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div variants={itemRise} className="flex gap-3">
+          <motion.button
+            onClick={onContinue}
+            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600"
+          >
+            I can see it ✓
+          </motion.button>
+          <button
+            onClick={() => setProblem(true)}
+            className="rounded-full border-2 border-slate-300 px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
+          >
+            I can't see it
+          </button>
+        </motion.div>
+      </motion.div>
+    </ScreenShell>
   );
 }
 
-export function RulesScreen({ onContinue }: ScreenProps) {
+const RULES = [
+  "50 questions across 3 sections.",
+  "Section 1 — Grammar & Vocabulary: 27 questions, 30 seconds each.",
+  "Section 2 — Reading: 11 questions, 1 minute 30 seconds each.",
+  "Section 3 — Listening: 12 questions (longer time for harder clips).",
+  "Each question auto-submits when time runs out.",
+  "You cannot go back to previous questions.",
+  "There's a break between sections (you can skip it).",
+  "Your result shows your CEFR level with IELTS/TOEIC equivalents.",
+];
+
+export function RulesScreen({ onContinue, onBack }: BaseScreenProps) {
   const [agreed, setAgreed] = useState(false);
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-6 py-12">
-      <h2 className="text-3xl font-bold text-slate-900">Test rules</h2>
-      <ol className="list-inside list-decimal space-y-2 rounded-2xl bg-slate-50 p-6 text-slate-700">
-        <li>Total: 50 questions across 3 sections.</li>
-        <li>Section 1 — Grammar &amp; Vocabulary: 27 questions, 30 seconds each.</li>
-        <li>Section 2 — Reading: 11 questions, 1 minute 30 seconds each.</li>
-        <li>Section 3 — Listening: 12 questions, 1 minute each.</li>
-        <li>Each question auto-submits when time runs out.</li>
-        <li>You cannot go back to previous questions.</li>
-        <li>There is a break between each section (you can skip it).</li>
-        <li>
-          Your results will show your CEFR level with IELTS/TOEIC equivalents.
-        </li>
-      </ol>
-      <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
-        ⚠️ Do not refresh the page during the test — your progress will be lost.
-      </div>
-      <label className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-          className="h-5 w-5"
-        />
-        <span className="text-slate-700">I have read and agree to the test rules</span>
-      </label>
-      <button
-        onClick={onContinue}
-        disabled={!agreed}
-        className="w-full rounded-full bg-teal-500 py-3 font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
+    <ScreenShell onBack={onBack}>
+      <motion.div
+        variants={containerStagger}
+        initial="hidden"
+        animate="show"
+        className="mx-auto max-w-2xl space-y-6"
       >
-        Begin Test
-      </button>
-    </div>
+        <motion.div variants={itemRise}>
+          <h2 className="text-3xl font-bold text-slate-900">Test rules</h2>
+          <p className="mt-1 text-slate-600">Quick read before you begin — these matter.</p>
+        </motion.div>
+
+        <motion.ol variants={itemRise} className="space-y-2 rounded-3xl bg-slate-50 p-6">
+          {RULES.map((r, i) => (
+            <motion.li
+              key={i}
+              variants={itemRise}
+              className="flex items-start gap-3 text-slate-700"
+            >
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">
+                {i + 1}
+              </span>
+              <span className="leading-relaxed">{r}</span>
+            </motion.li>
+          ))}
+        </motion.ol>
+
+        <motion.div
+          variants={itemRise}
+          className="flex items-start gap-3 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900"
+        >
+          <svg className="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>
+            Do not refresh the page or close the tab during the test — your progress will be lost
+            and the session will be cancelled.
+          </span>
+        </motion.div>
+
+        <motion.label
+          variants={itemRise}
+          className="flex cursor-pointer items-center gap-3 select-none rounded-2xl border-2 border-transparent p-3 transition hover:bg-slate-50"
+        >
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="h-5 w-5 rounded accent-teal-500"
+          />
+          <span className="text-slate-700">I have read and agree to the test rules</span>
+        </motion.label>
+
+        <motion.button
+          variants={itemRise}
+          onClick={onContinue}
+          disabled={!agreed}
+          whileTap={agreed ? { scale: 0.98 } : {}}
+          whileHover={agreed ? { scale: 1.01 } : {}}
+          className="w-full rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+        >
+          Begin Test
+        </motion.button>
+      </motion.div>
+    </ScreenShell>
   );
 }
 
@@ -210,10 +428,20 @@ export function CountdownScreen({ onComplete }: { onComplete: () => void }) {
   }, [count, onComplete]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center">
-      <div className="text-9xl font-bold text-teal-500">
-        {count > 0 ? count : "Go!"}
-      </div>
+    <div className="flex min-h-[70vh] flex-col items-center justify-center">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={count}
+          initial={{ opacity: 0, scale: 0.4 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.6 }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="bg-gradient-to-br from-teal-500 to-blue-500 bg-clip-text text-9xl font-black text-transparent"
+        >
+          {count > 0 ? count : "Go!"}
+        </motion.div>
+      </AnimatePresence>
+      <p className="mt-6 text-slate-500">Get ready…</p>
     </div>
   );
 }

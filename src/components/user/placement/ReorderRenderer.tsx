@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PlacementQuestionPayload } from "@/lib/api/services/user/placement/placement.service";
 
 type FragmentKey = "A" | "B" | "C";
@@ -19,15 +19,19 @@ export function ReorderRenderer({ question, order, onChange }: ReorderRendererPr
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [keyboardPicked, setKeyboardPicked] = useState<number | null>(null);
 
-  useEffect(() => {
-    onChange(items.join(""));
-  }, [items, onChange]);
+  // Stable ref to the latest onChange. Avoids re-running effects when the
+  // parent re-renders with a fresh inline arrow.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
+  // Sync from parent only when `order` actually changes externally. Compare
+  // against current items via a functional update to keep `items` out of the
+  // dependency array.
   useEffect(() => {
-    if (order && order.length === 3 && order !== items.join("")) {
-      setItems(order.split("") as FragmentKey[]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!order || order.length !== 3) return;
+    setItems((prev) =>
+      order === prev.join("") ? prev : (order.split("") as FragmentKey[])
+    );
   }, [order]);
 
   const move = (from: number, to: number) => {
@@ -36,6 +40,7 @@ export function ReorderRenderer({ question, order, onChange }: ReorderRendererPr
       const copy = [...prev];
       const [removed] = copy.splice(from, 1);
       copy.splice(to, 0, removed);
+      onChangeRef.current(copy.join(""));
       return copy;
     });
   };
