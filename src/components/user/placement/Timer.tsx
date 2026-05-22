@@ -4,19 +4,30 @@ interface TimerProps {
   seconds: number;
   onExpire: () => void;
   resetKey?: string | number;
+  /** When true, the countdown pauses (used while listening audio is loading). */
+  paused?: boolean;
 }
 
-export function Timer({ seconds, onExpire, resetKey }: TimerProps) {
+export function Timer({ seconds, onExpire, resetKey, paused = false }: TimerProps) {
   const [remaining, setRemaining] = useState(seconds);
   const onExpireRef = useRef(onExpire);
   onExpireRef.current = onExpire;
+  const remainingRef = useRef(seconds);
+  remainingRef.current = remaining;
 
+  // Reset whenever a new question arrives.
   useEffect(() => {
     setRemaining(seconds);
+    remainingRef.current = seconds;
+  }, [seconds, resetKey]);
+
+  useEffect(() => {
+    if (paused) return;
     const startTs = Date.now();
+    const startRemaining = remainingRef.current;
     const tick = () => {
       const elapsed = Math.floor((Date.now() - startTs) / 1000);
-      const next = Math.max(0, seconds - elapsed);
+      const next = Math.max(0, startRemaining - elapsed);
       setRemaining(next);
       if (next <= 0) {
         onExpireRef.current();
@@ -24,7 +35,7 @@ export function Timer({ seconds, onExpire, resetKey }: TimerProps) {
     };
     const intervalId = window.setInterval(tick, 1000);
     return () => window.clearInterval(intervalId);
-  }, [seconds, resetKey]);
+  }, [paused, seconds, resetKey]);
 
   const ratio = remaining / seconds;
   let color = "text-emerald-600";
