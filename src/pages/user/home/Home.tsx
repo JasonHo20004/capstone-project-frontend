@@ -1,6 +1,6 @@
 import CourseCard from '@/components/user/course/CourseCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Target, Layers } from 'lucide-react';
+import { ArrowRight, BookOpen, Target, Layers, ClipboardCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useCourses } from '@/hooks/api';
@@ -96,6 +96,31 @@ const Index = () => {
               </motion.div>
             ))}
           </div>
+        </section>
+
+        {/* Placement test CTA */}
+        <section className="container mx-auto mt-10 px-4">
+          <motion.div {...reveal(3)}>
+            <div className="flex flex-col gap-4 rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50 to-cyan-50 p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-500 text-white shadow">
+                  <ClipboardCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-bold text-slate-900">Kiểm tra trình độ tiếng Anh</h3>
+                  <p className="mt-0.5 text-sm text-slate-600">
+                    50 câu hỏi · ~40 phút · Xác định cấp độ CEFR A1–C2 và nhận lộ trình học phù hợp
+                  </p>
+                </div>
+              </div>
+              <Link to="/placement-test" className="shrink-0">
+                <Button variant="default" className="w-full bg-teal-500 hover:bg-teal-600 md:w-auto">
+                  Làm bài kiểm tra
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
         </section>
 
         {/* Popular courses */}

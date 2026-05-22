@@ -1,4 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useGeneratePlacementExam,
   useSubmitPlacementExam,
@@ -47,9 +49,22 @@ interface StoredAnswer {
 }
 
 const BREAK_SECONDS = 30 * 60;
+const NEXT_BUTTON_COOLDOWN_MS = 2000;
+
+const ACTIVE_PHASES: Phase[] = [
+  "COUNTDOWN",
+  "SECTION_1",
+  "BREAK_1",
+  "SECTION_2",
+  "BREAK_2",
+  "SECTION_3",
+];
+
+const isActivePhase = (p: Phase) => ACTIVE_PHASES.includes(p);
 
 export default function PlacementTest() {
-  const { data: profile } = useProfile();
+  const navigate = useNavigate();
+  const { user: profile, isLoading: profileLoading, isError: profileError } = useProfile();
   const userId = profile?.id ?? "";
 
   const [phase, setPhase] = useState<Phase>("WELCOME");
@@ -59,6 +74,9 @@ export default function PlacementTest() {
   const [sectionIdx, setSectionIdx] = useState(0);
   const [qInSection, setQInSection] = useState(0);
   const [result, setResult] = useState<PlacementResult | null>(null);
+  const [nextEnabled, setNextEnabled] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
+  const [audioReady, setAudioReady] = useState(true);
 
   const generateMut = useGeneratePlacementExam();
   const submitMut = useSubmitPlacementExam();
@@ -77,6 +95,50 @@ export default function PlacementTest() {
     () => exam?.sections.reduce((acc, s) => acc + s.questions.length, 0) ?? 50,
     [exam]
   );
+
+  // Reset the Next button cooldown each time the active question changes
+  const questionId = question?.id;
+  const isListening = question?.type === "listening_mcq";
+  useEffect(() => {
+    if (!questionId) return;
+    setNextEnabled(false);
+    // Listening questions start with audio loading — assume not ready until
+    // the renderer confirms. Non-listening questions are ready immediately.
+    setAudioReady(!isListening);
+    const t = window.setTimeout(() => setNextEnabled(true), NEXT_BUTTON_COOLDOWN_MS);
+    return () => window.clearTimeout(t);
+  }, [questionId, isListening]);
+
+  // Warn on browser-level navigation away during an active test
+  useEffect(() => {
+    if (!isActivePhase(phase)) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      // Modern browsers only require preventDefault() to trigger the prompt.
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [phase]);
+
+  // Preload audio for upcoming listening questions to avoid the 5-10s first-play
+  // delay observed in production.
+  const upcomingAudioUrls = useMemo(() => {
+    if (!exam || !section) return [] as string[];
+    const urls: string[] = [];
+    for (let i = qInSection + 1; i < section.questions.length && urls.length < 2; i++) {
+      const q = section.questions[i];
+      if (q.audio_url) urls.push(q.audio_url);
+    }
+    for (let s = sectionIdx + 1; s < exam.sections.length && urls.length < 2; s++) {
+      for (const q of exam.sections[s].questions) {
+        if (q.audio_url) {
+          urls.push(q.audio_url);
+          if (urls.length >= 2) break;
+        }
+      }
+    }
+    return urls;
+  }, [exam, section, sectionIdx, qInSection]);
 
   const handleStart = useCallback(() => {
     if (!userId) return;
@@ -103,23 +165,6 @@ export default function PlacementTest() {
     },
     [questionStart]
   );
-
-  const advance = useCallback(() => {
-    if (!exam || !section) return;
-    if (qInSection + 1 < section.questions.length) {
-      setQInSection((i) => i + 1);
-      setQuestionStart(Date.now());
-      return;
-    }
-    // section finished
-    if (sectionIdx === 0) {
-      setPhase("BREAK_1");
-    } else if (sectionIdx === 1) {
-      setPhase("BREAK_2");
-    } else {
-      void submitNow();
-    }
-  }, [exam, section, qInSection, sectionIdx]);
 
   const submitNow = useCallback(async () => {
     if (!exam || !userId) return;
@@ -161,6 +206,22 @@ export default function PlacementTest() {
     );
   }, [exam, userId, answers, submitMut]);
 
+  const advance = useCallback(() => {
+    if (!exam || !section) return;
+    if (qInSection + 1 < section.questions.length) {
+      setQInSection((i) => i + 1);
+      setQuestionStart(Date.now());
+      return;
+    }
+    if (sectionIdx === 0) {
+      setPhase("BREAK_1");
+    } else if (sectionIdx === 1) {
+      setPhase("BREAK_2");
+    } else {
+      void submitNow();
+    }
+  }, [exam, section, qInSection, sectionIdx, submitNow]);
+
   const startSection = (idx: number) => {
     setSectionIdx(idx);
     setQInSection(0);
@@ -168,24 +229,74 @@ export default function PlacementTest() {
     setPhase(idx === 0 ? "SECTION_1" : idx === 1 ? "SECTION_2" : "SECTION_3");
   };
 
-  // === Render by phase ===
+  const goBackToHub = () => {
+    if (isActivePhase(phase)) {
+      setExitOpen(true);
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
+  const confirmExit = () => {
+    setExitOpen(false);
+    setExam(null);
+    setAnswers(new Map());
+    navigate("/dashboard");
+  };
+
+  const phaseWrapper = (key: string, node: React.ReactNode) => (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={key}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {node}
+      </motion.div>
+    </AnimatePresence>
+  );
+
   if (phase === "WELCOME") {
-    return (
+    return phaseWrapper(
+      "welcome",
       <WelcomeScreen
         onStart={handleStart}
-        isLoading={generateMut.isPending}
-        error={generateMut.isError ? "Failed to load test. Please try again." : null}
+        onBack={() => navigate("/dashboard")}
+        isLoading={profileLoading || generateMut.isPending}
+        error={
+          profileError
+            ? "Could not load your profile. Please refresh and try again."
+            : generateMut.isError
+              ? "Failed to load test. Please try again."
+              : null
+        }
       />
     );
   }
-  if (phase === "AUDIO_CHECK") return <AudioCheckScreen onContinue={() => setPhase("BRIGHTNESS_CHECK")} />;
-  if (phase === "BRIGHTNESS_CHECK") return <BrightnessCheckScreen onContinue={() => setPhase("RULES")} />;
-  if (phase === "RULES") return <RulesScreen onContinue={() => setPhase("COUNTDOWN")} />;
-  if (phase === "COUNTDOWN") return <CountdownScreen onComplete={() => startSection(0)} />;
+  if (phase === "AUDIO_CHECK")
+    return phaseWrapper(
+      "audio",
+      <AudioCheckScreen onContinue={() => setPhase("BRIGHTNESS_CHECK")} onBack={() => navigate("/dashboard")} />
+    );
+  if (phase === "BRIGHTNESS_CHECK")
+    return phaseWrapper(
+      "brightness",
+      <BrightnessCheckScreen onContinue={() => setPhase("RULES")} onBack={() => navigate("/dashboard")} />
+    );
+  if (phase === "RULES")
+    return phaseWrapper(
+      "rules",
+      <RulesScreen onContinue={() => setPhase("COUNTDOWN")} onBack={() => navigate("/dashboard")} />
+    );
+  if (phase === "COUNTDOWN")
+    return phaseWrapper("countdown", <CountdownScreen onComplete={() => startSection(0)} />);
 
   if (phase === "BREAK_1" && exam) {
     const next = exam.sections[1];
-    return (
+    return phaseWrapper(
+      "break1",
       <BreakScreen
         durationSeconds={BREAK_SECONDS}
         nextSectionTitle={`Section 2 — ${next.title}`}
@@ -198,7 +309,8 @@ export default function PlacementTest() {
 
   if (phase === "BREAK_2" && exam) {
     const next = exam.sections[2];
-    return (
+    return phaseWrapper(
+      "break2",
       <BreakScreen
         durationSeconds={BREAK_SECONDS}
         nextSectionTitle={`Section 3 — ${next.title}`}
@@ -211,16 +323,21 @@ export default function PlacementTest() {
 
   if (phase === "SUBMITTING") {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex min-h-[60vh] flex-col items-center justify-center gap-6"
+      >
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-teal-200 border-t-teal-500" />
         <p className="text-xl font-medium text-slate-700">Analyzing your answers…</p>
         <p className="text-sm text-slate-500">Calculating your level…</p>
-      </div>
+      </motion.div>
     );
   }
 
   if (phase === "RESULT" && result) {
-    return (
+    return phaseWrapper(
+      "result",
       <ResultScreen
         result={result}
         onRetake={() => {
@@ -244,64 +361,189 @@ export default function PlacementTest() {
   const sectionLabel = `Section ${section.section}: ${section.title.toUpperCase()}`;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-6 py-8">
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex-1">
-          <ProgressBar
-            sectionTitle={sectionLabel}
-            sectionIndex={sectionIdx}
-            questionInSection={qInSection}
-            sectionTotal={section.questions.length}
-            globalIndex={globalIndex}
-            globalTotal={globalTotal}
+    <>
+      <div className="mx-auto max-w-3xl space-y-6 px-6 py-6">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={goBackToHub}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back to Learning Hub
+          </button>
+          <Timer
+            seconds={question.time_limit}
+            resetKey={question.id}
+            onExpire={advance}
+            paused={!audioReady}
           />
         </div>
-        <Timer
-          seconds={question.time_limit}
-          resetKey={question.id}
-          onExpire={advance}
+
+        <ProgressBar
+          sectionTitle={sectionLabel}
+          sectionIndex={sectionIdx}
+          questionInSection={qInSection}
+          sectionTotal={section.questions.length}
+          globalIndex={globalIndex}
+          globalTotal={globalTotal}
         />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={question.id}
+            initial={{ opacity: 0, x: 14 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -14 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          >
+            {question.type === "fill_blank" && (
+              <FillBlankRenderer
+                question={question}
+                selected={stored?.selected_option}
+                onSelect={(opt) => recordAnswer(question, { selected_option: opt })}
+              />
+            )}
+            {question.type === "heading_match" && (
+              <HeadingMatchRenderer
+                question={question}
+                selected={stored?.selected_option}
+                onSelect={(opt) => recordAnswer(question, { selected_option: opt })}
+              />
+            )}
+            {question.type === "reorder" && (
+              <ReorderRenderer
+                question={question}
+                order={stored?.selected_order}
+                onChange={(order) => recordAnswer(question, { selected_order: order })}
+              />
+            )}
+            {question.type === "listening_mcq" && (
+              <ListeningRenderer
+                question={question}
+                selected={stored?.selected_option}
+                onSelect={(opt) => recordAnswer(question, { selected_option: opt })}
+                onAudioReadyChange={setAudioReady}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="flex items-center justify-end gap-3">
+          {!nextEnabled && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xs text-slate-400"
+            >
+              Take a moment to read…
+            </motion.span>
+          )}
+          <motion.button
+            type="button"
+            onClick={advance}
+            disabled={!nextEnabled}
+            whileTap={nextEnabled ? { scale: 0.97 } : {}}
+            whileHover={nextEnabled ? { scale: 1.02 } : {}}
+            className={[
+              "rounded-full px-8 py-3 font-semibold shadow transition-colors",
+              nextEnabled
+                ? "bg-teal-500 text-white hover:bg-teal-600"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed",
+            ].join(" ")}
+          >
+            {question.type === "reorder" ? "Confirm Order" : "Next →"}
+          </motion.button>
+        </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        {question.type === "fill_blank" && (
-          <FillBlankRenderer
-            question={question}
-            selected={stored?.selected_option}
-            onSelect={(opt) => recordAnswer(question, { selected_option: opt })}
-          />
-        )}
-        {question.type === "heading_match" && (
-          <HeadingMatchRenderer
-            question={question}
-            selected={stored?.selected_option}
-            onSelect={(opt) => recordAnswer(question, { selected_option: opt })}
-          />
-        )}
-        {question.type === "reorder" && (
-          <ReorderRenderer
-            question={question}
-            order={stored?.selected_order}
-            onChange={(order) => recordAnswer(question, { selected_order: order })}
-          />
-        )}
-        {question.type === "listening_mcq" && (
-          <ListeningRenderer
-            question={question}
-            selected={stored?.selected_option}
-            onSelect={(opt) => recordAnswer(question, { selected_option: opt })}
-          />
-        )}
+      <div aria-hidden="true" className="sr-only">
+        {upcomingAudioUrls.map((url) => (
+          <audio key={url} src={url} preload="auto" />
+        ))}
       </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={advance}
-          className="rounded-full bg-teal-500 px-8 py-3 font-semibold text-white shadow hover:bg-teal-600"
+      <ExitConfirmModal
+        open={exitOpen}
+        onCancel={() => setExitOpen(false)}
+        onConfirm={confirmExit}
+      />
+    </>
+  );
+}
+
+function ExitConfirmModal({
+  open,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="exit-modal-title"
         >
-          {question.type === "reorder" ? "Confirm Order" : "Next →"}
-        </button>
-      </div>
-    </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 18 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+          >
+            <div className="bg-gradient-to-br from-amber-50 to-rose-50 p-6">
+              <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path
+                    d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <h3 id="exit-modal-title" className="text-xl font-bold text-slate-900">
+                Leave the placement test?
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                If you exit now,{" "}
+                <span className="font-semibold">your current session will be cancelled</span> and
+                your answers will <span className="font-semibold">not be saved</span>. You'll need
+                to start over from the beginning if you want to take the test again.
+              </p>
+            </div>
+
+            <div className="flex flex-col-reverse gap-2 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-full border-2 border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Continue test
+              </button>
+              <button
+                type="button"
+                onClick={onConfirm}
+                className="rounded-full bg-rose-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-rose-600"
+              >
+                Exit & cancel session
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
