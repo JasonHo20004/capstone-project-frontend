@@ -30,6 +30,11 @@ export interface GetCoursesParams extends PaginationParams {
 
 export interface SellerCoursesParams {
   status?: Course["status"] | "ACTIVE" | "PENDING";
+  search?: string;
+  level?: string;
+  category?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface CreateCourseRequest {

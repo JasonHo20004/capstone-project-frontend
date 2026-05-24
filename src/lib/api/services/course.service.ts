@@ -60,8 +60,8 @@ class CourseService {
     id: string,
     data: UpdateCourseRequest | FormData
   ): Promise<CreateOrUpdateCourseResponse> {
-    // Axios interceptor will automatically handle FormData Content-Type with boundary
-    const response = await apiClient.put<CreateOrUpdateCourseResponse>(
+    // BE accepts PATCH (partial update). Axios handles FormData boundary automatically.
+    const response = await apiClient.patch<CreateOrUpdateCourseResponse>(
       `/courses/${id}`,
       data
     );
@@ -164,6 +164,16 @@ class CourseService {
     return response.data;
   }
 
+  async deleteLesson(
+    courseId: string,
+    lessonId: string
+  ): Promise<{ success: boolean; message?: string }> {
+    const response = await apiClient.delete<{ success: boolean; message?: string }>(
+      `/courses/${courseId}/lessons/${lessonId}`
+    );
+    return response.data;
+  }
+
   // ── Lesson Comments ──────────────────────────────────
 
   async getComments(courseId: string, lessonId: string): Promise<any> {
@@ -181,14 +191,17 @@ class CourseService {
 
   // ── Final Test Management ──────────────────────────────────
 
-  /** Create a test in assessment-service */
+  /** Create a test in assessment-service. Omit `testType` for reusable
+   * non-final tests (used as quiz lessons inside modules). Pass
+   * `status: 'PUBLISHED'` so students can immediately take it once linked. */
   async createFinalTest(payload: {
     title: string;
     durationInMinutes: number;
     passingScore: number;
     totalScore: number;
     englishTestTypeId: string;
-    testType: string;
+    testType?: string;
+    status?: string;
     questions: Array<{
       questionText: string;
       questionType: string;
@@ -237,11 +250,47 @@ class CourseService {
     return response.data;
   }
 
-  /** Get test details from assessment-service */
-  async getTestById(testId: string) {
+  /**
+   * Get test details from assessment-service. Pass `includeAnswers=true` when
+   * the seller is viewing/editing their own test so `correctAnswerIndex` is
+   * populated on each question. Backend silently strips answers if the caller
+   * is not the owner / admin.
+   */
+  async getTestById(testId: string, opts?: { includeAnswers?: boolean }) {
+    const qs = opts?.includeAnswers ? "?includeAnswers=true" : "";
     const response = await apiClient.get<{ success: boolean; data: unknown }>(
-      `/tests/${testId}`
+      `/tests/${testId}${qs}`
     );
+    return response.data;
+  }
+
+  /** Update an existing test (used by seller to edit their final test) */
+  async updateFinalTest(testId: string, payload: {
+    title?: string;
+    durationInMinutes?: number;
+    passingScore?: number;
+    totalScore?: number;
+    englishTestTypeId?: string;
+    testType?: string;
+    questions?: Array<{
+      questionText: string;
+      questionType: string;
+      options: string[];
+      correctAnswerIndex: number;
+      explanation?: string;
+      questionOrder: number;
+    }>;
+  }) {
+    const response = await apiClient.put<{ message: string; data: { id: string } }>(
+      `/tests/${testId}`,
+      payload
+    );
+    return response.data;
+  }
+
+  /** Hard-delete a test row in assessment-service */
+  async deleteTest(testId: string) {
+    const response = await apiClient.delete<{ message: string }>(`/tests/${testId}`);
     return response.data;
   }
 
@@ -250,6 +299,44 @@ class CourseService {
     const response = await apiClient.get<{ success: boolean; data: Array<{ id: string; name: string }> }>(
       '/tests/types'
     );
+    return response.data;
+  }
+
+  /**
+   * Backfill the assessment-service course-test join table for the caller's
+   * courses. Idempotent. Used on /seller/tests mount so usage counts reflect
+   * legacy links created before the sync existed.
+   */
+  async syncCourseTests() {
+    const response = await apiClient.post<{ success: boolean; linked: number }>(
+      '/courses/seller/sync-course-tests'
+    );
+    return response.data;
+  }
+
+  /**
+   * Get all tests owned by the authenticated seller. Backend filters by
+   * `sellerId = req.user.userId` when `?mine=true`.
+   */
+  async getMyTests() {
+    const response = await apiClient.get<{
+      message: string;
+      data: Array<{
+        id: string;
+        title: string;
+        status: string;
+        testType: string | null;
+        sellerId: string | null;
+        durationInMinutes: number | null;
+        totalScore: number | null;
+        passingScore: number | null;
+        practiceCount: number | null;
+        createdAt: string;
+        updatedAt: string | null;
+        englishTestType: { name: string } | null;
+        _count: { sections: number; questions: number; courseTests: number };
+      }>;
+    }>("/tests?mine=true");
     return response.data;
   }
 
@@ -291,6 +378,19 @@ class CourseService {
         apiClient.put(`/courses/${courseId}/modules/${id}`, { moduleOrder })
       )
     );
+  }
+
+  /**
+   * Re-order lessons inside a module by patching `lessonOrder` for each.
+   * BE update endpoint takes FormData; we send a single field per request.
+   * Sequential so BE's conflict-shift logic doesn't race on parallel writes.
+   */
+  async reorderLessons(courseId: string, lessons: { id: string; lessonOrder: number }[]): Promise<void> {
+    for (const { id, lessonOrder } of lessons) {
+      const fd = new FormData();
+      fd.append('lessonOrder', String(lessonOrder));
+      await apiClient.patch(`/courses/${courseId}/lessons/${id}`, fd);
+    }
   }
 }
 

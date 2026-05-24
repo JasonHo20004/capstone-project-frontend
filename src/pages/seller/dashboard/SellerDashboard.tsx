@@ -1,15 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatVND } from '@/lib/utils';
 import {
   useSellerDashboard,
   useSellerMonthlyFees,
   useSellerLearners,
-  useSellerEarnings,
-  useSellerWithdrawalHistory,
 } from '@/hooks/api';
-import { useWallet } from '@/hooks/api/use-wallet';
+import { useProfile } from '@/hooks/api/use-user';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import ChartCard from '@/components/admin/ChartCard';
@@ -32,9 +31,13 @@ import {
   ArrowRight,
   Sparkles,
   TrendingUp,
+  TrendingDown,
   DollarSign,
   Activity,
   Wallet,
+  UserCircle,
+  Star,
+  Trophy,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -90,22 +93,62 @@ function aggregateLearnersByMonth(learners: { purchasedAt: string }[]) {
     .map(([name, count]) => ({ name, count }));
 }
 
-export default function SellerDashboard() {
-  const { data: dashboardStats, isLoading, error } = useSellerDashboard();
-  const { data: feesData } = useSellerMonthlyFees();
-  const { data: learnersData } = useSellerLearners({ limit: 500 });
-  const { data: earningsData } = useSellerEarnings({ limit: 200 });
-  const { data: wallet } = useWallet();
-  const { data: withdrawalsResp } = useSellerWithdrawalHistory({ page: 1, limit: 50 });
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 11) return 'Chào buổi sáng';
+  if (h < 14) return 'Chào buổi trưa';
+  if (h < 18) return 'Chào buổi chiều';
+  return 'Chào buổi tối';
+}
 
-  const pendingWithdrawals = useMemo(() => {
-    const items = (withdrawalsResp?.data ?? []) as Array<{ status: string; amount: number | string }>;
-    const pending = items.filter((w) => w.status === 'PENDING');
-    return {
-      count: pending.length,
-      total: pending.reduce((sum, w) => sum + Number(w.amount), 0),
-    };
-  }, [withdrawalsResp]);
+/** Star row for the average rating. Renders 5 stars with partial fill. */
+function RatingStars({ value }: { value: number }) {
+  const safeValue = Math.max(0, Math.min(5, value));
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((i) => {
+        const fill = Math.max(0, Math.min(1, safeValue - (i - 1)));
+        return (
+          <div key={i} className="relative h-4 w-4">
+            <Star className="absolute inset-0 h-4 w-4 text-muted-foreground/30" />
+            <div className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+            </div>
+          </div>
+        );
+      })}
+      <span className="ml-1 text-sm font-medium tabular-nums">{safeValue.toFixed(1)}</span>
+    </div>
+  );
+}
+
+function MoMBadge({ thisMonth, prevMonth }: { thisMonth: number; prevMonth: number }) {
+  if (prevMonth === 0 && thisMonth === 0) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  const delta = thisMonth - prevMonth;
+  const percent = prevMonth === 0 ? 100 : Math.round((delta / prevMonth) * 100);
+  const up = delta >= 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-xs font-medium ${
+        up ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+      }`}
+    >
+      {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+      {up ? '+' : ''}
+      {percent}% so với tháng trước
+    </span>
+  );
+}
+
+export default function SellerDashboard() {
+  const { user } = useProfile();
+  const { data: dashboardStats, isLoading, error } = useSellerDashboard();
+
+  const [revenueYear, setRevenueYear] = useState<number>(new Date().getFullYear());
+  const { data: feesData, isLoading: isLoadingFees } = useSellerMonthlyFees({ year: revenueYear });
+  const { data: learnersData, isLoading: isLoadingLearners } = useSellerLearners({ limit: 500 });
 
   const revenueChartData = useMemo(
     () => aggregateFeesByMonth(feesData?.fees ?? []),
@@ -132,7 +175,8 @@ export default function SellerDashboard() {
     return <ErrorMessage message="Không có dữ liệu dashboard." />;
   }
 
-  const { coursesCount, learnersCount, commentsCount } = dashboardStats;
+  const { coursesCount, learnersCount, commentsCount, averageRating, topCourses, financial } =
+    dashboardStats;
 
   const statValues = {
     courses: coursesCount,
@@ -146,11 +190,18 @@ export default function SellerDashboard() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-display">
-            Tổng quan giảng viên
+            {greeting()}, {user?.fullName?.split(' ').slice(-1)[0] || 'Giảng viên'} 👋
           </h1>
-          <p className="mt-1 text-muted-foreground flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary/70" />
-            Quản lý khoá học và theo dõi hiệu suất của bạn
+          <p className="mt-1 text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="inline-flex items-center gap-1">
+              <Sparkles className="h-4 w-4 text-primary/70" />
+              Quản lý khoá học và theo dõi hiệu suất của bạn
+            </span>
+            {averageRating > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <RatingStars value={averageRating} />
+              </span>
+            )}
           </p>
         </div>
         <Button asChild size="lg" className="shrink-0">
@@ -186,40 +237,48 @@ export default function SellerDashboard() {
           </Link>
         ))}
 
-        {/* Earnings Card — total + pending lock + available cash + pending withdraw */}
+        {/* Earnings Card — read from dashboardStats.financial */}
         <Link to="/seller/earnings" className="group block cursor-pointer">
           <Card className="overflow-hidden border-emerald-500/20 bg-emerald-500/5 transition-all duration-200 hover:shadow-md hover:border-emerald-500/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Số dư có thể rút</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Số dư có thể rút
+              </CardTitle>
               <div className="rounded-lg bg-emerald-500/15 p-2">
                 <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-400">
-                {formatVND(Number(wallet?.allowance ?? wallet?.balance ?? 0))}
+                {formatVND(financial.allowance)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Số tiền đã clear, có thể rút ngay</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Số tiền đã clear, có thể rút ngay
+              </p>
 
-              {(Number(wallet?.pendingBalance ?? 0) > 0 ||
-                (earningsData?.summary?.totalPending ?? 0) > 0) && (
+              {financial.pendingBalance > 0 && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  🔒 Đang khoá:{' '}
-                  {formatVND(
-                    Number(wallet?.pendingBalance ?? earningsData?.summary?.totalPending ?? 0)
-                  )}
+                  🔒 Đang khoá: {formatVND(financial.pendingBalance)}
                 </p>
               )}
 
-              {pendingWithdrawals.count > 0 && (
+              {financial.pendingWithdrawalCount > 0 && (
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  ⏳ {pendingWithdrawals.count} đơn rút đang chờ:{' '}
-                  {formatVND(pendingWithdrawals.total)}
+                  ⏳ {financial.pendingWithdrawalCount} đơn rút đang chờ:{' '}
+                  {formatVND(financial.pendingWithdrawalTotal)}
                 </p>
               )}
+
+              <div className="mt-2">
+                <MoMBadge
+                  thisMonth={financial.thisMonthNet}
+                  prevMonth={financial.prevMonthNet}
+                />
+              </div>
 
               <p className="text-[11px] text-muted-foreground mt-1">
-                Tổng thu nhập từ trước đến nay: {formatVND(earningsData?.summary?.totalEarnings ?? 0)}
+                Tổng thu nhập: {formatVND(financial.totalEarnings)} · Tháng này:{' '}
+                {formatVND(financial.thisMonthNet)}
               </p>
 
               <div className="mt-3 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -231,14 +290,41 @@ export default function SellerDashboard() {
         </Link>
       </div>
 
-      {/* Charts: Revenue & Learner Activity */}
+      {/* Charts: Revenue (with year picker) & Learner Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard
           title="Doanh thu theo tháng"
-          description="Số tiền nhận sau khi trừ phí nền tảng, theo tháng"
+          description={`Số tiền nhận sau khi trừ phí nền tảng — năm ${revenueYear}`}
+          headerExtra={
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRevenueYear((y) => y - 1)}
+                className="h-7 px-2"
+              >
+                ←
+              </Button>
+              <span className="text-sm font-semibold tabular-nums px-1">{revenueYear}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRevenueYear((y) => y + 1)}
+                disabled={revenueYear >= new Date().getFullYear()}
+                className="h-7 px-2"
+              >
+                →
+              </Button>
+            </div>
+          }
         >
           <div className="h-[280px] w-full">
-            {revenueChartData.length > 0 ? (
+            {isLoadingFees ? (
+              <div className="h-full w-full flex flex-col gap-2 justify-end p-4">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ) : revenueChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueChartData}>
                   <defs>
@@ -252,8 +338,8 @@ export default function SellerDashboard() {
                     dataKey="name"
                     tick={{ fontSize: 12 }}
                     tickFormatter={(v) => {
-                      const [y, m] = v.split('-');
-                      return `${m}/${y}`;
+                      const [, m] = v.split('-');
+                      return `T${m}`;
                     }}
                   />
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
@@ -275,7 +361,7 @@ export default function SellerDashboard() {
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <DollarSign className="mx-auto h-12 w-12 opacity-40" />
-                  <p className="mt-2 text-sm">Chưa có giao dịch phí nào</p>
+                  <p className="mt-2 text-sm">Chưa có doanh thu nào trong năm {revenueYear}</p>
                 </div>
               </div>
             )}
@@ -284,10 +370,16 @@ export default function SellerDashboard() {
 
         <ChartCard
           title="Hoạt động học viên"
-          description="Số học viên mới mua khoá học theo tháng"
+          description="Số học viên mới mua khoá học theo tháng (12 tháng gần nhất)"
         >
           <div className="h-[280px] w-full">
-            {learnerActivityData.length > 0 ? (
+            {isLoadingLearners ? (
+              <div className="h-full w-full flex items-end gap-2 p-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="flex-1" style={{ height: `${30 + (i * 7) % 60}%` }} />
+                ))}
+              </div>
+            ) : learnerActivityData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={learnerActivityData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
@@ -296,7 +388,7 @@ export default function SellerDashboard() {
                     tick={{ fontSize: 12 }}
                     tickFormatter={(v) => {
                       const [y, m] = v.split('-');
-                      return `${m}/${y}`;
+                      return `${m}/${String(y).slice(2)}`;
                     }}
                   />
                   <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
@@ -325,8 +417,60 @@ export default function SellerDashboard() {
         </ChartCard>
       </div>
 
-      {/* Quick Actions & Overview */}
+      {/* Top Courses + Quick Actions */}
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-amber-500" />
+              Top khoá học bán chạy
+            </CardTitle>
+            <CardDescription>3 khoá học có nhiều học viên nhất</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {topCourses.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">Chưa có khoá học nào có học viên.</p>
+            ) : (
+              <ul className="space-y-3">
+                {topCourses.map((c, idx) => (
+                  <li key={c.id}>
+                    <Link
+                      to={`/seller/courses/${c.id}`}
+                      className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/40 transition-colors"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 font-bold dark:bg-amber-500/20">
+                        {idx + 1}
+                      </span>
+                      {c.thumbnailUrl ? (
+                        <img
+                          src={c.thumbnailUrl}
+                          alt={c.title}
+                          className="h-12 w-16 rounded object-cover bg-muted"
+                        />
+                      ) : (
+                        <div className="h-12 w-16 rounded bg-muted flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{c.title}</p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                          <span className="inline-flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {c.learners}
+                          </span>
+                          <span>{formatVND(c.price)}</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -357,31 +501,10 @@ export default function SellerDashboard() {
               </Button>
               <Button variant="outline" className="h-auto justify-start gap-3 py-4" asChild>
                 <Link to="/seller/profile">
-                  <CreditCard className="h-5 w-5 shrink-0" />
+                  <UserCircle className="h-5 w-5 shrink-0" />
                   <span>Hồ sơ giảng viên</span>
                 </Link>
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Tổng quan hôm nay</CardTitle>
-            <CardDescription>Thống kê nhanh về hoạt động của bạn</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-              <span className="text-sm font-medium">Tổng khoá học</span>
-              <span className="text-xl font-bold font-display">{coursesCount}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-              <span className="text-sm font-medium">Học viên đã phục vụ</span>
-              <span className="text-xl font-bold font-display">{learnersCount}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-              <span className="text-sm font-medium">Tương tác (bình luận)</span>
-              <span className="text-xl font-bold font-display">{commentsCount}</span>
             </div>
           </CardContent>
         </Card>

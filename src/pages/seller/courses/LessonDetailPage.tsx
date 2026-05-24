@@ -6,10 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   ArrowLeft, BookOpen, Pencil, Save, RotateCcw, MessageSquare,
   Clock, Hash, Film, FileText, Link2, Upload, X, CheckCircle2, Plus, Trash2, Send,
 } from 'lucide-react';
-import { useCourse, useLesson, useUpdateLesson } from '@/hooks/api';
+import { useCourse, useLesson, useUpdateLesson, useDeleteLesson } from '@/hooks/api';
 import { courseService } from '@/lib/api/services/course.service';
 import { toast } from 'sonner';
 
@@ -30,6 +34,8 @@ export default function LessonDetailPage() {
   const { data: course } = useCourse(courseId);
   const { data: lessonDetail } = useLesson(courseId, lessonId);
   const updateLessonMutation = useUpdateLesson();
+  const deleteLessonMutation = useDeleteLesson();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Edit state
   const [form, setForm] = useState<{
@@ -218,6 +224,16 @@ export default function LessonDetailPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={deleteLessonMutation.isPending}
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                Xóa bài học
+              </Button>
               <Button variant="outline" size="sm" className="rounded-xl" onClick={handleReset} disabled={!isDirty}>
                 <RotateCcw className="w-4 h-4 mr-1.5" /> Khôi phục
               </Button>
@@ -661,6 +677,53 @@ export default function LessonDetailPage() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xóa bài học?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                Bạn sắp xóa bài học <strong className="text-slate-900">"{form.title}"</strong>.
+              </span>
+              <span className="block">
+                Toàn bộ <strong>video, bình luận và tiến độ học</strong> liên quan sẽ bị xóa
+                vĩnh viễn — không thể khôi phục.
+              </span>
+              {course?.status === 'ACTIVE' && (
+                <span className="block text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 text-sm">
+                  ⚠️ Khoá học đang ACTIVE, học viên đã mua sẽ không thấy bài học này nữa.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLessonMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteLessonMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!courseId || !lessonId) return;
+                deleteLessonMutation.mutate(
+                  { courseId, lessonId },
+                  {
+                    onSuccess: () => {
+                      setShowDeleteDialog(false);
+                      navigate(`/seller/courses/${courseId}`);
+                    },
+                  }
+                );
+              }}
+            >
+              {deleteLessonMutation.isPending ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

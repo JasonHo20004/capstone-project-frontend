@@ -13,11 +13,13 @@ export {
   useLesson,
   useCreateLesson,
   useUpdateLesson,
+  useDeleteLesson,
   useModules,
   useCreateModule,
   useUpdateModule,
   useDeleteModule,
   useReorderModules,
+  useReorderLessons,
 } from './use-courses';
 export {
   useSellerDashboard,
@@ -71,6 +73,9 @@ export {
 export {
   useSellerEarnings,
   useSellerCommissionRate,
+  useSellerPolicy,
+  useSellerEarningsTimeseries,
+  useSellerEarningsByCourse,
   useAdminCommissionReport,
   useCommissionConfig,
   useUpdateCommissionRate,

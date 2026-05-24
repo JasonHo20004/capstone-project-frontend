@@ -1,11 +1,35 @@
 import apiClient from '../config';
 import type { ApiResponse } from '../types';
 
+export interface SellerTopCourse {
+  id: string;
+  title: string;
+  price: number;
+  thumbnailUrl: string | null;
+  ratingCount: number;
+  status: string;
+  learners: number;
+  ratings: number;
+}
+
+export interface SellerFinancialSummary {
+  totalEarnings: number;
+  totalPending: number;
+  allowance: number;
+  pendingBalance: number;
+  pendingWithdrawalCount: number;
+  pendingWithdrawalTotal: number;
+  thisMonthNet: number;
+  prevMonthNet: number;
+}
+
 export interface SellerDashboardStats {
   coursesCount: number;
   learnersCount: number;
   commentsCount: number;
   averageRating: number;
+  topCourses: SellerTopCourse[];
+  financial: SellerFinancialSummary;
 }
 
 export interface SellerLearner {
@@ -96,11 +120,13 @@ class SellerService {
     page?: number;
     limit?: number;
     search?: string;
+    courseId?: string;
   }): Promise<ApiResponse<GetLearnersResponse>> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.search) queryParams.append('search', params.search);
+    if (params?.courseId) queryParams.append('courseId', params.courseId);
 
     const response = await apiClient.get<ApiResponse<GetLearnersResponse>>(
       `/seller/learners?${queryParams.toString()}`

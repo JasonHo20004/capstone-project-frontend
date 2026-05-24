@@ -127,16 +127,18 @@ export default function SellerCreateCourse() {
 
   const handleSubmit = () => {
     if (!validateStep(0)) { setStep(0); return; }
+    if (!validateStep(2)) { setStep(2); return; }
 
-    const payload = {
-      title: formData.title.trim(),
-      price: parseFloat(formData.price),
-      ...(formData.description.trim() && { description: formData.description.trim() }),
-      ...(formData.category.trim() && { category: formData.category.trim() }),
-      ...(formData.courseLevel && { courseLevel: formData.courseLevel }),
-    };
+    // Send as multipart so the thumbnail file is actually uploaded.
+    const fd = new FormData();
+    fd.append('title', formData.title.trim());
+    fd.append('price', formData.price);
+    if (formData.description.trim()) fd.append('description', formData.description.trim());
+    if (formData.category.trim()) fd.append('category', formData.category.trim());
+    if (formData.courseLevel) fd.append('courseLevel', formData.courseLevel);
+    if (formData.thumbnailFile) fd.append('thumbnail', formData.thumbnailFile);
 
-    createCourseMutation.mutate(payload, {
+    createCourseMutation.mutate(fd, {
       onSuccess: async () => {
         await queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
         navigate('/seller/courses');

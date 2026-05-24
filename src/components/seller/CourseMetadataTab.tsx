@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, RotateCcw } from 'lucide-react';
+import { Save, RotateCcw, Upload, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CourseLevel, CourseStatus } from '@/domain';
 
@@ -31,6 +31,9 @@ interface Props {
   onClearDraft: () => void;
   isSaving: boolean;
   statusConfig: Record<string, StatusInfo>;
+  /** Optional new thumbnail file (transient — not persisted to localStorage). */
+  thumbnailFile: File | null;
+  setThumbnailFile: (file: File | null) => void;
 }
 
 export function CourseMetadataTab({
@@ -41,10 +44,25 @@ export function CourseMetadataTab({
   onClearDraft,
   isSaving,
   statusConfig,
+  thumbnailFile,
+  setThumbnailFile,
 }: Props) {
   const merged = { ...course, ...draft };
   const st = statusConfig[merged.status] ?? statusConfig.DRAFT;
-  const isDirty = Object.keys(draft).length > 0;
+  const isDirty = Object.keys(draft).length > 0 || !!thumbnailFile;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+
+  // Generate (and clean up) preview URL whenever a new file is picked.
+  useEffect(() => {
+    if (!thumbnailFile) {
+      setThumbnailPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(thumbnailFile);
+    setThumbnailPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [thumbnailFile]);
 
   useEffect(() => {
     if (!isDirty) return;
@@ -54,6 +72,28 @@ export function CourseMetadataTab({
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
+
+  const handlePickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ảnh thumbnail không được vượt quá 5MB.');
+      return;
+    }
+    if (!/^image\/(jpe?g|png|webp)$/.test(file.type)) {
+      toast.error('Chỉ chấp nhận JPG, PNG, WebP.');
+      return;
+    }
+    setThumbnailFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Price-change warning: changes to ACTIVE course price don't affect existing buyers.
+  const priceChanged =
+    draft.price !== undefined &&
+    course?.price !== undefined &&
+    Number(draft.price) !== Number(course.price);
+  const showPriceWarning = priceChanged && course?.status === 'ACTIVE';
 
   return (
     <>
@@ -89,6 +129,14 @@ export function CourseMetadataTab({
                   value={draft.price ?? merged.price ?? 0}
                   onChange={(e) => setDraft((d) => ({ ...d, price: Number(e.target.value) }))}
                 />
+                {showPriceWarning && (
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Thay đổi giá chỉ áp dụng cho học viên <strong>mua sau khi lưu</strong>. Học viên đã mua không được hoàn lại / phụ thu chênh lệch.
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -163,6 +211,59 @@ export function CourseMetadataTab({
                 value={draft.description ?? merged.description ?? ''}
                 onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700">Ảnh thumbnail</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePickFile}
+              />
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="h-28 w-44 rounded-xl overflow-hidden border bg-muted flex items-center justify-center relative shrink-0">
+                  {thumbnailPreview ? (
+                    <img src={thumbnailPreview} alt="Thumbnail mới" className="w-full h-full object-cover" />
+                  ) : merged.thumbnailUrl ? (
+                    <img src={merged.thumbnailUrl} alt="Thumbnail hiện tại" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Chưa có ảnh</span>
+                  )}
+                  {thumbnailPreview && (
+                    <span className="absolute top-1 left-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                      Mới
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isSaving}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {merged.thumbnailUrl || thumbnailPreview ? 'Đổi ảnh thumbnail' : 'Tải lên thumbnail'}
+                  </Button>
+                  {thumbnailFile && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setThumbnailFile(null)}
+                      disabled={isSaving}
+                      className="text-destructive"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Huỷ ảnh mới
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">JPG, PNG, WebP, tối đa 5MB.</p>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-3 pt-2">

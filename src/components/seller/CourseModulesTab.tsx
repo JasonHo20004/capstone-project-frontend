@@ -6,6 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -26,9 +36,12 @@ import { toast } from 'sonner';
 import {
   Plus, Pencil, Save, Trash2, FolderOpen, FolderPlus, Layers, BookOpen,
   ChevronDown, ChevronRight, Clock, Play, MessageSquare, GripVertical,
+  ClipboardList, ExternalLink,
 } from 'lucide-react';
 import type { Lesson } from '@/domain';
 import { EmptyState } from './EmptyState';
+import AddQuizLessonDialog from './AddQuizLessonDialog';
+import { useReorderLessons } from '@/hooks/api';
 
 interface ModuleData {
   id: string;
@@ -51,13 +64,64 @@ interface Props {
   refetch: () => void;
 }
 
-function LessonRow({ lesson, index, onClick }: { lesson: Lesson; index: number; onClick: () => void }) {
+function SortableLessonRow({
+  lesson,
+  index,
+  onClick,
+}: {
+  lesson: Lesson;
+  index: number;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: lesson.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="bg-white">
+      <LessonRow lesson={lesson} index={index} onClick={onClick} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
+function LessonRow({
+  lesson,
+  index,
+  onClick,
+  dragHandleProps,
+}: {
+  lesson: Lesson;
+  index: number;
+  onClick: () => void;
+  dragHandleProps?: Record<string, unknown>;
+}) {
+  const isQuiz = !!lesson.testId;
   return (
     <div
       onClick={onClick}
-      className="group flex items-center gap-4 px-4 py-3 hover:bg-blue-50/50 transition-all cursor-pointer"
+      className="group flex items-center gap-3 px-4 py-3 hover:bg-blue-50/50 transition-all cursor-pointer"
     >
-      <div className="w-8 h-8 rounded-lg bg-blue-50 group-hover:bg-blue-100 text-blue-600 font-bold text-xs flex items-center justify-center flex-shrink-0 transition-colors">
+      {dragHandleProps && (
+        <button
+          {...dragHandleProps}
+          onClick={(e) => e.stopPropagation()}
+          className="touch-none p-1 -ml-1 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing"
+          title="Kéo để sắp xếp"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+      )}
+      <div
+        className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center flex-shrink-0 transition-colors ${
+          isQuiz
+            ? 'bg-amber-50 group-hover:bg-amber-100 text-amber-600'
+            : 'bg-blue-50 group-hover:bg-blue-100 text-blue-600'
+        }`}
+      >
         {lesson.lessonOrder ?? index + 1}
       </div>
       <div className="flex-1 min-w-0">
@@ -68,17 +132,25 @@ function LessonRow({ lesson, index, onClick }: { lesson: Lesson; index: number; 
               <Clock className="w-3 h-3" /> {Math.round(lesson.durationInSeconds / 60)} phút
             </span>
           ) : null}
-          {lesson.videoUrl && (
+          {isQuiz ? (
+            <span className="flex items-center gap-1 text-amber-600">
+              <ClipboardList className="w-3 h-3" /> Bài kiểm tra
+            </span>
+          ) : lesson.videoUrl ? (
             <span className="flex items-center gap-1 text-emerald-600">
               <Play className="w-3 h-3" /> Video
             </span>
-          )}
+          ) : null}
           <span className="flex items-center gap-1">
             <MessageSquare className="w-3 h-3" /> {lesson.commentCount ?? 0}
           </span>
         </div>
       </div>
-      <Pencil className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+      {isQuiz ? (
+        <ExternalLink className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-500 transition-colors flex-shrink-0" />
+      ) : (
+        <Pencil className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+      )}
     </div>
   );
 }
@@ -90,8 +162,10 @@ function SortableModuleItem({
   expanded,
   onToggle,
   onAddLesson,
+  onAddQuiz,
   onEdit,
   onDelete,
+  onReorderLessons,
   updatePending,
   deletePending,
   navigate,
@@ -102,8 +176,10 @@ function SortableModuleItem({
   expanded: boolean;
   onToggle: () => void;
   onAddLesson: () => void;
+  onAddQuiz: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onReorderLessons: (moduleId: string, lessons: Lesson[]) => void;
   updatePending: boolean;
   deletePending: boolean;
   navigate: (path: string) => void;
@@ -116,6 +192,24 @@ function SortableModuleItem({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const lessonSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleLessonDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = mod.lessons.findIndex((l) => l.id === active.id);
+    const newIndex = mod.lessons.findIndex((l) => l.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(mod.lessons, oldIndex, newIndex).map((l, i) => ({
+      ...l,
+      lessonOrder: i + 1,
+    }));
+    onReorderLessons(mod.id, reordered);
   };
 
   return (
@@ -161,6 +255,9 @@ function SortableModuleItem({
           <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600" onClick={onAddLesson} title="Thêm bài học">
             <Plus className="w-3.5 h-3.5" />
           </Button>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-amber-600" onClick={onAddQuiz} title="Thêm bài kiểm tra">
+            <ClipboardList className="w-3.5 h-3.5" />
+          </Button>
           <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600" onClick={onEdit} title="Sửa module" disabled={updatePending}>
             <Pencil className="w-3.5 h-3.5" />
           </Button>
@@ -175,19 +272,34 @@ function SortableModuleItem({
           {mod.lessons.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <p className="text-sm text-slate-400 italic">Chưa có bài học trong module này</p>
-              <Button size="sm" variant="outline" className="mt-2 text-xs rounded-lg" onClick={onAddLesson}>
-                <Plus className="w-3 h-3 mr-1" /> Thêm bài học
-              </Button>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <Button size="sm" variant="outline" className="text-xs rounded-lg" onClick={onAddLesson}>
+                  <Plus className="w-3 h-3 mr-1" /> Thêm bài học
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs rounded-lg text-amber-700 border-amber-200 hover:bg-amber-50" onClick={onAddQuiz}>
+                  <ClipboardList className="w-3 h-3 mr-1" /> Thêm bài kiểm tra
+                </Button>
+              </div>
             </div>
           ) : (
-            mod.lessons.map((l, i) => (
-              <LessonRow
-                key={l.id}
-                lesson={l}
-                index={i}
-                onClick={() => navigate(`/seller/courses/${courseId}/lessons/${l.id}`)}
-              />
-            ))
+            <DndContext sensors={lessonSensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
+              <SortableContext items={mod.lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                {mod.lessons.map((l, i) => (
+                  <SortableLessonRow
+                    key={l.id}
+                    lesson={l}
+                    index={i}
+                    onClick={() =>
+                      navigate(
+                        l.testId
+                          ? `/seller/tests/${l.testId}`
+                          : `/seller/courses/${courseId}/lessons/${l.id}`
+                      )
+                    }
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       )}
@@ -216,6 +328,38 @@ export function CourseModulesTab({
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editModuleTitle, setEditModuleTitle] = useState('');
   const [editModuleDescription, setEditModuleDescription] = useState('');
+  const [addQuizModuleId, setAddQuizModuleId] = useState<string | null>(null);
+  const [pendingDeleteModuleId, setPendingDeleteModuleId] = useState<string | null>(null);
+  const reorderLessonsMutation = useReorderLessons();
+
+  const handleReorderLessons = (moduleId: string, reordered: Lesson[]) => {
+    const previous = localModules;
+    setLocalModules((mods) =>
+      mods.map((m) => (m.id === moduleId ? { ...m, lessons: reordered } : m))
+    );
+    reorderLessonsMutation.mutate(
+      {
+        courseId,
+        lessons: reordered.map(({ id, lessonOrder }) => ({ id, lessonOrder: lessonOrder ?? 0 })),
+      },
+      {
+        onError: () => {
+          setLocalModules(previous);
+          toast.error('Không thể sắp xếp lại bài học. Đã hoàn tác.');
+        },
+        onSuccess: () => {
+          refetchModules();
+        },
+      }
+    );
+  };
+
+  const quizDialogModule = addQuizModuleId
+    ? localModules.find((m) => m.id === addQuizModuleId)
+    : null;
+  const pendingDeleteModule = pendingDeleteModuleId
+    ? localModules.find((m) => m.id === pendingDeleteModuleId)
+    : null;
 
   useEffect(() => {
     setLocalModules(modules);
@@ -293,10 +437,11 @@ export function CourseModulesTab({
     } catch { /* toast handled by hook */ }
   };
 
-  const handleDeleteModule = async (moduleId: string) => {
-    if (!confirm('Xóa module này? Các bài học bên trong sẽ trở thành bài học chưa phân loại.')) return;
+  const confirmDeleteModule = async () => {
+    if (!pendingDeleteModuleId) return;
     try {
-      await deleteModuleMutation.mutateAsync({ courseId, moduleId });
+      await deleteModuleMutation.mutateAsync({ courseId, moduleId: pendingDeleteModuleId });
+      setPendingDeleteModuleId(null);
       refetchModules();
       refetch();
     } catch { /* toast handled by hook */ }
@@ -337,20 +482,27 @@ export function CourseModulesTab({
               {localModules.map((mod, modIdx) =>
                 editingModuleId === mod.id ? (
                   <div key={mod.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex-1 flex items-center gap-2">
-                        <Input
-                          className="h-8 text-sm rounded-lg flex-1"
-                          value={editModuleTitle}
-                          onChange={(e) => setEditModuleTitle(e.target.value)}
-                          placeholder="Tên module"
-                          autoFocus
-                        />
-                        <Button size="sm" className="h-8 rounded-lg text-xs" onClick={() => handleUpdateModule(mod.id)} disabled={updateModuleMutation.isPending}>
-                          <Save className="w-3 h-3 mr-1" /> Lưu
-                        </Button>
+                    <div className="px-4 py-3 space-y-2">
+                      <Input
+                        className="h-8 text-sm rounded-lg"
+                        value={editModuleTitle}
+                        onChange={(e) => setEditModuleTitle(e.target.value)}
+                        placeholder="Tên module"
+                        autoFocus
+                      />
+                      <Textarea
+                        className="text-sm rounded-lg"
+                        rows={2}
+                        value={editModuleDescription}
+                        onChange={(e) => setEditModuleDescription(e.target.value)}
+                        placeholder="Mô tả (tùy chọn)"
+                      />
+                      <div className="flex items-center justify-end gap-2">
                         <Button size="sm" variant="ghost" className="h-8 rounded-lg text-xs" onClick={() => setEditingModuleId(null)}>
                           Hủy
+                        </Button>
+                        <Button size="sm" className="h-8 rounded-lg text-xs" onClick={() => handleUpdateModule(mod.id)} disabled={updateModuleMutation.isPending}>
+                          <Save className="w-3 h-3 mr-1" /> Lưu
                         </Button>
                       </div>
                     </div>
@@ -364,8 +516,10 @@ export function CourseModulesTab({
                     expanded={expandedModules.has(mod.id)}
                     onToggle={() => toggleModule(mod.id)}
                     onAddLesson={() => navigate(`/seller/courses/${courseId}/lessons/create?moduleId=${mod.id}`)}
+                    onAddQuiz={() => setAddQuizModuleId(mod.id)}
                     onEdit={() => { setEditingModuleId(mod.id); setEditModuleTitle(mod.title); setEditModuleDescription(mod.description ?? ''); }}
-                    onDelete={() => handleDeleteModule(mod.id)}
+                    onDelete={() => setPendingDeleteModuleId(mod.id)}
+                    onReorderLessons={handleReorderLessons}
                     updatePending={updateModuleMutation.isPending}
                     deletePending={deleteModuleMutation.isPending}
                     navigate={navigate}
@@ -439,6 +593,45 @@ export function CourseModulesTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {quizDialogModule && (
+        <AddQuizLessonDialog
+          open={!!addQuizModuleId}
+          onOpenChange={(o) => { if (!o) setAddQuizModuleId(null); }}
+          courseId={courseId}
+          moduleId={quizDialogModule.id}
+          existingLessons={quizDialogModule.lessons}
+          onSuccess={() => { setAddQuizModuleId(null); refetchModules(); refetch(); }}
+        />
+      )}
+
+      <AlertDialog open={!!pendingDeleteModuleId} onOpenChange={(o) => !o && setPendingDeleteModuleId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xoá module?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn sắp xoá module <strong className="text-slate-900">"{pendingDeleteModule?.title}"</strong>.
+              Các bài học bên trong sẽ chuyển thành <em>bài học chưa phân loại</em>, không bị mất.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteModuleMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteModuleMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDeleteModule();
+              }}
+            >
+              {deleteModuleMutation.isPending ? 'Đang xoá…' : 'Xoá module'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

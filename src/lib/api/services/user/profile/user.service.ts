@@ -1,6 +1,6 @@
 import apiClient from "@/lib/api/config";
 import type { ApiResponse } from "@/lib/api/types";
-import type { User, CourseSellerApplication } from "@/domain";
+import type { User, CourseSellerApplication, CourseSellerProfile } from "@/domain";
 
 export interface UpdateProfileDTO {
   fullName?: string;
@@ -52,7 +52,27 @@ class UserService {
       formData,
       {
         headers: {
-          'Content-Type': undefined, 
+          'Content-Type': undefined,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  /**
+   * Update the current seller's profile (certifications + expertise).
+   * `formData` MUST be multipart with:
+   *   - `images[]`        optional File entries for newly added certificates
+   *   - `certification[]` optional URL strings to keep
+   *   - `expertise[]`     optional list of expertise tags
+   */
+  async updateSellerProfile(formData: FormData): Promise<ApiResponse<CourseSellerProfile>> {
+    const response = await apiClient.put<ApiResponse<CourseSellerProfile>>(
+      '/seller/profile',
+      formData,
+      {
+        headers: {
+          'Content-Type': undefined,
         },
       }
     );

@@ -142,7 +142,7 @@ export const useUpdateCourse = () => {
       data,
     }: {
       id: string;
-      data: UpdateCourseRequest;
+      data: UpdateCourseRequest | FormData;
     }) => courseService.updateCourse(id, data),
     onSuccess: (response, variables) => {
       // Update cache cho course cụ thể
@@ -247,6 +247,33 @@ export const useUpdateLesson = () => {
   });
 };
 
+/**
+ * Hook để xóa lesson — invalidate cả module list để FE refresh.
+ */
+export const useDeleteLesson = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ courseId, lessonId }: { courseId: string; lessonId: string }) =>
+      courseService.deleteLesson(courseId, lessonId),
+    onSuccess: (_response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['course', variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['modules', variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
+      queryClient.removeQueries({ queryKey: ['lesson', variables.courseId, variables.lessonId] });
+      toast.success('Xóa bài học thành công!');
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data
+          ?.message ??
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        (err instanceof Error ? err.message : 'Không thể xóa bài học');
+      toast.error(msg);
+    },
+  });
+};
+
 // ── Module hooks ──────────────────────────────────
 
 export const useModules = (courseId?: string) => {
@@ -310,6 +337,23 @@ export const useReorderModules = () => {
     }) => courseService.reorderModules(courseId, modules),
     onSuccess: (_res, vars) => {
       queryClient.invalidateQueries({ queryKey: ['modules', vars.courseId] });
+    },
+  });
+};
+
+export const useReorderLessons = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      courseId,
+      lessons,
+    }: {
+      courseId: string;
+      lessons: { id: string; lessonOrder: number }[];
+    }) => courseService.reorderLessons(courseId, lessons),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['modules', vars.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['course', vars.courseId] });
     },
   });
 };

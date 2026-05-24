@@ -87,6 +87,9 @@ import SellerDashboard from "./pages/seller/dashboard/SellerDashboard";
 import SellerCourses from "./pages/seller/courses/SellerCourses";
 import SellerMonthlyFees from "./pages/seller/finance/SellerMonthlyFees";
 import SellerEarnings from "./pages/seller/finance/SellerEarnings";
+import SellerTests from "./pages/seller/tests/SellerTests";
+import SellerTestDetail from "./pages/seller/tests/SellerTestDetail";
+import CreateTestPage from "./pages/seller/tests/CreateTestPage";
 import SellerComments from "./pages/seller/interactions/SellerComments";
 import SellerLearners from "./pages/seller/learners/SellerLearners";
 import SellerProfile from "./pages/seller/account/SellerProfile";
@@ -195,6 +198,10 @@ const App = () => (
               <Route path="courses/:id" element={<SellerCourseDetail />} />
               <Route path="fees" element={<SellerMonthlyFees />} />
               <Route path="earnings" element={<SellerEarnings />} />
+              <Route path="tests" element={<SellerTests />} />
+              <Route path="tests/new" element={<CreateTestPage />} />
+              <Route path="tests/:id/edit" element={<CreateTestPage />} />
+              <Route path="tests/:id" element={<SellerTestDetail />} />
               <Route path="comments" element={<SellerComments />} />
               <Route path="learners" element={<SellerLearners />} />
               <Route path="profile" element={<SellerProfile />} />

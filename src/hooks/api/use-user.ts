@@ -85,3 +85,23 @@ export const useCreateSellerApplication = () => {
     },
   });
 };
+
+export const useUpdateSellerProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) => userService.updateSellerProfile(formData),
+    onSuccess: () => {
+      toast.success('Cập nhật hồ sơ thành công');
+      queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['seller', 'dashboard'] });
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        (err instanceof Error ? err.message : 'Có lỗi xảy ra');
+      toast.error(msg);
+    },
+  });
+};

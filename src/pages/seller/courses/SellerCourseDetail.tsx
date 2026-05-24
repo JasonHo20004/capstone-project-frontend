@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import {
   useCourse, useUpdateCourse, useModules,
   useCreateModule, useUpdateModule, useDeleteModule, useReorderModules,
+  usePublishCourse,
 } from '@/hooks/api';
 import { CourseMetadataTab } from '@/components/seller/CourseMetadataTab';
 import { CourseModulesTab } from '@/components/seller/CourseModulesTab';
@@ -17,7 +18,8 @@ import { EmptyState } from '@/components/seller/EmptyState';
 import { ErrorMessage } from '@/components/ui/error-message';
 import {
   ArrowLeft, BookOpen, Star, Clock, GraduationCap,
-  Layers, FileText, Settings, ClipboardCheck,
+  Layers, FileText, Settings, ClipboardCheck, ClipboardList,
+  Rocket, CheckCircle2, XCircle, Eye,
 } from 'lucide-react';
 import type { CourseStatus, CourseLevel, Lesson, Rating, CourseLesson } from '@/domain';
 
@@ -59,8 +61,10 @@ export default function SellerCourseDetail() {
   const updateModuleMutation = useUpdateModule();
   const deleteModuleMutation = useDeleteModule();
   const reorderModulesMutation = useReorderModules();
+  const publishCourseMutation = usePublishCourse();
 
   const [draft, setDraft] = useState<Draft>({});
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -87,6 +91,36 @@ export default function SellerCourseDetail() {
   const ratings = useMemo(() => (course as any)?.ratings ?? [], [course]);
   const totalComments = useMemo(() => lessons.reduce((s, l) => s + (l.commentCount ?? 0), 0), [lessons]);
   const totalDuration = useMemo(() => lessons.reduce((s, l) => s + (l.durationInSeconds ?? 0), 0), [lessons]);
+  const quizLessonCount = useMemo(
+    () => (modules as ModuleData[]).reduce((s, m) => s + m.lessons.filter((l) => !!l.testId).length, 0)
+      + unassignedLessons.filter((l) => !!l.testId).length,
+    [modules, unassignedLessons]
+  );
+
+  const publishChecklist = useMemo(() => {
+    const merged = { ...course, ...draft };
+    return [
+      { key: 'thumbnail', label: 'Có ảnh thumbnail', done: !!merged.thumbnailUrl || !!thumbnailFile },
+      { key: 'description', label: 'Có mô tả khoá học', done: !!(merged.description && merged.description.trim().length >= 20) },
+      { key: 'price', label: 'Đã đặt giá', done: typeof merged.price === 'number' && merged.price >= 0 },
+      { key: 'level', label: 'Đã chọn trình độ', done: !!merged.courseLevel },
+      { key: 'lessons', label: 'Có ít nhất 1 bài học', done: lessons.length > 0 },
+    ];
+  }, [course, draft, thumbnailFile, lessons.length]);
+
+  const allChecksDone = publishChecklist.every((c) => c.done);
+
+  const handlePublish = async () => {
+    if (!id) return;
+    try {
+      await publishCourseMutation.mutateAsync(id);
+      refetch();
+    } catch (err) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? 'Không thể xuất bản khoá học';
+      toast.error(msg);
+    }
+  };
   const seller = useMemo(() => course?.courseSeller ?? (course as any)?.user ?? null, [course]);
   const averageRating = useMemo(() => {
     if (!course) return undefined;
@@ -101,20 +135,37 @@ export default function SellerCourseDetail() {
 
   const saveDraft = async () => {
     if (!id) return;
-    if (!Object.keys(draft).length) { toast.info('Không có thay đổi nào để lưu.'); return; }
-    try {
-      await updateCourseMutation.mutateAsync({
-        id,
-        data: {
+    const hasDraft = Object.keys(draft).length > 0;
+    if (!hasDraft && !thumbnailFile) {
+      toast.info('Không có thay đổi nào để lưu.');
+      return;
+    }
+
+    // Send as multipart when a new thumbnail file was picked; otherwise JSON.
+    const data: FormData | Record<string, unknown> = thumbnailFile
+      ? (() => {
+          const fd = new FormData();
+          if (draft.title !== undefined) fd.append('title', draft.title);
+          if (draft.description !== undefined) fd.append('description', draft.description);
+          if (draft.price !== undefined) fd.append('price', String(draft.price));
+          if (draft.courseLevel !== undefined) fd.append('courseLevel', draft.courseLevel);
+          if (draft.status !== undefined) fd.append('status', draft.status);
+          fd.append('thumbnail', thumbnailFile);
+          return fd;
+        })()
+      : {
           ...(draft.title !== undefined && { title: draft.title }),
           ...(draft.description !== undefined && { description: draft.description }),
           ...(draft.price !== undefined && { price: draft.price }),
           ...(draft.courseLevel !== undefined && { courseLevel: draft.courseLevel }),
           ...(draft.status !== undefined && { status: draft.status }),
-        },
-      });
+        };
+
+    try {
+      await updateCourseMutation.mutateAsync({ id, data: data as never });
       localStorage.removeItem(DRAFT_KEY(id));
       setDraft({});
+      setThumbnailFile(null);
       refetch();
     } catch {
       localStorage.setItem(DRAFT_KEY(id!), JSON.stringify(draft));
@@ -184,7 +235,7 @@ export default function SellerCourseDetail() {
       {/* Header */}
       <div className="border-b bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="py-3">
+          <div className="py-3 flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={() => navigate('/seller/courses')}
@@ -192,6 +243,17 @@ export default function SellerCourseDetail() {
             >
               <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
             </Button>
+            {course && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/courses/${course.id}?preview=true`, '_blank')}
+                className="rounded-xl"
+                title="Xem khoá học dưới góc nhìn học viên"
+              >
+                <Eye className="w-4 h-4 mr-1.5" /> Xem trước
+              </Button>
+            )}
           </div>
 
           <div className="pb-6 flex flex-col sm:flex-row items-start gap-5">
@@ -219,7 +281,8 @@ export default function SellerCourseDetail() {
               <div className="mt-4 flex flex-wrap gap-3">
                 <StatPill icon={<GraduationCap className="w-3.5 h-3.5" />} label="Giá" value={formatVND(merged.price ?? 0)} />
                 <StatPill icon={<Layers className="w-3.5 h-3.5" />} label="Module" value={`${modulesTyped.length}`} />
-                <StatPill icon={<BookOpen className="w-3.5 h-3.5" />} label="Bài học" value={`${lessons.length}`} />
+                <StatPill icon={<BookOpen className="w-3.5 h-3.5" />} label="Bài học" value={`${lessons.length - quizLessonCount}`} />
+                <StatPill icon={<ClipboardList className="w-3.5 h-3.5" />} label="Bài kiểm tra" value={`${quizLessonCount}`} />
                 <StatPill icon={<Clock className="w-3.5 h-3.5" />} label="Thời lượng" value={totalDuration > 0 ? `${Math.round(totalDuration / 60)} phút` : '—'} />
                 <StatPill icon={<Star className="w-3.5 h-3.5" />} label="Đánh giá" value={averageRating ? `${averageRating} ★` : '—'} />
               </div>
@@ -245,18 +308,59 @@ export default function SellerCourseDetail() {
               <Settings className="w-4 h-4" /> Cập nhật
             </TabsTrigger>
             <TabsTrigger value="final-test" className="rounded-lg gap-1.5 data-[state=active]:shadow-sm">
-              <ClipboardCheck className="w-4 h-4" /> Bài kiểm tra
+              <ClipboardCheck className="w-4 h-4" /> Bài kiểm tra cuối khoá
             </TabsTrigger>
           </TabsList>
 
           {/* Overview */}
           <TabsContent value="overview" className="space-y-5">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <QuickStatCard icon={<Layers className="w-5 h-5 text-indigo-500" />} label="Module" value={modulesTyped.length} />
-              <QuickStatCard icon={<BookOpen className="w-5 h-5 text-blue-500" />} label="Bài học" value={lessons.length} />
+              <QuickStatCard icon={<BookOpen className="w-5 h-5 text-blue-500" />} label="Bài học" value={lessons.length - quizLessonCount} />
+              <QuickStatCard icon={<ClipboardList className="w-5 h-5 text-amber-500" />} label="Bài kiểm tra" value={quizLessonCount} />
               <QuickStatCard icon={<Clock className="w-5 h-5 text-teal-500" />} label="Thời lượng" value={totalDuration > 0 ? `${Math.round(totalDuration / 60)} phút` : '0'} />
               <QuickStatCard icon={<Star className="w-5 h-5 text-amber-500" />} label="Đánh giá TB" value={averageRating ?? '—'} />
             </div>
+            {(merged.status === 'DRAFT' || merged.status === 'REFUSE') && (
+              <Card className={`border ${allChecksDone ? 'border-emerald-200 bg-emerald-50/30' : 'border-amber-200 bg-amber-50/30'} shadow-sm`}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Rocket className={`w-4 h-4 ${allChecksDone ? 'text-emerald-600' : 'text-amber-600'}`} />
+                    Sẵn sàng xuất bản?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <ul className="space-y-1.5">
+                    {publishChecklist.map((c) => (
+                      <li key={c.key} className="flex items-center gap-2 text-sm">
+                        {c.done ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        )}
+                        <span className={c.done ? 'text-slate-700' : 'text-slate-500'}>{c.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <p className="text-xs text-slate-500">
+                      {allChecksDone
+                        ? 'Đã đủ điều kiện. Gửi duyệt để admin kích hoạt khoá học.'
+                        : 'Hoàn thành các mục trên trước khi gửi duyệt.'}
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={handlePublish}
+                      disabled={!allChecksDone || publishCourseMutation.isPending}
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {publishCourseMutation.isPending ? 'Đang gửi…' : 'Gửi duyệt'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -350,6 +454,8 @@ export default function SellerCourseDetail() {
               onClearDraft={clearDraft}
               isSaving={updateCourseMutation.isPending}
               statusConfig={statusConfig}
+              thumbnailFile={thumbnailFile}
+              setThumbnailFile={setThumbnailFile}
             />
           </TabsContent>
 

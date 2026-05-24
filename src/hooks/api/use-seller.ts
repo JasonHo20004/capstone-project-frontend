@@ -26,6 +26,7 @@ export const useSellerLearners = (params?: {
   page?: number;
   limit?: number;
   search?: string;
+  courseId?: string;
 }) => {
   return useQuery({
     queryKey: ['seller', 'learners', params],

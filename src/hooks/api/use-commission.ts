@@ -5,6 +5,9 @@ import {
   type AdminCommissionReportResponse,
   type CommissionConfig,
   type UpdateConfigPayload,
+  type SellerPolicy,
+  type EarningsTimeseriesPoint,
+  type CourseEarningsBreakdown,
 } from '@/lib/api/services/commission.service';
 
 // ── Seller Hooks ─────────────────────────────────────────────────────────
@@ -23,7 +26,36 @@ export const useSellerCommissionRate = () => {
     queryKey: ['commission', 'seller', 'rate'],
     queryFn: () => commissionService.getSellerRate(),
     staleTime: 5 * 60 * 1000,
-    select: (response) => response.data?.commissionRate ?? 0.3,
+    // Return undefined on failure so callers can show "—" instead of pretending
+    // the rate is the default 30%.
+    select: (response) => response.data?.commissionRate,
+  });
+};
+
+export const useSellerPolicy = () => {
+  return useQuery({
+    queryKey: ['commission', 'seller', 'policy'],
+    queryFn: () => commissionService.getSellerPolicy(),
+    staleTime: 5 * 60 * 1000,
+    select: (response): SellerPolicy | undefined => response.data,
+  });
+};
+
+export const useSellerEarningsTimeseries = (months: number = 12) => {
+  return useQuery({
+    queryKey: ['commission', 'seller', 'timeseries', months],
+    queryFn: () => commissionService.getSellerEarningsTimeseries(months),
+    staleTime: 2 * 60 * 1000,
+    select: (response): EarningsTimeseriesPoint[] => response.data ?? [],
+  });
+};
+
+export const useSellerEarningsByCourse = () => {
+  return useQuery({
+    queryKey: ['commission', 'seller', 'by-course'],
+    queryFn: () => commissionService.getSellerEarningsByCourse(),
+    staleTime: 2 * 60 * 1000,
+    select: (response): CourseEarningsBreakdown[] => response.data ?? [],
   });
 };
 

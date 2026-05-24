@@ -3,7 +3,26 @@ import type { ApiResponse } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────
 
-export type EarningStatus = 'PENDING' | 'AVAILABLE' | 'RELEASED';
+export type EarningStatus = 'PENDING' | 'AVAILABLE' | 'RELEASED' | 'REFUNDED';
+
+export interface SellerPolicy {
+  commissionRate: number;
+  clearanceDays: number;
+  gatewayFeeRate: number;
+  gatewayFeeFixed: number;
+}
+
+export interface EarningsTimeseriesPoint {
+  month: string;
+  amount: number;
+}
+
+export interface CourseEarningsBreakdown {
+  courseId: string;
+  sellerAmount: number;
+  totalAmount: number;
+  salesCount: number;
+}
 
 export interface SellerEarning {
   id: string;
@@ -101,6 +120,25 @@ class CommissionService {
   async getSellerRate(): Promise<ApiResponse<{ commissionRate: number }>> {
     const response = await apiClient.get<ApiResponse<{ commissionRate: number }>>(
       '/commission/seller/rate'
+    );
+    return response.data;
+  }
+
+  async getSellerPolicy(): Promise<ApiResponse<SellerPolicy>> {
+    const response = await apiClient.get<ApiResponse<SellerPolicy>>('/commission/seller/policy');
+    return response.data;
+  }
+
+  async getSellerEarningsTimeseries(months: number = 12): Promise<ApiResponse<EarningsTimeseriesPoint[]>> {
+    const response = await apiClient.get<ApiResponse<EarningsTimeseriesPoint[]>>(
+      `/commission/seller/earnings/timeseries?months=${months}`
+    );
+    return response.data;
+  }
+
+  async getSellerEarningsByCourse(): Promise<ApiResponse<CourseEarningsBreakdown[]>> {
+    const response = await apiClient.get<ApiResponse<CourseEarningsBreakdown[]>>(
+      '/commission/seller/earnings/by-course'
     );
     return response.data;
   }

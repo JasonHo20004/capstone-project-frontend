@@ -15,6 +15,8 @@ export interface Lesson {
   materials: string[];
   commentCount?: number;
   courseId: string;
+  /** When set, this is a quiz lesson pointing to a Test in assessment-service. */
+  testId?: string | null;
 }
 
 export interface Course {
