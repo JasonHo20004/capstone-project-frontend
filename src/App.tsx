@@ -22,7 +22,6 @@ import Contact from "./pages/user/info/Contact";
 import Blog from "./pages/user/info/Blog";
 import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
-import Subscription from "./pages/user/account/Subscription";
 import LiveRoomList from "./pages/user/livestream/LiveRoomList";
 import { lazy, Suspense } from "react";
 const LiveRoom = lazy(() => import("./pages/user/livestream/LiveRoom"));
@@ -129,7 +128,6 @@ const App = () => (
               <Route path="/cart" element={<Cart />} />
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/subscription" element={<Subscription />} />
 
               {/* AI Features (with sidebar layout) */}
               <Route path="/exam" element={<ExamCenter />} />

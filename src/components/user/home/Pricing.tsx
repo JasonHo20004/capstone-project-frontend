@@ -30,7 +30,7 @@ export default function Pricing() {
   const proPlan = plans.find((p) => p.type === 'PRO');
   const currentPlanType = subscription?.plan?.type ?? null;
   const isLoggedIn = !!user;
-  const proCtaTo = isLoggedIn ? '/subscription' : '/login?register=1';
+  const proCtaTo = '/#pricing';
 
   const reveal = (i = 0) => ({
     initial: reduce ? { opacity: 0 } : { opacity: 0, y: 16 },

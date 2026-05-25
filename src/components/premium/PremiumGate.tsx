@@ -81,7 +81,7 @@ export function PremiumGate({ feature, children, message }: PremiumGateProps) {
         <Button
           size="lg"
           className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold shadow-lg shadow-amber-200/50 transition-all hover:shadow-xl hover:shadow-amber-300/50"
-          onClick={() => navigate('/subscription')}
+          onClick={() => navigate('/#pricing')}
         >
           Nâng cấp lên Pro
           <ArrowRight className="w-4 h-4 ml-2" />
