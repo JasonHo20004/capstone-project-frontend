@@ -4,12 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { courseService } from '@/lib/api/services/course.service';
 import {
   ArrowLeft, Plus, Trash2, ClipboardList, Save, AlertTriangle, Loader2,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, Upload,
 } from 'lucide-react';
+import ImportFromFileModal, { type ImportedQuestion } from '@/components/seller/tests/ImportFromFileModal';
 
 interface QuestionDraft {
   questionText: string;
@@ -40,12 +51,31 @@ export default function CreateTestPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
   const [testTypes, setTestTypes] = useState<{ id: string; name: string }[]>([]);
+  const [importOpen, setImportOpen] = useState(false);
+  const [existingFinalTest, setExistingFinalTest] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
     courseService.getTestTypes()
       .then((res) => { if (res.data) setTestTypes(res.data); })
       .catch(() => { /* ignore */ });
   }, []);
+
+  // If seller arrived from a course's Final Test flow and the course already
+  // has a final test, offer to redirect them to edit it instead of creating a
+  // second one (plan rule: 1 graduation exam per course).
+  useEffect(() => {
+    if (!linkAsFinalCourseId || isEditMode) return;
+    let cancelled = false;
+    courseService.getCourseById(linkAsFinalCourseId)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((res: any) => {
+        if (cancelled) return;
+        const finalTestId: string | null | undefined = res?.data?.finalTestId;
+        if (finalTestId) setExistingFinalTest({ id: finalTestId });
+      })
+      .catch(() => { /* non-blocking */ });
+    return () => { cancelled = true; };
+  }, [linkAsFinalCourseId, isEditMode]);
 
   // Edit mode — load the existing test once.
   useEffect(() => {
@@ -116,6 +146,33 @@ export default function CreateTestPage() {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
       return updated;
+    });
+  };
+
+  const toDraft = (q: ImportedQuestion): QuestionDraft => ({
+    questionText: q.questionText,
+    options: q.options,
+    correctAnswerIndex: q.correctAnswerIndex,
+    explanation: q.explanation,
+  });
+
+  const handleImportReplace = (imported: ImportedQuestion[]) => {
+    if (imported.length === 0) return;
+    setQuestions(imported.map(toDraft));
+    setExpanded(0);
+  };
+
+  const handleImportAppend = (imported: ImportedQuestion[]) => {
+    if (imported.length === 0) return;
+    setQuestions((prev) => {
+      // Drop placeholder empty first question if the form is still pristine.
+      const trimmed =
+        prev.length === 1 && !prev[0].questionText.trim() && prev[0].options.every((o) => !o.trim())
+          ? []
+          : prev;
+      const next = [...trimmed, ...imported.map(toDraft)];
+      setExpanded(trimmed.length);
+      return next;
     });
   };
 
@@ -290,11 +347,16 @@ export default function CreateTestPage() {
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="font-semibold">Danh sách câu hỏi</h3>
-              <Button variant="outline" size="sm" onClick={addQuestion}>
-                <Plus className="h-4 w-4 mr-1" /> Thêm câu hỏi
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                  <Upload className="h-4 w-4 mr-1" /> Import từ file
+                </Button>
+                <Button variant="outline" size="sm" onClick={addQuestion}>
+                  <Plus className="h-4 w-4 mr-1" /> Thêm câu hỏi
+                </Button>
+              </div>
             </div>
 
             {questions.length === 0 && (
@@ -383,6 +445,40 @@ export default function CreateTestPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ImportFromFileModal
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onReplace={handleImportReplace}
+        onAppend={handleImportAppend}
+      />
+
+      <AlertDialog
+        open={!!existingFinalTest}
+        onOpenChange={(open) => { if (!open) setExistingFinalTest(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Khoá học đã có đề tốt nghiệp</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mỗi khoá học chỉ có một đề tốt nghiệp. Bạn muốn chỉnh sửa đề hiện có?
+              Học viên đã làm bài trên đề cũ vẫn được giữ kết quả.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => navigate(`/seller/courses/${linkAsFinalCourseId}`)}>
+              Quay lại khoá học
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (existingFinalTest) navigate(`/seller/tests/${existingFinalTest.id}/edit`);
+              }}
+            >
+              Chỉnh sửa đề hiện có
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
