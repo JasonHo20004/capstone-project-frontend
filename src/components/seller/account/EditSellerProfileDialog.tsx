@@ -37,6 +37,12 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
   const [keptCerts, setKeptCerts] = useState<string[]>(profile.certification ?? []);
   const [newFiles, setNewFiles] = useState<PreviewFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Mirror `newFiles` so unmount cleanup sees the latest blob URLs, not the
+  // stale list captured by an empty-dep effect closure.
+  const newFilesRef = useRef<PreviewFile[]>([]);
+  useEffect(() => {
+    newFilesRef.current = newFiles;
+  }, [newFiles]);
 
   // Re-seed state every time the dialog opens so we start from the latest server data.
   useEffect(() => {
@@ -44,18 +50,16 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
       setExpertise(profile.expertise ?? []);
       setKeptCerts(profile.certification ?? []);
       setExpInput('');
-      newFiles.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      newFilesRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl));
       setNewFiles([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, profile]);
 
-  // Cleanup blob URLs on unmount to avoid leaks.
+  // Cleanup any outstanding blob URLs on unmount.
   useEffect(() => {
     return () => {
-      newFiles.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      newFilesRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addExp = () => {

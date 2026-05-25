@@ -8,15 +8,10 @@ import { toast } from 'sonner';
 export const useProfile = () => {
   const { data, isLoading, isError, error } = useQuery<User | null, AxiosError<ApiError>>({
     queryKey: ['profile', 'me'],
-    
-    // SỬA: Bỏ try...catch
     queryFn: async () => {
-  
       const response = await userService.getProfile();
-
-      return response.data; 
+      return response.data;
     },
-
     staleTime: 1000 * 60 * 5,
     retry: false,
     refetchOnWindowFocus: false,
@@ -96,6 +91,7 @@ export const useUpdateSellerProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['seller', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['seller', 'profile', 'me'] });
     },
     onError: (err: unknown) => {
       const msg =
@@ -103,5 +99,23 @@ export const useUpdateSellerProfile = () => {
         (err instanceof Error ? err.message : 'Có lỗi xảy ra');
       toast.error(msg);
     },
+  });
+};
+
+/**
+ * Fetch the current seller's own profile (certification + expertise + isActive).
+ * `useProfile()` doesn't include CourseSellerProfile, so the seller-profile
+ * page uses this hook to render the real data.
+ */
+export const useSellerOwnProfile = () => {
+  return useQuery({
+    queryKey: ['seller', 'profile', 'me'],
+    queryFn: async () => {
+      const response = await userService.getSellerOwnProfile();
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 };
