@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Bell, Eye, Filter, Search, CheckCheck, Sparkles } from 'lucide-react';
+import { Bell, Eye, Filter, Search, CheckCheck, Sparkles, Archive, BellOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { useUser } from '@/hooks/api/use-user';
 import {
   useMarkAllNotificationsAsRead,
   useMarkNotificationAsRead,
   useNotificationRealtime,
   useNotifications,
+  useArchiveNotification,
 } from '@/hooks/api';
 import type { InAppNotification } from '@/domain';
 import {
@@ -39,6 +41,22 @@ const TYPE_FILTER_OPTIONS: { key: string; label: string }[] = [
   { key: 'comment_reply', label: '↩️ Trả lời' },
   { key: 'course_enrollment', label: '👤 Đăng ký' },
   { key: 'course_update', label: '🔄 Cập nhật' },
+  // Seller-specific events emitted by course-service / payment-service.
+  // Keys are uppercase to match what handlers write (see NotificationDropdown).
+  { key: 'COURSE_APPROVED', label: '✅ Khoá học duyệt' },
+  { key: 'COURSE_REJECTED', label: '❌ Khoá học bị từ chối' },
+  { key: 'COURSE_SUBMITTED', label: '📋 Khoá học chờ duyệt' },
+  { key: 'WITHDRAWAL_APPROVED', label: '💰 Rút tiền thành công' },
+  { key: 'WITHDRAWAL_REJECTED', label: '⚠️ Rút tiền bị từ chối' },
+];
+
+// Mute control persists across reloads via localStorage. Pure UX —
+// hides the unread highlight + bell pulse until the chosen deadline.
+const MUTE_STORAGE_KEY = 'notifications.mutedUntil';
+const MUTE_PRESETS: Array<{ label: string; hours: number }> = [
+  { label: '1 giờ', hours: 1 },
+  { label: '4 giờ', hours: 4 },
+  { label: 'Đến cuối ngày', hours: 12 },
 ];
 
 const AI_ACTION_LABEL: Record<string, string> = {
@@ -78,6 +96,34 @@ export default function Notifications() {
 
   const { mutate: markReadMutation } = useMarkNotificationAsRead();
   const { mutate: markAllReadMutation } = useMarkAllNotificationsAsRead();
+  const { mutate: archiveMutation, isPending: isArchiving } = useArchiveNotification();
+
+  // Mute lives client-side — read once on mount, write on user toggle.
+  const [mutedUntil, setMutedUntil] = useState<Date | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem(MUTE_STORAGE_KEY);
+    if (!raw) return null;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime()) || d.getTime() < Date.now()) {
+      localStorage.removeItem(MUTE_STORAGE_KEY);
+      return null;
+    }
+    return d;
+  });
+  const isMuted = !!mutedUntil && mutedUntil.getTime() > Date.now();
+
+  const applyMute = (hours: number | null) => {
+    if (hours == null) {
+      localStorage.removeItem(MUTE_STORAGE_KEY);
+      setMutedUntil(null);
+      toast.success('Đã bật lại thông báo');
+      return;
+    }
+    const until = new Date(Date.now() + hours * 60 * 60 * 1000);
+    localStorage.setItem(MUTE_STORAGE_KEY, until.toISOString());
+    setMutedUntil(until);
+    toast.success(`Tạm ẩn thông báo đến ${until.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`);
+  };
 
   useNotificationRealtime(userId);
 
@@ -153,10 +199,34 @@ export default function Notifications() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Button variant="outline" onClick={() => navigate(-1)}>
               Quay lại
             </Button>
+            {isMuted ? (
+              <Button
+                variant="outline"
+                onClick={() => applyMute(null)}
+                title={`Đang tắt thông báo đến ${mutedUntil?.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`}
+              >
+                <BellOff className="w-4 h-4 mr-2" /> Bật lại
+              </Button>
+            ) : (
+              <div className="inline-flex rounded-md border bg-white">
+                <span className="px-2 py-1.5 text-xs text-slate-500 self-center">Tạm tắt:</span>
+                {MUTE_PRESETS.map((p) => (
+                  <Button
+                    key={p.hours}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-8 rounded-none border-l first:border-l-0"
+                    onClick={() => applyMute(p.hours)}
+                  >
+                    {p.label}
+                  </Button>
+                ))}
+              </div>
+            )}
             {unreadCount > 0 && (
               <Button
                 variant="secondary"
@@ -381,7 +451,7 @@ export default function Notifications() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       {!n.isRead && (
                         <Button
                           variant="ghost"
@@ -395,6 +465,19 @@ export default function Notifications() {
                           <Eye className="w-3.5 h-3.5 mr-1" /> Đã đọc
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Lưu trữ"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-500 hover:text-slate-700"
+                        disabled={isArchiving}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          archiveMutation(n.id);
+                        }}
+                      >
+                        <Archive className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </div>
                 );

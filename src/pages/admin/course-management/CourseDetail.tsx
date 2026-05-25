@@ -42,6 +42,10 @@ export default function AdminCourseDetail() {
   const [editCourse, setEditCourse] = useState<UpdateCourseRequest>({});
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
   const [showDeleteCourseDialog, setShowDeleteCourseDialog] = useState(false);
+  // Rejection requires an explicit reason — open a dialog instead of firing
+  // the mutation directly, so admins can't silently reject with empty text.
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data: courseDetailResp } = useQuery({
     queryKey: ["adminCourseDetail", id],
@@ -218,7 +222,22 @@ export default function AdminCourseDetail() {
                   Ngày tạo: {new Date(course.createdAt).toLocaleString("vi-VN")}
                 </div>
               </div>
-              <div className="flex space-x-2">
+              {course.status === CourseStatus.REFUSE && course.rejectionReason && (
+                <div className="rounded border border-red-200 bg-red-50 p-3 space-y-1">
+                  <div className="text-xs font-semibold text-red-700">
+                    Lý do từ chối hiện tại
+                  </div>
+                  <div className="text-sm text-slate-700 whitespace-pre-wrap">
+                    {course.rejectionReason}
+                  </div>
+                  {course.rejectedAt && (
+                    <div className="text-xs text-slate-500">
+                      {new Date(course.rejectedAt).toLocaleString("vi-VN")}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="flex space-x-2 flex-wrap gap-y-2">
                 <Button
                   variant="destructive"
                   onClick={() => setShowDeleteCourseDialog(true)}
@@ -238,11 +257,10 @@ export default function AdminCourseDetail() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        updateCourseMutation.mutate({
-                          data: { status: CourseStatus.REFUSE },
-                        })
-                      }
+                      onClick={() => {
+                        setRejectReason("");
+                        setShowRejectDialog(true);
+                      }}
                     >
                       Từ chối
                     </Button>
@@ -459,6 +477,68 @@ export default function AdminCourseDetail() {
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteLesson}>
               Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showRejectDialog}
+        onOpenChange={(open) => {
+          setShowRejectDialog(open);
+          if (!open) setRejectReason("");
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Từ chối khoá học</AlertDialogTitle>
+            <AlertDialogDescription>
+              Nhập lý do từ chối (ít nhất 10 ký tự). Seller sẽ thấy nội dung này
+              trong banner phản hồi và được thông báo ngay.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="rejectReason">Lý do từ chối</Label>
+            <Textarea
+              id="rejectReason"
+              rows={5}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Ví dụ: mô tả khoá học chưa nêu rõ mục tiêu, cần bổ sung..."
+            />
+            <p className="text-xs text-muted-foreground">
+              {rejectReason.trim().length} ký tự
+              {rejectReason.trim().length < 10 && " (chưa đủ)"}
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateCourseMutation.isPending}>
+              Huỷ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                rejectReason.trim().length < 10 || updateCourseMutation.isPending
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                updateCourseMutation.mutate(
+                  {
+                    data: {
+                      status: CourseStatus.REFUSE,
+                      rejectionReason: rejectReason.trim(),
+                    },
+                  },
+                  {
+                    onSuccess: () => {
+                      setShowRejectDialog(false);
+                      setRejectReason("");
+                    },
+                  }
+                );
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {updateCourseMutation.isPending ? "Đang gửi…" : "Xác nhận từ chối"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useCourse, useLesson, useUpdateLesson, useDeleteLesson } from '@/hooks/api';
 import { courseService } from '@/lib/api/services/course.service';
+import { sellerService } from '@/lib/api/services';
 import { toast } from 'sonner';
 
 interface Comment {
@@ -23,6 +24,7 @@ interface Comment {
   userId: string;
   parentCommentId: string | null;
   createdAt: string;
+  editedAt?: string | null;
   user?: { fullName?: string; profilePicture?: string };
 }
 
@@ -63,6 +65,72 @@ export default function LessonDetailPage() {
   const [fetchedComments, setFetchedComments] = useState<Comment[]>([]);
   const [courseSellerId, setCourseSellerId] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  const [pendingDeleteComment, setPendingDeleteComment] = useState<Comment | null>(null);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+  // Inline edit state — only one comment editable at a time.
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [isSavingCommentEdit, setIsSavingCommentEdit] = useState(false);
+
+  const startEditComment = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.content);
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText('');
+  };
+
+  const submitEditComment = async (commentId: string, originalContent: string) => {
+    if (!courseId || !lessonId) return;
+    const trimmed = editingCommentText.trim();
+    if (!trimmed) {
+      toast.error('Nội dung không được để trống');
+      return;
+    }
+    if (trimmed === originalContent) {
+      cancelEditComment();
+      return;
+    }
+    setIsSavingCommentEdit(true);
+    try {
+      await courseService.editComment(courseId, lessonId, commentId, trimmed);
+      toast.success('Đã cập nhật bình luận');
+      cancelEditComment();
+      fetchComments();
+    } catch (err) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Lỗi khi cập nhật bình luận';
+      toast.error(msg);
+    } finally {
+      setIsSavingCommentEdit(false);
+    }
+  };
+
+  /**
+   * Moderation: course owner can delete any comment on their course
+   * (their own or a student's). Uses the seller-scoped delete endpoint so
+   * authorization is enforced server-side.
+   */
+  const handleDeleteComment = async () => {
+    if (!pendingDeleteComment) return;
+    setIsDeletingComment(true);
+    try {
+      await sellerService.deleteComment(pendingDeleteComment.id);
+      toast.success('Đã xoá bình luận');
+      setPendingDeleteComment(null);
+      fetchComments();
+    } catch (err) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Không thể xoá bình luận';
+      toast.error(msg);
+    } finally {
+      setIsDeletingComment(false);
+    }
+  };
 
   // Fetch comments from dedicated endpoint (enriched with user info)
   const fetchComments = () => {
@@ -501,15 +569,70 @@ export default function LessonDetailPage() {
                                 Giảng viên
                               </span>
                             )}
+                            {comment.editedAt && (
+                              <span
+                                className="text-[11px] text-slate-400 italic"
+                                title={`Đã chỉnh sửa lúc ${new Date(comment.editedAt).toLocaleString('vi-VN')}`}
+                              >
+                                (đã chỉnh sửa)
+                              </span>
+                            )}
                             <span className="text-xs text-slate-400 ml-auto">{new Date(comment.createdAt).toLocaleString('vi-VN')}</span>
                           </div>
-                          <p className="text-sm text-slate-600 mt-1">{comment.content}</p>
-                          <button
-                            className="text-xs text-slate-400 hover:text-teal-600 mt-2 font-medium transition-colors"
-                            onClick={() => setReplyingTo(replyingTo?.id === comment.id ? null : comment)}
-                          >
-                            {replyingTo?.id === comment.id ? 'Hủy' : 'Trả lời'}
-                          </button>
+                          {editingCommentId === comment.id ? (
+                            <div className="mt-2 space-y-2">
+                              <Textarea
+                                autoFocus
+                                rows={3}
+                                className="text-sm"
+                                value={editingCommentText}
+                                onChange={(e) => setEditingCommentText(e.target.value)}
+                                maxLength={2000}
+                              />
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  disabled={isSavingCommentEdit || !editingCommentText.trim() || editingCommentText.trim() === comment.content}
+                                  onClick={() => submitEditComment(comment.id, comment.content)}
+                                >
+                                  {isSavingCommentEdit ? 'Đang lưu…' : 'Lưu'}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={cancelEditComment} disabled={isSavingCommentEdit}>
+                                  Huỷ
+                                </Button>
+                                <span className="text-xs text-slate-400 ml-auto">{editingCommentText.length}/2000</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">{comment.content}</p>
+                          )}
+                          {editingCommentId !== comment.id && (
+                            <div className="flex items-center gap-3 mt-2">
+                              <button
+                                className="text-xs text-slate-400 hover:text-teal-600 font-medium transition-colors"
+                                onClick={() => setReplyingTo(replyingTo?.id === comment.id ? null : comment)}
+                              >
+                                {replyingTo?.id === comment.id ? 'Hủy' : 'Trả lời'}
+                              </button>
+                              {/* Edit only on seller's own comments — backend
+                                  rejects edits from anyone else (gaslighting). */}
+                              {isSeller && (
+                                <button
+                                  className="text-xs text-slate-400 hover:text-teal-600 font-medium transition-colors inline-flex items-center gap-1"
+                                  onClick={() => startEditComment(comment)}
+                                >
+                                  <Pencil className="w-3 h-3" /> Sửa
+                                </button>
+                              )}
+                              <button
+                                className="text-xs text-slate-400 hover:text-red-500 font-medium transition-colors inline-flex items-center gap-1"
+                                onClick={() => setPendingDeleteComment(comment)}
+                                title={isSeller ? 'Xoá bình luận của bạn' : 'Xoá bình luận vi phạm'}
+                              >
+                                <Trash2 className="w-3 h-3" /> Xoá
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -535,15 +658,68 @@ export default function LessonDetailPage() {
                                         Giảng viên
                                       </span>
                                     )}
+                                    {reply.editedAt && (
+                                      <span
+                                        className="text-[9px] text-slate-400 italic"
+                                        title={`Đã chỉnh sửa lúc ${new Date(reply.editedAt).toLocaleString('vi-VN')}`}
+                                      >
+                                        (đã chỉnh sửa)
+                                      </span>
+                                    )}
                                     <span className="text-[10px] text-slate-400 ml-auto">{new Date(reply.createdAt).toLocaleString('vi-VN')}</span>
                                   </div>
-                                  <p className="text-xs text-slate-600 mt-0.5">{reply.content}</p>
-                                  <button
-                                    className="text-[11px] text-slate-400 hover:text-teal-600 mt-1 font-medium transition-colors"
-                                    onClick={() => setReplyingTo(replyingTo?.id === reply.id ? null : reply)}
-                                  >
-                                    {replyingTo?.id === reply.id ? 'Hủy' : 'Trả lời'}
-                                  </button>
+                                  {editingCommentId === reply.id ? (
+                                    <div className="mt-1 space-y-2">
+                                      <Textarea
+                                        autoFocus
+                                        rows={2}
+                                        className="text-xs"
+                                        value={editingCommentText}
+                                        onChange={(e) => setEditingCommentText(e.target.value)}
+                                        maxLength={2000}
+                                      />
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          size="sm"
+                                          className="h-7 text-xs"
+                                          disabled={isSavingCommentEdit || !editingCommentText.trim() || editingCommentText.trim() === reply.content}
+                                          onClick={() => submitEditComment(reply.id, reply.content)}
+                                        >
+                                          {isSavingCommentEdit ? 'Đang lưu…' : 'Lưu'}
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={cancelEditComment} disabled={isSavingCommentEdit}>
+                                          Huỷ
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.content}</p>
+                                  )}
+                                  {editingCommentId !== reply.id && (
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <button
+                                        className="text-[11px] text-slate-400 hover:text-teal-600 font-medium transition-colors"
+                                        onClick={() => setReplyingTo(replyingTo?.id === reply.id ? null : reply)}
+                                      >
+                                        {replyingTo?.id === reply.id ? 'Hủy' : 'Trả lời'}
+                                      </button>
+                                      {isReplySeller && (
+                                        <button
+                                          className="text-[11px] text-slate-400 hover:text-teal-600 font-medium transition-colors inline-flex items-center gap-1"
+                                          onClick={() => startEditComment(reply)}
+                                        >
+                                          <Pencil className="w-3 h-3" /> Sửa
+                                        </button>
+                                      )}
+                                      <button
+                                        className="text-[11px] text-slate-400 hover:text-red-500 font-medium transition-colors inline-flex items-center gap-1"
+                                        onClick={() => setPendingDeleteComment(reply)}
+                                        title={isReplySeller ? 'Xoá bình luận của bạn' : 'Xoá bình luận vi phạm'}
+                                      >
+                                        <Trash2 className="w-3 h-3" /> Xoá
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -720,6 +896,39 @@ export default function LessonDetailPage() {
               }}
             >
               {deleteLessonMutation.isPending ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!pendingDeleteComment}
+        onOpenChange={(o) => !o && setPendingDeleteComment(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" /> Xoá bình luận?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                Nội dung sẽ bị xoá vĩnh viễn và không thể khôi phục.
+              </span>
+              {pendingDeleteComment && (
+                <span className="block text-xs text-slate-600 border-l-2 border-slate-200 pl-2 mt-2">
+                  "{pendingDeleteComment.content.slice(0, 200)}"
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingComment}>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeletingComment}
+              onClick={(e) => { e.preventDefault(); handleDeleteComment(); }}
+            >
+              {isDeletingComment ? 'Đang xoá…' : 'Xoá'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

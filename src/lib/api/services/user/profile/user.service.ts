@@ -60,6 +60,16 @@ class UserService {
   }
 
   /**
+   * Fetch the current seller's own profile (certification + expertise + isActive).
+   * Separate from /users/profile because UserResponse does not include the
+   * CourseSellerProfile relation.
+   */
+  async getSellerOwnProfile(): Promise<ApiResponse<CourseSellerProfile>> {
+    const response = await apiClient.get<ApiResponse<CourseSellerProfile>>('/seller/profile');
+    return response.data;
+  }
+
+  /**
    * Update the current seller's profile (certifications + expertise).
    * `formData` MUST be multipart with:
    *   - `images[]`        optional File entries for newly added certificates

@@ -16,13 +16,15 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import DataTable from '@/components/admin/DataTable';
 import ChartCard from '@/components/admin/ChartCard';
 import { WithdrawalModal } from '@/components/seller/finance/WithdrawalModal';
+import { WithdrawalHistoryTab } from '@/components/seller/finance/WithdrawalHistoryTab';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
 } from 'recharts';
 import {
   DollarSign, Percent, Receipt, ArrowLeft, Clock, Landmark, Wallet,
-  ArrowUpRight, CheckCircle2, XCircle, Info, Download, BookOpen, AlertCircle,
+  ArrowUpRight, CheckCircle2, Info, Download, BookOpen, AlertCircle,
+  TrendingUp, TrendingDown, FileSpreadsheet,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -76,7 +78,9 @@ export default function SellerEarnings() {
   const { data: walletData } = useWallet();
   const { data: timeseries } = useSellerEarningsTimeseries(12);
   const { data: byCourse } = useSellerEarningsByCourse();
-  const { data: myCoursesResp } = useSellerCourses({ page: 1, limit: 100 });
+  // First arg is the seller ID — empty string falls back to /me which reads
+  // the seller from the JWT. Passing the params object as arg 1 was the bug.
+  const { data: myCoursesResp } = useSellerCourses('', { page: 1, limit: 100 });
 
   // Map courseId → title once for any table/list that references it.
   const courseTitleById = useMemo(() => {
@@ -88,14 +92,55 @@ export default function SellerEarnings() {
 
   const courseTitle = (id: string) => courseTitleById.get(id) ?? `#${id.slice(0, 6)}`;
 
-  if (isLoadingEarnings) {
+  // ── All useMemo hooks must run on every render to keep the call order
+  //    stable. React forbids hooks after early returns (Rules of Hooks).
+  //    Kept up here so the guards below don't trip the "rendered more hooks
+  //    than during the previous render" error.
+
+  // Chart prefers the dedicated full-history timeseries from BE.
+  const chartData = useMemo(() => {
+    if (timeseries && timeseries.length > 0) {
+      return timeseries.map((p) => ({ name: p.month, amount: p.amount }));
+    }
+    return [];
+  }, [timeseries]);
+
+  // Month-over-month growth derived from the same timeseries.
+  const growth = useMemo(() => {
+    if (!timeseries || timeseries.length < 2) return null;
+    const thisMonth = timeseries[timeseries.length - 1]?.amount ?? 0;
+    const lastMonth = timeseries[timeseries.length - 2]?.amount ?? 0;
+    const delta = thisMonth - lastMonth;
+    const pct = lastMonth > 0 ? (delta / lastMonth) * 100 : thisMonth > 0 ? 100 : 0;
+    return { thisMonth, lastMonth, delta, pct };
+  }, [timeseries]);
+
+  // Tax summary: net the seller received YTD — handy for accounting/tax.
+  const yearToDate = useMemo(() => {
+    if (!timeseries || timeseries.length === 0) return null;
+    const currentYear = new Date().getFullYear();
+    const ytd = timeseries.filter((p) => p.month.startsWith(String(currentYear)));
+    const netReceived = ytd.reduce((s, p) => s + (p.amount ?? 0), 0);
+    return { year: currentYear, netReceived };
+  }, [timeseries]);
+
+  // Earnings table filtering — client-side because BE only paginates.
+  const filteredEarnings = useMemo(() => {
+    let rows = earningsData?.data ?? [];
+    if (statusFilter !== 'ALL') rows = rows.filter((r) => r.status === statusFilter);
+    if (courseFilter !== 'ALL') rows = rows.filter((r) => r.courseId === courseFilter);
+    return rows;
+  }, [earningsData?.data, statusFilter, courseFilter]);
+
+  // ── Early-return guards (only after every hook above has run) ──────────
+  if (isLoadingEarnings && !earningsData) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <LoadingSpinner />
       </div>
     );
   }
-  if (earningsError) {
+  if (earningsError && !earningsData) {
     return <ErrorMessage message="Không thể tải dữ liệu doanh thu. Vui lòng thử lại sau." />;
   }
 
@@ -168,21 +213,6 @@ export default function SellerEarnings() {
     },
   ];
 
-  // Chart prefers the dedicated full-history timeseries from BE.
-  const chartData = useMemo(() => {
-    if (timeseries && timeseries.length > 0) {
-      return timeseries.map((p) => ({ name: p.month, amount: p.amount }));
-    }
-    return [];
-  }, [timeseries]);
-
-  // Earnings table filtering — client-side because BE only paginates.
-  const filteredEarnings = useMemo(() => {
-    let rows = earningsData?.data ?? [];
-    if (statusFilter !== 'ALL') rows = rows.filter((r) => r.status === statusFilter);
-    if (courseFilter !== 'ALL') rows = rows.filter((r) => r.courseId === courseFilter);
-    return rows;
-  }, [earningsData?.data, statusFilter, courseFilter]);
 
   const handleExportEarnings = () => {
     const rows = (earningsData?.data ?? []).map((r) => ({
@@ -315,6 +345,61 @@ export default function SellerEarnings() {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Growth + tax summary */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                {growth && growth.pct >= 0 ? (
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                )}
+                Tăng trưởng tháng này vs tháng trước
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {growth ? (
+                <div className="space-y-1">
+                  <div className="text-2xl font-bold font-display">
+                    {growth.pct >= 0 ? '+' : ''}
+                    {growth.pct.toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Tháng này: <strong>{formatVND(growth.thisMonth)}</strong> • Tháng trước:{' '}
+                    {formatVND(growth.lastMonth)}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Cần ít nhất 2 tháng dữ liệu.</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <FileSpreadsheet className="h-4 w-4 text-blue-600" />
+                Tổng thu nhập YTD (cho khai thuế)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {yearToDate ? (
+                <div className="space-y-1">
+                  <div className="text-2xl font-bold font-display">
+                    {formatVND(yearToDate.netReceived)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Năm {yearToDate.year} — đã trừ phí cổng & platform fee. Dùng "Xuất CSV" để có
+                    chi tiết từng đơn cho hồ sơ thuế.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Chưa có dữ liệu năm nay.</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
@@ -521,86 +606,11 @@ export default function SellerEarnings() {
           </TabsContent>
 
           <TabsContent value="withdrawals" className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={handleExportWithdrawals} className="ml-auto">
-                <Download className="w-4 h-4 mr-1.5" /> Xuất CSV
-              </Button>
-            </div>
-            <DataTable
-              title="Lịch sử rút tiền"
-              description="Các yêu cầu rút tiền về tài khoản ngân hàng"
-              data={withdrawalsData?.data ?? []}
-              columns={[
-                {
-                  key: 'createdAt',
-                  header: 'Ngày yêu cầu',
-                  render: (r) => new Date(r.createdAt).toLocaleDateString('vi-VN'),
-                },
-                {
-                  key: 'amount',
-                  header: 'Số tiền',
-                  render: (r) => <span className="font-semibold text-primary">{formatVND(r.amount)}</span>,
-                },
-                {
-                  key: 'bankName',
-                  header: 'Ngân hàng',
-                  render: (r) => <span className="font-medium">{r.bankName}</span>,
-                },
-                {
-                  key: 'accountName',
-                  header: 'Chủ TK / Số TK',
-                  render: (r) => (
-                    <div className="text-xs">
-                      <p className="font-medium">{r.accountName}</p>
-                      <p className="text-muted-foreground font-mono">{r.accountNumber}</p>
-                    </div>
-                  ),
-                },
-                {
-                  key: 'status',
-                  header: 'Trạng thái',
-                  render: (r) => <WithdrawalStatusBadge status={r.status} />,
-                },
-                {
-                  key: 'adminNote',
-                  header: 'Ghi chú / Biên lai',
-                  render: (r) => (
-                    <div className="max-w-[200px] text-xs">
-                      {r.proofImageUrl && (
-                        <a href={r.proofImageUrl} target="_blank" rel="noreferrer" className="inline-block mb-1">
-                          <img
-                            src={r.proofImageUrl}
-                            alt="Biên lai"
-                            className="h-10 w-auto rounded border hover:opacity-80 transition-opacity"
-                          />
-                        </a>
-                      )}
-                      {r.adminNote && <p className="text-muted-foreground line-clamp-2">{r.adminNote}</p>}
-                    </div>
-                  ),
-                },
-              ]}
+            <WithdrawalHistoryTab
+              page={withdrawalPage}
+              onPageChange={setWithdrawalPage}
+              onExportCsv={handleExportWithdrawals}
             />
-
-            {(withdrawalsData?.data?.length ?? 0) === 0 && (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={Wallet}
-                    title="Chưa có lệnh rút tiền"
-                    hint="Khi bạn rút tiền, lịch sử sẽ hiển thị ở đây."
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {withdrawalsData && withdrawalsData.totalPages > 1 && (
-              <Pagination
-                page={withdrawalPage}
-                totalPages={withdrawalsData.totalPages}
-                onChange={setWithdrawalPage}
-              />
-            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -671,31 +681,6 @@ function StatusBadge({ status, availableAt }: { status: string; availableAt: str
   return (
     <Badge variant="outline" className="text-xs">{status}</Badge>
   );
-}
-
-function WithdrawalStatusBadge({ status }: { status: string }) {
-  if (status === 'PENDING') {
-    return (
-      <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/30">
-        <Clock className="w-3 h-3 mr-1" /> Chờ duyệt
-      </Badge>
-    );
-  }
-  if (status === 'APPROVED') {
-    return (
-      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
-        <CheckCircle2 className="w-3 h-3 mr-1" /> Đã chuyển khoản
-      </Badge>
-    );
-  }
-  if (status === 'REJECTED') {
-    return (
-      <Badge variant="outline" className="bg-red-500/10 text-red-700 border-red-500/30">
-        <XCircle className="w-3 h-3 mr-1" /> Từ chối
-      </Badge>
-    );
-  }
-  return <Badge variant="outline">{status}</Badge>;
 }
 
 function EmptyState({ icon: Icon, title, hint }: { icon: typeof DollarSign; title: string; hint?: string }) {

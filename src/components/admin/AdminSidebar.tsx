@@ -19,6 +19,7 @@ import {
   Crown,
   Percent,
   Landmark,
+  ShieldAlert,
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -71,6 +72,11 @@ const sidebarItems = [
     title: 'Đơn đăng ký',
     href: '/admin/applications',
     icon: UserCheck,
+  },
+  {
+    title: 'Kiểm duyệt bình luận',
+    href: '/admin/moderation',
+    icon: ShieldAlert,
   },
   {
     title: 'Quản lý Tag',

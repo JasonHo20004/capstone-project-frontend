@@ -253,9 +253,6 @@ export default function SellerDashboard() {
               <div className="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-400">
                 {formatVND(financial.allowance)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Số tiền đã clear, có thể rút ngay
-              </p>
 
               {financial.pendingBalance > 0 && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">

@@ -79,12 +79,34 @@ class CourseService {
   }
 
   /**
-   * Publish course (seller/admin)
+   * Submit course for admin review (seller). Backend route is POST.
+   * Transitions DRAFT/REFUSE → PENDING.
    */
   async publishCourse(id: string): Promise<PublishCourseResponse> {
-    const response = await apiClient.put<PublishCourseResponse>(
+    const response = await apiClient.post<PublishCourseResponse>(
       `/courses/${id}/publish`
     );
+    return response.data;
+  }
+
+  /**
+   * Fetch the review-workflow audit trail for one of the seller's own
+   * courses. Used by the seller-facing timeline.
+   */
+  async getReviewHistory(id: string): Promise<{
+    success: boolean;
+    data: Array<{
+      id: string;
+      courseId: string;
+      fromStatus: string;
+      toStatus: string;
+      actorId: string;
+      actorRole: 'seller' | 'admin' | string;
+      reason: string | null;
+      createdAt: string;
+    }>;
+  }> {
+    const response = await apiClient.get(`/courses/${id}/review-history`);
     return response.data;
   }
 
@@ -186,6 +208,37 @@ class CourseService {
       content,
       parentCommentId,
     });
+    return response.data;
+  }
+
+  /** Edit own comment — author-only, enforced server-side. */
+  async editComment(
+    courseId: string,
+    lessonId: string,
+    commentId: string,
+    content: string
+  ): Promise<any> {
+    const response = await apiClient.patch(
+      `/courses/${courseId}/lessons/${lessonId}/comments/${commentId}`,
+      { content }
+    );
+    return response.data;
+  }
+
+  /** Report a comment for moderation. */
+  async reportComment(
+    courseId: string,
+    lessonId: string,
+    commentId: string,
+    payload: {
+      reasonType: 'SPAM' | 'ABUSE' | 'SCAM' | 'MISINFORMATION' | 'OFF_TOPIC' | 'OTHER';
+      note?: string;
+    }
+  ): Promise<{ success: boolean; message?: string; data?: { autoHidden: boolean; totalReports: number } }> {
+    const response = await apiClient.post(
+      `/courses/${courseId}/lessons/${lessonId}/comments/${commentId}/report`,
+      payload
+    );
     return response.data;
   }
 

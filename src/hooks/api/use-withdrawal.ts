@@ -37,6 +37,29 @@ export const useRequestWithdrawal = () => {
   });
 };
 
+export const useCancelWithdrawal = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => withdrawalService.cancelWithdrawal(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['withdrawals', 'seller'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    },
+  });
+};
+
+export const useRetryWithdrawal = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { id: string; overrides?: Partial<WithdrawalRequestPayload> }) =>
+      withdrawalService.retryWithdrawal(vars.id, vars.overrides),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['withdrawals', 'seller'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    },
+  });
+};
+
 // ── ADMIN HOOKS ─────────────────────────────────────────────────────────
 
 export const useAdminWithdrawalRequests = (params?: {

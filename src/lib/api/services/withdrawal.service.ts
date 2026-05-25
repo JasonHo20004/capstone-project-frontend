@@ -1,7 +1,7 @@
 import apiClient from '../config';
 import type { ApiResponse } from '../types';
 
-export type WithdrawalRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type WithdrawalRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface WithdrawalRequest {
   id: string;
@@ -15,6 +15,8 @@ export interface WithdrawalRequest {
   adminNote: string | null;
   createdAt: string;
   processedAt: string | null;
+  cancelledAt?: string | null;
+  retriedFromId?: string | null;
 }
 
 export interface WithdrawalListResponse {
@@ -62,9 +64,29 @@ class WithdrawalService {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    
+
     const response = await apiClient.get<ApiResponse<WithdrawalListResponse>>(
       `/withdrawals/seller/history?${queryParams.toString()}`
+    );
+    return response.data;
+  }
+
+  /** Cancel a PENDING withdrawal request (seller-initiated). */
+  async cancelWithdrawal(id: string): Promise<ApiResponse<WithdrawalRequest>> {
+    const response = await apiClient.post<ApiResponse<WithdrawalRequest>>(
+      `/withdrawals/seller/requests/${id}/cancel`
+    );
+    return response.data;
+  }
+
+  /** Resubmit a previously REJECTED withdrawal (optionally with new bank/amount). */
+  async retryWithdrawal(
+    id: string,
+    overrides?: Partial<WithdrawalRequestPayload>
+  ): Promise<ApiResponse<WithdrawalRequest>> {
+    const response = await apiClient.post<ApiResponse<WithdrawalRequest>>(
+      `/withdrawals/seller/requests/${id}/retry`,
+      overrides ?? {}
     );
     return response.data;
   }

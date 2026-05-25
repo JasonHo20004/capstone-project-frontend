@@ -1,5 +1,23 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Flag, Pencil, Save, X } from 'lucide-react';
 
 interface Comment {
   id: string;
@@ -7,17 +25,23 @@ interface Comment {
   userId: string;
   parentCommentId: string | null;
   createdAt: string;
+  editedAt?: string | null;
   user?: { fullName?: string; profilePicture?: string };
 }
 
+type ReportReason = 'SPAM' | 'ABUSE' | 'SCAM' | 'MISINFORMATION' | 'OFF_TOPIC' | 'OTHER';
+
 interface DiscussionSectionProps {
-  /** Fetch comments by page/limit – return { comments, total } */
   fetchComments: (page: number, limit: number) => Promise<{ comments: Comment[]; total: number }>;
-  /** Post a new comment – return the created comment */
-  postComment: (content: string, parentCommentId?: string) => Promise<any>;
-  /** Optional title override */
+  postComment: (content: string, parentCommentId?: string) => Promise<unknown>;
+  /** Edit own comment. Optional — if omitted, edit UI hides. */
+  editComment?: (commentId: string, content: string) => Promise<unknown>;
+  /** Flag a comment as inappropriate. Optional — if omitted, report UI hides. */
+  reportComment?: (
+    commentId: string,
+    payload: { reasonType: ReportReason; note?: string }
+  ) => Promise<unknown>;
   title?: string;
-  /** Optional subtitle override */
   subtitle?: string;
 }
 
@@ -36,7 +60,23 @@ function getCurrentUser() {
   }
 }
 
-export default function DiscussionSection({ fetchComments: fetchCommentsFn, postComment: postCommentFn, title, subtitle }: DiscussionSectionProps) {
+const REASON_LABELS: Record<ReportReason, string> = {
+  SPAM: 'Spam / Quảng cáo',
+  ABUSE: 'Xúc phạm / Quấy rối',
+  SCAM: 'Lừa đảo',
+  MISINFORMATION: 'Sai thông tin',
+  OFF_TOPIC: 'Lạc đề',
+  OTHER: 'Khác',
+};
+
+export default function DiscussionSection({
+  fetchComments: fetchCommentsFn,
+  postComment: postCommentFn,
+  editComment: editCommentFn,
+  reportComment: reportCommentFn,
+  title,
+  subtitle,
+}: DiscussionSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [isPosting, setIsPosting] = useState(false);
@@ -45,6 +85,17 @@ export default function DiscussionSection({ fetchComments: fetchCommentsFn, post
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Edit state — only one comment editable at a time.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Report state — drives the modal dialog.
+  const [reportingComment, setReportingComment] = useState<Comment | null>(null);
+  const [reportReason, setReportReason] = useState<ReportReason>('SPAM');
+  const [reportNote, setReportNote] = useState('');
+  const [isReporting, setIsReporting] = useState(false);
 
   const COMMENTS_PER_PAGE = 10;
   const currentUser = useMemo(() => getCurrentUser(), []);
@@ -82,6 +133,66 @@ export default function DiscussionSection({ fetchComments: fetchCommentsFn, post
       })
       .catch(() => toast.error('Lỗi khi gửi'))
       .finally(() => setIsPosting(false));
+  };
+
+  const startEdit = (comment: Comment) => {
+    setEditingId(comment.id);
+    setEditingText(comment.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingText('');
+  };
+
+  const submitEdit = async (commentId: string) => {
+    if (!editCommentFn) return;
+    const trimmed = editingText.trim();
+    if (!trimmed) {
+      toast.error('Nội dung không được để trống');
+      return;
+    }
+    setIsSavingEdit(true);
+    try {
+      await editCommentFn(commentId, trimmed);
+      toast.success('Đã cập nhật bình luận');
+      cancelEdit();
+      loadComments(page);
+    } catch (err) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Lỗi khi cập nhật bình luận';
+      toast.error(msg);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const openReport = (comment: Comment) => {
+    setReportingComment(comment);
+    setReportReason('SPAM');
+    setReportNote('');
+  };
+
+  const submitReport = async () => {
+    if (!reportingComment || !reportCommentFn) return;
+    setIsReporting(true);
+    try {
+      await reportCommentFn(reportingComment.id, {
+        reasonType: reportReason,
+        note: reportNote.trim() || undefined,
+      });
+      toast.success('Đã gửi báo cáo. Cám ơn bạn!');
+      setReportingComment(null);
+      loadComments(page);
+    } catch (err) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Không thể gửi báo cáo';
+      toast.error(msg);
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   const topLevelComments = comments.filter((c) => !c.parentCommentId);
@@ -127,6 +238,10 @@ export default function DiscussionSection({ fetchComments: fetchCommentsFn, post
     const replies = isExpanded ? allReplies : allReplies.slice(0, REPLY_PREVIEW_COUNT);
     const hiddenCount = allReplies.length - REPLY_PREVIEW_COUNT;
     const isActive = replyingTo?.id === comment.id;
+    const isOwn = !!currentUser && comment.userId === currentUser.id;
+    const isEditing = editingId === comment.id;
+    const canEdit = !!editCommentFn && isOwn;
+    const canReport = !!reportCommentFn && !isOwn;
 
     return (
       <div key={comment.id}>
@@ -137,17 +252,79 @@ export default function DiscussionSection({ fetchComments: fetchCommentsFn, post
               <span className={`${isReply ? 'text-xs' : 'text-sm'} font-medium text-slate-700`}>
                 {comment.user?.fullName ?? 'Người dùng'}
               </span>
+              {comment.editedAt && (
+                <span
+                  className={`${isReply ? 'text-[10px]' : 'text-[11px]'} text-slate-400 italic`}
+                  title={`Đã chỉnh sửa lúc ${new Date(comment.editedAt).toLocaleString('vi-VN')}`}
+                >
+                  (đã chỉnh sửa)
+                </span>
+              )}
               <span className={`${isReply ? 'text-[10px]' : 'text-xs'} text-slate-400 ml-auto`}>
                 {new Date(comment.createdAt).toLocaleString('vi-VN')}
               </span>
             </div>
-            <p className={`${isReply ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 whitespace-pre-wrap`}>{comment.content}</p>
-            <button
-              className={`${isReply ? 'text-[11px]' : 'text-xs'} text-slate-400 hover:text-indigo-600 mt-1.5 font-medium transition-colors`}
-              onClick={() => setReplyingTo(isActive ? null : comment)}
-            >
-              {isActive ? 'Hủy' : 'Trả lời'}
-            </button>
+
+            {isEditing ? (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  autoFocus
+                  rows={3}
+                  className="w-full rounded-lg resize-none text-sm border border-indigo-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  maxLength={2000}
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => submitEdit(comment.id)}
+                    disabled={isSavingEdit || !editingText.trim() || editingText.trim() === comment.content}
+                  >
+                    <Save className="w-3.5 h-3.5 mr-1" />
+                    {isSavingEdit ? 'Đang lưu…' : 'Lưu'}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={isSavingEdit}>
+                    <X className="w-3.5 h-3.5 mr-1" /> Huỷ
+                  </Button>
+                  <span className="text-xs text-slate-400 ml-auto">
+                    {editingText.length}/2000
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className={`${isReply ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 whitespace-pre-wrap`}>
+                {comment.content}
+              </p>
+            )}
+
+            {!isEditing && (
+              <div className="flex items-center gap-3 mt-1.5">
+                <button
+                  className={`${isReply ? 'text-[11px]' : 'text-xs'} text-slate-400 hover:text-indigo-600 font-medium transition-colors`}
+                  onClick={() => setReplyingTo(isActive ? null : comment)}
+                >
+                  {isActive ? 'Hủy' : 'Trả lời'}
+                </button>
+                {canEdit && (
+                  <button
+                    className={`${isReply ? 'text-[11px]' : 'text-xs'} text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1`}
+                    onClick={() => startEdit(comment)}
+                  >
+                    <Pencil className="w-3 h-3" /> Sửa
+                  </button>
+                )}
+                {canReport && (
+                  <button
+                    className={`${isReply ? 'text-[11px]' : 'text-xs'} text-slate-400 hover:text-red-500 font-medium transition-colors inline-flex items-center gap-1`}
+                    onClick={() => openReport(comment)}
+                    title="Báo cáo bình luận không phù hợp"
+                  >
+                    <Flag className="w-3 h-3" /> Báo cáo
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -322,6 +499,68 @@ export default function DiscussionSection({ fetchComments: fetchCommentsFn, post
           <p className="text-xs text-slate-400 mt-2 ml-12">Nhấn Enter để gửi, Shift+Enter để xuống dòng.</p>
         </div>
       </div>
+
+      {/* Report dialog */}
+      <Dialog open={!!reportingComment} onOpenChange={(o) => !o && setReportingComment(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Flag className="w-5 h-5" /> Báo cáo bình luận
+            </DialogTitle>
+            <DialogDescription>
+              Bình luận sẽ được ẩn tạm thời nếu nhiều người báo cáo. Admin sẽ xem xét và quyết định.
+            </DialogDescription>
+          </DialogHeader>
+          {reportingComment && (
+            <div className="space-y-3">
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+                <div className="text-xs text-slate-500 mb-1">
+                  {reportingComment.user?.fullName ?? 'Người dùng'} • {new Date(reportingComment.createdAt).toLocaleString('vi-VN')}
+                </div>
+                <p className="text-slate-700 line-clamp-3 whitespace-pre-wrap">{reportingComment.content}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Lý do</label>
+                <Select value={reportReason} onValueChange={(v) => setReportReason(v as ReportReason)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(REASON_LABELS) as ReportReason[]).map((k) => (
+                      <SelectItem key={k} value={k}>{REASON_LABELS[k]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Ghi chú thêm <span className="text-xs text-slate-400 font-normal">(tuỳ chọn)</span>
+                </label>
+                <Textarea
+                  rows={3}
+                  maxLength={500}
+                  value={reportNote}
+                  onChange={(e) => setReportNote(e.target.value)}
+                  placeholder="Mô tả thêm để admin hiểu bối cảnh…"
+                />
+                <p className="text-[11px] text-slate-400 text-right">{reportNote.length}/500</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReportingComment(null)} disabled={isReporting}>
+              Huỷ
+            </Button>
+            <Button
+              onClick={submitReport}
+              disabled={isReporting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isReporting ? 'Đang gửi…' : 'Gửi báo cáo'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

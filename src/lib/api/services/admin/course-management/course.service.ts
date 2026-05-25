@@ -8,6 +8,8 @@ export interface UpdateCourseRequest {
   price?: number;
   courseLevel?: CourseLevel;
   status?: CourseStatus;
+  /** Required when status transitions to REFUSE — backend validates min 10 chars. */
+  rejectionReason?: string;
 }
 
 class CourseManagementService {

@@ -38,6 +38,13 @@ export interface Course {
   thumbnailUrl?: string;
   requirements?: string[];
   targetAudiences?: string[];
+  // Review workflow metadata (latest values; full audit trail at
+  // GET /courses/:id/review-history). Nullable when no transition yet.
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
+  reviewedById?: string | null;
   /** Optional relations - populated by API when requested */
   lessons?: Lesson[];
   user?: Pick<User, 'fullName' | 'id'>;

@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { Bell, MessageSquare, BookOpen, UserPlus, RefreshCw, Reply } from 'lucide-react';
+import {
+  Bell, MessageSquare, BookOpen, UserPlus, RefreshCw, Reply,
+  CheckCircle2, XCircle, ClipboardCheck, Wallet, AlertCircle, ShieldAlert,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -33,6 +36,10 @@ interface NotificationTypeConfig {
   bgColorUnread: string;
 }
 
+// Type keys are case-sensitive and must match the `type` column written by
+// notification-service handlers. Some are lowercase (legacy: course_comment),
+// some uppercase (newer: COURSE_APPROVED). Both forms are registered below;
+// getNotificationTypeConfig also tolerates whichever the backend sends.
 const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
   course_comment: {
     icon: MessageSquare,
@@ -62,6 +69,51 @@ const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
     bgColor: 'bg-amber-50',
     bgColorUnread: 'bg-amber-100',
   },
+  // ── Seller-specific events (emitted by course-service) ──────────────────
+  COURSE_APPROVED: {
+    icon: CheckCircle2,
+    label: 'Khoá học duyệt',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    bgColorUnread: 'bg-emerald-100',
+  },
+  COURSE_REJECTED: {
+    icon: XCircle,
+    label: 'Khoá học bị từ chối',
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
+    bgColorUnread: 'bg-red-100',
+  },
+  COURSE_SUBMITTED: {
+    icon: ClipboardCheck,
+    label: 'Khoá học cần duyệt',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    bgColorUnread: 'bg-amber-100',
+  },
+  // ── Wallet / withdrawal events (emitted by payment-service) ─────────────
+  WITHDRAWAL_APPROVED: {
+    icon: Wallet,
+    label: 'Rút tiền thành công',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    bgColorUnread: 'bg-emerald-100',
+  },
+  WITHDRAWAL_REJECTED: {
+    icon: AlertCircle,
+    label: 'Rút tiền bị từ chối',
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
+    bgColorUnread: 'bg-red-100',
+  },
+  // ── Moderation alert (admin-facing) ─────────────────────────────────────
+  comment_report: {
+    icon: ShieldAlert,
+    label: 'Báo cáo bình luận',
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
+    bgColorUnread: 'bg-red-100',
+  },
 };
 
 const DEFAULT_TYPE_CONFIG: NotificationTypeConfig = {
@@ -73,7 +125,13 @@ const DEFAULT_TYPE_CONFIG: NotificationTypeConfig = {
 };
 
 export function getNotificationTypeConfig(type: string): NotificationTypeConfig {
-  return NOTIFICATION_TYPE_MAP[type] || DEFAULT_TYPE_CONFIG;
+  // Try exact match first; fall back to uppercase for legacy lowercase keys.
+  return (
+    NOTIFICATION_TYPE_MAP[type] ||
+    NOTIFICATION_TYPE_MAP[type?.toUpperCase()] ||
+    NOTIFICATION_TYPE_MAP[type?.toLowerCase()] ||
+    DEFAULT_TYPE_CONFIG
+  );
 }
 
 // ============== Navigation helper ==============
@@ -81,18 +139,32 @@ export function getNotificationTypeConfig(type: string): NotificationTypeConfig 
 export function getNotificationLink(notification: InAppNotification): string | null {
   const meta = notification.metadata as Record<string, unknown> | null;
   const courseId = notification.courseId || (meta?.courseId as string);
+  // Normalise so a string like "Course_Approved" still matches the cases below.
+  const type = String(notification.type ?? '').toUpperCase();
 
-  switch (notification.type) {
-    case 'course_comment':
-    case 'comment_reply':
+  switch (type) {
+    case 'COURSE_COMMENT':
+    case 'COMMENT_REPLY':
       if (courseId && meta?.lessonId) {
-        return `/courses/${courseId}`;
+        return `/courses/${courseId}/lessons/${meta.lessonId as string}`;
       }
       return courseId ? `/courses/${courseId}` : null;
-    case 'course_enrollment':
+    case 'COURSE_ENROLLMENT':
       return courseId ? `/seller/courses/${courseId}` : '/seller/learners';
-    case 'course_update':
+    case 'COURSE_UPDATE':
       return courseId ? `/courses/${courseId}` : null;
+    case 'COURSE_APPROVED':
+    case 'COURSE_REJECTED':
+    case 'COURSE_SUBMITTED':
+      // Seller-facing detail page shows the rejection reason banner +
+      // approval status — exactly where the seller wants to go on click.
+      return courseId ? `/seller/courses/${courseId}` : '/seller/courses';
+    case 'WITHDRAWAL_APPROVED':
+    case 'WITHDRAWAL_REJECTED':
+      // Finance page hosts the withdrawal history tab — anchor that tab.
+      return '/seller/earnings?tab=withdrawals';
+    case 'COMMENT_REPORT':
+      return '/admin/moderation';
     default:
       return null;
   }

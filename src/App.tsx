@@ -49,6 +49,7 @@ import AdminDashboard from "./pages/admin/dashboard/Dashboard";
 import UsersManagement from "./pages/admin/user-management/Users";
 import CoursesManagement from "./pages/admin/course-management/Courses";
 import ApplicationsManagement from "./pages/admin/application-management/ApplicationsManagement";
+import CommentReports from "./pages/admin/moderation/CommentReports";
 import ReportsManagement from "./pages/admin/management/ReportsManagement";
 import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
@@ -167,6 +168,7 @@ const App = () => (
             <Route path="lessons/:lessonId" element={<AdminLessonDetail />} />
             <Route path="transactions" element={<TransactionsManagement />} />
             <Route path="applications" element={<ApplicationsManagement />} />
+            <Route path="moderation" element={<CommentReports />} />
             <Route path="exams" element={<ExamManagement />} />
             <Route path="exams/new" element={<ExamFormPage />} />
             <Route path="exams/new/writing" element={<WritingTestForm />} />
