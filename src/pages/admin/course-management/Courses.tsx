@@ -192,17 +192,14 @@ export default function CoursesManagement() {
                   <Check className="mr-2 h-4 w-4" />
                   Duyệt khóa học
                 </DropdownMenuItem>
+                {/* Rejection now requires a written reason — handled on the
+                    detail page where we can render a textarea. */}
                 <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() =>
-                    updateCourseMutation.mutate({
-                      id: course.id,
-                      data: { status: CourseStatus.REFUSE },
-                    })
-                  }
+                  onClick={() => navigate(`/admin/courses/${course.id}`)}
                 >
                   <X className="mr-2 h-4 w-4" />
-                  Từ chối
+                  Từ chối (mở chi tiết)
                 </DropdownMenuItem>
               </>
             )}

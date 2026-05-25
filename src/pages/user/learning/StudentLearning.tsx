@@ -171,6 +171,12 @@ const StudentLearningPage = () => {
                     postComment={async (content, parentCommentId) => {
                       return studentLearningService.createLessonComment(courseId, effectiveLessonId, { content, parentCommentId });
                     }}
+                    editComment={async (commentId, content) => {
+                      return studentLearningService.editLessonComment(courseId, effectiveLessonId, commentId, content);
+                    }}
+                    reportComment={async (commentId, payload) => {
+                      return studentLearningService.reportLessonComment(courseId, effectiveLessonId, commentId, payload);
+                    }}
                     title="Q&A / Bình luận bài học"
                     subtitle="Đặt câu hỏi hoặc thảo luận về nội dung bài học này"
                   />

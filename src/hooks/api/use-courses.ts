@@ -108,6 +108,10 @@ export const useSellerCourses = (
     },
     enabled: true, // Luôn enabled, sẽ dùng /me nếu không có sellerId
     staleTime: 2 * 60 * 1000,
+    // Keep showing the previous result while a new filter/search loads —
+    // without this, every change re-keys the query and flips isLoading=true,
+    // which makes the page re-render its full-screen spinner.
+    placeholderData: keepPreviousData,
     select: (response) => response.data,
   });
 };
@@ -184,8 +188,24 @@ export const usePublishCourse = () => {
       queryClient.setQueryData(['course', variables], response.data);
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
-      toast.success('Xuất bản khóa học thành công!');
+      queryClient.invalidateQueries({ queryKey: ['course-review-history', variables] });
+      toast.success('Đã gửi khóa học để admin duyệt!');
     },
+  });
+};
+
+/**
+ * Read the review-workflow audit trail for one of the seller's own courses.
+ * Powers the seller-facing timeline on SellerCourseDetail.
+ */
+export const useCourseReviewHistory = (
+  courseId: string | undefined,
+  enabled: boolean = true,
+) => {
+  return useQuery({
+    queryKey: ['course-review-history', courseId],
+    queryFn: () => courseService.getReviewHistory(courseId!),
+    enabled: !!courseId && enabled,
   });
 };
 

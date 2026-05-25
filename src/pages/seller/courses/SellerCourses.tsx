@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
-import FilterSection from '@/components/admin/FilterSection';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MoreHorizontal, Eye, Sparkles, Trash2, BookOpen } from 'lucide-react';
+import {
+  MoreHorizontal, Eye, Sparkles, Trash2, BookOpen, Search, X, CornerDownLeft,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatVND } from '@/lib/utils';
 import { useSellerCourses, useDeleteCourse } from '@/hooks/api';
@@ -44,8 +46,13 @@ export default function SellerCourses() {
   const { user, isLoading: isProfileLoading } = useProfile();
   const currentUserId = user?.id ?? '';
 
-  // Server-side filters
-  const [search, setSearch] = useState('');
+  // Two-tier search state:
+  //   - searchInput: what the seller is currently typing (free, no refetch)
+  //   - appliedSearch: what's actually sent to the backend (commit on Enter)
+  // Only the latter is in the query key, so each keystroke no longer
+  // re-fires the request or flashes a full-screen loading spinner.
+  const [searchInput, setSearchInput] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [status, setStatus] = useState<string>('ALL');
   const [level, setLevel] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortKey>('createdAt');
@@ -55,12 +62,13 @@ export default function SellerCourses() {
   const {
     data: sellerCoursesResponse,
     isLoading: isCoursesLoading,
+    isFetching: isCoursesFetching,
     isError: isCoursesError,
     error: coursesError,
     refetch: refetchCourses,
   } = useSellerCourses('', {
     status: status === 'ALL' ? undefined : (status as Course['status']),
-    search: search.trim() || undefined,
+    search: appliedSearch.trim() || undefined,
     level: level === 'ALL' ? undefined : level,
     limit: 100,
   });
@@ -136,7 +144,11 @@ export default function SellerCourses() {
     );
   }
 
-  if (isCoursesLoading || isProfileLoading) {
+  // Only block the page on the truly first load (no data yet). On every
+  // subsequent refetch (search committed, filter changed) the old rows stay
+  // visible thanks to keepPreviousData; a subtle isFetching indicator hints
+  // the table is updating.
+  if ((isCoursesLoading && !sellerCoursesResponse) || isProfileLoading) {
     return (
       <div className="flex justify-center py-10">
         <LoadingSpinner text="Đang tải khoá học..." />
@@ -144,7 +156,7 @@ export default function SellerCourses() {
     );
   }
 
-  if (isCoursesError) {
+  if (isCoursesError && !sellerCoursesResponse) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Quản lý khoá học của tôi</h1>
@@ -155,6 +167,8 @@ export default function SellerCourses() {
       </div>
     );
   }
+
+  const isRefetching = isCoursesFetching && !isCoursesLoading;
 
   return (
     <div className="space-y-6">
@@ -178,36 +192,35 @@ export default function SellerCourses() {
         </div>
       </div>
 
-      <FilterSection
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Tìm kiếm theo tiêu đề"
-        filters={[
-          {
-            value: status,
-            onChange: setStatus,
-            options: [
-              { value: 'ALL', label: 'Tất cả trạng thái' },
-              { value: 'ACTIVE', label: 'Đang hoạt động' },
-              { value: 'PENDING', label: 'Chờ duyệt' },
-              { value: 'REFUSE', label: 'Bị từ chối' },
-              { value: 'INACTIVE', label: 'Tạm dừng' },
-              { value: 'DRAFT', label: 'Bản nháp' },
-            ],
-            placeholder: 'Trạng thái',
-          },
-          {
-            value: level,
-            onChange: setLevel,
-            options: levels.map((l) => ({ value: l, label: l === 'ALL' ? 'Tất cả level' : l })),
-            placeholder: 'Level',
-          },
-        ]}
+      <CourseFiltersBar
+        searchInput={searchInput}
+        appliedSearch={appliedSearch}
+        onSearchInput={setSearchInput}
+        onSearchSubmit={() => setAppliedSearch(searchInput.trim())}
+        onSearchClear={() => {
+          setSearchInput('');
+          setAppliedSearch('');
+        }}
+        status={status}
+        onStatusChange={setStatus}
+        level={level}
+        onLevelChange={setLevel}
+        levels={levels}
+        onResetAll={() => {
+          setSearchInput('');
+          setAppliedSearch('');
+          setStatus('ALL');
+          setLevel('ALL');
+        }}
       />
 
       <DataTable<Course>
-        title="Khoá học"
-        description="Danh sách khoá học của bạn"
+        title={`Khoá học${isRefetching ? ' • đang tải...' : ''}`}
+        description={
+          appliedSearch
+            ? `Đang lọc theo "${appliedSearch}" — xoá ô tìm kiếm và Enter để bỏ lọc`
+            : 'Danh sách khoá học của bạn'
+        }
         data={sortedCourses}
         columns={[
           {
@@ -316,5 +329,156 @@ export default function SellerCourses() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+// ─── Filters bar ───────────────────────────────────────────────────────────
+// Custom UX (better than the shared FilterSection for this page):
+//   - Search input with leading icon + clearable X button
+//   - Pending hint "↵ Enter" when typed text hasn't been applied yet
+//   - Esc clears the input
+//   - Active filter chips below — each removable independently
+//   - "Xoá tất cả bộ lọc" link when ≥1 filter is active
+
+interface CourseFiltersBarProps {
+  searchInput: string;
+  appliedSearch: string;
+  onSearchInput: (v: string) => void;
+  onSearchSubmit: () => void;
+  onSearchClear: () => void;
+  status: string;
+  onStatusChange: (v: string) => void;
+  level: string;
+  onLevelChange: (v: string) => void;
+  levels: string[];
+  onResetAll: () => void;
+}
+
+const STATUS_OPTIONS = [
+  { value: 'ALL', label: 'Tất cả trạng thái' },
+  { value: 'ACTIVE', label: 'Đang hoạt động' },
+  { value: 'PENDING', label: 'Chờ duyệt' },
+  { value: 'REFUSE', label: 'Bị từ chối' },
+  { value: 'INACTIVE', label: 'Tạm dừng' },
+  { value: 'DRAFT', label: 'Bản nháp' },
+];
+
+function CourseFiltersBar({
+  searchInput, appliedSearch, onSearchInput, onSearchSubmit, onSearchClear,
+  status, onStatusChange, level, onLevelChange, levels, onResetAll,
+}: CourseFiltersBarProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hasPending = searchInput.trim() !== appliedSearch.trim();
+  const hasInput = searchInput.length > 0;
+  const hasAnyFilter = appliedSearch !== '' || status !== 'ALL' || level !== 'ALL';
+
+  const statusLabel = STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            ref={inputRef}
+            value={searchInput}
+            onChange={(e) => onSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                onSearchSubmit();
+              } else if (e.key === 'Escape' && hasInput) {
+                e.preventDefault();
+                onSearchClear();
+              }
+            }}
+            placeholder="Tìm theo tiêu đề khoá học..."
+            className="pl-9 pr-24"
+          />
+          {/* Right-side adornments: pending hint + clear button */}
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {hasPending && (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                <CornerDownLeft className="w-3 h-3" /> Enter
+              </span>
+            )}
+            {hasInput && (
+              <button
+                type="button"
+                aria-label="Xoá ô tìm kiếm"
+                onClick={() => {
+                  onSearchClear();
+                  inputRef.current?.focus();
+                }}
+                className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-slate-100"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <Select value={status} onValueChange={onStatusChange}>
+          <SelectTrigger className="w-full md:w-[180px]">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={level} onValueChange={onLevelChange}>
+          <SelectTrigger className="w-full md:w-[140px]">
+            <SelectValue placeholder="Level" />
+          </SelectTrigger>
+          <SelectContent>
+            {levels.map((l) => (
+              <SelectItem key={l} value={l}>{l === 'ALL' ? 'Tất cả level' : l}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Active filter chips */}
+      {hasAnyFilter && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground">Đang lọc:</span>
+          {appliedSearch && (
+            <FilterChip label={`Tìm: "${appliedSearch}"`} onRemove={onSearchClear} />
+          )}
+          {status !== 'ALL' && (
+            <FilterChip label={statusLabel} onRemove={() => onStatusChange('ALL')} />
+          )}
+          {level !== 'ALL' && (
+            <FilterChip label={`Level ${level}`} onRemove={() => onLevelChange('ALL')} />
+          )}
+          <button
+            type="button"
+            onClick={onResetAll}
+            className="text-xs text-primary hover:underline ml-1"
+          >
+            Xoá tất cả
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+      {label}
+      <button
+        type="button"
+        aria-label={`Xoá ${label}`}
+        onClick={onRemove}
+        className="rounded-full hover:bg-primary/20 p-0.5"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </span>
   );
 }

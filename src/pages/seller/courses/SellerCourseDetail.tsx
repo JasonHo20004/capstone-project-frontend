@@ -14,12 +14,13 @@ import {
 import { CourseMetadataTab } from '@/components/seller/CourseMetadataTab';
 import { CourseModulesTab } from '@/components/seller/CourseModulesTab';
 import { CourseFinalTestTab } from '@/components/seller/CourseFinalTestTab';
+import { CourseReviewWorkflow } from '@/components/seller/CourseReviewWorkflow';
 import { EmptyState } from '@/components/seller/EmptyState';
 import { ErrorMessage } from '@/components/ui/error-message';
 import {
   ArrowLeft, BookOpen, Star, Clock, GraduationCap,
   Layers, FileText, Settings, ClipboardCheck, ClipboardList,
-  Rocket, CheckCircle2, XCircle, Eye,
+  Eye,
 } from 'lucide-react';
 import type { CourseStatus, CourseLevel, Lesson, Rating, CourseLesson } from '@/domain';
 
@@ -99,16 +100,48 @@ export default function SellerCourseDetail() {
 
   const publishChecklist = useMemo(() => {
     const merged = { ...course, ...draft };
+    const hasLessonWithContent = lessons.some(
+      (l) => (l.durationInSeconds ?? 0) > 0 || !!l.testId
+    );
     return [
-      { key: 'thumbnail', label: 'Có ảnh thumbnail', done: !!merged.thumbnailUrl || !!thumbnailFile },
-      { key: 'description', label: 'Có mô tả khoá học', done: !!(merged.description && merged.description.trim().length >= 20) },
-      { key: 'price', label: 'Đã đặt giá', done: typeof merged.price === 'number' && merged.price >= 0 },
-      { key: 'level', label: 'Đã chọn trình độ', done: !!merged.courseLevel },
-      { key: 'lessons', label: 'Có ít nhất 1 bài học', done: lessons.length > 0 },
+      {
+        key: 'thumbnail',
+        label: 'Có ảnh thumbnail',
+        done: !!merged.thumbnailUrl || !!thumbnailFile,
+        hint: 'Lên ảnh thumbnail ở tab "Cập nhật"',
+      },
+      {
+        key: 'description',
+        label: 'Có mô tả khoá học (≥ 20 ký tự)',
+        done: !!(merged.description && merged.description.trim().length >= 20),
+        hint: 'Mô tả ngắn gọn về mục tiêu & nội dung khoá học',
+      },
+      {
+        key: 'price',
+        label: 'Đã đặt giá',
+        done: typeof merged.price === 'number' && merged.price >= 0,
+        hint: 'Đặt 0đ cho khoá miễn phí',
+      },
+      {
+        key: 'level',
+        label: 'Đã chọn trình độ',
+        done: !!merged.courseLevel,
+        hint: 'A1, A2, B1, B2, C1, hoặc C2',
+      },
+      {
+        key: 'lessons-min',
+        label: 'Có ít nhất 3 bài học',
+        done: lessons.length >= 3,
+        hint: `Hiện có ${lessons.length} bài học`,
+      },
+      {
+        key: 'lesson-content',
+        label: 'Ít nhất 1 bài học có nội dung (video hoặc bài kiểm tra)',
+        done: hasLessonWithContent,
+        hint: 'Upload video hoặc gắn quiz vào bài học',
+      },
     ];
-  }, [course, draft, thumbnailFile, lessons.length]);
-
-  const allChecksDone = publishChecklist.every((c) => c.done);
+  }, [course, draft, thumbnailFile, lessons]);
 
   const handlePublish = async () => {
     if (!id) return;
@@ -321,45 +354,24 @@ export default function SellerCourseDetail() {
               <QuickStatCard icon={<Clock className="w-5 h-5 text-teal-500" />} label="Thời lượng" value={totalDuration > 0 ? `${Math.round(totalDuration / 60)} phút` : '0'} />
               <QuickStatCard icon={<Star className="w-5 h-5 text-amber-500" />} label="Đánh giá TB" value={averageRating ?? '—'} />
             </div>
-            {(merged.status === 'DRAFT' || merged.status === 'REFUSE') && (
-              <Card className={`border ${allChecksDone ? 'border-emerald-200 bg-emerald-50/30' : 'border-amber-200 bg-amber-50/30'} shadow-sm`}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Rocket className={`w-4 h-4 ${allChecksDone ? 'text-emerald-600' : 'text-amber-600'}`} />
-                    Sẵn sàng xuất bản?
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <ul className="space-y-1.5">
-                    {publishChecklist.map((c) => (
-                      <li key={c.key} className="flex items-center gap-2 text-sm">
-                        {c.done ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                        )}
-                        <span className={c.done ? 'text-slate-700' : 'text-slate-500'}>{c.label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <p className="text-xs text-slate-500">
-                      {allChecksDone
-                        ? 'Đã đủ điều kiện. Gửi duyệt để admin kích hoạt khoá học.'
-                        : 'Hoàn thành các mục trên trước khi gửi duyệt.'}
-                    </p>
-                    <Button
-                      size="sm"
-                      onClick={handlePublish}
-                      disabled={!allChecksDone || publishCourseMutation.isPending}
-                      className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      {publishCourseMutation.isPending ? 'Đang gửi…' : 'Gửi duyệt'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <CourseReviewWorkflow
+              course={{
+                id: course.id,
+                title: merged.title ?? course.title,
+                description: (merged.description ?? course.description) ?? null,
+                price: (merged.price ?? course.price) ?? null,
+                courseLevel: (merged.courseLevel ?? course.courseLevel) ?? null,
+                thumbnailUrl: (merged.thumbnailUrl ?? course.thumbnailUrl) ?? null,
+                status: merged.status ?? course.status,
+                submittedAt: course.submittedAt ?? null,
+                approvedAt: course.approvedAt ?? null,
+                rejectedAt: course.rejectedAt ?? null,
+                rejectionReason: course.rejectionReason ?? null,
+              }}
+              checklist={publishChecklist}
+              isSubmitting={publishCourseMutation.isPending}
+              onSubmit={handlePublish}
+            />
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">

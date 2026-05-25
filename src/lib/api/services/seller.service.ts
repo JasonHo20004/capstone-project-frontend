@@ -54,6 +54,12 @@ export interface SellerComment {
   courseId: string;
   courseTitle: string;
   createdAt: string;
+  /** Backend now also returns: parentCommentId, isOwn, isReply, isAnswered */
+  parentCommentId?: string | null;
+  isOwn?: boolean;
+  isReply?: boolean;
+  /** null when not a top-level student comment (own reply or seller's own comment). */
+  isAnswered?: boolean | null;
 }
 
 /**
@@ -65,8 +71,26 @@ export interface SellerMonthlyFee {
   month: number;
   year: number;
   grossAmount: number;
+  /** Backend now returns gateway fee separately so the FE can show full breakdown. */
+  gatewayFee?: number;
   platformFee: number;
   netAmount: number;
+  /** Number of sales contributing to this month. */
+  salesCount?: number;
+}
+
+export interface SellerMonthlyFeeDetailRow {
+  id: string;
+  createdAt: string;
+  courseId: string;
+  courseTitle: string;
+  orderId: string;
+  totalAmount: number;
+  gatewayFee: number;
+  commissionAmount: number;
+  sellerAmount: number;
+  status: string;
+  availableAt: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -141,14 +165,36 @@ class SellerService {
     page?: number;
     limit?: number;
     search?: string;
+    courseId?: string;
+    status?: 'all' | 'unanswered' | 'answered';
   }): Promise<ApiResponse<GetCommentsResponse>> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.search) queryParams.append('search', params.search);
+    if (params?.courseId) queryParams.append('courseId', params.courseId);
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status);
 
     const response = await apiClient.get<ApiResponse<GetCommentsResponse>>(
       `/seller/comments?${queryParams.toString()}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Delete a comment on one of seller's own courses (moderation).
+   */
+  async deleteComment(commentId: string): Promise<ApiResponse<unknown>> {
+    const response = await apiClient.delete<ApiResponse<unknown>>(
+      `/seller/comments/${commentId}`
+    );
+    return response.data;
+  }
+
+  /** Aggregate counts for the comments-inbox header. */
+  async getCommentsSummary(): Promise<ApiResponse<{ total: number; unanswered: number; answered: number }>> {
+    const response = await apiClient.get<ApiResponse<{ total: number; unanswered: number; answered: number }>>(
+      `/seller/comments/summary`
     );
     return response.data;
   }
@@ -165,6 +211,20 @@ class SellerService {
 
     const response = await apiClient.get<ApiResponse<GetMonthlyFeesResponse>>(
       `/seller/fees?${queryParams.toString()}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Per-order detail for a single (year, month) bucket of seller fees.
+   * Powers the drill-down modal.
+   */
+  async getMonthlyFeeDetail(
+    year: number,
+    month: number
+  ): Promise<ApiResponse<SellerMonthlyFeeDetailRow[]>> {
+    const response = await apiClient.get<ApiResponse<SellerMonthlyFeeDetailRow[]>>(
+      `/seller/fees/${year}/${month}/detail`
     );
     return response.data;
   }

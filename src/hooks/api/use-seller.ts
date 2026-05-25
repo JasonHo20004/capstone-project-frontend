@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
   sellerService,
   type SellerDashboardStats,
@@ -32,22 +32,50 @@ export const useSellerLearners = (params?: {
     queryKey: ['seller', 'learners', params],
     queryFn: () => sellerService.getLearners(params),
     staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
     select: (response) => response.data,
   });
 };
 
 /**
- * Hook để lấy danh sách bình luận của seller
+ * Hook để lấy danh sách bình luận của seller — hỗ trợ lọc theo course
+ * và trạng thái trả lời (unanswered / answered / all).
  */
 export const useSellerComments = (params?: {
   page?: number;
   limit?: number;
   search?: string;
+  courseId?: string;
+  status?: 'all' | 'unanswered' | 'answered';
 }) => {
   return useQuery({
     queryKey: ['seller', 'comments', params],
     queryFn: () => sellerService.getComments(params),
     staleTime: 2 * 60 * 1000,
+    // Keep showing the previous result while a new search/filter is loading.
+    // Without this, every keystroke flips isLoading=true → the page renders
+    // a full-screen spinner → input loses focus and "feels like reload".
+    placeholderData: keepPreviousData,
+    select: (response) => response.data,
+  });
+};
+
+export const useDeleteSellerComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => sellerService.deleteComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller', 'comments'] });
+    },
+  });
+};
+
+/** Comments-inbox summary used by the page header. */
+export const useSellerCommentsSummary = () => {
+  return useQuery({
+    queryKey: ['seller', 'comments', 'summary'],
+    queryFn: () => sellerService.getCommentsSummary(),
+    staleTime: 60 * 1000,
     select: (response) => response.data,
   });
 };
@@ -63,6 +91,24 @@ export const useSellerMonthlyFees = (params?: {
     queryFn: () => sellerService.getMonthlyFees(params),
     staleTime: 2 * 60 * 1000,
     select: (response) => response.data,
+  });
+};
+
+/**
+ * Drill-down detail for one (year, month). Only fires when enabled=true,
+ * keeping the modal cheap to mount before the user picks a month.
+ */
+export const useSellerMonthlyFeeDetail = (
+  year: number | undefined,
+  month: number | undefined,
+  enabled: boolean = true,
+) => {
+  return useQuery({
+    queryKey: ['seller', 'fees', 'detail', year, month],
+    queryFn: () => sellerService.getMonthlyFeeDetail(year!, month!),
+    enabled: enabled && !!year && !!month,
+    staleTime: 60 * 1000,
+    select: (response) => response.data ?? [],
   });
 };
 

@@ -18,6 +18,12 @@ interface FilterOption {
 interface FilterSectionProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
+  /**
+   * Optional Enter handler. When provided, the consumer typically holds a
+   * separate "applied search" state and only updates the query when this
+   * fires — so each keystroke doesn't trigger a refetch / loading flash.
+   */
+  onSearchSubmit?: () => void;
   searchPlaceholder?: string;
   filters?: {
     value: string;
@@ -34,6 +40,7 @@ interface FilterSectionProps {
 export default function FilterSection({
   searchValue,
   onSearchChange,
+  onSearchSubmit,
   searchPlaceholder = "Tìm kiếm...",
   filters = [],
   actions,
@@ -50,6 +57,12 @@ export default function FilterSection({
             placeholder={searchPlaceholder}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && onSearchSubmit) {
+                e.preventDefault();
+                onSearchSubmit();
+              }
+            }}
             className="pl-8"
           />
         </div>

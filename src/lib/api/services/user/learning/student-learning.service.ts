@@ -56,6 +56,37 @@ class StudentLearningService {
     return response.data;
   }
 
+  async editLessonComment(
+    courseId: string,
+    lessonId: string,
+    commentId: string,
+    content: string
+  ) {
+    const response = await apiClient.patch<ApiResponse<LessonCommentsResponse["comments"][number]>>(
+      `/student/courses/${courseId}/lessons/${lessonId}/comments/${commentId}`,
+      { content }
+    );
+    return response.data;
+  }
+
+  async reportLessonComment(
+    courseId: string,
+    lessonId: string,
+    commentId: string,
+    payload: {
+      reasonType: 'SPAM' | 'ABUSE' | 'SCAM' | 'MISINFORMATION' | 'OFF_TOPIC' | 'OTHER';
+      note?: string;
+    }
+  ) {
+    const response = await apiClient.post<
+      ApiResponse<{ autoHidden: boolean; totalReports: number }>
+    >(
+      `/student/courses/${courseId}/lessons/${lessonId}/comments/${commentId}/report`,
+      payload
+    );
+    return response.data;
+  }
+
   async getCourseRatings(courseId: string, params?: PaginatedParams) {
     // Backend returns: { success, message, data: [...ratings], averageScore, pagination }
     const response = await apiClient.get<{ data: unknown }>(
