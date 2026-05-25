@@ -1,10 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { userSubscriptionService } from "@/lib/api/services/user";
+import type { UserSubscriptionStatus } from "@/domain";
 
 const PLANS_KEY = ["user-plans"] as const;
 const MY_SUBSCRIPTION_KEY = ["my-subscription"] as const;
 const SUBSCRIPTION_HISTORY_KEY = ["subscription-history"] as const;
+
+export const SUBSCRIPTION_CACHE_KEY = "capstone_my_subscription";
+
+function readCachedSubscription(): UserSubscriptionStatus | null | undefined {
+  try {
+    const raw = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
+    if (raw === null) return undefined;
+    return JSON.parse(raw) as UserSubscriptionStatus | null;
+  } catch {
+    localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
+    return undefined;
+  }
+}
 
 export const useUserPlans = () => {
   return useQuery({
@@ -25,6 +39,8 @@ export const useMySubscription = () => {
       return res.data ?? null;
     },
     staleTime: 60 * 1000,
+    initialData: readCachedSubscription,
+    initialDataUpdatedAt: 0,
   });
 };
 

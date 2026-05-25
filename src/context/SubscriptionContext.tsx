@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { useMySubscription } from '@/hooks/api/use-user-subscription';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import { useMySubscription, SUBSCRIPTION_CACHE_KEY } from '@/hooks/api/use-user-subscription';
 import type { UserSubscriptionStatus, PremiumFeature } from '@/domain';
 
 interface SubscriptionContextValue {
@@ -13,6 +13,12 @@ const SubscriptionContext = createContext<SubscriptionContextValue | undefined>(
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const { data: subscriptionData, isLoading } = useMySubscription();
+
+  useEffect(() => {
+    if (subscriptionData !== undefined) {
+      localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify(subscriptionData));
+    }
+  }, [subscriptionData]);
 
   const value = useMemo<SubscriptionContextValue>(() => {
     const plan = subscriptionData?.plan ?? null;
