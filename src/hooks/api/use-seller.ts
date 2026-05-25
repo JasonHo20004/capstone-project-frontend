@@ -27,6 +27,8 @@ export const useSellerLearners = (params?: {
   limit?: number;
   search?: string;
   courseId?: string;
+  sortBy?: 'date' | 'course';
+  sortOrder?: 'asc' | 'desc';
 }) => {
   return useQuery({
     queryKey: ['seller', 'learners', params],

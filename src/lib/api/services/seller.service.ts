@@ -111,6 +111,11 @@ export interface GetLearnersResponse {
     limit: number;
     totalPages: number;
   };
+  /** Aggregate header counters returned by BE, independent of pagination. */
+  stats?: {
+    uniqueCoursesCount: number;
+    newThisWeekCount: number;
+  };
 }
 
 export interface GetCommentsResponse {
@@ -145,12 +150,16 @@ class SellerService {
     limit?: number;
     search?: string;
     courseId?: string;
+    sortBy?: 'date' | 'course';
+    sortOrder?: 'asc' | 'desc';
   }): Promise<ApiResponse<GetLearnersResponse>> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.courseId) queryParams.append('courseId', params.courseId);
+    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
     const response = await apiClient.get<ApiResponse<GetLearnersResponse>>(
       `/seller/learners?${queryParams.toString()}`
