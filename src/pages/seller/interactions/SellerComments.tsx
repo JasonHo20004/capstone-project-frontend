@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import {
   ExternalLink, Trash2, MessageSquare, CheckCircle2, Clock, Search, X,
-  CornerDownLeft, RefreshCw, Send, Reply, Inbox,
+  CornerDownLeft, RefreshCw, Send, Reply, Inbox, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { courseService } from '@/lib/api/services/course.service';
@@ -41,6 +41,7 @@ import type { Course } from '@/domain';
 
 type StatusFilter = 'all' | 'unanswered' | 'answered';
 const PAGE_SIZE = 20;
+const REPLY_MAX = 2000;
 
 /** Compact human-friendly time: "vừa xong" → "Hôm qua" → date. */
 function relativeTime(iso: string): string {
@@ -56,10 +57,17 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('vi-VN');
 }
 
+function getInitials(name: string): string {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+}
+
 export default function SellerComments() {
   const navigate = useNavigate();
+  const listTopRef = useRef<HTMLDivElement>(null);
 
-  // ── State (hooks always called in the same order — no early returns) ──
+  // ── State ──────────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [courseId, setCourseId] = useState<string>('ALL');
@@ -69,11 +77,12 @@ export default function SellerComments() {
   const [replyingId, setReplyingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [isPostingReply, setIsPostingReply] = useState(false);
+  // Locally-answered IDs bridge the gap between "user just replied" and the
+  // next refetch so the badge updates immediately.
+  const [locallyAnswered, setLocallyAnswered] = useState<Set<string>>(new Set());
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Fetch a big window (limit=200) once per filter combo and paginate
-  // client-side. Simple — avoids needing a pageCursor on the BE for now.
-  // If volume blows past 200/seller the BE pagination should be wired in.
+  // Real BE pagination: hand `page` + `limit` to the API and trust its totals.
   const {
     data: commentsData,
     isLoading,
@@ -82,7 +91,8 @@ export default function SellerComments() {
     refetch,
   } = useSellerComments({
     search: appliedSearch,
-    limit: 200,
+    page,
+    limit: PAGE_SIZE,
     courseId: courseId === 'ALL' ? undefined : courseId,
     status,
   });
@@ -105,30 +115,29 @@ export default function SellerComments() {
 
   const deleteMutation = useDeleteSellerComment();
 
-  // Sort: unanswered student comments first (so they're never buried),
-  // then newest. Seller-own + answered fall back to plain newest-first.
-  const sortedRows = useMemo(() => {
-    const list = [...(commentsData?.comments ?? [])];
-    list.sort((a, b) => {
-      const aUn = a.isAnswered === false ? 0 : 1;
-      const bUn = b.isAnswered === false ? 0 : 1;
-      if (aUn !== bUn) return aUn - bUn;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-    return list;
-  }, [commentsData?.comments]);
+  const rows = useMemo(() => {
+    const list = commentsData?.comments ?? [];
+    if (locallyAnswered.size === 0) return list;
+    return list.map((c) =>
+      locallyAnswered.has(c.id) && c.isAnswered === false
+        ? { ...c, isAnswered: true }
+        : c
+    );
+  }, [commentsData?.comments, locallyAnswered]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const pagedRows = useMemo(
-    () => sortedRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [sortedRows, safePage]
-  );
+  const pagination = commentsData?.pagination;
+  const total = pagination?.total ?? 0;
+  const totalPages = Math.max(1, pagination?.totalPages ?? 1);
+
+  // Clamp page back into range when filters shrink the result set.
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const isRefetching = isFetching && !isLoading;
   const hasAnyFilter = appliedSearch !== '' || courseId !== 'ALL' || status !== 'all';
 
-  // ── Handlers ──────────────────────────────────────────────────────────
+  // ── Handlers ───────────────────────────────────────────────────────────
   const applySearch = () => {
     setAppliedSearch(searchInput.trim());
     setPage(1);
@@ -152,6 +161,13 @@ export default function SellerComments() {
   const handleRefresh = () => {
     refetch();
     refetchSummary();
+  };
+
+  const goToPage = (p: number) => {
+    setPage(p);
+    requestAnimationFrame(() => {
+      listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   const handleDelete = async () => {
@@ -184,10 +200,13 @@ export default function SellerComments() {
     if (!trimmed) return;
     setIsPostingReply(true);
     try {
-      // Reply attaches under the top-level comment so threading works in
-      // both the seller and student lesson views.
       const parentId = comment.parentCommentId ?? comment.id;
       await courseService.postComment(comment.courseId, comment.lessonId, trimmed, parentId);
+      setLocallyAnswered((prev) => {
+        const next = new Set(prev);
+        next.add(parentId);
+        return next;
+      });
       toast.success('Đã gửi trả lời');
       cancelReply();
       refetch();
@@ -228,6 +247,12 @@ export default function SellerComments() {
     answered: 'Đã trả lời',
   };
 
+  const jumpToUnanswered = () => {
+    if (!summary || summary.unanswered === 0) return;
+    setStatus('unanswered');
+    setPage(1);
+  };
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -257,34 +282,43 @@ export default function SellerComments() {
             </div>
           </CardContent>
         </Card>
-        <Card
-          className={
-            summary && summary.unanswered > 0
-              ? 'border-amber-300 bg-amber-50/40 cursor-pointer hover:bg-amber-50/70 transition-colors'
-              : ''
-          }
-          onClick={() => {
-            if (summary && summary.unanswered > 0) {
-              setStatus('unanswered');
-              setPage(1);
-            }
-          }}
-        >
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-700" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Chưa trả lời</p>
-              <p className="text-xl font-bold font-display text-amber-700">
-                {summary?.unanswered ?? '—'}
-              </p>
-              {summary && summary.unanswered > 0 && (
+        {summary && summary.unanswered > 0 ? (
+          <button
+            type="button"
+            onClick={jumpToUnanswered}
+            className="text-left rounded-lg border border-amber-300 bg-amber-50/40 hover:bg-amber-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors"
+            aria-label={`Có ${summary.unanswered} bình luận chưa trả lời, bấm để xem`}
+          >
+            <div className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center relative">
+                <Clock className="w-5 h-5 text-amber-700" />
+                <span className="absolute -top-1 -right-1 inline-flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500/60 animate-ping" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+                </span>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Chưa trả lời</p>
+                <p className="text-xl font-bold font-display text-amber-700">{summary.unanswered}</p>
                 <p className="text-[10px] text-amber-700/70 mt-0.5">Bấm để xem ngay</p>
-              )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </button>
+        ) : (
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-amber-700" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Chưa trả lời</p>
+                <p className="text-xl font-bold font-display text-amber-700">
+                  {summary?.unanswered ?? '—'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
@@ -303,7 +337,6 @@ export default function SellerComments() {
       {/* Filters bar */}
       <div className="space-y-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          {/* Search input with icon + clear + pending hint */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -381,7 +414,6 @@ export default function SellerComments() {
           </Select>
         </div>
 
-        {/* Active filter chips */}
         {hasAnyFilter && (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground">Đang lọc:</span>
@@ -412,13 +444,13 @@ export default function SellerComments() {
       </div>
 
       {/* Comment list */}
-      <div className="space-y-3">
+      <div ref={listTopRef} className="space-y-3 scroll-mt-4">
         <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-          <span>{sortedRows.length} bình luận</span>
+          <span>{total.toLocaleString('vi-VN')} bình luận</span>
           {isRefetching && <span>• đang tải...</span>}
         </div>
 
-        {pagedRows.length === 0 ? (
+        {rows.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="py-12 text-center">
               <MessageSquare className="w-10 h-10 opacity-30 mx-auto" />
@@ -433,7 +465,7 @@ export default function SellerComments() {
             </CardContent>
           </Card>
         ) : (
-          pagedRows.map((c) => (
+          rows.map((c) => (
             <CommentRow
               key={c.id}
               comment={c}
@@ -455,21 +487,21 @@ export default function SellerComments() {
             <Button
               variant="outline"
               size="sm"
-              disabled={safePage <= 1}
-              onClick={() => setPage(safePage - 1)}
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
             >
-              Trước
+              <ChevronLeft className="w-4 h-4 mr-1" /> Trước
             </Button>
             <span className="text-sm text-muted-foreground">
-              Trang {safePage} / {totalPages}
+              Trang {page} / {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
-              disabled={safePage >= totalPages}
-              onClick={() => setPage(safePage + 1)}
+              disabled={page >= totalPages}
+              onClick={() => goToPage(page + 1)}
             >
-              Tiếp
+              Tiếp <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         )}
@@ -487,7 +519,8 @@ export default function SellerComments() {
               </span>
               {pendingDelete && (
                 <span className="block text-xs text-muted-foreground border-l-2 pl-2 mt-2 italic">
-                  "{pendingDelete.content.slice(0, 200)}"
+                  "{pendingDelete.content.slice(0, 200)}
+                  {pendingDelete.content.length > 200 ? '…' : ''}"
                 </span>
               )}
             </AlertDialogDescription>
@@ -543,28 +576,53 @@ function CommentRow({
   comment, isReplying, replyText, isPostingReply,
   onReplyChange, onStartReply, onCancelReply, onSubmitReply, onJump, onDelete,
 }: CommentRowProps) {
+  const remaining = REPLY_MAX - replyText.length;
+  const counterClass =
+    remaining < 0
+      ? 'text-destructive font-semibold'
+      : remaining < 100
+        ? 'text-amber-600 font-medium'
+        : 'text-muted-foreground';
+
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-4 space-y-3">
-        {/* Header row: status + author + time */}
-        <div className="flex items-center gap-2 flex-wrap text-xs">
-          <CommentStatusBadge comment={comment} />
-          <span className="font-medium text-slate-700">{comment.userName}</span>
-          <span className="text-muted-foreground">•</span>
-          <span
-            className="text-muted-foreground"
-            title={new Date(comment.createdAt).toLocaleString('vi-VN')}
-          >
-            {relativeTime(comment.createdAt)}
-          </span>
-          <span className="text-muted-foreground">•</span>
-          <span className="text-muted-foreground truncate">
-            {comment.courseTitle} → {comment.lessonTitle}
-          </span>
+        {/* Header row: avatar + name/badge + meta */}
+        <div className="flex items-start gap-3">
+          {comment.userProfilePicture ? (
+            <img
+              src={comment.userProfilePicture}
+              alt={comment.userName}
+              className="w-9 h-9 rounded-full object-cover shrink-0 border"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold border border-primary/20">
+              {getInitials(comment.userName)}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <span className="font-medium text-slate-700">{comment.userName}</span>
+              <CommentStatusBadge comment={comment} />
+              <span className="text-muted-foreground">•</span>
+              <span
+                className="text-muted-foreground"
+                title={new Date(comment.createdAt).toLocaleString('vi-VN')}
+              >
+                {relativeTime(comment.createdAt)}
+              </span>
+            </div>
+            <p
+              className="text-[11px] text-muted-foreground/80 truncate mt-0.5"
+              title={`${comment.courseTitle} → ${comment.lessonTitle}`}
+            >
+              {comment.courseTitle} <span className="opacity-60">→</span> {comment.lessonTitle}
+            </p>
+          </div>
         </div>
 
         {/* Content */}
-        <p className="text-sm text-slate-700 whitespace-pre-wrap">
+        <p className="text-sm text-slate-700 whitespace-pre-wrap break-words">
           {comment.isReply && (
             <span className="text-xs text-muted-foreground mr-1">↳</span>
           )}
@@ -609,7 +667,7 @@ function CommentRow({
                   onCancelReply();
                 }
               }}
-              maxLength={2000}
+              maxLength={REPLY_MAX}
               className="text-sm resize-none"
             />
             <div className="flex items-center gap-2">
@@ -624,8 +682,8 @@ function CommentRow({
               <Button size="sm" variant="ghost" onClick={onCancelReply} disabled={isPostingReply}>
                 Huỷ
               </Button>
-              <span className="text-xs text-muted-foreground ml-auto">
-                {replyText.length}/2000
+              <span className={`text-xs ml-auto ${counterClass}`}>
+                {replyText.length}/{REPLY_MAX}
               </span>
             </div>
           </div>
@@ -637,8 +695,8 @@ function CommentRow({
 
 /**
  * Compact status indicator:
- *   - Own reply: "Của bạn" (teal)
- *   - Student top-level + no seller reply: "Chưa trả lời" (amber, attention)
+ *   - Own reply / own top-level: "Của bạn" (teal)
+ *   - Student top-level + no seller reply: "Chưa trả lời" (amber)
  *   - Student top-level + seller replied: "Đã trả lời" (emerald)
  *   - Student replies under another student: no badge
  */
@@ -664,7 +722,5 @@ function CommentStatusBadge({ comment }: { comment: SellerComment }) {
       </Badge>
     );
   }
-  return (
-    <Badge variant="outline" className="text-xs">—</Badge>
-  );
+  return null;
 }

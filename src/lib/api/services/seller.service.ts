@@ -47,14 +47,16 @@ export interface SellerLearner {
 export interface SellerComment {
   id: string;
   content: string;
+  userId?: string;
   userName: string;
   userEmail: string;
+  userProfilePicture?: string | null;
   lessonId: string;
   lessonTitle: string;
   courseId: string;
   courseTitle: string;
   createdAt: string;
-  /** Backend now also returns: parentCommentId, isOwn, isReply, isAnswered */
+  /** Backend also returns: parentCommentId, isOwn, isReply, isAnswered */
   parentCommentId?: string | null;
   isOwn?: boolean;
   isReply?: boolean;
