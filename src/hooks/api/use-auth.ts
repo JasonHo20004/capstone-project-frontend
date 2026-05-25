@@ -9,6 +9,7 @@ import {
   type LoginResponse,
 } from "@/lib/api/services/user";
 import type { VerifyEmailResponse } from "@/lib/api/types/auth.types";
+import { SUBSCRIPTION_CACHE_KEY } from "@/hooks/api/use-user-subscription";
 
 /**
  * Custom hook cho Authentication với React Query
@@ -59,6 +60,7 @@ export const useAuth = () => {
     onSuccess: () => {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
+      localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
       queryClient.clear();
       window.dispatchEvent(new Event('auth-change'));
       toast.success("Đăng xuất thành công!");
@@ -69,6 +71,7 @@ export const useAuth = () => {
         // When API fails, still clear local state and redirect
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
+        localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
         queryClient.clear();
         window.dispatchEvent(new Event('auth-change'));
         navigate("/login");
