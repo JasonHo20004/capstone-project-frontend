@@ -15,12 +15,13 @@ import {
   Mail,
   Award,
   GraduationCap,
-  Target,
   Wallet as WalletIcon,
   ArrowUpRight,
   ShieldCheck,
   ShieldAlert,
   CheckCircle2,
+  Sparkles,
+  ImageIcon,
 } from 'lucide-react';
 import { formatVND } from '@/lib/utils';
 import { useProfile, useSellerOwnProfile } from '@/hooks/api/use-user';
@@ -28,7 +29,6 @@ import { useSellerDashboard } from '@/hooks/api';
 import { ErrorMessage } from '@/components/ui/error-message';
 import EditSellerProfileDialog from '@/components/seller/account/EditSellerProfileDialog';
 
-/** Format an internal english-level enum into something human-readable. */
 function formatEnglishLevel(raw?: string | null): string {
   if (!raw) return '—';
   if (raw.startsWith('IELTS_')) {
@@ -71,77 +71,92 @@ export default function SellerProfile() {
   const coursesCount = dashboardStats?.coursesCount ?? 0;
   const learnersCount = dashboardStats?.learnersCount ?? 0;
   const averageRating = dashboardStats?.averageRating ?? 0;
-  const learningGoals = user?.learningGoals ?? [];
 
   return (
     <div className="space-y-6">
-      {/* Hero */}
-      <Card className="overflow-hidden">
-        <div className="h-28 sm:h-36 bg-gradient-to-br from-primary/80 via-primary to-violet-600" />
+      {/* ─── Hero ───────────────────────────────────────────────────────── */}
+      <Card className="overflow-hidden border-border/40 shadow-[var(--shadow-md)]">
+        <div className="relative h-32 sm:h-40 bg-hero-gradient">
+          <div
+            className="absolute inset-0 opacity-40 mix-blend-overlay"
+            style={{
+              background:
+                'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.18) 0%, transparent 45%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.10) 0%, transparent 50%)',
+            }}
+          />
+          <div className="absolute right-4 top-4">
+            <Button
+              onClick={() => setEditOpen(true)}
+              size="sm"
+              variant="secondary"
+              disabled={isLoadingSeller || !sellerProfile}
+              className="bg-white/90 hover:bg-white text-primary border-0 shadow-sm backdrop-blur"
+            >
+              <Pencil className="w-3.5 h-3.5 mr-1.5" />
+              Chỉnh sửa hồ sơ
+            </Button>
+          </div>
+        </div>
+
         <CardContent className="p-6 pt-0">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-12">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <UserAvatar
-                src={user?.profilePicture}
-                name={user?.fullName ?? 'Seller'}
-                className="h-24 w-24 ring-4 ring-background"
-              />
-              <div className="space-y-1 sm:pb-1">
-                {isLoadingUser ? (
-                  <>
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-4 w-64" />
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h1 className="text-2xl font-semibold">{user?.fullName || 'Seller'}</h1>
-                      <Badge variant="secondary" className="bg-violet-100 text-violet-700 border-0">
-                        <GraduationCap className="h-3 w-3 mr-1" /> Giảng viên
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14">
+            <UserAvatar
+              src={user?.profilePicture}
+              name={user?.fullName ?? 'Seller'}
+              className="h-28 w-28 ring-4 ring-white shadow-[var(--shadow-md)]"
+            />
+            <div className="flex-1 space-y-2 sm:pb-1">
+              {isLoadingUser ? (
+                <>
+                  <Skeleton className="h-7 w-56" />
+                  <Skeleton className="h-4 w-64" />
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <h1 className="text-2xl font-bold font-display tracking-tight">
+                      {user?.fullName || 'Seller'}
+                    </h1>
+                    <Badge className="bg-primary/10 text-primary border-0 hover:bg-primary/15">
+                      <GraduationCap className="h-3 w-3 mr-1" /> Giảng viên
+                    </Badge>
+                    {isActive ? (
+                      <Badge className="bg-emerald-50 text-emerald-700 border-0 hover:bg-emerald-100">
+                        <ShieldCheck className="h-3 w-3 mr-1" /> Đang hoạt động
                       </Badge>
-                      {isActive ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 border-0">
-                          <ShieldCheck className="h-3 w-3 mr-1" /> Đang hoạt động
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <ShieldAlert className="h-3 w-3 mr-1" /> Tạm khoá
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                      <Mail className="h-3.5 w-3.5" /> {user?.email}
-                    </p>
-                    {user?.createdAt && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <CalendarDays className="h-3 w-3" /> Tham gia từ {formatDateVN(user.createdAt)}
-                      </p>
+                    ) : (
+                      <Badge variant="destructive">
+                        <ShieldAlert className="h-3 w-3 mr-1" /> Tạm khoá
+                      </Badge>
                     )}
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="sm:pb-1">
-              <Button
-                onClick={() => setEditOpen(true)}
-                variant="outline"
-                disabled={isLoadingSeller || !sellerProfile}
-              >
-                <Pencil className="w-4 h-4 mr-2" />
-                Chỉnh sửa hồ sơ
-              </Button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5" /> {user?.email}
+                    </span>
+                    {user?.createdAt && (
+                      <span className="flex items-center gap-1.5">
+                        <CalendarDays className="h-3.5 w-3.5" /> Tham gia{' '}
+                        {formatDateVN(user.createdAt)}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Inactive banner */}
+      {/* ─── Inactive banner ────────────────────────────────────────────── */}
       {!isLoadingSeller && sellerProfile && !isActive && (
         <Card className="border-destructive/40 bg-destructive/5">
           <CardContent className="p-4 flex items-start gap-3">
             <ShieldAlert className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-destructive">Tài khoản Seller đang bị tạm khoá</p>
+              <p className="text-sm font-semibold text-destructive">
+                Tài khoản Seller đang bị tạm khoá
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Bạn vẫn xem được hồ sơ nhưng tạm thời không thể xuất bản khoá học hoặc rút tiền.
                 Nếu cho rằng đây là nhầm lẫn, vui lòng liên hệ quản trị viên.
@@ -151,43 +166,131 @@ export default function SellerProfile() {
         </Card>
       )}
 
-      {/* Stats row */}
+      {/* ─── KPI Stats ──────────────────────────────────────────────────── */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={<BookOpen className="h-4 w-4 text-primary" />}
+          icon={<BookOpen className="h-4 w-4" />}
           label="Khoá học"
           value={isLoadingStats ? null : coursesCount.toLocaleString('vi-VN')}
-          tint="primary"
         />
         <StatCard
-          icon={<Users className="h-4 w-4 text-emerald-600" />}
+          icon={<Users className="h-4 w-4" />}
           label="Người học"
           value={isLoadingStats ? null : learnersCount.toLocaleString('vi-VN')}
-          tint="emerald"
         />
         <StatCard
-          icon={<Star className="h-4 w-4 text-amber-600" />}
+          icon={<Star className="h-4 w-4" />}
           label="Đánh giá TB"
           value={isLoadingStats ? null : averageRating > 0 ? averageRating.toFixed(1) : '—'}
           hint={averageRating > 0 ? '/ 5.0' : undefined}
-          tint="amber"
         />
         <StatCard
-          icon={<WalletIcon className="h-4 w-4 text-violet-600" />}
+          icon={<WalletIcon className="h-4 w-4" />}
           label="Tổng doanh thu"
           value={isLoadingStats ? null : formatVND(totalEarnings)}
-          tint="violet"
         />
       </div>
 
-      {/* Wallet + Personal info */}
+      {/* ─── Trust: Expertise + Certifications (seller's "calling card") ─ */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <Card className="lg:col-span-2 border-border/40 shadow-[var(--shadow-sm)]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Award className="h-4 w-4 text-primary" /> Chuyên môn
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingSeller ? (
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-7 w-20" />
+                ))}
+              </div>
+            ) : expertise.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {expertise.map((e) => (
+                  <span
+                    key={e}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/15"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {e}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <EmptyHint
+                icon={<Sparkles className="h-4 w-4" />}
+                text="Chưa có chuyên môn — bấm 'Chỉnh sửa hồ sơ' để thêm."
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3 border-border/40 shadow-[var(--shadow-sm)]">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck className="h-4 w-4 text-primary" /> Chứng chỉ
+              {certification.length > 0 && (
+                <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-normal">
+                  {certification.length}
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingSeller ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
+                ))}
+              </div>
+            ) : certification.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {certification.map((url, idx) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Nhấn để xem ảnh gốc"
+                    className="group relative block aspect-[4/3] rounded-lg overflow-hidden border border-border/60 bg-muted/30 hover:border-primary/40 hover:shadow-[var(--shadow-md)] transition-all"
+                  >
+                    <img
+                      src={url}
+                      alt={`Chứng chỉ ${idx + 1}`}
+                      className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur rounded p-1 shadow">
+                      <ArrowUpRight className="h-3 w-3 text-primary" />
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <EmptyHint
+                icon={<ImageIcon className="h-4 w-4" />}
+                text="Chưa có chứng chỉ — bấm 'Chỉnh sửa hồ sơ' để tải lên."
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ─── Wallet + Personal info ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="border-primary/15 bg-gradient-to-br from-primary/[0.04] to-transparent shadow-[var(--shadow-sm)]">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <WalletIcon className="h-4 w-4 text-primary" /> Ví giảng viên
             </CardTitle>
-            <Button asChild size="sm" variant="ghost">
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="text-primary hover:text-primary hover:bg-primary/10"
+            >
               <Link to="/seller/earnings" className="text-xs">
                 Xem chi tiết
                 <ArrowUpRight className="h-3 w-3 ml-1" />
@@ -198,38 +301,38 @@ export default function SellerProfile() {
             <div>
               <p className="text-xs text-muted-foreground">Số dư có thể rút</p>
               {isLoadingStats ? (
-                <Skeleton className="h-7 w-32 mt-1" />
+                <Skeleton className="h-9 w-40 mt-1" />
               ) : (
-                <p className="text-2xl font-bold font-display text-emerald-700">
+                <p className="text-3xl font-bold font-display text-foreground tracking-tight mt-0.5">
                   {formatVND(allowance)}
                 </p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-3 border-t">
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/40">
               <div>
-                <p className="text-[11px] text-muted-foreground">Đang chờ clearance</p>
-                <p className="text-sm font-semibold text-amber-600">
+                <p className="text-xs text-muted-foreground">Đang chờ giải ngân</p>
+                <p className="text-sm font-semibold text-amber-600 mt-0.5">
                   {isLoadingStats ? '—' : formatVND(pendingBalance)}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground">Tổng đã nhận</p>
-                <p className="text-sm font-semibold">
+                <p className="text-xs text-muted-foreground">Tổng đã nhận</p>
+                <p className="text-sm font-semibold text-foreground mt-0.5">
                   {isLoadingStats ? '—' : formatVND(totalEarnings)}
                 </p>
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground pt-1">
-              Nguồn thu nhập: chia hoa hồng từ học viên mua khoá học.
+            <p className="text-xs text-muted-foreground pt-1">
+              Nguồn thu: chia hoa hồng từ học viên mua khoá học.
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/40 shadow-[var(--shadow-sm)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Thông tin cá nhân</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
+          <CardContent className="space-y-3">
             <InfoRow
               icon={<Phone className="h-3.5 w-3.5" />}
               label="Số điện thoại"
@@ -242,114 +345,19 @@ export default function SellerProfile() {
             />
             <InfoRow
               icon={<GraduationCap className="h-3.5 w-3.5" />}
-              label="Trình độ tiếng Anh"
+              label="Trình độ"
               value={
                 <Badge variant="outline" className="font-normal">
                   {formatEnglishLevel(user?.englishLevel)}
                 </Badge>
               }
             />
-            <div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1.5">
-                <Target className="h-3.5 w-3.5" /> Mục tiêu học tập
-              </p>
-              {learningGoals.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {learningGoals.map((g) => (
-                    <Badge key={g} variant="secondary" className="font-normal">
-                      {g}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-xs text-muted-foreground italic">Chưa cập nhật</span>
-              )}
-            </div>
-            <p className="text-[11px] text-muted-foreground pt-2 border-t">
+            <p className="text-xs text-muted-foreground pt-3 border-t border-border/40">
               Cần sửa thông tin cá nhân?{' '}
-              <Link to="/profile" className="text-primary hover:underline">
+              <Link to="/profile" className="text-primary hover:underline font-medium">
                 Đi tới trang tài khoản
               </Link>
             </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Expertise + Certifications */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Award className="h-4 w-4 text-primary" /> Chuyên môn & Kỹ năng
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingSeller ? (
-              <div className="flex flex-wrap gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-6 w-20" />
-                ))}
-              </div>
-            ) : expertise.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {expertise.map((e) => (
-                  <Badge key={e} variant="secondary" className="font-normal">
-                    <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-600" />
-                    {e}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                Chưa có chuyên môn. Bấm "Chỉnh sửa hồ sơ" để thêm.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="h-4 w-4 text-primary" /> Chứng chỉ
-              {certification.length > 0 && (
-                <span className="text-xs text-muted-foreground font-normal">
-                  ({certification.length})
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingSeller ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
-                ))}
-              </div>
-            ) : certification.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {certification.map((url, idx) => (
-                  <a
-                    key={url}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Nhấn để xem ảnh gốc"
-                    className="block aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-white hover:shadow-md hover:border-primary/40 transition-all"
-                  >
-                    <img
-                      src={url}
-                      alt={`Chứng chỉ ${idx + 1}`}
-                      className="w-full h-full object-contain"
-                      loading="lazy"
-                    />
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                Chưa có chứng chỉ. Bấm "Chỉnh sửa hồ sơ" để tải lên.
-              </p>
-            )}
           </CardContent>
         </Card>
       </div>
@@ -368,39 +376,40 @@ export default function SellerProfile() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────
-
-const tintMap = {
-  primary: 'border-primary/20 bg-primary/5',
-  emerald: 'border-emerald-500/20 bg-emerald-500/5',
-  amber: 'border-amber-500/20 bg-amber-500/5',
-  violet: 'border-violet-500/20 bg-violet-500/5',
-} as const;
+// ─── Sub-components ─────────────────────────────────────────────────────
 
 function StatCard({
   icon,
   label,
   value,
   hint,
-  tint,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | null;
   hint?: string;
-  tint: keyof typeof tintMap;
 }) {
   return (
-    <Card className={tintMap[tint]}>
-      <CardContent className="p-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <div className="rounded-md bg-background/60 p-1.5">{icon}</div>
+    <Card className="border-border/40 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:border-primary/30 transition-all">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {label}
+          </p>
+          <div className="rounded-md bg-primary/10 p-1.5 text-primary">{icon}</div>
         </div>
-        <div className="text-xl font-bold font-display leading-tight">
-          {value === null ? <Skeleton className="h-7 w-16" /> : value}
-          {hint && value !== null && (
-            <span className="text-xs text-muted-foreground font-normal ml-1">{hint}</span>
+        <div className="text-2xl font-bold font-display leading-none tracking-tight">
+          {value === null ? (
+            <Skeleton className="h-7 w-20" />
+          ) : (
+            <>
+              {value}
+              {hint && (
+                <span className="text-xs text-muted-foreground font-normal ml-1 tracking-normal">
+                  {hint}
+                </span>
+              )}
+            </>
           )}
         </div>
       </CardContent>
@@ -418,12 +427,21 @@ function InfoRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+    <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
       <div className="text-sm font-medium truncate text-right">{value}</div>
+    </div>
+  );
+}
+
+function EmptyHint({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-4 rounded-lg bg-muted/40 border border-dashed border-border/60 text-sm text-muted-foreground">
+      <span className="text-muted-foreground/70">{icon}</span>
+      <span className="italic">{text}</span>
     </div>
   );
 }

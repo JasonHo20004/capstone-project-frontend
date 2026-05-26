@@ -31,7 +31,6 @@ import {
   ArrowRight,
   Sparkles,
   TrendingUp,
-  TrendingDown,
   DollarSign,
   Activity,
   Wallet,
@@ -123,26 +122,6 @@ function RatingStars({ value }: { value: number }) {
   );
 }
 
-function MoMBadge({ thisMonth, prevMonth }: { thisMonth: number; prevMonth: number }) {
-  if (prevMonth === 0 && thisMonth === 0) {
-    return <span className="text-xs text-muted-foreground">—</span>;
-  }
-  const delta = thisMonth - prevMonth;
-  const percent = prevMonth === 0 ? 100 : Math.round((delta / prevMonth) * 100);
-  const up = delta >= 0;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs font-medium ${
-        up ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-      }`}
-    >
-      {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-      {up ? '+' : ''}
-      {percent}% so với tháng trước
-    </span>
-  );
-}
-
 export default function SellerDashboard() {
   const { user } = useProfile();
   const { data: dashboardStats, isLoading, error } = useSellerDashboard();
@@ -216,9 +195,9 @@ export default function SellerDashboard() {
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map(({ key, label, description, icon: Icon, href, color, iconBg }) => (
-          <Link key={key} to={href} className="group block cursor-pointer">
+          <Link key={key} to={href} className="group block cursor-pointer h-full">
             <Card
-              className={`overflow-hidden border transition-all duration-200 hover:shadow-md hover:border-primary/30 ${color}`}
+              className={`h-full overflow-hidden border transition-all duration-200 hover:shadow-md hover:border-primary/30 ${color}`}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
@@ -238,9 +217,9 @@ export default function SellerDashboard() {
           </Link>
         ))}
 
-        {/* Earnings Card — read from dashboardStats.financial */}
-        <Link to="/seller/earnings" className="group block cursor-pointer">
-          <Card className="overflow-hidden border-emerald-500/20 bg-emerald-500/5 transition-all duration-200 hover:shadow-md hover:border-emerald-500/30">
+        {/* Earnings Card — same shape as the other three for visual parity */}
+        <Link to="/seller/earnings" className="group block cursor-pointer h-full">
+          <Card className="h-full overflow-hidden border-emerald-500/20 bg-emerald-500/5 transition-all duration-200 hover:shadow-md hover:border-emerald-500/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Số dư có thể rút
@@ -253,32 +232,13 @@ export default function SellerDashboard() {
               <div className="text-2xl font-bold font-display text-emerald-700 dark:text-emerald-400">
                 {formatVND(financial.allowance)}
               </div>
-
-              {financial.pendingBalance > 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  🔒 Đang khoá: {formatVND(financial.pendingBalance)}
-                </p>
-              )}
-
-              {financial.pendingWithdrawalCount > 0 && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  ⏳ {financial.pendingWithdrawalCount} đơn rút đang chờ:{' '}
-                  {formatVND(financial.pendingWithdrawalTotal)}
-                </p>
-              )}
-
-              <div className="mt-2">
-                <MoMBadge
-                  thisMonth={financial.thisMonthNet}
-                  prevMonth={financial.prevMonthNet}
-                />
-              </div>
-
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Tổng thu nhập: {formatVND(financial.totalEarnings)} · Tháng này:{' '}
-                {formatVND(financial.thisMonthNet)}
+              <p className="text-xs text-muted-foreground mt-1">
+                {financial.pendingBalance > 0
+                  ? `Đang khoá ${formatVND(financial.pendingBalance)}`
+                  : financial.pendingWithdrawalCount > 0
+                    ? `${financial.pendingWithdrawalCount} đơn rút đang chờ`
+                    : `Tổng đã nhận ${formatVND(financial.totalEarnings)}`}
               </p>
-
               <div className="mt-3 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
                 Xem chi tiết
                 <ArrowRight className="h-3 w-3" />
