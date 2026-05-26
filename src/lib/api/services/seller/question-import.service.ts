@@ -22,6 +22,8 @@ export interface ParsedQuestion {
   score: number;
   sourceText: string;
   parserWarnings: string[];
+  /** Instruction for this section; only present on the first question of each detected section. */
+  sectionInstruction?: string;
 }
 
 export interface ParseSummary {

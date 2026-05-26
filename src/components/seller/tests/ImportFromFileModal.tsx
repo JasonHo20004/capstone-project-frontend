@@ -26,6 +26,7 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle2,
+  BookOpen,
   X,
   RefreshCw,
   ListPlus,
@@ -39,6 +40,8 @@ export interface ImportedQuestion {
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
+  /** Only set on the first question of each detected section. */
+  sectionInstruction?: string;
 }
 
 interface Props {
@@ -102,6 +105,7 @@ function toImportedQuestion(
     options,
     correctAnswerIndex: Math.max(0, correctIndex),
     explanation: q.explanation ?? '',
+    sectionInstruction: q.sectionInstruction,
   };
 }
 
@@ -309,22 +313,34 @@ Answer Key:
             )}
 
             <div className="max-h-64 overflow-y-auto rounded-md border bg-slate-50/40 p-2 space-y-1">
-              {parseResult.questions.slice(0, 50).map((q, idx) => (
-                <div key={idx} className="text-xs px-2 py-1 rounded bg-white border">
-                  <div className="font-medium">
-                    {q.questionNumber}. {q.questionText.slice(0, 80)}
-                    {q.questionText.length > 80 ? '…' : ''}
+              {parseResult.questions.slice(0, 50).map((q, idx) => {
+                const prevInstruction = idx > 0 ? parseResult.questions[idx - 1].sectionInstruction : undefined;
+                const showHeader = !!q.sectionInstruction && q.sectionInstruction !== prevInstruction;
+                return (
+                  <div key={idx}>
+                    {showHeader && (
+                      <div className="text-xs px-2 py-1.5 mt-2 first:mt-0 rounded bg-blue-50 border border-blue-200 text-blue-700 font-medium flex items-start gap-1.5">
+                        <BookOpen className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        <span className="line-clamp-2">{q.sectionInstruction}</span>
+                      </div>
+                    )}
+                    <div className="text-xs px-2 py-1 rounded bg-white border">
+                      <div className="font-medium">
+                        {q.questionNumber}. {q.questionText.slice(0, 80)}
+                        {q.questionText.length > 80 ? '…' : ''}
+                      </div>
+                      <div className="mt-0.5 text-muted-foreground">
+                        {q.options.length}/4 đáp án •{' '}
+                        {q.correctAnswerIndex !== null
+                          ? `Đúng: ${String.fromCharCode(65 + q.correctAnswerIndex)}`
+                          : manualKey[String(q.questionNumber)]
+                          ? `Đúng (manual): ${manualKey[String(q.questionNumber)]}`
+                          : 'Chưa có đáp án'}
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-0.5 text-muted-foreground">
-                    {q.options.length}/4 đáp án •{' '}
-                    {q.correctAnswerIndex !== null
-                      ? `Đúng: ${String.fromCharCode(65 + q.correctAnswerIndex)}`
-                      : manualKey[String(q.questionNumber)]
-                      ? `Đúng (manual): ${manualKey[String(q.questionNumber)]}`
-                      : 'Chưa có đáp án'}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {parseResult.questions.length > 50 && (
                 <p className="text-xs text-muted-foreground text-center py-1">
                   …và {parseResult.questions.length - 50} câu khác
