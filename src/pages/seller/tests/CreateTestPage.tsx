@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { courseService } from '@/lib/api/services/course.service';
 import {
   ArrowLeft, Plus, Trash2, ClipboardList, Save, AlertTriangle, Loader2,
-  ChevronDown, ChevronRight, Upload,
+  ChevronDown, ChevronRight, Upload, X,
 } from 'lucide-react';
 import ImportFromFileModal, { type ImportedQuestion } from '@/components/seller/tests/ImportFromFileModal';
 
@@ -29,11 +29,21 @@ interface QuestionDraft {
   explanation: string;
 }
 
+interface SectionDraft {
+  instruction: string;
+  questions: QuestionDraft[];
+}
+
 const emptyQuestion = (): QuestionDraft => ({
   questionText: '',
   options: ['', '', '', ''],
   correctAnswerIndex: 0,
   explanation: '',
+});
+
+const emptySection = (): SectionDraft => ({
+  instruction: '',
+  questions: [emptyQuestion()],
 });
 
 export default function CreateTestPage() {
@@ -46,8 +56,8 @@ export default function CreateTestPage() {
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState(20);
   const [passingScore, setPassingScore] = useState(60);
-  const [questions, setQuestions] = useState<QuestionDraft[]>([emptyQuestion()]);
-  const [expanded, setExpanded] = useState<number | null>(0);
+  const [sections, setSections] = useState<SectionDraft[]>([emptySection()]);
+  const [expanded, setExpanded] = useState<{ si: number; qi: number } | null>({ si: 0, qi: 0 });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
   const [testTypes, setTestTypes] = useState<{ id: string; name: string }[]>([]);
@@ -117,81 +127,129 @@ export default function CreateTestPage() {
             explanation: q.explanation || '',
           };
         });
-        setQuestions(mapped.length > 0 ? mapped : [emptyQuestion()]);
-        setExpanded(0);
+        setSections([{ instruction: '', questions: mapped.length > 0 ? mapped : [emptyQuestion()] }]);
+        setExpanded({ si: 0, qi: 0 });
       })
       .catch(() => toast.error('Không thể tải bài kiểm tra'))
       .finally(() => setLoading(false));
   }, [editId, navigate]);
 
-  const addQuestion = () => {
-    setQuestions((prev) => {
-      const next = [...prev, emptyQuestion()];
-      setExpanded(next.length - 1);
+  const addQuestionToSection = (si: number) => {
+    setSections((prev) => {
+      const next = prev.map((s, i) => i === si ? { ...s, questions: [...s.questions, emptyQuestion()] } : s);
+      setExpanded({ si, qi: next[si].questions.length - 1 });
       return next;
     });
   };
 
-  const removeQuestion = (index: number) => {
-    if (questions.length <= 1) {
-      toast.error('Phải có ít nhất 1 câu hỏi');
-      return;
-    }
-    setQuestions((prev) => prev.filter((_, i) => i !== index));
-    setExpanded((cur) => (cur === index ? null : cur != null && cur > index ? cur - 1 : cur));
-  };
-
-  const updateQuestion = (index: number, field: keyof QuestionDraft, value: unknown) => {
-    setQuestions((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
+  const removeQuestion = (si: number, qi: number) => {
+    setSections((prev) => {
+      const section = prev[si];
+      if (section.questions.length === 1) {
+        if (prev.length === 1) { toast.error('Phải có ít nhất 1 câu hỏi'); return prev; }
+        const next = prev.filter((_, i) => i !== si);
+        setExpanded(null);
+        return next;
+      }
+      const next = prev.map((s, i) => i === si ? { ...s, questions: s.questions.filter((_, j) => j !== qi) } : s);
+      setExpanded((cur) => cur?.si === si && cur.qi === qi ? null : cur);
+      return next;
     });
   };
 
-  const toDraft = (q: ImportedQuestion): QuestionDraft => ({
-    questionText: q.questionText,
-    options: q.options,
-    correctAnswerIndex: q.correctAnswerIndex,
-    explanation: q.explanation,
-  });
+  const updateQuestion = (si: number, qi: number, field: keyof QuestionDraft, value: unknown) => {
+    setSections((prev) => prev.map((s, i) => i !== si ? s : {
+      ...s,
+      questions: s.questions.map((q, j) => j !== qi ? q : { ...q, [field]: value }),
+    }));
+  };
+
+  const updateOption = (si: number, qi: number, oi: number, value: string) => {
+    setSections((prev) => prev.map((s, i) => i !== si ? s : {
+      ...s,
+      questions: s.questions.map((q, j) => {
+        if (j !== qi) return q;
+        const opts = [...q.options];
+        opts[oi] = value;
+        return { ...q, options: opts };
+      }),
+    }));
+  };
+
+  const updateSectionInstruction = (si: number, value: string) => {
+    setSections((prev) => prev.map((s, i) => i !== si ? s : { ...s, instruction: value }));
+  };
+
+  const addSection = () => {
+    setSections((prev) => {
+      const next = [...prev, emptySection()];
+      setExpanded({ si: next.length - 1, qi: 0 });
+      return next;
+    });
+  };
+
+  const removeSection = (si: number) => {
+    if (sections.length === 1) { toast.error('Phải có ít nhất 1 phần'); return; }
+    setSections((prev) => prev.filter((_, i) => i !== si));
+    setExpanded(null);
+  };
+
+  const groupImportedIntoSections = (imported: ImportedQuestion[]): SectionDraft[] => {
+    if (imported.length === 0) return [emptySection()];
+    const result: SectionDraft[] = [];
+    let current: SectionDraft | null = null;
+    for (const q of imported) {
+      if (q.sectionInstruction !== undefined) {
+        current = { instruction: q.sectionInstruction, questions: [] };
+        result.push(current);
+      } else if (current === null) {
+        current = { instruction: '', questions: [] };
+        result.push(current);
+      }
+      current.questions.push({
+        questionText: q.questionText,
+        options: q.options,
+        correctAnswerIndex: q.correctAnswerIndex,
+        explanation: q.explanation,
+      });
+    }
+    return result;
+  };
 
   const handleImportReplace = (imported: ImportedQuestion[]) => {
     if (imported.length === 0) return;
-    setQuestions(imported.map(toDraft));
-    setExpanded(0);
+    setSections(groupImportedIntoSections(imported));
+    setExpanded({ si: 0, qi: 0 });
   };
 
   const handleImportAppend = (imported: ImportedQuestion[]) => {
     if (imported.length === 0) return;
-    setQuestions((prev) => {
-      // Drop placeholder empty first question if the form is still pristine.
-      const trimmed =
-        prev.length === 1 && !prev[0].questionText.trim() && prev[0].options.every((o) => !o.trim())
-          ? []
-          : prev;
-      const next = [...trimmed, ...imported.map(toDraft)];
-      setExpanded(trimmed.length);
-      return next;
-    });
-  };
-
-  const updateOption = (qIndex: number, optIndex: number, value: string) => {
-    setQuestions((prev) => {
-      const updated = [...prev];
-      const opts = [...updated[qIndex].options];
-      opts[optIndex] = value;
-      updated[qIndex] = { ...updated[qIndex], options: opts };
-      return updated;
+    setSections((prev) => {
+      const isPristine = prev.length === 1 && !prev[0].instruction && prev[0].questions.length === 1 && !prev[0].questions[0].questionText.trim() && prev[0].questions[0].options.every((o) => !o.trim());
+      const incoming = groupImportedIntoSections(imported);
+      if (isPristine) {
+        setExpanded({ si: 0, qi: 0 });
+        return incoming;
+      }
+      const base = [...prev];
+      const [first, ...rest] = incoming;
+      if (!base[base.length - 1].instruction && !first.instruction) {
+        base[base.length - 1] = { ...base[base.length - 1], questions: [...base[base.length - 1].questions, ...first.questions] };
+        return [...base, ...rest];
+      }
+      return [...base, ...incoming];
     });
   };
 
   const validate = (): boolean => {
     if (!title.trim()) { toast.error('Vui lòng nhập tiêu đề bài kiểm tra'); return false; }
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (!q.questionText.trim()) { toast.error(`Câu ${i + 1}: chưa có nội dung câu hỏi`); return false; }
-      if (q.options.some((o) => !o.trim())) { toast.error(`Câu ${i + 1}: điền đầy đủ 4 đáp án`); return false; }
+    let globalIdx = 0;
+    for (const s of sections) {
+      for (const q of s.questions) {
+        globalIdx++;
+        if (!q.questionText.trim()) { toast.error(`Câu ${globalIdx}: chưa có nội dung câu hỏi`); return false; }
+        if (q.options.some((o) => !o.trim())) { toast.error(`Câu ${globalIdx}: điền đầy đủ 4 đáp án`); return false; }
+      }
     }
     return true;
   };
@@ -202,15 +260,19 @@ export default function CreateTestPage() {
     try {
       const testTypeId = testTypes[0]?.id;
       if (!testTypeId) { toast.error('Không tìm thấy loại bài kiểm tra'); return; }
-      const totalScore = questions.length * 10;
-      const payloadQuestions = questions.map((q, i) => ({
-        questionText: q.questionText,
-        questionType: 'MULTIPLE_CHOICE',
-        options: q.options,
-        correctAnswerIndex: q.correctAnswerIndex,
-        explanation: q.explanation || undefined,
-        questionOrder: i + 1,
-      }));
+      const totalQuestions = sections.reduce((sum, s) => sum + s.questions.length, 0);
+      const totalScore = totalQuestions * 10;
+      let order = 0;
+      const payloadQuestions = sections.flatMap((s) =>
+        s.questions.map((q) => ({
+          questionText: q.questionText,
+          questionType: 'MULTIPLE_CHOICE',
+          options: q.options,
+          correctAnswerIndex: q.correctAnswerIndex,
+          explanation: q.explanation || undefined,
+          questionOrder: ++order,
+        }))
+      );
 
       // Edit mode: PUT to /tests/:id and done.
       if (isEditMode && editId) {
@@ -265,7 +327,24 @@ export default function CreateTestPage() {
       navigate(`/seller/tests/${newTestId}`);
     } catch (err) {
       console.error('Failed to save test:', err);
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      type ApiErr = { response?: { status?: number; data?: { code?: string; error?: string; message?: string; data?: { finalTestId?: string } } } };
+      const apiErr = err as ApiErr;
+
+      // If the course already has a final test (server-side guard), surface the
+      // same redirect AlertDialog that the pre-check useEffect would have shown.
+      if (
+        apiErr.response?.status === 409 &&
+        apiErr.response?.data?.code === 'FINAL_TEST_EXISTS'
+      ) {
+        const existingId = apiErr.response.data?.data?.finalTestId;
+        if (existingId) {
+          setExistingFinalTest({ id: existingId });
+          return;
+        }
+      }
+
+      const msg = apiErr?.response?.data?.message
+        ?? apiErr?.response?.data?.error
         ?? 'Lỗi khi lưu bài kiểm tra';
       toast.error(msg);
     } finally {
@@ -341,93 +420,128 @@ export default function CreateTestPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Tổng điểm</label>
               <div className="h-10 flex items-center text-sm font-semibold px-3 bg-muted rounded-md">
-                {questions.length} câu × 10 = {questions.length * 10} điểm
+                {sections.reduce((sum, s) => sum + s.questions.length, 0)} câu × 10 = {sections.reduce((sum, s) => sum + s.questions.length, 0) * 10} điểm
               </div>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="font-semibold">Danh sách câu hỏi</h3>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
                   <Upload className="h-4 w-4 mr-1" /> Import từ file
                 </Button>
-                <Button variant="outline" size="sm" onClick={addQuestion}>
-                  <Plus className="h-4 w-4 mr-1" /> Thêm câu hỏi
+                <Button variant="outline" size="sm" onClick={addSection}>
+                  <Plus className="h-4 w-4 mr-1" /> Thêm phần mới
                 </Button>
               </div>
             </div>
 
-            {questions.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed rounded-lg">
-                <AlertTriangle className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Chưa có câu hỏi nào.</p>
-              </div>
-            )}
-
-            {questions.map((q, qi) => {
-              const isOpen = expanded === qi;
-              const filledOpts = q.options.filter((o) => o.trim()).length;
+            {sections.map((section, si) => {
+              const globalOffset = sections.slice(0, si).reduce((sum, s) => sum + s.questions.length, 0);
               return (
-                <div key={qi} className="rounded-lg border overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isOpen ? null : qi)}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-                  >
-                    {isOpen ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
-                    <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-                      {qi + 1}
+                <div key={si} className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="bg-slate-50 border-b px-4 py-2 flex items-start gap-3">
+                    <div className="flex items-center gap-2 shrink-0 mt-1">
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Phần {si + 1}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">
-                        {q.questionText.trim() || <span className="italic text-muted-foreground">(chưa có nội dung)</span>}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {filledOpts}/4 đáp án • Đúng: {String.fromCharCode(65 + q.correctAnswerIndex)}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={(e) => { e.stopPropagation(); removeQuestion(qi); }}
+                    <Textarea
+                      rows={2}
+                      value={section.instruction}
+                      onChange={(e) => updateSectionInstruction(si, e.target.value)}
+                      placeholder="Instruction cho phần này (có thể để trống)..."
+                      className="flex-1 text-sm bg-white resize-none min-h-[2.5rem]"
+                    />
+                    <button
+                      type="button"
+                      title="Xóa phần này"
+                      disabled={sections.length === 1}
+                      onClick={() => removeSection(si)}
+                      className="shrink-0 mt-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-30"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </button>
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
 
-                  {isOpen && (
-                    <div className="p-4 pt-2 space-y-3 border-t bg-slate-50/40">
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground">Nội dung câu hỏi</label>
-                        <Textarea rows={2} value={q.questionText} onChange={(e) => updateQuestion(qi, 'questionText', e.target.value)} placeholder="Nhập nội dung câu hỏi..." />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {q.options.map((opt, oi) => (
-                          <div key={oi} className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => updateQuestion(qi, 'correctAnswerIndex', oi)}
-                              className={`flex-shrink-0 w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center border-2 transition-colors ${
-                                q.correctAnswerIndex === oi
-                                  ? 'border-green-500 bg-green-500 text-white'
-                                  : 'border-muted-foreground/30 text-muted-foreground hover:border-green-400'
-                              }`}
+                  <div className="divide-y">
+                    {section.questions.map((q, qi) => {
+                      const globalQi = globalOffset + qi;
+                      const isOpen = expanded?.si === si && expanded?.qi === qi;
+                      const filledOpts = q.options.filter((o) => o.trim()).length;
+                      return (
+                        <div key={qi}>
+                          <button
+                            type="button"
+                            onClick={() => setExpanded(isOpen ? null : { si, qi })}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                          >
+                            {isOpen ? <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />}
+                            <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+                              {globalQi + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">
+                                {q.questionText.trim() || <span className="italic text-muted-foreground">(chưa có nội dung)</span>}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {filledOpts}/4 đáp án • Đúng: {String.fromCharCode(65 + q.correctAnswerIndex)}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive shrink-0"
+                              onClick={(e) => { e.stopPropagation(); removeQuestion(si, qi); }}
                             >
-                              {String.fromCharCode(65 + oi)}
-                            </button>
-                            <Input value={opt} onChange={(e) => updateOption(qi, oi, e.target.value)} placeholder={`Đáp án ${String.fromCharCode(65 + oi)}`} className="flex-1" />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground">Giải thích (tùy chọn)</label>
-                        <Input value={q.explanation} onChange={(e) => updateQuestion(qi, 'explanation', e.target.value)} placeholder="Giải thích tại sao đáp án đúng..." />
-                      </div>
-                    </div>
-                  )}
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </button>
+
+                          {isOpen && (
+                            <div className="p-4 pt-2 space-y-3 border-t bg-slate-50/40">
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Nội dung câu hỏi</label>
+                                <Textarea rows={2} value={q.questionText} onChange={(e) => updateQuestion(si, qi, 'questionText', e.target.value)} placeholder="Nhập nội dung câu hỏi..." />
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {q.options.map((opt, oi) => (
+                                  <div key={oi} className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateQuestion(si, qi, 'correctAnswerIndex', oi)}
+                                      className={`flex-shrink-0 w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center border-2 transition-colors ${
+                                        q.correctAnswerIndex === oi
+                                          ? 'border-green-500 bg-green-500 text-white'
+                                          : 'border-muted-foreground/30 text-muted-foreground hover:border-green-400'
+                                      }`}
+                                    >
+                                      {String.fromCharCode(65 + oi)}
+                                    </button>
+                                    <Input value={opt} onChange={(e) => updateOption(si, qi, oi, e.target.value)} placeholder={`Đáp án ${String.fromCharCode(65 + oi)}`} className="flex-1" />
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Giải thích (tùy chọn)</label>
+                                <Input value={q.explanation} onChange={(e) => updateQuestion(si, qi, 'explanation', e.target.value)} placeholder="Giải thích tại sao đáp án đúng..." />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="px-4 py-2 bg-slate-50/60 border-t">
+                    <button
+                      type="button"
+                      onClick={() => addQuestionToSection(si)}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Thêm câu hỏi vào phần này
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -437,9 +551,6 @@ export default function CreateTestPage() {
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
               {saving ? 'Đang lưu...' : saveLabel}
-            </Button>
-            <Button variant="outline" onClick={addQuestion}>
-              <Plus className="h-4 w-4 mr-1" /> Thêm câu hỏi
             </Button>
             <Button variant="ghost" onClick={() => navigate(backTarget)} className="ml-auto">Hủy</Button>
           </div>
