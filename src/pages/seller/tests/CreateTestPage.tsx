@@ -471,32 +471,34 @@ export default function CreateTestPage() {
                       const filledOpts = q.options.filter((o) => o.trim()).length;
                       return (
                         <div key={qi}>
-                          <button
-                            type="button"
-                            onClick={() => setExpanded(isOpen ? null : { si, qi })}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-                          >
-                            {isOpen ? <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />}
-                            <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-                              {globalQi + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">
-                                {q.questionText.trim() || <span className="italic text-muted-foreground">(chưa có nội dung)</span>}
+                          <div className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+                            <button
+                              type="button"
+                              onClick={() => setExpanded(isOpen ? null : { si, qi })}
+                              className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                            >
+                              {isOpen ? <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />}
+                              <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+                                {globalQi + 1}
                               </div>
-                              <div className="text-xs text-muted-foreground mt-0.5">
-                                {filledOpts}/4 đáp án • Đúng: {String.fromCharCode(65 + q.correctAnswerIndex)}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate">
+                                  {q.questionText.trim() || <span className="italic text-muted-foreground">(chưa có nội dung)</span>}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-0.5">
+                                  {filledOpts}/4 đáp án • Đúng: {String.fromCharCode(65 + q.correctAnswerIndex)}
+                                </div>
                               </div>
-                            </div>
+                            </button>
                             <Button
                               variant="ghost"
                               size="sm"
                               className="text-destructive hover:text-destructive shrink-0"
-                              onClick={(e) => { e.stopPropagation(); removeQuestion(si, qi); }}
+                              onClick={() => removeQuestion(si, qi)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          </button>
+                          </div>
 
                           {isOpen && (
                             <div className="p-4 pt-2 space-y-3 border-t bg-slate-50/40">
