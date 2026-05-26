@@ -1,7 +1,41 @@
-import { useMemo, useState } from "react";
-import { Bell, Search, Home, User, LogOut, CheckCheck, Menu } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Bell,
+  Search,
+  Home,
+  User,
+  LogOut,
+  CheckCheck,
+  Menu,
+  LayoutDashboard,
+  Users as UsersIcon,
+  BookOpen,
+  CreditCard,
+  ClipboardList,
+  UserCheck,
+  ShieldAlert,
+  Landmark,
+  Bell as BellIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +66,26 @@ export default function AdminHeader({ onOpenSidebar }: AdminHeaderProps) {
   const { logout, isLoggingOut } = useAuth();
   const userId = user?.id;
   const [searchTerm, setSearchTerm] = useState("");
+  type SearchScope = "users" | "courses" | "transactions" | "applications";
+  const [searchScope, setSearchScope] = useState<SearchScope>("users");
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // ⌘K / Ctrl+K opens the command palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const goto = (path: string) => {
+    setPaletteOpen(false);
+    navigate(path);
+  };
 
   const { data: stats } = useNotificationStats();
   const { data: notificationsResponse } = useNotifications({
@@ -56,7 +110,21 @@ export default function AdminHeader({ onOpenSidebar }: AdminHeaderProps) {
     e.preventDefault();
     const term = searchTerm.trim();
     if (!term) return;
-    navigate(`/admin/users?q=${encodeURIComponent(term)}`);
+    const q = encodeURIComponent(term);
+    const routes: Record<SearchScope, string> = {
+      users: `/admin/users?q=${q}`,
+      courses: `/admin/courses?q=${q}`,
+      transactions: `/admin/transactions?q=${q}`,
+      applications: `/admin/applications?q=${q}`,
+    };
+    navigate(routes[searchScope]);
+  };
+
+  const scopeLabel: Record<SearchScope, string> = {
+    users: "Người dùng",
+    courses: "Khóa học",
+    transactions: "Giao dịch",
+    applications: "Đơn đăng ký",
   };
 
   const handleNotificationClick = (notificationId: string, isRead: boolean) => {
@@ -66,7 +134,7 @@ export default function AdminHeader({ onOpenSidebar }: AdminHeaderProps) {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-card/80 backdrop-blur-sm px-4 sm:px-6">
       <div className="flex items-center gap-4 flex-1">
         {onOpenSidebar && (
           <Button
@@ -79,15 +147,31 @@ export default function AdminHeader({ onOpenSidebar }: AdminHeaderProps) {
             <Menu className="h-5 w-5" />
           </Button>
         )}
-        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Tìm người dùng theo tên / email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-            aria-label="Tìm kiếm người dùng"
-          />
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full max-w-xl">
+          <Select value={searchScope} onValueChange={(v) => setSearchScope(v as SearchScope)}>
+            <SelectTrigger className="w-[150px] shrink-0" aria-label="Phạm vi tìm kiếm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="users">Người dùng</SelectItem>
+              <SelectItem value="courses">Khóa học</SelectItem>
+              <SelectItem value="transactions">Giao dịch</SelectItem>
+              <SelectItem value="applications">Đơn đăng ký</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={`Tìm ${scopeLabel[searchScope].toLowerCase()}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-16"
+              aria-label={`Tìm kiếm ${scopeLabel[searchScope]}`}
+            />
+            <kbd className="hidden sm:inline-flex absolute right-2 top-1/2 -translate-y-1/2 h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 pointer-events-none">
+              ⌘K
+            </kbd>
+          </div>
         </form>
       </div>
 
@@ -208,6 +292,58 @@ export default function AdminHeader({ onOpenSidebar }: AdminHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen}>
+        <CommandInput placeholder="Gõ để điều hướng hoặc tìm kiếm..." />
+        <CommandList>
+          <CommandEmpty>Không tìm thấy kết quả.</CommandEmpty>
+          <CommandGroup heading="Điều hướng">
+            <CommandItem onSelect={() => goto("/admin")}>
+              <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/users")}>
+              <UsersIcon className="mr-2 h-4 w-4" /> Quản lý người dùng
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/courses")}>
+              <BookOpen className="mr-2 h-4 w-4" /> Quản lý khóa học
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/exams")}>
+              <ClipboardList className="mr-2 h-4 w-4" /> Quản lý bài thi
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/transactions")}>
+              <CreditCard className="mr-2 h-4 w-4" /> Giao dịch
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/withdrawals")}>
+              <Landmark className="mr-2 h-4 w-4" /> Rút tiền (Payout)
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/applications")}>
+              <UserCheck className="mr-2 h-4 w-4" /> Đơn đăng ký
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/moderation")}>
+              <ShieldAlert className="mr-2 h-4 w-4" /> Kiểm duyệt bình luận
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/notifications")}>
+              <BellIcon className="mr-2 h-4 w-4" /> Thông báo hệ thống
+            </CommandItem>
+          </CommandGroup>
+          <CommandSeparator />
+          <CommandGroup heading="Hành động nhanh">
+            <CommandItem onSelect={() => goto("/admin/applications?status=PENDING")}>
+              <UserCheck className="mr-2 h-4 w-4" /> Xem đơn đăng ký chờ duyệt
+              <CommandShortcut>PENDING</CommandShortcut>
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/admin/withdrawals")}>
+              <Landmark className="mr-2 h-4 w-4" /> Xem yêu cầu rút tiền
+            </CommandItem>
+            <CommandItem onSelect={() => goto("/")}>
+              <Home className="mr-2 h-4 w-4" /> Về trang chủ người dùng
+            </CommandItem>
+            <CommandItem onSelect={() => { setPaletteOpen(false); logout(); }}>
+              <LogOut className="mr-2 h-4 w-4" /> Đăng xuất
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
     </header>
   );
 }

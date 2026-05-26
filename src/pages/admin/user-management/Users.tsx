@@ -29,6 +29,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   MoreHorizontal,
   Eye,
@@ -39,6 +41,9 @@ import {
   DollarSign,
   Save,
   X as XIcon,
+  ShieldCheck,
+  ShieldOff,
+  Ban,
 } from "lucide-react";
 import type { User } from "@/domain";
 import DataTable from "@/components/admin/DataTable";
@@ -46,17 +51,23 @@ import FilterSection from "@/components/admin/FilterSection";
 import StatCard from "@/components/admin/StatCard";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { userManagementService } from "@/lib/api/services/admin";
+import { userManagementService, auditLogService } from "@/lib/api/services/admin";
 
 export default function UsersManagement() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>(searchParams.get("role") ?? "all");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{
+    user: User;
+    newStatus: "ACTIVE" | "SUSPENDED" | "BANNED";
+    suspendDays?: number;
+  } | null>(null);
+  const [statusReason, setStatusReason] = useState("");
   const [walletConfirm, setWalletConfirm] = useState<{
     current: number;
     next: number;
@@ -81,22 +92,44 @@ export default function UsersManagement() {
   useEffect(() => {
     const q = searchParams.get("q");
     if (q !== null) setSearchTerm(q);
+    const r = searchParams.get("role");
+    if (r) setRoleFilter(r);
   }, [searchParams]);
 
-  const { data: usersResp } = useQuery({
+  // Mirror current filters back into the URL so refresh/share preserves state.
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (searchTerm) next.set("q", searchTerm);
+    else next.delete("q");
+    if (roleFilter && roleFilter !== "all") next.set("role", roleFilter);
+    else next.delete("role");
+    // Only update if something changed — avoids infinite loop with searchParams dep.
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, roleFilter]);
+
+  const { data: usersResp, isLoading: isUsersLoading } = useQuery({
     queryKey: ["userManagementUsers"],
     queryFn: () => userManagementService.getUsers(),
   });
+
+  const extractApiError = (err: unknown, fallback: string) => {
+    const data = (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data;
+    return data?.error ?? data?.message ?? (err instanceof Error ? err.message : fallback);
+  };
 
   const createUserMutation = useMutation({
     mutationFn: (
       payload: Parameters<typeof userManagementService.createUser>[0]
     ) => userManagementService.createUser(payload),
-    onSuccess: (resp) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userManagementUsers"] });
       setCreatingUser(false);
       toast.success("Tạo người dùng mới thành công!");
     },
+    onError: (err) => toast.error(extractApiError(err, "Không thể tạo người dùng")),
   });
 
   const updateUserMutation = useMutation({
@@ -113,6 +146,7 @@ export default function UsersManagement() {
       setEditingUser(null);
       toast.success("Cập nhật thông tin người dùng thành công!");
     },
+    onError: (err) => toast.error(extractApiError(err, "Không thể cập nhật người dùng")),
   });
 
   const deleteUserMutation = useMutation({
@@ -123,6 +157,38 @@ export default function UsersManagement() {
       setSelectedUser(null);
       toast.success("Xóa người dùng thành công!");
     },
+    onError: (err) => toast.error(extractApiError(err, "Không thể xóa người dùng")),
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: (vars: {
+      userId: string;
+      status: "ACTIVE" | "SUSPENDED" | "BANNED";
+      reason: string;
+      suspendedUntil?: string | null;
+    }) =>
+      userManagementService.updateUserStatus(vars.userId, {
+        status: vars.status,
+        reason: vars.reason,
+        suspendedUntil: vars.suspendedUntil ?? null,
+      }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["userManagementUsers"] });
+      auditLogService
+        .record({
+          action: "USER_STATUS_CHANGE",
+          entityType: "USER",
+          entityId: vars.userId,
+          reason: vars.reason,
+          metadata: { newStatus: vars.status, suspendedUntil: vars.suspendedUntil },
+        })
+        .catch((err) => console.error("[Audit] user status log failed:", err));
+      toast.success("Đã cập nhật trạng thái người dùng");
+      setStatusTarget(null);
+      setStatusReason("");
+    },
+    onError: (err) =>
+      toast.error(extractApiError(err, "Không thể cập nhật trạng thái")),
   });
 
   const fetchUserMutation = useMutation({
@@ -164,9 +230,14 @@ export default function UsersManagement() {
     return matchesSearch && matchesRole;
   });
 
+  // Backend total (preferred). Falls back to current array length only when no
+  // count is provided — avoids showing "page size" as the total.
+  const backendTotal =
+    (usersResp as { total?: number })?.total ??
+    (usersResp as { data?: { userCount?: number } })?.data?.userCount;
   const stats = {
-    totalUsers: (usersResp as any)?.total || (usersResp as any)?.data?.userCount || users.length,
-    totalWalletBalance: (usersResp as any)?.data?.totalWallet || 0,
+    totalUsers: typeof backendTotal === "number" ? backendTotal : users.length,
+    totalWalletBalance: (usersResp as { data?: { totalWallet?: number } })?.data?.totalWallet ?? 0,
   };
 
   const formatCurrency = (value: number) => {
@@ -191,16 +262,22 @@ export default function UsersManagement() {
     }
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("vi-VN", {
+  const formatDate = (date?: string | null) => {
+    if (!date) return "—";
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("vi-VN", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
     });
   };
 
-  const formatDateForInput = (date: string) => {
-    return new Date(date).toISOString().split("T")[0];
+  const formatDateForInput = (date?: string | null) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
   };
 
   const handleViewUser = (userId: string) => {
@@ -237,6 +314,12 @@ export default function UsersManagement() {
     });
   };
 
+  const toIsoOrUndefined = (val?: string) => {
+    if (!val) return undefined;
+    const d = new Date(val);
+    return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+  };
+
   const buildUpdatePayload = (walletOverride?: number) => {
     if (!editingUser) return null;
     return {
@@ -244,7 +327,7 @@ export default function UsersManagement() {
       fullName: editForm.fullName,
       email: editForm.email,
       phoneNumber: editForm.phoneNumber || undefined,
-      dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
+      dateOfBirth: toIsoOrUndefined(editForm.dateOfBirth) ?? editingUser.dateOfBirth,
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
       // Role is read-only in the edit dialog. Preserve the existing role
@@ -291,9 +374,27 @@ export default function UsersManagement() {
       return;
     }
     const payload = buildUpdatePayload(walletConfirm.next);
-    if (payload) {
+    if (payload && editingUser) {
       updateUserMutation.mutate(payload, {
-        onSuccess: () => setWalletConfirm(null),
+        onSuccess: () => {
+          // Audit log is fire-and-forget — the wallet mutation already succeeded.
+          auditLogService
+            .record({
+              action: "WALLET_ADJUST",
+              entityType: "WALLET",
+              entityId: editingUser.wallet?.id ?? editingUser.id,
+              reason: walletConfirm.reason.trim(),
+              metadata: {
+                userId: editingUser.id,
+                userEmail: editingUser.email,
+                previousBalance: walletConfirm.current,
+                newBalance: walletConfirm.next,
+                delta: walletConfirm.next - walletConfirm.current,
+              },
+            })
+            .catch((err) => console.error("[Audit] wallet adjust log failed:", err));
+          setWalletConfirm(null);
+        },
       });
     }
   };
@@ -372,12 +473,17 @@ export default function UsersManagement() {
       return;
     }
 
+    const dob = toIsoOrUndefined(editForm.dateOfBirth);
+    if (!dob) {
+      toast.error("Ngày sinh không hợp lệ");
+      return;
+    }
     const payload = {
       fullName: editForm.fullName,
       email: editForm.email,
       password: editForm.password,
       phoneNumber: editForm.phoneNumber || undefined,
-      dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
+      dateOfBirth: dob,
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
       ...(editForm.role === "ADMINISTRATOR"
@@ -417,6 +523,7 @@ export default function UsersManagement() {
     {
       key: "user",
       header: "Người dùng",
+      sortValue: (user: User) => user.fullName?.toLowerCase() ?? "",
       render: (user: User) => (
         <div className="flex items-center space-x-3">
           <UserAvatar src={user.profilePicture} name={user.fullName} className="h-8 w-8" />
@@ -430,11 +537,13 @@ export default function UsersManagement() {
     {
       key: "role",
       header: "Vai trò",
+      sortValue: (user: User) => user.role ?? "STUDENT",
       render: (user: User) => getRoleBadge(user.role),
     },
     {
       key: "wallet",
       header: "Số dư ví",
+      sortValue: (user: User) => user.wallet?.allowance ?? -1,
       render: (user: User) => (
         <div className="font-medium">
           {user.wallet ? formatCurrency(user.wallet.allowance) : "Chưa có ví"}
@@ -442,8 +551,22 @@ export default function UsersManagement() {
       ),
     },
     {
+      key: "userStatus",
+      header: "Trạng thái",
+      sortValue: (user: User) => user.userStatus ?? "ACTIVE",
+      render: (user: User) => {
+        const s = user.userStatus ?? "ACTIVE";
+        if (s === "SUSPENDED")
+          return <Badge className="bg-amber-100 text-amber-800">Tạm khoá</Badge>;
+        if (s === "BANNED")
+          return <Badge className="bg-red-100 text-red-800">Khoá vĩnh viễn</Badge>;
+        return <Badge variant="outline" className="text-green-700">Hoạt động</Badge>;
+      },
+    },
+    {
       key: "createdAt",
       header: "Ngày tạo",
+      sortValue: (user: User) => (user.createdAt ? new Date(user.createdAt) : null),
       render: (user: User) => (
         <div className="text-sm">{formatDate(user.createdAt)}</div>
       ),
@@ -468,18 +591,57 @@ export default function UsersManagement() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => handleEditUser(user.id)}
-              disabled={user.role === "ADMINISTRATOR"}
+              disabled={user.role === "ADMINISTRATOR" || fetchUserMutation.isPending}
             >
               <Edit className="mr-2 h-4 w-4" />
-              Chỉnh sửa
+              {fetchUserMutation.isPending ? "Đang tải..." : "Chỉnh sửa"}
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {(user.userStatus ?? "ACTIVE") === "ACTIVE" ? (
+              <>
+                <DropdownMenuItem
+                  className="text-amber-700"
+                  onClick={() => setStatusTarget({ user, newStatus: "SUSPENDED", suspendDays: 7 })}
+                  disabled={user.role === "ADMINISTRATOR"}
+                >
+                  <ShieldOff className="mr-2 h-4 w-4" />
+                  Tạm khoá 7 ngày
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-amber-700"
+                  onClick={() => setStatusTarget({ user, newStatus: "SUSPENDED", suspendDays: 30 })}
+                  disabled={user.role === "ADMINISTRATOR"}
+                >
+                  <ShieldOff className="mr-2 h-4 w-4" />
+                  Tạm khoá 30 ngày
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={() => setStatusTarget({ user, newStatus: "BANNED" })}
+                  disabled={user.role === "ADMINISTRATOR"}
+                >
+                  <Ban className="mr-2 h-4 w-4" />
+                  Khoá vĩnh viễn
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem
+                className="text-green-700"
+                onClick={() => setStatusTarget({ user, newStatus: "ACTIVE" })}
+                disabled={user.role === "ADMINISTRATOR"}
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Mở khoá tài khoản
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-red-600"
               onClick={() => setDeletingUser(user)}
               disabled={user.role === "ADMINISTRATOR"}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Xóa người dùng
+              Xóa vĩnh viễn (hard delete)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -497,6 +659,36 @@ export default function UsersManagement() {
       placeholder: "Chọn vai trò",
     },
   ];
+
+  if (isUsersLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-56" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[0, 1].map((i) => (
+            <Card key={i} className="p-6 space-y-3">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-8 w-24" />
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <Skeleton className="h-5 w-48" />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -1087,6 +1279,87 @@ export default function UsersManagement() {
             >
               <UserPlus className="mr-2 h-4 w-4" />
               Tạo người dùng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status change (ban/suspend/restore) Dialog */}
+      <Dialog
+        open={!!statusTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setStatusTarget(null);
+            setStatusReason("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {statusTarget?.newStatus === "ACTIVE"
+                ? "Mở khoá tài khoản"
+                : statusTarget?.newStatus === "SUSPENDED"
+                ? `Tạm khoá ${statusTarget.suspendDays} ngày`
+                : "Khoá vĩnh viễn"}
+            </DialogTitle>
+            <DialogDescription>
+              {statusTarget && (
+                <>
+                  Đối với <strong>{statusTarget.user.fullName}</strong> ({statusTarget.user.email}).
+                  {statusTarget.newStatus !== "ACTIVE" && (
+                    <span className="block mt-2 text-amber-600">
+                      Người dùng sẽ không thể đăng nhập sau khi bạn xác nhận. Lý do sẽ hiển thị trên màn hình login của họ.
+                    </span>
+                  )}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="statusReason">
+              Lý do <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="statusReason"
+              rows={3}
+              maxLength={500}
+              value={statusReason}
+              onChange={(e) => setStatusReason(e.target.value)}
+              placeholder="VD: Vi phạm điều khoản, spam quảng cáo, gian lận tài chính..."
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {statusReason.length}/500
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStatusTarget(null);
+                setStatusReason("");
+              }}
+            >
+              Huỷ
+            </Button>
+            <Button
+              variant={statusTarget?.newStatus === "ACTIVE" ? "default" : "destructive"}
+              disabled={statusReason.trim().length < 3 || updateStatusMutation.isPending}
+              onClick={() => {
+                if (!statusTarget) return;
+                const suspendedUntil =
+                  statusTarget.newStatus === "SUSPENDED" && statusTarget.suspendDays
+                    ? new Date(Date.now() + statusTarget.suspendDays * 86_400_000).toISOString()
+                    : null;
+                updateStatusMutation.mutate({
+                  userId: statusTarget.user.id,
+                  status: statusTarget.newStatus,
+                  reason: statusReason.trim(),
+                  suspendedUntil,
+                });
+              }}
+            >
+              Xác nhận
             </Button>
           </DialogFooter>
         </DialogContent>

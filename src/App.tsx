@@ -22,6 +22,7 @@ import Contact from "./pages/user/info/Contact";
 import Blog from "./pages/user/info/Blog";
 import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
+import UserRefunds from "./pages/user/refund/Refunds";
 import LiveRoomList from "./pages/user/livestream/LiveRoomList";
 import { lazy, Suspense } from "react";
 const LiveRoom = lazy(() => import("./pages/user/livestream/LiveRoom"));
@@ -49,6 +50,8 @@ import AdminDashboard from "./pages/admin/dashboard/Dashboard";
 import UsersManagement from "./pages/admin/user-management/Users";
 import CoursesManagement from "./pages/admin/course-management/Courses";
 import ApplicationsManagement from "./pages/admin/application-management/ApplicationsManagement";
+import AuditLogs from "./pages/admin/audit-log/AuditLogs";
+import AdminRefunds from "./pages/admin/refund/AdminRefunds";
 import CommentReports from "./pages/admin/moderation/CommentReports";
 import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
@@ -125,6 +128,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/wallet" element={<Wallet />} />
+              <Route path="/refunds" element={<UserRefunds />} />
               <Route path="/notifications" element={<Notifications />} />
 
               {/* AI Features (with sidebar layout) */}
@@ -180,6 +184,8 @@ const App = () => (
             <Route path="withdrawals" element={<WithdrawalManagement />} />
             <Route path="tags" element={<TagsManagement />} />
             <Route path="user-plans" element={<UserPlansManagement />} />
+            <Route path="audit-logs" element={<AuditLogs />} />
+            <Route path="refunds" element={<AdminRefunds />} />
           </Route>
 
           {/* Seller Routes */}

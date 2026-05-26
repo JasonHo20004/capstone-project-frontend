@@ -14,6 +14,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import DataTable from '@/components/admin/DataTable';
 import { toast } from 'sonner';
+import { auditLogService } from '@/lib/api/services/admin';
 import {
   Dialog,
   DialogContent,
@@ -96,6 +97,19 @@ export default function WithdrawalManagement() {
         proofImageUrl: proofUrl || undefined,
         adminNote: adminNote || undefined,
       });
+      auditLogService
+        .record({
+          action: 'WITHDRAWAL_APPROVE',
+          entityType: 'WITHDRAWAL',
+          entityId: selectedRequest.id,
+          reason: adminNote || undefined,
+          metadata: {
+            sellerId: selectedRequest.sellerId,
+            amount: selectedRequest.amount,
+            proofImageUrl: proofUrl || undefined,
+          },
+        })
+        .catch((err) => console.error('[Audit] withdrawal approve log failed:', err));
       toast.success('Đã duyệt yêu cầu rút tiền');
       setIsApproveOpen(false);
     } catch {
@@ -114,6 +128,18 @@ export default function WithdrawalManagement() {
         id: selectedRequest.id,
         adminNote,
       });
+      auditLogService
+        .record({
+          action: 'WITHDRAWAL_REJECT',
+          entityType: 'WITHDRAWAL',
+          entityId: selectedRequest.id,
+          reason: adminNote.trim(),
+          metadata: {
+            sellerId: selectedRequest.sellerId,
+            amount: selectedRequest.amount,
+          },
+        })
+        .catch((err) => console.error('[Audit] withdrawal reject log failed:', err));
       toast.success('Đã từ chối và hoàn tiền lại ví Seller');
       setIsRejectOpen(false);
     } catch {

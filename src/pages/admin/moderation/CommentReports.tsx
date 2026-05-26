@@ -27,6 +27,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import {
   moderationService,
+  auditLogService,
   type CommentReportStatus,
   type CommentReportReason,
   type CommentReportAction,
@@ -80,6 +81,20 @@ export default function CommentReports() {
           ? 'Đã giữ bình luận'
           : 'Đã bỏ qua báo cáo'
       );
+      auditLogService
+        .record({
+          action: 'COMMENT_MODERATE',
+          entityType: 'COMMENT',
+          entityId: pendingResolve?.report.commentId,
+          reason: vars.note,
+          metadata: {
+            reportId: vars.reportId,
+            resolveAction: vars.action,
+            reasonType: pendingResolve?.report.reasonType,
+            authorEmail: pendingResolve?.report.comment.author.fullName,
+          },
+        })
+        .catch((err) => console.error('[Audit] moderation log failed:', err));
       setPendingResolve(null);
       setResolveNote('');
     },

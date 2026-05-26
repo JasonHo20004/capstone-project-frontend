@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -36,12 +38,26 @@ import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import StatCard from '@/components/admin/StatCard';
 import { applicationManagementService } from '@/lib/api/services/admin/application-management/application.service';
+import { auditLogService } from '@/lib/api/services/admin';
 import { toast } from 'sonner';
 
 export default function ApplicationsManagement() {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') ?? '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') ?? 'all');
+
+  // Mirror filters into URL for refresh-safe links + Dashboard drill-down.
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (searchTerm) next.set('q', searchTerm); else next.delete('q');
+    if (statusFilter && statusFilter !== 'all') next.set('status', statusFilter);
+    else next.delete('status');
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter]);
   const [selectedApplication, setSelectedApplication] = useState<CourseSellerApplication | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewStatus, setReviewStatus] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
@@ -77,7 +93,23 @@ export default function ApplicationsManagement() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['sidebarPendingApplications'] });
       toast.success(reviewStatus === 'APPROVED' ? 'Đã duyệt đơn đăng ký' : 'Đã từ chối đơn đăng ký');
+      // Audit log: fire-and-forget so it never blocks the success path.
+      if (selectedApplication) {
+        auditLogService
+          .record({
+            action: reviewStatus === 'APPROVED' ? 'APPLICATION_APPROVE' : 'APPLICATION_REJECT',
+            entityType: 'APPLICATION',
+            entityId: selectedApplication.id,
+            reason: reviewStatus === 'REJECTED' ? rejectionReason.trim() : undefined,
+            metadata: {
+              applicantEmail: selectedApplication.user?.email,
+              applicantName: selectedApplication.user?.fullName,
+            },
+          })
+          .catch((err) => console.error('[Audit] application review log failed:', err));
+      }
       setReviewDialogOpen(false);
       setSelectedApplication(null);
       setRejectionReason('');
@@ -89,6 +121,54 @@ export default function ApplicationsManagement() {
       toast.error(msg);
     },
   });
+
+  // ── Bulk selection state ───────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<'APPROVED' | 'REJECTED' | null>(null);
+  const [bulkRejectionReason, setBulkRejectionReason] = useState('');
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const runBulk = async () => {
+    if (!bulkAction || selectedIds.length === 0) return;
+    if (bulkAction === 'REJECTED' && !bulkRejectionReason.trim()) {
+      toast.error('Vui lòng nhập lý do từ chối chung');
+      return;
+    }
+    setBulkProgress({ done: 0, total: selectedIds.length });
+    let success = 0;
+    let failed = 0;
+    for (const [i, id] of selectedIds.entries()) {
+      try {
+        await applicationManagementService.updateApplicationStatus(id, {
+          status: bulkAction,
+          rejectionReason: bulkAction === 'REJECTED' ? bulkRejectionReason.trim() : undefined,
+        });
+        // Record one audit entry per item so the trail can be filtered later.
+        auditLogService
+          .record({
+            action: bulkAction === 'APPROVED' ? 'APPLICATION_APPROVE' : 'APPLICATION_REJECT',
+            entityType: 'APPLICATION',
+            entityId: id,
+            reason: bulkAction === 'REJECTED' ? bulkRejectionReason.trim() : 'Bulk approval',
+            metadata: { bulk: true },
+          })
+          .catch((err) => console.error('[Audit] bulk log failed:', err));
+        success++;
+      } catch {
+        failed++;
+      }
+      setBulkProgress({ done: i + 1, total: selectedIds.length });
+    }
+    queryClient.invalidateQueries({ queryKey: ['applications'] });
+    queryClient.invalidateQueries({ queryKey: ['sidebarPendingApplications'] });
+    setBulkProgress(null);
+    setBulkAction(null);
+    setBulkRejectionReason('');
+    setSelectedIds([]);
+    toast.success(
+      `Hoàn tất: ${success} thành công${failed > 0 ? `, ${failed} thất bại` : ''}`
+    );
+  };
 
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
@@ -271,7 +351,92 @@ export default function ApplicationsManagement() {
         data={filteredApplications}
         columns={columns}
         emptyMessage="Không tìm thấy đơn đăng ký nào"
+        selectable
+        getRowId={(app) => app.id}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={() => (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+              onClick={() => setBulkAction('APPROVED')}
+            >
+              <Check className="mr-1 h-4 w-4" /> Duyệt {selectedIds.length}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-red-600 border-red-600 hover:bg-red-50"
+              onClick={() => setBulkAction('REJECTED')}
+            >
+              <X className="mr-1 h-4 w-4" /> Từ chối {selectedIds.length}
+            </Button>
+          </>
+        )}
       />
+
+      {/* Bulk confirm dialog */}
+      <Dialog open={!!bulkAction} onOpenChange={(open) => !open && !bulkProgress && setBulkAction(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {bulkAction === 'APPROVED'
+                ? `Duyệt ${selectedIds.length} đơn?`
+                : `Từ chối ${selectedIds.length} đơn?`}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkAction === 'APPROVED'
+                ? 'Hành động này sẽ duyệt hàng loạt các đơn đăng ký được chọn. Chỉ áp dụng cho đơn ở trạng thái PENDING.'
+                : 'Hành động này sẽ từ chối hàng loạt. Bạn cần nhập lý do chung cho tất cả các đơn được chọn.'}
+            </DialogDescription>
+          </DialogHeader>
+          {bulkAction === 'REJECTED' && (
+            <div className="space-y-2">
+              <Label htmlFor="bulkReason">Lý do từ chối <span className="text-destructive">*</span></Label>
+              <Textarea
+                id="bulkReason"
+                rows={3}
+                value={bulkRejectionReason}
+                onChange={(e) => setBulkRejectionReason(e.target.value)}
+                placeholder="VD: Hồ sơ chưa đủ chứng chỉ, chuyên môn chưa phù hợp..."
+                disabled={!!bulkProgress}
+              />
+            </div>
+          )}
+          {bulkProgress && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Đang xử lý...</span>
+                <span>{bulkProgress.done}/{bulkProgress.total}</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBulkAction(null)}
+              disabled={!!bulkProgress}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant={bulkAction === 'REJECTED' ? 'destructive' : 'default'}
+              onClick={runBulk}
+              disabled={!!bulkProgress || (bulkAction === 'REJECTED' && !bulkRejectionReason.trim())}
+            >
+              {bulkProgress ? 'Đang xử lý...' : 'Xác nhận'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Application Detail Dialog */}
       <Dialog open={!!selectedApplication && !reviewDialogOpen} onOpenChange={() => setSelectedApplication(null)}>

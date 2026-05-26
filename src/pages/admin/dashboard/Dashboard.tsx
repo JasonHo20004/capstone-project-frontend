@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   AreaChart,
@@ -32,6 +33,7 @@ import {
 import { dashboardService } from "@/lib/api/services/admin";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 const CHART_COLORS = {
@@ -103,14 +105,16 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ["adminDashboard"],
     queryFn: () => dashboardService.getDashboardData(),
-    refetchInterval: 30000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+    staleTime: 15_000,
   });
 
   const stats = dashboardData?.data?.stats;
-  const revenueData = dashboardData?.data?.revenueData || [];
-  const userGrowthData = dashboardData?.data?.userGrowthData || [];
-  const topCourses = (dashboardData?.data as any)?.topCourses || [];
-  const userBreakdown = (dashboardData?.data as any)?.userBreakdown || {};
+  const revenueData = dashboardData?.data?.revenueData ?? [];
+  const userGrowthData = dashboardData?.data?.userGrowthData ?? [];
+  const topCourses = dashboardData?.data?.topCourses ?? [];
+  const userBreakdown = dashboardData?.data?.userBreakdown ?? { students: 0, sellers: 0, admins: 0 };
 
   const courseStatusData = (dashboardData?.data?.courseStatusData || []).map(
     (item) => ({
@@ -121,10 +125,34 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground text-sm">Đang tải dữ liệu dashboard...</p>
+      <div className="space-y-8">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Card key={i} className="p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-9 w-9 rounded-lg" />
+              </div>
+              <Skeleton className="h-8 w-28" />
+              <Skeleton className="h-3 w-20" />
+            </Card>
+          ))}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-7">
+          <Card className="lg:col-span-4 p-6 space-y-3">
+            <Skeleton className="h-5 w-44" />
+            <Skeleton className="h-4 w-56" />
+            <Skeleton className="h-[280px] w-full" />
+          </Card>
+          <Card className="lg:col-span-3 p-6 space-y-3">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-[220px] w-full rounded-full" />
+          </Card>
         </div>
       </div>
     );
@@ -167,7 +195,8 @@ export default function AdminDashboard() {
       {/* ─── Stat Cards ─────────────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Users */}
-        <Card className="relative overflow-hidden">
+        <Link to="/admin/users" aria-label="Xem danh sách người dùng" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Tổng người dùng</CardTitle>
@@ -193,9 +222,11 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+        </Link>
 
         {/* Total Courses */}
-        <Card className="relative overflow-hidden">
+        <Link to="/admin/courses" aria-label="Xem danh sách khóa học" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Tổng khóa học</CardTitle>
@@ -211,14 +242,16 @@ export default function AdminDashboard() {
               <TrendBadge value={stats.monthlyGrowth.courses} />
             )}
             <div className="flex gap-3 mt-3 text-xs text-muted-foreground">
-              <span className="text-emerald-600 font-medium">{(stats as any)?.activeCourses || 0} Active</span>
-              <span className="text-amber-600 font-medium">{(stats as any)?.pendingCourses || 0} Pending</span>
+              <span className="text-emerald-600 font-medium">{stats?.activeCourses ?? 0} Active</span>
+              <span className="text-amber-600 font-medium">{stats?.pendingCourses ?? 0} Pending</span>
             </div>
           </CardContent>
         </Card>
+        </Link>
 
         {/* Revenue */}
-        <Card className="relative overflow-hidden">
+        <Link to="/admin/transactions" aria-label="Xem chi tiết giao dịch" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Doanh thu</CardTitle>
@@ -236,9 +269,11 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+        </Link>
 
         {/* Pending Applications */}
-        <Card className="relative overflow-hidden">
+        <Link to="/admin/applications?status=PENDING" aria-label="Xem đơn chờ duyệt" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Đơn chờ duyệt</CardTitle>
@@ -261,6 +296,7 @@ export default function AdminDashboard() {
             </p>
           </CardContent>
         </Card>
+        </Link>
       </div>
 
       {/* ─── Charts Row 1: Revenue + Course Status ──────────────────── */}
@@ -450,7 +486,7 @@ export default function AdminDashboard() {
           <CardContent>
             {topCourses.length > 0 ? (
               <div className="space-y-4">
-                {topCourses.map((course: any, index: number) => (
+                {topCourses.map((course, index) => (
                   <div
                     key={course.id}
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"

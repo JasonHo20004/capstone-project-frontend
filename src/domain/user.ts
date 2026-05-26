@@ -18,6 +18,10 @@ export interface User {
   englishLevel?: string;
   learningGoals: string[];
   role?: UserRole;
+  /** Soft moderation status; admin can suspend or ban accounts. */
+  userStatus?: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+  suspendedUntil?: string | null;
+  statusReason?: string | null;
   /** Populated when API returns user with wallet relation (e.g. /users/profile) */
   wallet?: Wallet;
 }

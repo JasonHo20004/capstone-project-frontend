@@ -80,6 +80,32 @@ class UserManagementService {
     );
     return response.data;
   }
+
+  async updateUserStatus(
+    userId: string,
+    payload: UpdateUserStatusRequest,
+  ): Promise<ApiResponse<UpdateUserStatusResult>> {
+    const response = await apiClient.patch<ApiResponse<UpdateUserStatusResult>>(
+      `users/${userId}/status`,
+      payload,
+    );
+    return response.data;
+  }
+}
+
+export type UserStatusValue = "ACTIVE" | "SUSPENDED" | "BANNED";
+
+export interface UpdateUserStatusRequest {
+  status: UserStatusValue;
+  reason: string;
+  suspendedUntil?: string | null;
+}
+
+export interface UpdateUserStatusResult {
+  id: string;
+  userStatus: UserStatusValue;
+  statusReason: string | null;
+  suspendedUntil: string | null;
 }
 
 export const userManagementService = new UserManagementService();

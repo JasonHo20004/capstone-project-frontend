@@ -15,19 +15,27 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-background">
-      <div className="hidden lg:block">
+      {/* Desktop: fixed collapsible sidebar (mirrors SellerLayout pattern) */}
+      <div className="hidden lg:block fixed inset-y-0 left-0 z-40">
         <AdminSidebar />
       </div>
+      {/* Spacer keeps content from sliding underneath the collapsed sidebar */}
+      <div className="hidden lg:block w-20 flex-shrink-0" />
+
+      {/* Mobile: full-width drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="p-0 w-64">
-          <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+          <AdminSidebar onNavigate={() => setMobileOpen(false)} forceExpanded />
         </SheetContent>
       </Sheet>
+
       <div className="flex flex-1 flex-col overflow-hidden">
         <AdminHeader onOpenSidebar={() => setMobileOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <AdminBreadcrumb />
-          <Outlet />
+        <main className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-6">
+          <div className="mx-auto w-full max-w-screen-xl">
+            <AdminBreadcrumb />
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

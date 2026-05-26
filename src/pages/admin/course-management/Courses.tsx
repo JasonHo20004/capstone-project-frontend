@@ -1,7 +1,7 @@
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -41,11 +41,23 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { toast } from 'sonner';
 
 export default function CoursesManagement() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
   const [approveTarget, setApproveTarget] = useState<Course | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (searchTerm) next.set("q", searchTerm); else next.delete("q");
+    if (statusFilter && statusFilter !== "all") next.set("status", statusFilter);
+    else next.delete("status");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter]);
 
   const {
     data: coursesResponse,
