@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Edit, Crown, Zap, Package, Settings, Sparkles } from 'lucide-react';
+import { Loader2, Edit, Crown, Zap, Package, Settings, Sparkles, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +12,29 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
@@ -26,6 +45,8 @@ import {
   useAdminUserPlans,
   useUpdateUserPlan,
   useSeedUserPlans,
+  useCreateUserPlan,
+  useDeleteUserPlan,
 } from '@/hooks/api/use-admin-user-plans';
 
 const AVAILABLE_FEATURES = [
@@ -42,18 +63,29 @@ const AVAILABLE_FEATURES = [
 const formatVND = (amount: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
+const EMPTY_FORM = {
+  name: '',
+  description: '',
+  price: 0,
+  features: [] as string[],
+  isActive: true,
+  type: 'FREE' as 'FREE' | 'PRO',
+};
+
 export default function UserPlansManagement() {
   const { data: plans = [], isLoading } = useAdminUserPlans();
   const updateMutation = useUpdateUserPlan();
   const seedMutation = useSeedUserPlans();
+  const createMutation = useCreateUserPlan();
+  const deleteMutation = useDeleteUserPlan();
   const [editingPlan, setEditingPlan] = useState<UserPlan | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    description: '',
-    price: 0,
-    features: [] as string[],
-    isActive: true,
-  });
+  const [creatingPlan, setCreatingPlan] = useState(false);
+  const [deletingPlan, setDeletingPlan] = useState<UserPlan | null>(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+
+  const usedTypes = new Set(plans.map((p) => p.type));
+  const availableTypes = (['FREE', 'PRO'] as const).filter((t) => !usedTypes.has(t));
+  const canCreate = availableTypes.length > 0;
 
   const openEditDialog = (plan: UserPlan) => {
     setEditingPlan(plan);
@@ -63,6 +95,42 @@ export default function UserPlansManagement() {
       price: plan.price,
       features: [...plan.features],
       isActive: plan.isActive,
+      type: plan.type,
+    });
+  };
+
+  const openCreateDialog = () => {
+    if (!canCreate) return;
+    setEditForm({
+      ...EMPTY_FORM,
+      type: availableTypes[0],
+    });
+    setCreatingPlan(true);
+  };
+
+  const handleCreate = () => {
+    if (!editForm.name.trim()) return;
+    createMutation.mutate(
+      {
+        name: editForm.name.trim(),
+        type: editForm.type,
+        price: editForm.price,
+        description: editForm.description || undefined,
+        features: editForm.features,
+      },
+      {
+        onSuccess: () => {
+          setCreatingPlan(false);
+          setEditForm(EMPTY_FORM);
+        },
+      }
+    );
+  };
+
+  const handleDelete = () => {
+    if (!deletingPlan) return;
+    deleteMutation.mutate(deletingPlan.id, {
+      onSuccess: () => setDeletingPlan(null),
     });
   };
 
@@ -158,6 +226,14 @@ export default function UserPlansManagement() {
               <Edit className="mr-2 h-4 w-4" />
               Chỉnh sửa
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => setDeletingPlan(plan)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Xóa
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -174,23 +250,34 @@ export default function UserPlansManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Quản lý gói người dùng</h1>
           <p className="text-muted-foreground">
             Quản lý gói Free & Pro cho người học
           </p>
         </div>
-        {plans.length === 0 && (
-          <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
-            {seedMutation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4 mr-2" />
-            )}
-            Tạo gói mặc định
+        <div className="flex gap-2">
+          {plans.length === 0 && (
+            <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
+              {seedMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              Tạo gói mặc định
+            </Button>
+          )}
+          <Button
+            variant={plans.length === 0 ? 'outline' : 'default'}
+            onClick={openCreateDialog}
+            disabled={!canCreate}
+            title={!canCreate ? 'Đã tạo cả hai gói FREE và PRO' : undefined}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Tạo gói mới
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -310,6 +397,130 @@ export default function UserPlansManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Create Plan Dialog */}
+      <Dialog open={creatingPlan} onOpenChange={(open) => !open && setCreatingPlan(false)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Tạo gói mới
+            </DialogTitle>
+            <DialogDescription>
+              Hệ thống chỉ hỗ trợ tối đa 2 loại gói: FREE và PRO. Mỗi loại chỉ có 1 gói.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Loại gói</Label>
+              <Select
+                value={editForm.type}
+                onValueChange={(v) =>
+                  setEditForm((prev) => ({ ...prev, type: v as 'FREE' | 'PRO' }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTypes.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tên gói *</Label>
+              <Input
+                placeholder="VD: Pro Annual"
+                value={editForm.name}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mô tả</Label>
+              <Input
+                placeholder="Mô tả ngắn về gói"
+                value={editForm.description}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, description: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Giá / tháng (VND)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={editForm.price}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))
+                }
+              />
+            </div>
+            <div>
+              <Label className="mb-3 block">Tính năng</Label>
+              <div className="space-y-2 max-h-52 overflow-y-auto">
+                {AVAILABLE_FEATURES.map((feature) => (
+                  <div
+                    key={feature.key}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
+                  >
+                    <span className="text-sm">{feature.label}</span>
+                    <Switch
+                      checked={editForm.features.includes(feature.key)}
+                      onCheckedChange={() => toggleFeature(feature.key)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-2 border-t">
+              <Button variant="outline" onClick={() => setCreatingPlan(false)}>
+                Hủy
+              </Button>
+              <Button
+                onClick={handleCreate}
+                disabled={createMutation.isPending || !editForm.name.trim()}
+              >
+                {createMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-2" />
+                )}
+                Tạo gói
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Plan Confirmation */}
+      <AlertDialog open={!!deletingPlan} onOpenChange={(open) => !open && setDeletingPlan(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa gói</AlertDialogTitle>
+            <AlertDialogDescription>
+              Gói <strong>{deletingPlan?.name}</strong> ({deletingPlan?.type}) sẽ bị xóa.
+              Hành động này chỉ thành công khi <strong>không còn subscription active</strong>;
+              ngược lại backend sẽ chặn và yêu cầu di chuyển/đợi user hủy đăng ký.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+              onClick={handleDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleteMutation.isPending ? 'Đang xóa...' : 'Xác nhận xóa'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

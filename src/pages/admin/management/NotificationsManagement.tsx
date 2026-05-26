@@ -34,8 +34,10 @@ import type { InAppNotification, NotificationType, User } from "@/domain";
 import StatCard from '@/components/admin/StatCard';
 import FilterSection from '@/components/admin/FilterSection';
 import DataTable from '@/components/admin/DataTable';
+import { useUser } from '@/hooks/api/use-user';
 
 export default function NotificationsManagement() {
+  const { user: adminUser } = useUser();
   const [notifications, setNotifications] = useState<InAppNotification[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [notificationTypes, setNotificationTypes] = useState<NotificationType[]>([]);
@@ -54,16 +56,16 @@ export default function NotificationsManagement() {
   });
 
   useEffect(() => {
+    if (!adminUser?.id) return;
     const fetchData = async () => {
       try {
         const [notificationsRes, typesRes] = await Promise.all([
           notificationService.getUserNotifications({
-            userId: 'admin', // backend will be filtered by user when using real admin context
+            userId: adminUser.id,
             page: 1,
             limit: 100,
           }),
-          // Fallback: get notification types for filtering
-          notificationService.getUserStats('admin').catch(() => null),
+          notificationService.getUserStats(adminUser.id).catch(() => null),
         ]);
 
         setNotifications(notificationsRes.data?.notifications ?? []);
@@ -84,7 +86,7 @@ export default function NotificationsManagement() {
     };
 
     fetchData();
-  }, []);
+  }, [adminUser?.id]);
 
   const filteredNotifications = notifications.filter(notification => {
     const matchesSearch = notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

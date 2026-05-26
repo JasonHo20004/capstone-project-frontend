@@ -16,6 +16,16 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import DataTable from '@/components/admin/DataTable';
 import { toast } from 'sonner';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   DollarSign,
   TrendingUp,
   Users,
@@ -41,6 +51,8 @@ export default function CommissionManagement() {
   const [editGatewayRate, setEditGatewayRate] = useState('');
   const [editGatewayFixed, setEditGatewayFixed] = useState('');
   const [editClearanceDays, setEditClearanceDays] = useState('');
+  const [confirmConfigOpen, setConfirmConfigOpen] = useState(false);
+  const [confirmReleaseOpen, setConfirmReleaseOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -71,7 +83,7 @@ export default function CommissionManagement() {
     setEditClearanceDays(clearanceDays.toString());
   };
 
-  const handleSaveConfig = async () => {
+  const validateConfig = () => {
     const rateNum = parseFloat(editRate);
     const gwRateNum = parseFloat(editGatewayRate);
     const gwFixedNum = parseFloat(editGatewayFixed);
@@ -79,30 +91,41 @@ export default function CommissionManagement() {
 
     if (isNaN(rateNum) || rateNum < 0 || rateNum > 100) {
       toast.error('Tỷ lệ hoa hồng phải từ 0 đến 100');
-      return;
+      return null;
     }
     if (isNaN(gwRateNum) || gwRateNum < 0 || gwRateNum > 100) {
       toast.error('Phí cổng (%) phải từ 0 đến 100');
-      return;
+      return null;
     }
     if (isNaN(gwFixedNum) || gwFixedNum < 0) {
       toast.error('Phí cổng cố định phải >= 0');
-      return;
+      return null;
     }
     if (isNaN(clearanceNum) || clearanceNum < 0 || clearanceNum > 90) {
       toast.error('Thời gian khoá phải từ 0 đến 90 ngày');
-      return;
+      return null;
     }
+    return { rateNum, gwRateNum, gwFixedNum, clearanceNum };
+  };
 
+  const handleSaveConfig = () => {
+    if (!validateConfig()) return;
+    setConfirmConfigOpen(true);
+  };
+
+  const confirmSaveConfig = async () => {
+    const v = validateConfig();
+    if (!v) return;
     try {
       await updateConfig.mutateAsync({
-        commissionRate: rateNum / 100,
-        gatewayFeeRate: gwRateNum / 100,
-        gatewayFeeFixed: gwFixedNum,
-        clearanceDays: clearanceNum,
+        commissionRate: v.rateNum / 100,
+        gatewayFeeRate: v.gwRateNum / 100,
+        gatewayFeeFixed: v.gwFixedNum,
+        clearanceDays: v.clearanceNum,
       });
       toast.success('Đã cập nhật cấu hình');
       setIsEditing(false);
+      setConfirmConfigOpen(false);
     } catch {
       toast.error('Cập nhật thất bại');
     }
@@ -116,6 +139,7 @@ export default function CommissionManagement() {
       } else {
         toast.info('Không có giao dịch nào cần mở khoá');
       }
+      setConfirmReleaseOpen(false);
     } catch {
       toast.error('Thao tác thất bại');
     }
@@ -166,7 +190,7 @@ export default function CommissionManagement() {
         </div>
         <Button
           variant="outline"
-          onClick={handleRelease}
+          onClick={() => setConfirmReleaseOpen(true)}
           disabled={releaseEarnings.isPending}
           className="gap-2"
         >
@@ -433,6 +457,75 @@ export default function CommissionManagement() {
           </Button>
         </div>
       )}
+
+      <AlertDialog open={confirmConfigOpen} onOpenChange={setConfirmConfigOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận cập nhật cấu hình</AlertDialogTitle>
+            <AlertDialogDescription>
+              Thay đổi sẽ <strong>áp dụng cho tất cả seller</strong> ở các giao dịch mua khóa học tiếp theo.
+              Vui lòng kiểm tra kỹ trước khi xác nhận.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/40 p-3 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Hoa hồng Platform</p>
+              <p className="font-medium">
+                {Math.round(globalRate * 100)}% → <strong>{editRate || 0}%</strong>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Phí cổng (%)</p>
+              <p className="font-medium">
+                {(gatewayFeeRate * 100).toFixed(1)}% → <strong>{editGatewayRate || 0}%</strong>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Phí cổng cố định</p>
+              <p className="font-medium">
+                {formatVND(gatewayFeeFixed)} → <strong>{formatVND(Number(editGatewayFixed) || 0)}</strong>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Thời gian khoá</p>
+              <p className="font-medium">
+                {clearanceDays} → <strong>{editClearanceDays || 0}</strong> ngày
+              </p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateConfig.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSaveConfig}
+              disabled={updateConfig.isPending}
+            >
+              {updateConfig.isPending ? 'Đang lưu...' : 'Xác nhận lưu'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmReleaseOpen} onOpenChange={setConfirmReleaseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mở khoá thu nhập đến hạn</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hệ thống sẽ quét tất cả khoản hoa hồng của seller đã vượt qua thời gian khoá
+              ({clearanceDays} ngày) và chuyển sang trạng thái <strong>Sẵn sàng rút</strong>.
+              Sau khi mở khoá, seller có thể tạo yêu cầu Payout cho số tiền này.
+              <br /><br />
+              Thao tác này thường được chạy theo lịch tự động — chỉ chạy thủ công khi cần.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={releaseEarnings.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRelease} disabled={releaseEarnings.isPending}>
+              <Unlock className="mr-2 h-4 w-4" />
+              {releaseEarnings.isPending ? 'Đang xử lý...' : 'Xác nhận mở khoá'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Bell, Search, Home, User } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Bell, Search, Home, User, LogOut, CheckCheck, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,14 +15,23 @@ import {
   useNotificationRealtime,
   useNotificationStats,
   useNotifications,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
 } from "@/hooks/api";
 import { useUser } from "@/hooks/api/use-user";
+import { useAuth } from "@/hooks/api/use-auth";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function AdminHeader() {
+interface AdminHeaderProps {
+  onOpenSidebar?: () => void;
+}
+
+export default function AdminHeader({ onOpenSidebar }: AdminHeaderProps) {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { logout, isLoggingOut } = useAuth();
   const userId = user?.id;
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: stats } = useNotificationStats();
   const { data: notificationsResponse } = useNotifications({
@@ -31,6 +40,8 @@ export default function AdminHeader() {
     unreadOnly: false,
     enabled: Boolean(userId),
   });
+  const markAsRead = useMarkNotificationAsRead();
+  const markAllAsRead = useMarkAllNotificationsAsRead();
 
   useNotificationRealtime(userId);
 
@@ -41,19 +52,46 @@ export default function AdminHeader() {
 
   const unreadCount = stats?.unread ?? 0;
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const term = searchTerm.trim();
+    if (!term) return;
+    navigate(`/admin/users?q=${encodeURIComponent(term)}`);
+  };
+
+  const handleNotificationClick = (notificationId: string, isRead: boolean) => {
+    if (!isRead) {
+      markAsRead.mutate(notificationId);
+    }
+  };
+
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      <div className="flex items-center gap-4">
-        <div className="relative w-96">
+    <header className="flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
+      <div className="flex items-center gap-4 flex-1">
+        {onOpenSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            aria-label="Mở menu"
+            onClick={onOpenSidebar}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm kiếm người dùng, khóa học..."
+            placeholder="Tìm người dùng theo tên / email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            aria-label="Tìm kiếm người dùng"
           />
-        </div>
+        </form>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Button
           variant="outline"
           size="sm"
@@ -80,7 +118,21 @@ export default function AdminHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
+            <div className="flex items-center justify-between px-2 py-1.5">
+              <DropdownMenuLabel className="px-0 py-0">Thông báo</DropdownMenuLabel>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => markAllAsRead.mutate()}
+                  disabled={markAllAsRead.isPending}
+                >
+                  <CheckCheck className="mr-1 h-3 w-3" />
+                  Đánh dấu tất cả
+                </Button>
+              )}
+            </div>
             <DropdownMenuSeparator />
             {latestNotifications.length === 0 ? (
               <div className="px-3 py-6 text-sm text-muted-foreground text-center">
@@ -89,9 +141,11 @@ export default function AdminHeader() {
             ) : (
               <div className="max-h-80 overflow-y-auto">
                 {latestNotifications.map((n) => (
-                  <div
+                  <button
                     key={n.id}
-                    className={`px-3 py-2 text-sm border-b last:border-b-0 ${
+                    type="button"
+                    onClick={() => handleNotificationClick(n.id, n.isRead)}
+                    className={`block w-full text-left px-3 py-2 text-sm border-b last:border-b-0 hover:bg-accent transition-colors ${
                       n.isRead ? "bg-background" : "bg-primary/5"
                     }`}
                   >
@@ -102,7 +156,7 @@ export default function AdminHeader() {
                     <div className="mt-1 text-[10px] text-muted-foreground">
                       {new Date(n.createdAt).toLocaleString("vi-VN")}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -112,7 +166,7 @@ export default function AdminHeader() {
                 to="/admin/notifications"
                 className="text-primary hover:underline"
               >
-                Xem tất cả
+                Xem tất cả thông báo →
               </Link>
             </div>
           </DropdownMenuContent>
@@ -127,23 +181,29 @@ export default function AdminHeader() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Admin User</p>
+                <p className="text-sm font-medium leading-none">
+                  {user?.fullName || "Quản trị viên"}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  admin@skillboost.com
+                  {user?.email || ""}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Hồ sơ</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <span>Cài đặt</span>
+            <DropdownMenuItem asChild>
+              <Link to="/profile">
+                <User className="mr-2 h-4 w-4" />
+                <span>Hồ sơ</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <span>Đăng xuất</span>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => logout()}
+              disabled={isLoggingOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

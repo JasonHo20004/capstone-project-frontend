@@ -50,10 +50,8 @@ import UsersManagement from "./pages/admin/user-management/Users";
 import CoursesManagement from "./pages/admin/course-management/Courses";
 import ApplicationsManagement from "./pages/admin/application-management/ApplicationsManagement";
 import CommentReports from "./pages/admin/moderation/CommentReports";
-import ReportsManagement from "./pages/admin/management/ReportsManagement";
 import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
-import RevenueManagement from "./pages/admin/revenue-management/Revenues";
 import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
 import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 import TagsManagement from "./pages/admin/tag-management/Tags";
@@ -81,7 +79,6 @@ import Register from "./pages/shared/auth/Register";
 import VerifyEmailPage from "./pages/shared/auth/VerifyEmail";
 
 // Layouts
-import AdminLayout from "./components/admin/AdminLayout";
 import SellerLayout from "./components/seller/SellerLayout";
 import SellerDashboard from "./pages/seller/dashboard/SellerDashboard";
 import SellerCourses from "./pages/seller/courses/SellerCourses";
@@ -160,7 +157,7 @@ const App = () => (
           </Route>
           {/* admin Routes */}
 
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminProtectedRoute />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UsersManagement />} />
             <Route path="courses" element={<CoursesManagement />} />
@@ -178,9 +175,7 @@ const App = () => (
             <Route path="exams/:id/edit/speaking" element={<SpeakingTestForm />} />
             <Route path="speaking-topics" element={<SpeakingTopicManager />} />
             <Route path="dictation" element={<DictationManagement />} />
-            <Route path="reports" element={<ReportsManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
-            <Route path="revenue" element={<RevenueManagement />} />
             <Route path="commission" element={<CommissionManagement />} />
             <Route path="withdrawals" element={<WithdrawalManagement />} />
             <Route path="tags" element={<TagsManagement />} />

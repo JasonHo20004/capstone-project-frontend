@@ -10,8 +10,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  RefreshCw,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import {
   AreaChart,
   Area,
@@ -92,7 +94,13 @@ function TrendBadge({ value, label = "so với tháng trước" }: TrendBadgePro
 }
 
 export default function AdminDashboard() {
-  const { data: dashboardData, isLoading } = useQuery({
+  const {
+    data: dashboardData,
+    isLoading,
+    isFetching,
+    dataUpdatedAt,
+    refetch,
+  } = useQuery({
     queryKey: ["adminDashboard"],
     queryFn: () => dashboardService.getDashboardData(),
     refetchInterval: 30000,
@@ -125,17 +133,35 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight font-display">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Tổng quan hoạt động hệ thống SkillBoost —{" "}
-          {new Date().toLocaleDateString("vi-VN", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight font-display">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Tổng quan hoạt động hệ thống SkillBoost —{" "}
+            {new Date().toLocaleDateString("vi-VN", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {dataUpdatedAt > 0 && (
+            <span className="text-xs text-muted-foreground">
+              Cập nhật lúc {new Date(dataUpdatedAt).toLocaleTimeString("vi-VN")}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+            {isFetching ? "Đang tải..." : "Làm mới"}
+          </Button>
+        </div>
       </div>
 
       {/* ─── Stat Cards ─────────────────────────────────────────────── */}

@@ -63,6 +63,7 @@ export default function ExamManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [skillFilter, setSkillFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<TestItem | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{ test: TestItem; nextStatus: 'PUBLISHED' | 'DRAFT' } | null>(null);
   const queryClient = useQueryClient();
 
   const { data: tests = [], isLoading, isError, error, refetch } = useQuery({
@@ -82,6 +83,7 @@ export default function ExamManagement() {
     mutationFn: ({ id, status }: { id: string; status: string }) => updateTestStatusApi(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminTests'] });
+      setStatusTarget(null);
     },
   });
 
@@ -188,7 +190,7 @@ export default function ExamManagement() {
             {test.status === 'DRAFT' ? (
               <DropdownMenuItem
                 className="text-emerald-600"
-                onClick={() => statusMutation.mutate({ id: test.id, status: 'PUBLISHED' })}
+                onClick={() => setStatusTarget({ test, nextStatus: 'PUBLISHED' })}
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Xuất bản
@@ -196,7 +198,7 @@ export default function ExamManagement() {
             ) : (
               <DropdownMenuItem
                 className="text-amber-600"
-                onClick={() => statusMutation.mutate({ id: test.id, status: 'DRAFT' })}
+                onClick={() => setStatusTarget({ test, nextStatus: 'DRAFT' })}
               >
                 <XCircle className="mr-2 h-4 w-4" />
                 Hủy xuất bản
@@ -321,6 +323,45 @@ export default function ExamManagement() {
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
               Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Status Toggle Confirm Dialog */}
+      <AlertDialog open={!!statusTarget} onOpenChange={(open) => !open && setStatusTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {statusTarget?.nextStatus === 'PUBLISHED' ? 'Xuất bản bài thi' : 'Hủy xuất bản bài thi'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {statusTarget?.nextStatus === 'PUBLISHED' ? (
+                <>
+                  Bài thi <strong>"{statusTarget?.test.title}"</strong> sẽ hiển thị công khai cho học viên ngay sau khi xuất bản.
+                </>
+              ) : (
+                <>
+                  Bài thi <strong>"{statusTarget?.test.title}"</strong> sẽ bị ẩn khỏi học viên. Học viên đang làm dở
+                  có thể bị gián đoạn. Bạn có chắc chắn?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={statusMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={statusMutation.isPending}
+              onClick={() =>
+                statusTarget &&
+                statusMutation.mutate({ id: statusTarget.test.id, status: statusTarget.nextStatus })
+              }
+            >
+              {statusMutation.isPending
+                ? 'Đang xử lý...'
+                : statusTarget?.nextStatus === 'PUBLISHED'
+                ? 'Xác nhận xuất bản'
+                : 'Xác nhận hủy xuất bản'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

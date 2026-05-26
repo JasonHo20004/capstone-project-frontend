@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -48,13 +49,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userManagementService } from "@/lib/api/services/admin";
 
 export default function UsersManagement() {
+  const [searchParams] = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [walletConfirm, setWalletConfirm] = useState<{
+    current: number;
+    next: number;
+    reason: string;
+  } | null>(null);
   const queryClient = useQueryClient();
   const [editForm, setEditForm] = useState({
     fullName: "",
@@ -69,6 +76,12 @@ export default function UsersManagement() {
     expertise: [] as string[],
     walletAllowance: "" as number | "",
   });
+
+  // Sync URL ?q= (from AdminHeader global search) into the local search term.
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q !== null) setSearchTerm(q);
+  }, [searchParams]);
 
   const { data: usersResp } = useQuery({
     queryKey: ["userManagementUsers"],
@@ -140,11 +153,12 @@ export default function UsersManagement() {
       user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
+    // Role filter — STUDENT covers users whose role is explicitly USER or absent.
+    // Any other known role (COURSESELLER / ADMINISTRATOR) must match exactly.
+    const isStudent = !user.role || user.role === "USER" || user.role === "STUDENT";
     const matchesRole =
       roleFilter === "all" ||
-      (roleFilter === "STUDENT" &&
-        user.role !== "COURSESELLER" &&
-        user.role !== "ADMINISTRATOR") ||
+      (roleFilter === "STUDENT" && isStudent) ||
       (roleFilter !== "STUDENT" && user.role === roleFilter);
 
     return matchesSearch && matchesRole;
@@ -223,10 +237,9 @@ export default function UsersManagement() {
     });
   };
 
-  const handleSaveUser = () => {
-    if (!editingUser) return;
-
-    const payload = {
+  const buildUpdatePayload = (walletOverride?: number) => {
+    if (!editingUser) return null;
+    return {
       id: editingUser.id,
       fullName: editForm.fullName,
       email: editForm.email,
@@ -234,11 +247,10 @@ export default function UsersManagement() {
       dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
-      ...(editForm.role !== "STUDENT"
-        ? { role: editForm.role as "COURSESELLER" | "ADMINISTRATOR" }
-        : {}),
+      // Role is read-only in the edit dialog. Preserve the existing role
+      // (set via Application approval, not arbitrary admin edits).
       courseSellerProfile:
-        editForm.role === "COURSESELLER"
+        editingUser.role === "COURSESELLER"
           ? {
               id: editingUser.courseSellerProfile?.id,
               certification: editForm.certification,
@@ -247,10 +259,43 @@ export default function UsersManagement() {
             }
           : undefined,
       walletAllowance:
-        editForm.walletAllowance === "" ? undefined : editForm.walletAllowance,
+        walletOverride !== undefined
+          ? walletOverride
+          : editForm.walletAllowance === ""
+          ? undefined
+          : editForm.walletAllowance,
     };
+  };
 
-    updateUserMutation.mutate(payload);
+  const handleSaveUser = () => {
+    if (!editingUser) return;
+    const currentBalance = editingUser.wallet?.allowance ?? 0;
+    const nextBalance =
+      editForm.walletAllowance === "" ? currentBalance : Number(editForm.walletAllowance);
+
+    // If admin is changing the wallet balance, force an explicit confirmation
+    // with a reason — this is a sensitive financial action.
+    if (editingUser.wallet && nextBalance !== currentBalance) {
+      setWalletConfirm({ current: currentBalance, next: nextBalance, reason: "" });
+      return;
+    }
+
+    const payload = buildUpdatePayload();
+    if (payload) updateUserMutation.mutate(payload);
+  };
+
+  const confirmWalletAdjustment = () => {
+    if (!walletConfirm) return;
+    if (!walletConfirm.reason.trim()) {
+      toast.error("Vui lòng nhập lý do điều chỉnh số dư");
+      return;
+    }
+    const payload = buildUpdatePayload(walletConfirm.next);
+    if (payload) {
+      updateUserMutation.mutate(payload, {
+        onSuccess: () => setWalletConfirm(null),
+      });
+    }
   };
 
   const handleCancelEdit = () => {
@@ -312,6 +357,21 @@ export default function UsersManagement() {
   };
 
   const handleSaveNewUser = () => {
+    // Email format guard (UX-only — backend remains source of truth).
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email);
+    if (!emailOk) {
+      toast.error("Email không hợp lệ");
+      return;
+    }
+    if (editForm.password.length < 6) {
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+      return;
+    }
+    if (editForm.role === "COURSESELLER") {
+      toast.error("Không thể tạo trực tiếp giảng viên — hãy duyệt qua Đơn đăng ký");
+      return;
+    }
+
     const payload = {
       fullName: editForm.fullName,
       email: editForm.email,
@@ -320,17 +380,9 @@ export default function UsersManagement() {
       dateOfBirth: new Date(editForm.dateOfBirth).toISOString(),
       englishLevel: editForm.englishLevel || undefined,
       learningGoals: editForm.learningGoals,
-      ...(editForm.role !== "STUDENT"
-        ? { role: editForm.role as "COURSESELLER" | "ADMINISTRATOR" }
+      ...(editForm.role === "ADMINISTRATOR"
+        ? { role: "ADMINISTRATOR" as const }
         : {}),
-      courseSellerProfile:
-        editForm.role === "COURSESELLER"
-          ? {
-              certification: editForm.certification,
-              expertise: editForm.expertise,
-              isActive: true,
-            }
-          : undefined,
       walletAllowance: editForm.walletAllowance || undefined,
     };
 
@@ -697,12 +749,7 @@ export default function UsersManagement() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Vai trò</Label>
-                    <Select
-                      value={editForm.role}
-                      onValueChange={(value) =>
-                        setEditForm({ ...editForm, role: value })
-                      }
-                    >
+                    <Select value={editForm.role} disabled>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
@@ -714,6 +761,10 @@ export default function UsersManagement() {
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Không đổi vai trò trực tiếp. Để nâng cấp người dùng thành giảng viên, hãy duyệt đơn ở
+                      mục <strong>Đơn đăng ký</strong>.
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -931,12 +982,14 @@ export default function UsersManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="STUDENT">Học viên</SelectItem>
-                      <SelectItem value="COURSESELLER">Giảng viên</SelectItem>
                       <SelectItem value="ADMINISTRATOR">
                         Quản trị viên
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Người dùng mới chỉ có thể là Học viên hoặc Quản trị viên. Giảng viên phải qua quy trình duyệt đơn.
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -1034,6 +1087,74 @@ export default function UsersManagement() {
             >
               <UserPlus className="mr-2 h-4 w-4" />
               Tạo người dùng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wallet Adjustment Confirmation Dialog */}
+      <Dialog
+        open={!!walletConfirm}
+        onOpenChange={(open) => !open && setWalletConfirm(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xác nhận điều chỉnh số dư</DialogTitle>
+            <DialogDescription>
+              Đây là thao tác tài chính nhạy cảm. Vui lòng nhập lý do để lưu vào lịch sử kiểm toán.
+            </DialogDescription>
+          </DialogHeader>
+          {walletConfirm && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/50 p-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Số dư hiện tại</p>
+                  <p className="text-sm font-medium">{formatCurrency(walletConfirm.current)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Số dư mới</p>
+                  <p className={`text-sm font-semibold ${
+                    walletConfirm.next > walletConfirm.current ? "text-emerald-600" : "text-red-600"
+                  }`}>
+                    {formatCurrency(walletConfirm.next)}
+                    <span className="ml-1 text-xs">
+                      ({walletConfirm.next > walletConfirm.current ? "+" : ""}
+                      {formatCurrency(walletConfirm.next - walletConfirm.current)})
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="walletReason">
+                  Lý do điều chỉnh <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="walletReason"
+                  rows={3}
+                  maxLength={500}
+                  placeholder="VD: Hoàn tiền cho đơn #abc, bồi thường sự cố, điều chỉnh sai sót..."
+                  value={walletConfirm.reason}
+                  onChange={(e) =>
+                    setWalletConfirm({ ...walletConfirm, reason: e.target.value })
+                  }
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {walletConfirm.reason.length}/500
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWalletConfirm(null)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={confirmWalletAdjustment}
+              disabled={updateUserMutation.isPending || !walletConfirm?.reason.trim()}
+              variant="destructive"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Xác nhận điều chỉnh
             </Button>
           </DialogFooter>
         </DialogContent>

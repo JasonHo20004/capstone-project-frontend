@@ -26,10 +26,15 @@ import {
   X,
   FileText,
   User,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Users,
 } from 'lucide-react';
 import type { CourseSellerApplication } from '@/domain';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
+import StatCard from '@/components/admin/StatCard';
 import { applicationManagementService } from '@/lib/api/services/admin/application-management/application.service';
 import { toast } from 'sonner';
 
@@ -48,6 +53,13 @@ export default function ApplicationsManagement() {
   });
 
   const applications = applicationsResp?.data || [];
+
+  const stats = {
+    total: applications.length,
+    pending: applications.filter((a) => a.status === 'PENDING').length,
+    approved: applications.filter((a) => a.status === 'APPROVED').length,
+    rejected: applications.filter((a) => a.status === 'REJECTED').length,
+  };
 
   const updateStatusMutation = useMutation({
     mutationFn: ({
@@ -230,6 +242,13 @@ export default function ApplicationsManagement() {
         <p className="text-muted-foreground">
           Duyệt và quản lý các đơn đăng ký trở thành giảng viên
         </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Tổng đơn" value={stats.total} description="Toàn bộ đơn đăng ký" icon={Users} />
+        <StatCard title="Chờ duyệt" value={stats.pending} description="Đang chờ admin xem xét" icon={Clock} />
+        <StatCard title="Đã duyệt" value={stats.approved} description="Đã trở thành giảng viên" icon={CheckCircle2} />
+        <StatCard title="Đã từ chối" value={stats.rejected} description="Bị từ chối" icon={XCircle} />
       </div>
 
       <FilterSection

@@ -1,18 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   Users,
   BookOpen,
   CreditCard,
-  FileText,
-  Bell,
-  Settings,
   UserCheck,
-  AlertTriangle,
-  Package,
-  ScrollText,
   Tag,
   ClipboardList,
   Headphones,
@@ -20,113 +13,47 @@ import {
   Percent,
   Landmark,
   ShieldAlert,
+  Bell,
 } from 'lucide-react';
 
 const sidebarItems = [
-  {
-    title: 'Dashboard',
-    href: '/admin',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Quản lý người dùng',
-    href: '/admin/users',
-    icon: Users,
-  },
-  {
-    title: 'Quản lý khóa học',
-    href: '/admin/courses',
-    icon: BookOpen,
-  },
-  {
-    title: 'Quản lý bài thi',
-    href: '/admin/exams',
-    icon: ClipboardList,
-  },
-  {
-    title: 'Quản lý Dictation',
-    href: '/admin/dictation',
-    icon: Headphones,
-  },
-  // {
-  //   title: 'Doanh thu',
-  //   href: '/admin/revenue',
-  //   icon: FileText,
-  // },
-  {
-    title: 'Giao dịch',
-    href: '/admin/transactions',
-    icon: CreditCard,
-  },
-  {
-    title: 'Hoa hồng',
-    href: '/admin/commission',
-    icon: Percent,
-  },
-  {
-    title: 'Rút tiền (Payout)',
-    href: '/admin/withdrawals',
-    icon: Landmark,
-  },
-  {
-    title: 'Đơn đăng ký',
-    href: '/admin/applications',
-    icon: UserCheck,
-  },
-  {
-    title: 'Kiểm duyệt bình luận',
-    href: '/admin/moderation',
-    icon: ShieldAlert,
-  },
-  {
-    title: 'Quản lý Tag',
-    href: '/admin/tags',
-    icon: Tag,
-  },
-  {
-    title: 'Gói người dùng',
-    href: '/admin/user-plans',
-    icon: Crown,
-  },
-  // {
-  //   title: 'Báo cáo vi phạm',
-  //   href: '/admin/reports',
-  //   icon: AlertTriangle,
-  // },
-  // {
-  //   title: 'Thông báo',
-  //   href: '/admin/notifications',
-  //   icon: Bell,
-  // },
-  // {
-  //   title: 'Cài đặt',
-  //   href: '/admin/settings',
-  //   icon: Settings,
-  // },
+  { title: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
+  { title: 'Quản lý người dùng', href: '/admin/users', icon: Users },
+  { title: 'Quản lý khóa học', href: '/admin/courses', icon: BookOpen },
+  { title: 'Quản lý bài thi', href: '/admin/exams', icon: ClipboardList },
+  { title: 'Quản lý Dictation', href: '/admin/dictation', icon: Headphones },
+  { title: 'Giao dịch', href: '/admin/transactions', icon: CreditCard },
+  { title: 'Hoa hồng', href: '/admin/commission', icon: Percent },
+  { title: 'Rút tiền (Payout)', href: '/admin/withdrawals', icon: Landmark },
+  { title: 'Đơn đăng ký', href: '/admin/applications', icon: UserCheck },
+  { title: 'Kiểm duyệt bình luận', href: '/admin/moderation', icon: ShieldAlert },
+  { title: 'Thông báo hệ thống', href: '/admin/notifications', icon: Bell },
+  { title: 'Quản lý Tag', href: '/admin/tags', icon: Tag },
+  { title: 'Gói người dùng', href: '/admin/user-plans', icon: Crown },
 ];
 
-export default function AdminSidebar() {
-  const location = useLocation();
-  const queryClient = useQueryClient();
+interface AdminSidebarProps {
+  onNavigate?: () => void;
+}
 
-  const handleNavClick = () => {
-    // Invalidate all queries to refetch data when navigating
-    queryClient.invalidateQueries();
-  };
+export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
+  const location = useLocation();
 
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r">
-      <div className="flex h-16 items-center border-b px-6">
+      <div className="flex h-16 items-center border-b px-6 shrink-0">
         <h2 className="text-lg font-semibold">Admin Panel</h2>
       </div>
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {sidebarItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = item.exact
+            ? location.pathname === item.href
+            : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
               to={item.href}
-              onClick={handleNavClick}
+              onClick={onNavigate}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive

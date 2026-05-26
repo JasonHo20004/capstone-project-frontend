@@ -7,11 +7,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Star } from "lucide-react";
+import { Star, Trash2, Check } from "lucide-react";
 import { courseManagementService } from "@/lib/api/services/admin";
 import type { UpdateCourseRequest } from "@/lib/api/services/admin";
 import { CourseWithStats, CourseStatus, CourseLevel, Lesson, Rating } from "@/domain";
 import type { Lesson as LessonType } from "@/domain";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -46,6 +47,8 @@ export default function AdminCourseDetail() {
   // the mutation directly, so admins can't silently reject with empty text.
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [ratingToDelete, setRatingToDelete] = useState<string | null>(null);
 
   const { data: courseDetailResp } = useQuery({
     queryKey: ["adminCourseDetail", id],
@@ -68,9 +71,18 @@ export default function AdminCourseDetail() {
   const updateCourseMutation = useMutation({
     mutationFn: (vars: { data: UpdateCourseRequest }) =>
       courseManagementService.updateCourse(id!, vars.data),
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: ["adminCourseDetail", id] });
       queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+      if (vars.data.status === CourseStatus.ACTIVE) {
+        toast.success("Đã duyệt khóa học");
+        setShowApproveDialog(false);
+      } else {
+        toast.success("Đã lưu thay đổi");
+      }
+    },
+    onError: () => {
+      toast.error("Cập nhật thất bại");
     },
   });
 
@@ -128,6 +140,11 @@ export default function AdminCourseDetail() {
         queryKey: ["adminCourseRatings", id],
         type: "active",
       });
+      toast.success("Đã xóa đánh giá");
+      setRatingToDelete(null);
+    },
+    onError: () => {
+      toast.error("Không thể xóa đánh giá");
     },
   });
 
@@ -246,13 +263,8 @@ export default function AdminCourseDetail() {
                 </Button>
                 {course.status === CourseStatus.PENDING && (
                   <>
-                    <Button
-                      onClick={() =>
-                        updateCourseMutation.mutate({
-                          data: { status: CourseStatus.ACTIVE },
-                        })
-                      }
-                    >
+                    <Button onClick={() => setShowApproveDialog(true)}>
+                      <Check className="mr-2 h-4 w-4" />
                       Duyệt khóa học
                     </Button>
                     <Button
@@ -346,15 +358,7 @@ export default function AdminCourseDetail() {
                     </div>
                     <div className="space-y-2">
                       <Label>Trạng thái</Label>
-                      <Select
-                        value={editCourse.status ?? undefined}
-                        onValueChange={(v) =>
-                          setEditCourse({
-                            ...editCourse,
-                            status: v as UpdateCourseRequest["status"],
-                          })
-                        }
-                      >
+                      <Select value={editCourse.status ?? undefined} disabled>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Chọn trạng thái" />
                         </SelectTrigger>
@@ -367,18 +371,27 @@ export default function AdminCourseDetail() {
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Trạng thái không sửa ở đây. Dùng nút <strong>Duyệt</strong> / <strong>Từ chối</strong> ở tab Tổng quan
+                        để đảm bảo lưu kèm lý do và thông báo cho seller.
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() =>
-                        updateCourseMutation.mutate({ data: editCourse })
-                      }
+                      onClick={() => {
+                        // Defensive: never send status from the edit tab —
+                        // approval / rejection has dedicated flows.
+                        const { status: _ignored, ...editable } = editCourse;
+                        updateCourseMutation.mutate({ data: editable });
+                      }}
                       disabled={
-                        !editCourse.title || editCourse.price === undefined
+                        !editCourse.title ||
+                        editCourse.price === undefined ||
+                        updateCourseMutation.isPending
                       }
                     >
-                      Lưu thay đổi
+                      {updateCourseMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
                     </Button>
                     {/* <Button
                       variant="outline"
@@ -438,21 +451,39 @@ export default function AdminCourseDetail() {
 
             <TabsContent value="ratings" className="space-y-4">
               <div className="space-y-2">
-                {(ratingsResp?.data || []).map((rt: Rating) => (
-                  <div key={rt.id} className="border rounded p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium">
-                        Điểm: {rt.score} • Người dùng:{" "}
-                        {rt.user?.fullName || rt.userId}
-                      </div>
-                    </div>
-                    {rt.content && (
-                      <div className="text-sm text-muted-foreground">
-                        {rt.content}
-                      </div>
-                    )}
+                {(ratingsResp?.data || []).length === 0 ? (
+                  <div className="text-sm text-muted-foreground italic py-6 text-center">
+                    Chưa có đánh giá nào cho khóa học này.
                   </div>
-                ))}
+                ) : (
+                  (ratingsResp?.data || []).map((rt: Rating) => (
+                    <div key={rt.id} className="border rounded p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-medium flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            {rt.score}
+                          </span>
+                          <span className="text-muted-foreground">•</span>
+                          <span>{rt.user?.fullName || rt.userId}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => setRatingToDelete(rt.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {rt.content && (
+                        <div className="text-sm text-muted-foreground">
+                          {rt.content}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </TabsContent>
           </Tabs>
@@ -562,6 +593,60 @@ export default function AdminCourseDetail() {
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteCourse}>
               Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duyệt khóa học</AlertDialogTitle>
+            <AlertDialogDescription>
+              Khóa học <strong>{course?.title}</strong> sẽ được công khai cho học viên
+              ngay sau khi duyệt. Vui lòng đảm bảo nội dung đã được rà soát kỹ.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateCourseMutation.isPending}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updateCourseMutation.isPending}
+              onClick={() =>
+                updateCourseMutation.mutate({
+                  data: { status: CourseStatus.ACTIVE },
+                })
+              }
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Xác nhận duyệt
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!ratingToDelete}
+        onOpenChange={(open) => !open && setRatingToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa đánh giá</AlertDialogTitle>
+            <AlertDialogDescription>
+              Đánh giá sẽ bị xóa vĩnh viễn và rating trung bình của khóa học sẽ được tính lại.
+              Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteRatingMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteRatingMutation.isPending}
+              onClick={() => ratingToDelete && deleteRatingMutation.mutate(ratingToDelete)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleteRatingMutation.isPending ? "Đang xóa..." : "Xác nhận xóa"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

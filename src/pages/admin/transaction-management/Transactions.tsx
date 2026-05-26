@@ -2,6 +2,15 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +32,9 @@ import {
   Download,
   CreditCard,
   Wallet,
+  Search as SearchIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { transactionManagementService } from "@/lib/api/services/admin";
 import type {
   TransactionFilters,
@@ -143,6 +154,39 @@ export default function TransactionsManagement() {
     }
   };
 
+  const escapeCsv = (val: unknown) => {
+    const s = String(val ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const handleExportCsv = () => {
+    if (transactions.length === 0) {
+      toast.info("Không có giao dịch nào để xuất");
+      return;
+    }
+    const headers = ["ID", "Loại", "Mô tả", "Người dùng", "Email", "Số tiền", "Trạng thái", "Thời gian"];
+    const rows = transactions.map((t) => [
+      t.id,
+      t.transactionType,
+      t.description ?? "",
+      t.wallet?.user?.fullName ?? "",
+      t.wallet?.user?.email ?? "",
+      String(t.amount),
+      t.status,
+      new Date(t.createdAt).toISOString(),
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map(escapeCsv).join(",")).join("\n");
+    // BOM ensures Excel reads UTF-8 (Vietnamese) correctly.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Đã xuất ${rows.length} giao dịch`);
+  };
+
   const handleViewTransaction = async (transactionId: string) => {
     try {
       const response = await transactionManagementService.getTransactionById(transactionId);
@@ -237,9 +281,9 @@ export default function TransactionsManagement() {
               Xem chi tiết
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportCsv()}>
               <Download className="mr-2 h-4 w-4" />
-              Xuất báo cáo
+              Xuất CSV (trang hiện tại)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -291,90 +335,116 @@ export default function TransactionsManagement() {
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 rounded-lg border bg-card p-4">
         {/* Row 1: Search and Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo mô tả hoặc ID giao dịch..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            className="flex h-10 w-[400px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label="Lọc theo trạng thái"
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={typeFilter || "all"}
-            onChange={(e) =>
-              setTypeFilter(
-                e.target.value as TransactionFilters["transactionType"]
-              )
-            }
-            aria-label="Lọc theo loại giao dịch"
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          >
-            {typeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[260px] max-w-md space-y-1">
+            <Label htmlFor="txSearch" className="text-xs text-muted-foreground">
+              Tìm kiếm
+            </Label>
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="txSearch"
+                placeholder="Mô tả hoặc ID giao dịch..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Trạng thái</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Loại</Label>
+            <Select
+              value={typeFilter || "all"}
+              onValueChange={(value) =>
+                setTypeFilter(value as TransactionFilters["transactionType"])
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {typeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Row 2: Date Range and Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="startDate" className="text-sm font-medium">
-            Từ ngày:
-          </label>
-          <input
-            id="startDate"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          />
-          <label htmlFor="endDate" className="text-sm font-medium">
-            Đến ngày:
-          </label>
-          <input
-            id="endDate"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          />
-          <Button onClick={handleSearch}>Tìm kiếm</Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              // Clear UI state
-              setSearchTerm("");
-              setStatusFilter("all");
-              setTypeFilter("all");
-              setStartDate("");
-              setEndDate("");
-              // Clear applied state
-              setAppliedSearch("");
-              setAppliedStatus("all");
-              setAppliedType("all");
-              setAppliedStartDate("");
-              setAppliedEndDate("");
-              setPage(1);
-            }}
-          >
-            Xóa tất cả bộ lọc
-          </Button>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="startDate" className="text-xs text-muted-foreground">
+              Từ ngày
+            </Label>
+            <Input
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-[180px]"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="endDate" className="text-xs text-muted-foreground">
+              Đến ngày
+            </Label>
+            <Input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-[180px]"
+            />
+          </div>
+          <div className="flex gap-2 ml-auto">
+            <Button onClick={handleSearch}>
+              <SearchIcon className="mr-2 h-4 w-4" />
+              Tìm kiếm
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchTerm("");
+                setStatusFilter("all");
+                setTypeFilter("all");
+                setStartDate("");
+                setEndDate("");
+                setAppliedSearch("");
+                setAppliedStatus("all");
+                setAppliedType("all");
+                setAppliedStartDate("");
+                setAppliedEndDate("");
+                setPage(1);
+              }}
+            >
+              Xóa lọc
+            </Button>
+            <Button variant="outline" onClick={() => handleExportCsv()}>
+              <Download className="mr-2 h-4 w-4" />
+              Xuất CSV
+            </Button>
+          </div>
         </div>
       </div>
 

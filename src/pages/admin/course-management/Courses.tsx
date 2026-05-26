@@ -12,14 +12,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  MoreHorizontal, 
-  Eye, 
-  Check, 
+import {
+  MoreHorizontal,
+  Eye,
+  Check,
   X,
   Star,
-  Pencil
+  Pencil,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { Course, CourseWithStats } from "@/domain";
 import { CourseStatus } from "@/domain";
 import { courseManagementService } from '@/lib/api/services/admin';
@@ -28,10 +38,12 @@ import FilterSection from '@/components/admin/FilterSection';
 import { useCourses } from '@/hooks/api';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
+import { toast } from 'sonner';
 
 export default function CoursesManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [approveTarget, setApproveTarget] = useState<Course | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -66,9 +78,16 @@ export default function CoursesManagement() {
   const updateCourseMutation = useMutation({
     mutationFn: (vars: { id: string; data: { status?: Course["status"] } }) =>
       courseManagementService.updateCourse(vars.id, vars.data),
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: ['adminCourses'] });
       refetch();
+      if (vars.data.status === CourseStatus.ACTIVE) {
+        toast.success('Đã duyệt khóa học');
+        setApproveTarget(null);
+      }
+    },
+    onError: () => {
+      toast.error('Thao tác thất bại');
     },
   });
 
@@ -182,12 +201,7 @@ export default function CoursesManagement() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-green-600"
-                  onClick={() =>
-                    updateCourseMutation.mutate({
-                      id: course.id,
-                      data: { status: CourseStatus.ACTIVE },
-                    })
-                  }
+                  onClick={() => setApproveTarget(course)}
                 >
                   <Check className="mr-2 h-4 w-4" />
                   Duyệt khóa học
@@ -269,6 +283,34 @@ export default function CoursesManagement() {
         columns={columns}
         emptyMessage="Không tìm thấy khóa học nào"
       />
+
+      <AlertDialog open={!!approveTarget} onOpenChange={(open) => !open && setApproveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duyệt khóa học</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn sắp công khai khóa học <strong>{approveTarget?.title}</strong> ra trang chính —
+              học viên có thể nhìn thấy và mua ngay. Vui lòng đảm bảo nội dung đã được rà soát.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateCourseMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updateCourseMutation.isPending}
+              onClick={() =>
+                approveTarget &&
+                updateCourseMutation.mutate({
+                  id: approveTarget.id,
+                  data: { status: CourseStatus.ACTIVE },
+                })
+              }
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Xác nhận duyệt
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

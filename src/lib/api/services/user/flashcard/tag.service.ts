@@ -34,6 +34,14 @@ class TagService {
     const response = await apiClient.post<ApiResponse<Tag>>(`/tags/update/${tagId}`, data);
     return response.data;
   }
+
+  /**
+   * Xóa tag (Admin only)
+   */
+  async deleteTag(tagId: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.delete<ApiResponse<null>>(`/tags/${tagId}`);
+    return response.data;
+  }
 }
 
 export const tagService = new TagService();

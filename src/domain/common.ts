@@ -30,6 +30,8 @@ export interface Comment {
 export interface Tag {
   id: string;
   name: string;
+  /** Number of flashcard decks currently using this tag (admin-only, from listTags). */
+  deckCount?: number;
 }
 
 export interface Report {

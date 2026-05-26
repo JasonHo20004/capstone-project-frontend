@@ -18,7 +18,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Plus, Tag as TagIcon } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Edit, Plus, Tag as TagIcon, Trash2 } from "lucide-react";
 import type { Tag } from "@/domain";
 import DataTable from "@/components/admin/DataTable";
 import FilterSection from "@/components/admin/FilterSection";
@@ -32,6 +43,7 @@ export default function TagsManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [creatingTag, setCreatingTag] = useState(false);
+  const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
   const queryClient = useQueryClient();
   const [tagForm, setTagForm] = useState({
     name: "",
@@ -60,6 +72,21 @@ export default function TagsManagement() {
       setEditingTag(null);
       setTagForm({ name: "" });
       toast.success("Cập nhật tag thành công!");
+    },
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: (tagId: string) => tagService.deleteTag(tagId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+      setDeletingTag(null);
+      toast.success("Đã xóa tag");
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        "Không thể xóa tag";
+      toast.error(msg);
     },
   });
 
@@ -116,6 +143,18 @@ export default function TagsManagement() {
       ),
     },
     {
+      key: "deckCount",
+      header: "Đang dùng",
+      render: (tag: Tag) =>
+        tag.deckCount === undefined ? (
+          <span className="text-muted-foreground text-sm">—</span>
+        ) : tag.deckCount === 0 ? (
+          <Badge variant="outline" className="text-muted-foreground">Chưa dùng</Badge>
+        ) : (
+          <Badge variant="secondary">{tag.deckCount} deck</Badge>
+        ),
+    },
+    {
       key: "actions",
       header: "",
       render: (tag: Tag) => (
@@ -131,6 +170,13 @@ export default function TagsManagement() {
             <DropdownMenuItem onClick={() => handleEdit(tag)}>
               <Edit className="mr-2 h-4 w-4" />
               Chỉnh sửa
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => setDeletingTag(tag)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Xóa
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -157,9 +203,14 @@ export default function TagsManagement() {
         <StatCard
           title="Tổng số Tag"
           value={tags.length}
+          description="Đang dùng trong các flashcard decks"
           icon={TagIcon}
-          trend={{ value: 0, label: "So với kỳ trước", isPositive: true }}
         />
+        <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground mb-1">Lưu ý</p>
+          Người dùng có thể tạo deck mới với tag tự chọn — hệ thống sẽ tự tạo tag chưa tồn tại.
+          Admin chỉ cần can thiệp khi muốn đặt tên chuẩn cho tag phổ biến.
+        </div>
       </div>
 
       <FilterSection
@@ -215,6 +266,35 @@ export default function TagsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Tag Dialog */}
+      <AlertDialog open={!!deletingTag} onOpenChange={(open) => !open && setDeletingTag(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa tag</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tag <strong>"{deletingTag?.name}"</strong> sẽ bị xóa khỏi hệ thống.
+              {deletingTag?.deckCount && deletingTag.deckCount > 0 ? (
+                <span className="block mt-2 text-amber-600">
+                  ⚠️ Tag này đang được dùng bởi <strong>{deletingTag.deckCount} deck</strong>.
+                  Sau khi xóa, các deck đó sẽ mất tag liên kết.
+                </span>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteTagMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteTagMutation.isPending}
+              onClick={() => deletingTag && deleteTagMutation.mutate(deletingTag.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleteTagMutation.isPending ? "Đang xóa..." : "Xác nhận xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Tag Dialog */}
       <Dialog open={!!editingTag} onOpenChange={() => setEditingTag(null)}>
