@@ -11,7 +11,7 @@ import SkillTreeFlow, { type SkillTreeNodeData, NODE_THEME } from "./components/
 import MiniQuizDialog from "./components/MiniQuizDialog";
 import {
   Globe, Pizza, Briefcase, Hospital, Laptop, BookOpen, Home, Leaf,
-  Map, ArrowRight, BookMarked, Flame, Heart, Zap,
+  Map, ArrowRight, BookMarked, Flame, Heart, Zap, Sparkles, ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -35,15 +35,26 @@ const CELEBRATION_MESSAGES = [
 
 // ─── Topic / Level Definitions ───────────────────────────────────────────────
 
-const TOPICS: Array<{ id: string; label: string; icon: LucideIcon; description: string; color: string; popular?: boolean }> = [
-  { id: "travel",      label: "Travel",       icon: Globe,     description: "Booking, directions, airports",      color: "from-blue-500 to-cyan-500",      popular: true },
-  { id: "food",        label: "Food & Dining", icon: Pizza,     description: "Ordering, cooking, nutrition",        color: "from-orange-500 to-amber-500" },
-  { id: "business",    label: "Business",     icon: Briefcase, description: "Email, meetings, presentations",      color: "from-slate-600 to-slate-800",    popular: true },
-  { id: "health",      label: "Health",       icon: Hospital,  description: "Doctor visits, symptoms, medicine",   color: "from-emerald-500 to-green-600" },
-  { id: "technology",  label: "Technology",   icon: Laptop,    description: "Internet, software, AI",              color: "from-violet-500 to-purple-600" },
-  { id: "education",   label: "Education",    icon: BookOpen,  description: "School, lectures, exams",             color: "from-indigo-500 to-blue-600" },
-  { id: "daily_life",  label: "Daily Life",   icon: Home,      description: "Shopping, socializing, family",       color: "from-pink-500 to-rose-500",      popular: true },
-  { id: "environment", label: "Environment",  icon: Leaf,      description: "Pollution, conservation, recycling",  color: "from-teal-500 to-emerald-600" },
+interface TopicDef {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  description: string;
+  color: string;
+  popular?: boolean;
+  nodeCount: number;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+}
+
+const TOPICS: TopicDef[] = [
+  { id: "travel",      label: "Travel",       icon: Globe,     description: "Booking, directions, airports",      color: "from-blue-500 to-cyan-500",      popular: true, nodeCount: 24, difficulty: 2 },
+  { id: "food",        label: "Food & Dining", icon: Pizza,     description: "Ordering, cooking, nutrition",        color: "from-orange-500 to-amber-500",                  nodeCount: 20, difficulty: 2 },
+  { id: "business",    label: "Business",     icon: Briefcase, description: "Email, meetings, presentations",      color: "from-slate-600 to-slate-800",    popular: true, nodeCount: 32, difficulty: 4 },
+  { id: "health",      label: "Health",       icon: Hospital,  description: "Doctor visits, symptoms, medicine",   color: "from-emerald-500 to-green-600",                 nodeCount: 22, difficulty: 3 },
+  { id: "technology",  label: "Technology",   icon: Laptop,    description: "Internet, software, AI",              color: "from-violet-500 to-purple-600",                 nodeCount: 28, difficulty: 4 },
+  { id: "education",   label: "Education",    icon: BookOpen,  description: "School, lectures, exams",             color: "from-indigo-500 to-blue-600",                   nodeCount: 26, difficulty: 3 },
+  { id: "daily_life",  label: "Daily Life",   icon: Home,      description: "Shopping, socializing, family",       color: "from-pink-500 to-rose-500",      popular: true, nodeCount: 18, difficulty: 1 },
+  { id: "environment", label: "Environment",  icon: Leaf,      description: "Pollution, conservation, recycling",  color: "from-teal-500 to-emerald-600",                  nodeCount: 24, difficulty: 3 },
 ];
 
 const LEVELS = [
@@ -368,27 +379,34 @@ export default function SkillTree() {
     const hasResumable = !savedTreesLoading && sortedTrees.length > 0;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 font-sans">
-        <header className="bg-white/80 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 font-sans relative overflow-hidden">
+        {/* Starfield ambient backdrop */}
+        <div className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.5) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(199,210,254,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,0.4) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.5) 50%, transparent 51%)",
+            backgroundSize: "600px 600px",
+          }}
+        />
+        <header className="relative z-10 bg-slate-950/70 backdrop-blur border-b border-slate-800/50 h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-slate-800 text-lg">Learning Map</h1>
+            <h1 className="font-bold text-white text-lg">Learning Map</h1>
           </div>
-          <Link to="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link to="/dashboard" className="text-sm text-indigo-300 hover:text-indigo-100 font-medium">
             ← Back
           </Link>
         </header>
 
-        <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
 
           {/* ── Continue Your Journey ─────────────────────────────────────── */}
           {hasResumable && (
             <div className="mb-12">
               <div className="mb-6">
-                <h2 className="text-2xl font-black text-slate-800 mb-1">Continue Your Journey</h2>
-                <p className="text-slate-500 text-sm">Pick up where you left off</p>
+                <h2 className="text-2xl font-black text-white mb-1">Continue Your Journey</h2>
+                <p className="text-slate-400 text-sm">Pick up where you left off</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -404,10 +422,10 @@ export default function SkillTree() {
                       key={tree.id}
                       onClick={() => handleResumeTree(tree)}
                       disabled={!!resumingId}
-                      className={`group relative bg-white rounded-2xl border-2 p-5 text-left transition-all duration-300
+                      className={`group relative bg-slate-900/60 backdrop-blur rounded-2xl border-2 p-5 text-left transition-all duration-300
                         ${isResuming
-                          ? "border-indigo-400 shadow-lg shadow-indigo-100"
-                          : "border-slate-200 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100 hover:-translate-y-0.5"
+                          ? "border-indigo-400/70 shadow-lg shadow-indigo-500/20"
+                          : "border-slate-700/60 hover:border-indigo-400/60 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5"
                         }
                         ${resumingId && !isResuming ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
@@ -420,15 +438,14 @@ export default function SkillTree() {
                         {/* Header row */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
-                            {tInfo && <tInfo.icon size={16} className="text-slate-500 shrink-0" />}
-                            <span className="font-bold text-slate-800 text-sm truncate">
+                            {tInfo && <tInfo.icon size={16} className="text-slate-300 shrink-0" />}
+                            <span className="font-bold text-white text-sm truncate">
                               {tInfo?.label ?? tree.topic}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 ml-2 shrink-0">
-                            {/* Sprint 4: last-visited badge */}
                             {isLastVisited && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded-full">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30">
                                 Last visited
                               </span>
                             )}
@@ -443,7 +460,7 @@ export default function SkillTree() {
 
                         {/* Progress bar */}
                         <div className="mb-2.5">
-                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
@@ -462,12 +479,12 @@ export default function SkillTree() {
                             {progress.completed}/{progress.total} · {progress.percentage}%
                           </span>
                           {isResuming ? (
-                            <span className="flex items-center gap-1.5 text-[11px] text-indigo-500 font-semibold">
-                              <span className="inline-block w-3 h-3 border border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                            <span className="flex items-center gap-1.5 text-[11px] text-indigo-300 font-semibold">
+                              <span className="inline-block w-3 h-3 border border-indigo-300 border-t-indigo-100 rounded-full animate-spin" />
                               Loading…
                             </span>
                           ) : (
-                            <span className="text-[11px] text-indigo-500 font-semibold group-hover:text-indigo-700 transition-colors">
+                            <span className="text-[11px] text-indigo-300 font-semibold group-hover:text-indigo-100 transition-colors">
                               Tap to resume →
                             </span>
                           )}
@@ -480,39 +497,83 @@ export default function SkillTree() {
             </div>
           )}
 
-          {/* ── Start a New Topic ────────────────────────────────────────── */}
+          {/* ── Start a New Topic — World Map Carousel (Idea 3) ─────────── */}
           <div>
             <div className={`mb-6 ${hasResumable ? "" : "text-center"}`}>
               {hasResumable ? (
                 <>
-                  <h2 className="text-2xl font-black text-slate-800 mb-1">Start a New Topic</h2>
-                  <p className="text-slate-500 text-sm">Each topic mixes grammar, vocabulary and listening</p>
+                  <h2 className="text-2xl font-black text-white mb-1">Explore a New World</h2>
+                  <p className="text-slate-400 text-sm">Pick a destination — each world mixes grammar, vocabulary and listening</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-3xl font-black text-slate-800 mb-3">Choose a Topic</h2>
-                  <p className="text-slate-500 text-lg">Each topic mixes grammar, vocabulary and listening</p>
+                  <h2 className="text-3xl font-black text-white mb-3">Choose Your World</h2>
+                  <p className="text-slate-400 text-lg">Each world is a learning adventure mixing grammar, vocabulary and listening</p>
                 </>
               )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div
+              className="flex gap-5 overflow-x-auto overflow-y-visible pt-2 pb-6 -mx-6 px-6 snap-x snap-mandatory"
+              style={{ scrollbarWidth: "thin" }}
+            >
               {TOPICS.map((topic) => (
                 <button
                   key={topic.id}
                   onClick={() => { setSelectedTopic(topic.id); setStep("level"); }}
-                  className="group relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                  className="group relative shrink-0 snap-start overflow-hidden rounded-3xl text-left transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1"
+                  style={{ width: 280, height: 340 }}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90 group-hover:opacity-100 transition-opacity`} />
-                  <div className="relative text-white">
-                    {topic.popular && (
-                      <span className="absolute -top-1 -right-1 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-white/20 rounded-full">
-                        Popular
-                      </span>
-                    )}
-                    <topic.icon size={28} className="mb-3 text-white/90" />
-                    <h3 className="font-bold text-base mb-1">{topic.label}</h3>
-                    <p className="text-xs opacity-80 leading-relaxed">{topic.description}</p>
+                  {/* Gradient base */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${topic.color}`} />
+                  {/* Atmospheric glow ring */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ background: "radial-gradient(circle at 50% 20%, rgba(255,255,255,0.25) 0%, transparent 60%)" }}
+                  />
+                  {/* Dark vignette at bottom for text legibility */}
+                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+                  {/* Popular ribbon */}
+                  {topic.popular && (
+                    <div className="absolute top-4 right-4 z-10 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-white/95 text-slate-900 rounded-full shadow-lg">
+                      <Sparkles size={11} /> Popular
+                    </div>
+                  )}
+
+                  {/* Icon medallion */}
+                  <div className="absolute top-6 left-6 z-10 w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform duration-300">
+                    <topic.icon size={32} />
+                  </div>
+
+                  {/* Body */}
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-6 text-white">
+                    <h3 className="font-black text-2xl mb-1 drop-shadow-md">{topic.label}</h3>
+                    <p className="text-sm text-white/85 leading-snug mb-4 line-clamp-2">{topic.description}</p>
+
+                    {/* Stats row */}
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-white/90">
+                        <BookMarked size={12} />
+                        <span>~{topic.nodeCount} lessons</span>
+                      </div>
+                      <div className="flex items-center gap-0.5" aria-label={`Difficulty ${topic.difficulty} out of 5`}>
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <span
+                            key={i}
+                            className="block w-2 h-2 rounded-full"
+                            style={{
+                              backgroundColor: i <= topic.difficulty ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.25)",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="flex items-center justify-between border-t border-white/20 pt-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-white/90">Enter world</span>
+                      <ChevronRight size={18} className="text-white group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
                 </button>
               ))}
@@ -529,30 +590,37 @@ export default function SkillTree() {
 
   if (step === "level") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 font-sans">
-        <header className="bg-white/80 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 font-sans relative overflow-hidden">
+        {/* Starfield backdrop */}
+        <div className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.5) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(199,210,254,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,0.4) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.5) 50%, transparent 51%)",
+            backgroundSize: "600px 600px",
+          }}
+        />
+        <header className="relative z-10 bg-slate-950/70 backdrop-blur border-b border-slate-800/50 h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-slate-800 text-lg">Learning Map</h1>
+            <h1 className="font-bold text-white text-lg">Learning Map</h1>
           </div>
           <button
             onClick={() => setStep("topic")}
-            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            className="text-sm text-indigo-300 hover:text-indigo-100 font-medium"
           >
             ← Change topic
           </button>
         </header>
 
-        <div className="max-w-3xl mx-auto px-6 py-12">
+        <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full shadow-sm border border-slate-200 mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900/60 backdrop-blur rounded-full shadow-lg border border-slate-700/60 mb-4 text-slate-100">
               {topicInfo && <topicInfo.icon size={18} />}
-              <span className="font-bold text-slate-700">{topicInfo?.label}</span>
+              <span className="font-bold">{topicInfo?.label}</span>
             </div>
-            <h2 className="text-3xl font-black text-slate-800 mb-3">Select Level</h2>
-            <p className="text-slate-500">Standard CEFR scale</p>
+            <h2 className="text-3xl font-black text-white mb-3">Select Level</h2>
+            <p className="text-slate-400">Standard CEFR scale</p>
           </div>
 
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-10">
@@ -560,16 +628,16 @@ export default function SkillTree() {
               <button
                 key={level.id}
                 onClick={() => setSelectedLevel(level.id)}
-                className={`rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105 border-2 ${
+                className={`rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105 border-2 backdrop-blur ${
                   selectedLevel === level.id
-                    ? "border-indigo-500 shadow-lg shadow-indigo-500/20 bg-white"
-                    : "border-slate-200 bg-white hover:border-slate-300"
+                    ? "border-indigo-400 shadow-lg shadow-indigo-500/30 bg-slate-900/80"
+                    : "border-slate-700/60 bg-slate-900/40 hover:border-slate-500/80"
                 }`}
               >
                 <div className="text-2xl font-black mb-0.5" style={{ color: level.color }}>
                   {level.label}
                 </div>
-                <div className="text-[10px] text-slate-600 font-semibold leading-tight">{level.description}</div>
+                <div className="text-[10px] text-slate-200 font-semibold leading-tight">{level.description}</div>
                 <div className="text-[8px] text-slate-400 mt-1 leading-snug">{level.subtext}</div>
               </button>
             ))}
@@ -578,7 +646,7 @@ export default function SkillTree() {
           <div className="text-center mb-4">
             <Link
               to="/placement-test"
-              className="text-sm text-indigo-500 hover:text-indigo-700 font-medium transition-colors"
+              className="text-sm text-indigo-300 hover:text-indigo-100 font-medium transition-colors"
             >
               Not sure? Take a quick placement test →
             </Link>
@@ -588,7 +656,7 @@ export default function SkillTree() {
             <button
               onClick={startLearning}
               disabled={!selectedLevel || loading}
-              className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 disabled:opacity-50 transition-all duration-300 hover:scale-105"
+              className="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/40 hover:shadow-indigo-500/60 disabled:opacity-50 transition-all duration-300 hover:scale-105"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -596,7 +664,10 @@ export default function SkillTree() {
                   AI is building your path...
                 </span>
               ) : (
-                <><ArrowRight size={16} className="mr-1.5" />Start Learning</>
+                <span className="flex items-center justify-center gap-2">
+                  <ArrowRight size={18} />
+                  Start Learning
+                </span>
               )}
             </button>
           </div>
@@ -791,28 +862,73 @@ export default function SkillTree() {
         />
       )}
 
-      {/* ── Sprint 7: Node-completion celebration ─────────────────────── */}
+      {/* ── Idea 4: Full-screen node-completion celebration ──────────── */}
       {celebration && (
         <div
-          className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
           role="status"
           aria-live="polite"
           aria-atomic="true"
         >
+          {/* Backdrop */}
+          <div
+            className={`absolute inset-0 ${prefersReducedMotion ? "bg-slate-950/80" : "bg-slate-950/70 skill-fade-in"}`}
+            style={{ backdropFilter: "blur(6px)" }}
+          />
+
           {prefersReducedMotion ? (
-            // Accessible static message for reduced-motion users
-            <div className="bg-slate-800/95 border border-slate-700 text-white px-8 py-5 rounded-2xl text-center shadow-2xl">
-              <div className="text-3xl font-black text-amber-400">+{XP_PER_NODE} XP</div>
-              <div className="text-base font-semibold text-slate-200 mt-1">{celebration.message}</div>
+            // Accessible static fallback
+            <div className="relative bg-slate-800/95 border border-slate-700 text-white px-10 py-7 rounded-3xl text-center shadow-2xl">
+              <Sparkles size={36} className="text-amber-400 mx-auto mb-2" />
+              <div className="text-4xl font-black text-amber-400">+{XP_PER_NODE} XP</div>
+              <div className="text-lg font-semibold text-slate-200 mt-2">{celebration.message}</div>
             </div>
           ) : (
-            // Animated floating celebration
-            <div className="skill-xp-pop text-center select-none">
-              <div className="text-5xl font-black text-amber-400 drop-shadow-[0_0_16px_rgba(251,191,36,0.6)]">
-                +{XP_PER_NODE} XP
-              </div>
-              <div className="text-xl font-bold text-white drop-shadow-lg mt-1.5">
-                {celebration.message}
+            <div className="relative flex items-center justify-center select-none pointer-events-none">
+              {/* Star burst — 12 stars radiating outward */}
+              {Array.from({ length: 12 }).map((_, i) => {
+                const angle = (i / 12) * Math.PI * 2;
+                const dx = Math.cos(angle) * 220;
+                const dy = Math.sin(angle) * 220;
+                const size = i % 3 === 0 ? 28 : i % 3 === 1 ? 18 : 22;
+                const colors = ["#fbbf24", "#fde68a", "#a78bfa", "#f472b6", "#34d399"];
+                const color = colors[i % colors.length];
+                return (
+                  <Sparkles
+                    key={i}
+                    size={size}
+                    className="absolute skill-burst-star"
+                    style={{
+                      color,
+                      filter: `drop-shadow(0 0 8px ${color})`,
+                      // CSS custom props consumed by the keyframes
+                      ["--dx" as any]: `${dx}px`,
+                      ["--dy" as any]: `${dy}px`,
+                      animationDelay: `${i * 35}ms`,
+                    }}
+                  />
+                );
+              })}
+
+              {/* Center radial glow */}
+              <div
+                className="absolute skill-burst-glow"
+                style={{
+                  width: 360,
+                  height: 360,
+                  background: "radial-gradient(circle, rgba(251,191,36,0.45) 0%, rgba(167,139,250,0.18) 40%, transparent 70%)",
+                  borderRadius: "50%",
+                }}
+              />
+
+              {/* XP + message */}
+              <div className="relative text-center">
+                <div className="skill-xp-bounce text-7xl md:text-8xl font-black text-amber-400 drop-shadow-[0_0_28px_rgba(251,191,36,0.8)] leading-none">
+                  +{XP_PER_NODE} XP
+                </div>
+                <div className="skill-message-rise mt-4 text-2xl md:text-3xl font-black text-white drop-shadow-2xl">
+                  {celebration.message}
+                </div>
               </div>
             </div>
           )}
@@ -825,14 +941,47 @@ export default function SkillTree() {
           from { transform: translateY(100%); opacity: 0; }
           to   { transform: translateY(0);    opacity: 1; }
         }
-        @keyframes xpPop {
-          0%   { transform: scale(0.4) translateY(0);    opacity: 0; }
-          30%  { transform: scale(1.15) translateY(-12px); opacity: 1; }
-          60%  { transform: scale(1) translateY(-20px);  opacity: 1; }
-          100% { transform: scale(0.9) translateY(-80px); opacity: 0; }
+        @keyframes skillFadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
         }
-        .skill-xp-pop {
-          animation: xpPop 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        .skill-fade-in {
+          animation: skillFadeIn 0.25s ease-out forwards;
+        }
+        @keyframes xpBounce {
+          0%   { transform: scale(0.3);  opacity: 0; }
+          35%  { transform: scale(1.2);  opacity: 1; }
+          55%  { transform: scale(0.95); opacity: 1; }
+          75%  { transform: scale(1.05); opacity: 1; }
+          100% { transform: scale(1);    opacity: 1; }
+        }
+        .skill-xp-bounce {
+          animation: xpBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes messageRise {
+          0%   { transform: translateY(20px); opacity: 0; }
+          40%  { transform: translateY(20px); opacity: 0; }
+          100% { transform: translateY(0);    opacity: 1; }
+        }
+        .skill-message-rise {
+          animation: messageRise 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes burstStar {
+          0%   { transform: translate(0, 0) scale(0) rotate(0deg);            opacity: 0; }
+          15%  { transform: translate(calc(var(--dx) * 0.15), calc(var(--dy) * 0.15)) scale(1) rotate(45deg); opacity: 1; }
+          70%  { transform: translate(calc(var(--dx) * 0.85), calc(var(--dy) * 0.85)) scale(1) rotate(180deg); opacity: 1; }
+          100% { transform: translate(var(--dx), var(--dy)) scale(0) rotate(360deg); opacity: 0; }
+        }
+        .skill-burst-star {
+          animation: burstStar 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes burstGlow {
+          0%   { transform: scale(0.2); opacity: 0; }
+          25%  { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+        .skill-burst-glow {
+          animation: burstGlow 1.5s ease-out forwards;
         }
       `}</style>
     </div>
