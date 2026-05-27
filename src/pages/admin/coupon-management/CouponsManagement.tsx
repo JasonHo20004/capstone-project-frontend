@@ -221,6 +221,11 @@ export default function CouponsManagement() {
     setForm(emptyForm);
   };
 
+  const dateRangeInvalid =
+    !!form.startsAt &&
+    !!form.expiresAt &&
+    new Date(form.startsAt).getTime() >= new Date(form.expiresAt).getTime();
+
   const handleSubmit = () => {
     if (!form.code.trim()) {
       toast.error('Vui lòng nhập mã giảm giá');
@@ -232,6 +237,10 @@ export default function CouponsManagement() {
     }
     if (form.discountType === 'PERCENT' && Number(form.discountValue) > 100) {
       toast.error('Phần trăm giảm tối đa 100%');
+      return;
+    }
+    if (dateRangeInvalid) {
+      toast.error('Ngày hết hạn phải sau ngày bắt đầu');
       return;
     }
     const payload = toPayload(form);
@@ -513,6 +522,7 @@ export default function CouponsManagement() {
                 type="datetime-local"
                 value={form.startsAt}
                 onChange={(e) => setForm((s) => ({ ...s, startsAt: e.target.value }))}
+                className={dateRangeInvalid ? 'border-destructive' : ''}
               />
             </div>
             <div className="space-y-1.5">
@@ -522,7 +532,13 @@ export default function CouponsManagement() {
                 type="datetime-local"
                 value={form.expiresAt}
                 onChange={(e) => setForm((s) => ({ ...s, expiresAt: e.target.value }))}
+                className={dateRangeInvalid ? 'border-destructive' : ''}
               />
+              {dateRangeInvalid && (
+                <p className="text-xs text-destructive">
+                  Ngày hết hạn phải sau ngày bắt đầu.
+                </p>
+              )}
             </div>
             <div className="space-y-1.5 sm:col-span-2 flex items-center gap-3 pt-2">
               <input
@@ -541,7 +557,7 @@ export default function CouponsManagement() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={createMut.isPending || updateMut.isPending}
+              disabled={createMut.isPending || updateMut.isPending || dateRangeInvalid}
             >
               {createMut.isPending || updateMut.isPending
                 ? 'Đang lưu...'

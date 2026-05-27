@@ -29,7 +29,7 @@ import {
   type RefundRequest,
   type RefundRequestStatus,
 } from "@/lib/api/services/admin";
-import { Receipt, Check, X, Eye } from "lucide-react";
+import { Receipt, Check, X, Eye, RefreshCw } from "lucide-react";
 
 const STATUS_LABEL: Record<
   RefundRequestStatus,
@@ -52,7 +52,7 @@ export default function AdminRefunds() {
   const [action, setAction] = useState<"approve" | "reject" | null>(null);
   const [adminNote, setAdminNote] = useState("");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useQuery({
     queryKey: ["adminRefunds", status, page],
     queryFn: () =>
       refundService.listAdmin({
@@ -60,8 +60,9 @@ export default function AdminRefunds() {
         limit: 20,
         status: status !== "all" ? status : undefined,
       }),
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
+    // Polling removed — silent refetches were stealing focus mid-review.
+    // Sidebar still polls /pending counts; admin can refresh manually.
+    staleTime: 30_000,
   });
 
   const approveMutation = useMutation({
@@ -239,13 +240,29 @@ export default function AdminRefunds() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Receipt className="h-7 w-7 text-primary" />
-        <div>
+      <div className="flex items-start gap-3">
+        <Receipt className="h-7 w-7 text-primary mt-1" />
+        <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">Yêu cầu hoàn tiền</h1>
           <p className="text-muted-foreground">
             Duyệt yêu cầu hoàn tiền từ học viên. Khi duyệt, tiền được cộng vào ví học viên và doanh thu seller cho đơn đó bị đánh dấu REFUNDED.
           </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            Làm mới
+          </Button>
+          {dataUpdatedAt > 0 && (
+            <span className="text-[10px] text-muted-foreground">
+              Cập nhật: {new Date(dataUpdatedAt).toLocaleTimeString('vi-VN')}
+            </span>
+          )}
         </div>
       </div>
 

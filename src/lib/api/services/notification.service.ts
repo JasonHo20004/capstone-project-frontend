@@ -115,6 +115,31 @@ export class NotificationService {
     return response.data;
   }
 
+  // ── Admin: platform-wide notification feed ─────────────────────────────
+  async listAllForAdmin(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: string;
+    isRead?: boolean;
+    userId?: string;
+    campaignsOnly?: boolean;
+  }): Promise<AdminNotificationsResponse> {
+    const response = await apiClient.get<AdminNotificationsResponse>(
+      "/notifications/admin/all",
+      { params }
+    );
+    return response.data;
+  }
+
+  /** Admin: list notification types (used to populate campaign dropdown). */
+  async listAdminNotificationTypes(): Promise<ApiResponse<AdminNotificationTypeRow[]>> {
+    const response = await apiClient.get<ApiResponse<AdminNotificationTypeRow[]>>(
+      "/notifications/types"
+    );
+    return response.data;
+  }
+
   // ── Admin campaign endpoints ───────────────────────────────────────────
   async runCampaign(payload: CampaignPayload): Promise<ApiResponse<CampaignResult>> {
     const response = await apiClient.post<ApiResponse<CampaignResult>>(
@@ -133,6 +158,21 @@ export class NotificationService {
     );
     return response.data;
   }
+}
+
+export interface AdminNotificationsResponse {
+  success: boolean;
+  data: InAppNotification[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminNotificationTypeRow {
+  id: string;
+  name: string;
+  isLocked: boolean;
 }
 
 export type CampaignSegment =

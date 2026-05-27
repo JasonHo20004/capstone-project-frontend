@@ -38,7 +38,14 @@ import {
   CreditCard,
 } from 'lucide-react';
 
-export default function CommissionManagement() {
+interface CommissionManagementProps {
+  /** When true, the page-level header is suppressed (used by SettingsPage). */
+  embedded?: boolean;
+}
+
+export default function CommissionManagement({
+  embedded = false,
+}: CommissionManagementProps = {}) {
   const [page, setPage] = useState(1);
   const { data: reportData, isLoading, error } = useAdminCommissionReport({ page, limit: 10 });
   const { data: config } = useCommissionConfig();
@@ -178,21 +185,23 @@ export default function CommissionManagement() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header — hidden when embedded inside SettingsPage to avoid double-heading */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-display">
-            Quản lý Hoa hồng (Revenue Split)
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Quản lý phí cổng thanh toán, tỷ lệ chia doanh thu và thời gian khoá tiền
-          </p>
-        </div>
+        {!embedded && (
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-display">
+              Quản lý Hoa hồng (Revenue Split)
+            </h1>
+            <p className="mt-1 text-muted-foreground">
+              Quản lý phí cổng thanh toán, tỷ lệ chia doanh thu và thời gian khoá tiền
+            </p>
+          </div>
+        )}
         <Button
           variant="outline"
           onClick={() => setConfirmReleaseOpen(true)}
           disabled={releaseEarnings.isPending}
-          className="gap-2"
+          className={`gap-2 ${embedded ? 'sm:ml-auto' : ''}`}
         >
           <Unlock className="h-4 w-4" />
           {releaseEarnings.isPending ? 'Đang xử lý...' : 'Mở khoá thu nhập đến hạn'}

@@ -30,30 +30,65 @@ import { useAdminWithdrawalSummary } from '@/hooks/api';
 
 type PendingKey = 'applications' | 'withdrawals' | 'moderation' | 'refunds';
 
-const sidebarItems: {
+interface SidebarItem {
   title: string;
   href: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
   pendingKey?: PendingKey;
-}[] = [
-  { title: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
-  { title: 'Quản lý người dùng', href: '/admin/users', icon: Users },
-  { title: 'Quản lý khóa học', href: '/admin/courses', icon: BookOpen },
-  { title: 'Quản lý bài thi', href: '/admin/exams', icon: ClipboardList },
-  { title: 'Quản lý Dictation', href: '/admin/dictation', icon: Headphones },
-  { title: 'Giao dịch', href: '/admin/transactions', icon: CreditCard },
-  { title: 'Hoa hồng', href: '/admin/commission', icon: Percent },
-  { title: 'Rút tiền (Payout)', href: '/admin/withdrawals', icon: Landmark, pendingKey: 'withdrawals' },
-  { title: 'Hoàn tiền', href: '/admin/refunds', icon: Receipt, pendingKey: 'refunds' },
-  { title: 'Đơn đăng ký', href: '/admin/applications', icon: UserCheck, pendingKey: 'applications' },
-  { title: 'Kiểm duyệt bình luận', href: '/admin/moderation', icon: ShieldAlert, pendingKey: 'moderation' },
-  { title: 'Nhật ký quản trị', href: '/admin/audit-logs', icon: FileText },
-  { title: 'Thông báo hệ thống', href: '/admin/notifications', icon: Bell },
-  { title: 'Quản lý Tag', href: '/admin/tags', icon: Tag },
-  { title: 'Gói người dùng', href: '/admin/user-plans', icon: Crown },
-  { title: 'Mã giảm giá', href: '/admin/coupons', icon: Ticket },
-  { title: 'Cài đặt hệ thống', href: '/admin/settings', icon: Settings },
+}
+
+interface SidebarGroup {
+  /** Section label shown when expanded; omitted for the top "Tổng quan" group. */
+  label?: string;
+  items: SidebarItem[];
+}
+
+const sidebarGroups: SidebarGroup[] = [
+  {
+    items: [{ title: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true }],
+  },
+  {
+    label: 'Người dùng',
+    items: [
+      { title: 'Quản lý người dùng', href: '/admin/users', icon: Users },
+      { title: 'Đơn đăng ký', href: '/admin/applications', icon: UserCheck, pendingKey: 'applications' },
+      { title: 'Kiểm duyệt bình luận', href: '/admin/moderation', icon: ShieldAlert, pendingKey: 'moderation' },
+    ],
+  },
+  {
+    label: 'Nội dung',
+    items: [
+      { title: 'Quản lý khóa học', href: '/admin/courses', icon: BookOpen },
+      { title: 'Quản lý bài thi', href: '/admin/exams', icon: ClipboardList },
+      { title: 'Quản lý Dictation', href: '/admin/dictation', icon: Headphones },
+      { title: 'Quản lý Tag', href: '/admin/tags', icon: Tag },
+    ],
+  },
+  {
+    label: 'Tài chính',
+    items: [
+      { title: 'Giao dịch', href: '/admin/transactions', icon: CreditCard },
+      { title: 'Hoa hồng', href: '/admin/commission', icon: Percent },
+      { title: 'Rút tiền (Payout)', href: '/admin/withdrawals', icon: Landmark, pendingKey: 'withdrawals' },
+      { title: 'Hoàn tiền', href: '/admin/refunds', icon: Receipt, pendingKey: 'refunds' },
+    ],
+  },
+  {
+    label: 'Tiếp thị',
+    items: [
+      { title: 'Thông báo hệ thống', href: '/admin/notifications', icon: Bell },
+      { title: 'Mã giảm giá', href: '/admin/coupons', icon: Ticket },
+      { title: 'Gói người dùng', href: '/admin/user-plans', icon: Crown },
+    ],
+  },
+  {
+    label: 'Hệ thống',
+    items: [
+      { title: 'Nhật ký quản trị', href: '/admin/audit-logs', icon: FileText },
+      { title: 'Cài đặt hệ thống', href: '/admin/settings', icon: Settings },
+    ],
+  },
 ];
 
 interface AdminSidebarProps {
@@ -144,71 +179,99 @@ export default function AdminSidebar({ onNavigate, forceExpanded = false }: Admi
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 p-3 overflow-y-auto overflow-x-hidden">
-        {sidebarItems.map((item) => {
-          const isActive = item.exact
-            ? location.pathname === item.href
-            : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
-          const count = item.pendingKey ? pending[item.pendingKey] : 0;
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              onClick={handleNavClick}
-              title={item.title}
-              className={cn(
-                'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200',
-                isActive
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-              )}
-            >
-              <span className="relative shrink-0">
-                <item.icon
-                  className={cn(
-                    'h-5 w-5',
-                    isActive ? 'text-primary-foreground' : '',
-                  )}
-                />
-                {/* Dot indicator visible while sidebar is collapsed */}
-                {count > 0 && !forceExpanded && (
-                  <span
-                    className={cn(
-                      'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full ring-2 ring-card',
-                      'bg-red-500 group-hover:opacity-0 transition-opacity',
-                    )}
-                    aria-hidden="true"
-                  />
-                )}
-              </span>
-              <span
+      <nav className="flex-1 p-3 overflow-y-auto overflow-x-hidden">
+        {sidebarGroups.map((group, gi) => (
+          <div key={group.label ?? `group-${gi}`} className={gi > 0 ? 'mt-4' : ''}>
+            {group.label && (
+              <div
                 className={cn(
-                  'flex-1 whitespace-nowrap transition-all duration-300',
+                  // Collapsed view: show a thin divider so groups are still
+                  // visually separated even when labels aren't visible.
+                  'mb-1 px-3 transition-all duration-300',
                   forceExpanded
-                    ? 'opacity-100 translate-x-0'
-                    : 'opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0',
+                    ? 'opacity-100'
+                    : 'opacity-0 group-hover:opacity-100',
                 )}
               >
-                {item.title}
-              </span>
-              {/* Full badge with count, visible when sidebar is expanded */}
-              {count > 0 && (
-                <span
-                  className={cn(
-                    'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold min-w-[20px] transition-opacity duration-300',
-                    isActive
-                      ? 'bg-primary-foreground/20 text-primary-foreground'
-                      : 'bg-red-500 text-white',
-                    forceExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                  )}
-                  aria-label={`${count} mục chờ xử lý`}
-                >
-                  {count > 99 ? '99+' : count}
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {group.label}
                 </span>
-              )}
-            </Link>
-          );
-        })}
+              </div>
+            )}
+            {!forceExpanded && gi > 0 && (
+              <div
+                className="mx-3 mb-1 h-px bg-border/60 transition-opacity duration-300 group-hover:opacity-0"
+                aria-hidden="true"
+              />
+            )}
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const isActive = item.exact
+                  ? location.pathname === item.href
+                  : location.pathname === item.href ||
+                    location.pathname.startsWith(`${item.href}/`);
+                const count = item.pendingKey ? pending[item.pendingKey] : 0;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={handleNavClick}
+                    title={item.title}
+                    className={cn(
+                      'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200',
+                      isActive
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    )}
+                  >
+                    <span className="relative shrink-0">
+                      <item.icon
+                        className={cn(
+                          'h-5 w-5',
+                          isActive ? 'text-primary-foreground' : '',
+                        )}
+                      />
+                      {/* Dot indicator visible while sidebar is collapsed */}
+                      {count > 0 && !forceExpanded && (
+                        <span
+                          className={cn(
+                            'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full ring-2 ring-card',
+                            'bg-red-500 group-hover:opacity-0 transition-opacity',
+                          )}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </span>
+                    <span
+                      className={cn(
+                        'flex-1 whitespace-nowrap transition-all duration-300',
+                        forceExpanded
+                          ? 'opacity-100 translate-x-0'
+                          : 'opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0',
+                      )}
+                    >
+                      {item.title}
+                    </span>
+                    {count > 0 && (
+                      <span
+                        className={cn(
+                          'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold min-w-[20px] transition-opacity duration-300',
+                          isActive
+                            ? 'bg-primary-foreground/20 text-primary-foreground'
+                            : 'bg-red-500 text-white',
+                          forceExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                        )}
+                        aria-label={`${count} mục chờ xử lý`}
+                      >
+                        {count > 99 ? '99+' : count}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
     </aside>
   );

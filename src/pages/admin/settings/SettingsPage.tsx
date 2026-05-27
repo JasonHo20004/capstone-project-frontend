@@ -143,7 +143,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="commission" className="mt-6">
-          <CommissionManagement />
+          <CommissionManagement embedded />
         </TabsContent>
 
         <TabsContent value="withdrawal" className="space-y-4 mt-6">

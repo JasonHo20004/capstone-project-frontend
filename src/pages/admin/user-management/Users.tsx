@@ -235,9 +235,21 @@ export default function UsersManagement() {
   const backendTotal =
     (usersResp as { total?: number })?.total ??
     (usersResp as { data?: { userCount?: number } })?.data?.userCount;
+  const hasBackendTotal = typeof backendTotal === "number";
+  const backendTotalWallet =
+    (usersResp as { data?: { totalWallet?: number } })?.data?.totalWallet;
+  const hasBackendWallet = typeof backendTotalWallet === "number";
+
   const stats = {
-    totalUsers: typeof backendTotal === "number" ? backendTotal : users.length,
-    totalWalletBalance: (usersResp as { data?: { totalWallet?: number } })?.data?.totalWallet ?? 0,
+    totalUsers: hasBackendTotal ? (backendTotal as number) : users.length,
+    totalWalletBalance: hasBackendWallet
+      ? (backendTotalWallet as number)
+      : users.reduce(
+          (sum, u) => sum + Number((u as { walletBalance?: number }).walletBalance ?? 0),
+          0
+        ),
+    hasBackendTotal,
+    hasBackendWallet,
   };
 
   const formatCurrency = (value: number) => {
@@ -715,14 +727,22 @@ export default function UsersManagement() {
         <StatCard
           title="Tổng người dùng"
           value={stats.totalUsers.toString()}
-          description="Tất cả người dùng"
+          description={
+            stats.hasBackendTotal
+              ? 'Tất cả người dùng trong hệ thống'
+              : 'Số người dùng trên trang hiện tại'
+          }
           icon={Users}
         />
 
         <StatCard
           title="Tổng số dư ví"
           value={formatCurrency(stats.totalWalletBalance)}
-          description="Tổng tiền trong hệ thống"
+          description={
+            stats.hasBackendWallet
+              ? 'Tổng tiền trong hệ thống'
+              : 'Tổng số dư ví của trang hiện tại'
+          }
           icon={DollarSign}
         />
       </div>

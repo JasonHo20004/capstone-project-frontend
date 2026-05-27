@@ -64,29 +64,20 @@ export default function NotificationsManagement() {
     if (!adminUser?.id) return;
     const fetchData = async () => {
       try {
+        // Platform-wide feed — was previously pulling the admin's own inbox.
         const [notificationsRes, typesRes] = await Promise.all([
-          notificationService.getUserNotifications({
-            userId: adminUser.id,
-            page: 1,
-            limit: 100,
-          }),
-          notificationService.getUserStats(adminUser.id).catch(() => null),
+          notificationService.listAllForAdmin({ page: 1, limit: 100 }),
+          notificationService.listAdminNotificationTypes().catch(() => null),
         ]);
 
-        setNotifications(notificationsRes.data?.notifications ?? []);
-        const typesData = (typesRes as { data?: { byType?: Record<string, number> } })?.data?.byType;
-        if (typesData) {
-          const byType = typesData;
-          setNotificationTypes(
-            Object.keys(byType).map((name) => ({
-              id: name,
-              name,
-              isLocked: false,
-            })),
-          );
+        setNotifications(notificationsRes.data ?? []);
+        const types = typesRes?.data;
+        if (Array.isArray(types) && types.length > 0) {
+          setNotificationTypes(types);
         }
-      } catch {
-        // swallow errors for now; UI will show empty state
+      } catch (err) {
+        console.error('[NotificationsManagement] fetch failed:', err);
+        toast.error('Không thể tải danh sách thông báo');
       }
     };
 
@@ -156,6 +147,8 @@ export default function NotificationsManagement() {
   };
 
   const [sendingCampaign, setSendingCampaign] = useState(false);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   /** Translate the legacy UI role labels into the server's segment vocab. */
   const buildSegment = (): CampaignSegment | null => {
@@ -179,6 +172,47 @@ export default function NotificationsManagement() {
     return { kind: 'role', roles };
   };
 
+  // Live recipient count preview — re-runs whenever the segment selection
+  // changes inside an open dialog. Debounced via cleanup to avoid spamming.
+  useEffect(() => {
+    if (!isCreateDialogOpen) {
+      setPreviewCount(null);
+      return;
+    }
+    const segment = buildSegment();
+    if (!segment) {
+      setPreviewCount(null);
+      return;
+    }
+    // user-ids segment doesn't need a round-trip — count is exact already.
+    if (segment.kind === 'user-ids') {
+      setPreviewCount(segment.userIds.length);
+      return;
+    }
+    let cancelled = false;
+    setPreviewing(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await notificationService.previewCampaign(segment);
+        if (!cancelled) setPreviewCount(res.data?.recipientCount ?? 0);
+      } catch {
+        if (!cancelled) setPreviewCount(null);
+      } finally {
+        if (!cancelled) setPreviewing(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isCreateDialogOpen,
+    newNotification.recipientType,
+    newNotification.selectedRoles.join(','),
+    newNotification.selectedUserIds.length,
+  ]);
+
   const handleCreateNotification = async () => {
     const segment = buildSegment();
     if (!segment) {
@@ -188,6 +222,13 @@ export default function NotificationsManagement() {
     if (!newNotification.title.trim() || !newNotification.content.trim()) {
       toast.error('Vui lòng nhập tiêu đề và nội dung');
       return;
+    }
+    // Guard rail: campaigns hitting >500 recipients require a typed confirm.
+    if (previewCount !== null && previewCount > 500) {
+      const ok = window.confirm(
+        `Bạn sắp gửi thông báo đến ${previewCount.toLocaleString('vi-VN')} người dùng. Tiếp tục?`
+      );
+      if (!ok) return;
     }
     const payload: CampaignPayload = {
       title: newNotification.title.trim(),
@@ -559,8 +600,22 @@ export default function NotificationsManagement() {
               )}
 
               {/* Recipient Summary */}
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium mb-1">Tóm tắt người nhận:</p>
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg space-y-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Sẽ gửi đến:</p>
+                  {previewing ? (
+                    <Badge variant="outline" className="text-xs animate-pulse">
+                      Đang đếm...
+                    </Badge>
+                  ) : previewCount !== null ? (
+                    <Badge
+                      variant={previewCount > 500 ? 'destructive' : 'default'}
+                      className="text-xs"
+                    >
+                      {previewCount.toLocaleString('vi-VN')} người
+                    </Badge>
+                  ) : null}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {newNotification.recipientType === 'role' ? (
                     newNotification.selectedRoles.length > 0 ? (

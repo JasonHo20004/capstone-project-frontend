@@ -83,17 +83,8 @@ export default function CoursesManagement() {
   });
 
   const courses = coursesResponse?.data ?? [];
+  // Server has already filtered by search + status — no client-side re-filter.
   const totalCourses = coursesResponse?.total ?? courses.length;
-
-  const filteredCourses = useMemo(() => {
-    if (!courses) return [];
-    return courses.filter(course => {
-      const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (course.sellerName ?? course.courseSeller?.fullName ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [courses, searchTerm, statusFilter]);
 
   const updateCourseMutation = useMutation({
     mutationFn: (vars: { id: string; data: { status?: Course["status"] } }) =>
@@ -115,21 +106,29 @@ export default function CoursesManagement() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  /** IDs that errored during the previous bulk run — surfaced as a Retry CTA. */
+  const [failedIds, setFailedIds] = useState<string[]>([]);
 
   const pendingSelectedCourses = useMemo(() => {
     const idSet = new Set(selectedIds);
     return courses.filter((c) => idSet.has(c.id) && c.status === CourseStatus.PENDING);
   }, [courses, selectedIds]);
 
-  const runBulkApprove = async () => {
-    if (pendingSelectedCourses.length === 0) {
+  const failedCourses = useMemo(() => {
+    if (failedIds.length === 0) return [];
+    const set = new Set(failedIds);
+    return courses.filter((c) => set.has(c.id));
+  }, [courses, failedIds]);
+
+  const runBulkApproveFor = async (targets: Course[]) => {
+    if (targets.length === 0) {
       toast.error('Không có khóa học PENDING nào trong lựa chọn');
       return;
     }
-    setBulkProgress({ done: 0, total: pendingSelectedCourses.length });
+    setBulkProgress({ done: 0, total: targets.length });
     let success = 0;
-    let failed = 0;
-    for (const [i, course] of pendingSelectedCourses.entries()) {
+    const failures: string[] = [];
+    for (const [i, course] of targets.entries()) {
       try {
         await courseManagementService.updateCourse(course.id, {
           status: CourseStatus.ACTIVE,
@@ -145,19 +144,28 @@ export default function CoursesManagement() {
           .catch((err) => console.error('[Audit] bulk course approve log failed:', err));
         success++;
       } catch {
-        failed++;
+        failures.push(course.id);
       }
-      setBulkProgress({ done: i + 1, total: pendingSelectedCourses.length });
+      setBulkProgress({ done: i + 1, total: targets.length });
     }
     queryClient.invalidateQueries({ queryKey: ['adminCourses'] });
     refetch();
     setBulkProgress(null);
     setBulkConfirmOpen(false);
     setSelectedIds([]);
-    toast.success(
-      `Hoàn tất: ${success} duyệt thành công${failed > 0 ? `, ${failed} thất bại` : ''}`
-    );
+    setFailedIds(failures);
+    if (failures.length === 0) {
+      toast.success(`Hoàn tất: ${success} duyệt thành công`);
+    } else {
+      toast.warning(
+        `${success} duyệt thành công, ${failures.length} thất bại — bấm "Thử lại" để duyệt phần lỗi`,
+        { duration: 8000 }
+      );
+    }
   };
+
+  const runBulkApprove = () => runBulkApproveFor(pendingSelectedCourses);
+  const runRetryFailed = () => runBulkApproveFor(failedCourses);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -344,10 +352,36 @@ export default function CoursesManagement() {
         ]}
       />
 
+      {failedCourses.length > 0 && !bulkProgress && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+          <div className="text-sm">
+            <span className="font-semibold text-amber-700 dark:text-amber-400">
+              {failedCourses.length} khóa học chưa duyệt được
+            </span>
+            <span className="text-muted-foreground ml-2">
+              từ lần duyệt hàng loạt trước. Có thể do mạng hoặc validate bên BE.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setFailedIds([])}>
+              Bỏ qua
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-amber-500 text-amber-700 hover:bg-amber-50"
+              onClick={runRetryFailed}
+            >
+              <Check className="mr-1 h-4 w-4" /> Thử lại {failedCourses.length}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <DataTable
         title="Danh sách khóa học"
         description={`Tổng cộng ${totalCourses} khóa học`}
-        data={filteredCourses}
+        data={courses}
         columns={columns}
         emptyMessage="Không tìm thấy khóa học nào"
         selectable

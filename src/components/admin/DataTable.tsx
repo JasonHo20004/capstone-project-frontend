@@ -131,6 +131,11 @@ export default function DataTable<T extends object>({
     const newSize = parseInt(value, 10);
     setItemsPerPage(newSize);
     setCurrentPage(1);
+    // Clear selection — the previous selection may not all appear in the new
+    // page window, and a "ghost" selection misleads bulk actions.
+    if (selectionEnabled && (selectedIds?.length ?? 0) > 0) {
+      onSelectionChange?.([]);
+    }
   };
 
   const visibleIds = useMemo(
