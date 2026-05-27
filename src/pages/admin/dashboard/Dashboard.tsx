@@ -195,8 +195,8 @@ export default function AdminDashboard() {
       {/* ─── Stat Cards ─────────────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Users */}
-        <Link to="/admin/users" aria-label="Xem danh sách người dùng" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
-        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+        <Link to="/admin/users" aria-label="Xem danh sách người dùng" className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Tổng người dùng</CardTitle>
@@ -204,15 +204,16 @@ export default function AdminDashboard() {
               <Users className="h-5 w-5 text-indigo-600" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-1 flex-col">
             <div className="text-3xl font-bold font-display">
               {(stats?.totalUsers || 0).toLocaleString()}
             </div>
-            {stats?.monthlyGrowth?.users !== undefined && (
-              <TrendBadge value={stats.monthlyGrowth.users} />
-            )}
-            {/* Mini user breakdown */}
-            <div className="flex gap-3 mt-3 text-xs text-muted-foreground">
+            <div className="min-h-[20px] mt-1">
+              {stats?.monthlyGrowth?.users !== undefined && (
+                <TrendBadge value={stats.monthlyGrowth.users} />
+              )}
+            </div>
+            <div className="flex gap-3 mt-auto pt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <GraduationCap className="h-3 w-3" /> {userBreakdown.students || 0} Học viên
               </span>
@@ -225,8 +226,8 @@ export default function AdminDashboard() {
         </Link>
 
         {/* Total Courses */}
-        <Link to="/admin/courses" aria-label="Xem danh sách khóa học" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
-        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+        <Link to="/admin/courses" aria-label="Xem danh sách khóa học" className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Tổng khóa học</CardTitle>
@@ -234,14 +235,16 @@ export default function AdminDashboard() {
               <BookOpen className="h-5 w-5 text-cyan-600" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-1 flex-col">
             <div className="text-3xl font-bold font-display">
               {(stats?.totalCourses || 0).toLocaleString()}
             </div>
-            {stats?.monthlyGrowth?.courses !== undefined && (
-              <TrendBadge value={stats.monthlyGrowth.courses} />
-            )}
-            <div className="flex gap-3 mt-3 text-xs text-muted-foreground">
+            <div className="min-h-[20px] mt-1">
+              {stats?.monthlyGrowth?.courses !== undefined && (
+                <TrendBadge value={stats.monthlyGrowth.courses} />
+              )}
+            </div>
+            <div className="flex gap-3 mt-auto pt-3 text-xs text-muted-foreground">
               <span className="text-emerald-600 font-medium">{stats?.activeCourses ?? 0} Active</span>
               <span className="text-amber-600 font-medium">{stats?.pendingCourses ?? 0} Pending</span>
             </div>
@@ -250,8 +253,8 @@ export default function AdminDashboard() {
         </Link>
 
         {/* Revenue */}
-        <Link to="/admin/transactions" aria-label="Xem chi tiết giao dịch" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
-        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+        <Link to="/admin/transactions" aria-label="Xem chi tiết giao dịch" className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Doanh thu</CardTitle>
@@ -259,21 +262,28 @@ export default function AdminDashboard() {
               <DollarSign className="h-5 w-5 text-emerald-600" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-1 flex-col">
             <div className="text-3xl font-bold font-display">
               {stats?.totalRevenue ? formatCompactCurrency(stats.totalRevenue) : "0"}
               <span className="text-lg text-muted-foreground ml-1">₫</span>
             </div>
-            {stats?.monthlyGrowth?.revenue !== undefined && (
-              <TrendBadge value={stats.monthlyGrowth.revenue} />
-            )}
+            <div className="min-h-[20px] mt-1">
+              {stats?.monthlyGrowth?.revenue !== undefined && (
+                <TrendBadge value={stats.monthlyGrowth.revenue} />
+              )}
+            </div>
+            <div className="flex gap-3 mt-auto pt-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <DollarSign className="h-3 w-3" /> Tổng từ trước đến nay
+              </span>
+            </div>
           </CardContent>
         </Card>
         </Link>
 
         {/* Pending Applications */}
-        <Link to="/admin/applications?status=PENDING" aria-label="Xem đơn chờ duyệt" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
-        <Card className="relative overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+        <Link to="/admin/applications?status=PENDING" aria-label="Xem đơn chờ duyệt" className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
+        <Card className="relative h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Đơn chờ duyệt</CardTitle>
@@ -281,19 +291,26 @@ export default function AdminDashboard() {
               <UserCheck className="h-5 w-5 text-amber-600" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-1 flex-col">
             <div className="text-3xl font-bold font-display">
               {stats?.pendingApplications || 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="min-h-[20px] mt-1">
               {(stats?.pendingApplications || 0) > 0 ? (
-                <span className="text-amber-600 font-medium flex items-center gap-1">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
                   <ShieldCheck className="h-3 w-3" /> Cần xem xét
                 </span>
               ) : (
-                "Không có đơn chờ duyệt"
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <Minus className="h-3 w-3" /> Không có đơn chờ
+                </span>
               )}
-            </p>
+            </div>
+            <div className="flex gap-3 mt-auto pt-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <UserCheck className="h-3 w-3" /> Yêu cầu giảng viên
+              </span>
+            </div>
           </CardContent>
         </Card>
         </Link>
