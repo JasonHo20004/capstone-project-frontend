@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { Check } from "lucide-react";
 import apiClient from "@/lib/api/config";
 
 interface Milestone {
@@ -194,7 +195,7 @@ export default function LearningPath() {
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
                   m.completedAt ? "bg-green-500 text-white" : "bg-white border-2 border-slate-300 text-slate-500"
                 }`}>
-                  {m.completedAt ? "✓" : i + 1}
+                  {m.completedAt ? <Check size={14} /> : i + 1}
                 </div>
                 {i < milestones.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 my-1"></div>}
               </div>

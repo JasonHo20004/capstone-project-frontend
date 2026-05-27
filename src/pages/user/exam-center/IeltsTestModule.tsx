@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { BarChart2, Lightbulb, Lock } from 'lucide-react';
 import apiClient from "@/lib/api/config";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
 import SpeakingTestLayout from "./SpeakingTestLayout";
@@ -24,10 +25,10 @@ const SECTION_INSTRUCTIONS: Record<string, string> = {
 
 // ─── Highlight Colors ────────────────────────────────────────────────────────
 const HIGHLIGHT_COLORS = [
-  { name: 'Yellow', color: '#fef08a', border: '#eab308', icon: '🟡' },
-  { name: 'Green', color: '#bbf7d0', border: '#22c55e', icon: '🟢' },
-  { name: 'Blue', color: '#bfdbfe', border: '#3b82f6', icon: '🔵' },
-  { name: 'Pink', color: '#fbcfe8', border: '#ec4899', icon: '🩷' },
+  { name: 'Yellow', color: '#fef08a', border: '#eab308' },
+  { name: 'Green', color: '#bbf7d0', border: '#22c55e' },
+  { name: 'Blue', color: '#bfdbfe', border: '#3b82f6' },
+  { name: 'Pink', color: '#fbcfe8', border: '#ec4899' },
 ];
 
 // ─── Types (matching assessment-service API response) ────────────────────────
@@ -512,7 +513,7 @@ export default function IeltsTestModule() {
               ← Exam Center
             </Link>
             <Link to="/exam/history" className="px-6 py-2.5 bg-white text-indigo-600 rounded-xl font-bold border-2 border-indigo-200 hover:bg-indigo-50 transition">
-              📊 Lịch sử
+              <BarChart2 size={16} className="mr-1.5 inline-block" /> Lịch sử
             </Link>
           </div>
         </div>
@@ -769,7 +770,7 @@ export default function IeltsTestModule() {
                   ))}
                   {assistantResult.suggestions.map((sug, i) => (
                     <div key={`s-${i}`} className="text-xs mb-1 p-2 bg-white rounded border border-blue-100">
-                      <span className="font-bold text-blue-600 mr-1">💡</span> {sug.improvement}
+                      <Lightbulb size={12} className="inline mr-1 text-blue-600 shrink-0" /> {sug.improvement}
                     </div>
                   ))}
                 </div>
@@ -918,8 +919,8 @@ export default function IeltsTestModule() {
                 </audio>
                 <p className={`text-xs mt-2 ${alreadyPlayed ? "text-slate-500" : "text-teal-600"}`}>
                   {alreadyPlayed
-                    ? "🔒 Section này đã nghe xong — không thể nghe lại (chuẩn IELTS)."
-                    : "💡 Đây là bài thi IELTS thật — bạn chỉ được nghe MỘT lần, không tua lại được."}
+                    ? <><Lock size={12} className="inline mr-1" />Section này đã nghe xong — không thể nghe lại (chuẩn IELTS).</>
+                    : <><Lightbulb size={12} className="inline mr-1" />Đây là bài thi IELTS thật — bạn chỉ được nghe MỘT lần, không tua lại được.</>}
                 </p>
 
                 {/* Transcript reveal — only after submission */}
@@ -1327,12 +1328,12 @@ export default function IeltsTestModule() {
                               }
                               ${isFlagged ? 'ring-2 ring-amber-400' : ''}
                             `}
-                            title={`Q${q.questionOrder}${isAnswered ? ' ✓' : ''}${isFlagged ? ' 🚩' : ''}`}
+                            title={`Q${q.questionOrder}${isAnswered ? ' (ok)' : ''}${isFlagged ? ' (flagged)' : ''}`}
                           >
                             {q.questionOrder}
                             {isFlagged && (
                               <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full flex items-center justify-center">
-                                <span className="text-[7px] text-white">⚑</span>
+                                <span className="block w-1.5 h-1.5 bg-white rounded-full" />
                               </span>
                             )}
                           </button>

@@ -36,18 +36,18 @@ const formatDate = (date: string) => {
 
 const TYPE_FILTER_OPTIONS: { key: string; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
-  { key: 'ai_insight', label: '✨ AI Insight' },
-  { key: 'course_comment', label: '💬 Bình luận' },
-  { key: 'comment_reply', label: '↩️ Trả lời' },
-  { key: 'course_enrollment', label: '👤 Đăng ký' },
-  { key: 'course_update', label: '🔄 Cập nhật' },
+  { key: 'ai_insight', label: 'AI Insight' },
+  { key: 'course_comment', label: 'Bình luận' },
+  { key: 'comment_reply', label: 'Trả lời' },
+  { key: 'course_enrollment', label: 'Đăng ký' },
+  { key: 'course_update', label: 'Cập nhật' },
   // Seller-specific events emitted by course-service / payment-service.
   // Keys are uppercase to match what handlers write (see NotificationDropdown).
-  { key: 'COURSE_APPROVED', label: '✅ Khoá học duyệt' },
-  { key: 'COURSE_REJECTED', label: '❌ Khoá học bị từ chối' },
-  { key: 'COURSE_SUBMITTED', label: '📋 Khoá học chờ duyệt' },
-  { key: 'WITHDRAWAL_APPROVED', label: '💰 Rút tiền thành công' },
-  { key: 'WITHDRAWAL_REJECTED', label: '⚠️ Rút tiền bị từ chối' },
+  { key: 'COURSE_APPROVED', label: 'Khoá học duyệt' },
+  { key: 'COURSE_REJECTED', label: 'Khoá học bị từ chối' },
+  { key: 'COURSE_SUBMITTED', label: 'Khoá học chờ duyệt' },
+  { key: 'WITHDRAWAL_APPROVED', label: 'Rút tiền thành công' },
+  { key: 'WITHDRAWAL_REJECTED', label: 'Rút tiền bị từ chối' },
 ];
 
 // Mute control persists across reloads via localStorage. Pure UX —

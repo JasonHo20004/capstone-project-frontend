@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, RotateCcw, Upload, X, AlertTriangle } from 'lucide-react';
+import { Save, RotateCcw, Upload, X, AlertTriangle, SendHorizontal, PauseCircle, Clock, XCircle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CourseLevel, CourseStatus } from '@/domain';
 
@@ -172,7 +172,7 @@ export function CourseMetadataTab({
                         toast.info('Nhấn "Lưu" để gửi duyệt.');
                       }}
                     >
-                      🚀 Gửi duyệt
+                      <SendHorizontal size={14} className="mr-1" /> Gửi duyệt
                     </Button>
                   )}
                   {merged.status === 'ACTIVE' && (
@@ -185,19 +185,19 @@ export function CourseMetadataTab({
                         toast.info('Nhấn "Lưu" để tạm ngưng.');
                       }}
                     >
-                      ⏸️ Tạm ngưng
+                      <PauseCircle size={14} className="mr-1" /> Tạm ngưng
                     </Button>
                   )}
                 </div>
                 {merged.status === 'PENDING' && (
-                  <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">⏳ Đang chờ admin duyệt.</p>
+                  <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1"><Clock size={12} /> Đang chờ admin duyệt.</p>
                 )}
                 {merged.status === 'REFUSE' && (
-                  <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg">❌ Bị từ chối. Hãy sửa rồi gửi lại.</p>
+                  <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg flex items-center gap-1"><XCircle size={12} /> Bị từ chối. Hãy sửa rồi gửi lại.</p>
                 )}
                 {draft.status && draft.status !== merged.status && (
                   <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
-                    ⚡ Sẽ chuyển sang <strong>{draft.status === 'PENDING' ? 'Chờ duyệt' : 'Tạm ngưng'}</strong> khi bạn lưu.
+                    <Zap size={12} className="inline mr-1" /> Sẽ chuyển sang <strong>{draft.status === 'PENDING' ? 'Chờ duyệt' : 'Tạm ngưng'}</strong> khi bạn lưu.
                   </p>
                 )}
               </div>

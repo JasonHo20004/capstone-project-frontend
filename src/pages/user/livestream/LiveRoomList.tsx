@@ -210,8 +210,8 @@ export default function LiveRoomList() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en">🇬🇧 Tiếng Anh</SelectItem>
-                    <SelectItem value="vi">🇻🇳 Tiếng Việt</SelectItem>
+                    <SelectItem value="en">EN Tiếng Anh</SelectItem>
+                    <SelectItem value="vi">VI Tiếng Việt</SelectItem>
                   </SelectContent>
                 </Select>
                 {language === 'vi' && (
@@ -371,7 +371,7 @@ export default function LiveRoomList() {
                   {room.level_label}
                 </Badge>
                 <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                  {room.language === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}
+                  {room.language === 'vi' ? 'VI' : 'EN'}
                 </span>
                 <span className="text-xs text-slate-400 flex items-center gap-1">
                   <Users className="w-3 h-3" />

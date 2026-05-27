@@ -213,7 +213,7 @@ export default function AiTutorPanel({
       // onError
       (error: string) => {
         console.error("[AI Tutor Stream] Error:", error);
-        const finalText = accumulated || `⚠️ Lỗi: ${error}`;
+        const finalText = accumulated || `Lỗi: ${error}`;
         setMessages(prev => {
           const updated = [...prev];
           const lastIdx = updated.length - 1;
@@ -346,11 +346,11 @@ export default function AiTutorPanel({
               <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-indigo-600 text-[32px]">school</span>
               </div>
-              <h4 className="font-bold text-slate-700 mb-2">Chào bạn! 👋</h4>
+              <h4 className="font-bold text-slate-700 mb-2">Chào bạn!</h4>
               <p className="text-sm text-slate-400">
                 {question
                   ? "Đang phân tích câu hỏi..."
-                  : "Chọn một câu sai, sau đó bấm '🤖 Giải thích' để bắt đầu."}
+                  : "Chọn một câu sai, sau đó bấm 'AI Giải thích' để bắt đầu."}
               </p>
             </div>
           )}

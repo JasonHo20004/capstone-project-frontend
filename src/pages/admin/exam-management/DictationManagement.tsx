@@ -597,7 +597,7 @@ export default function DictationManagement() {
                   <Label className="flex items-center gap-2">
                     <Music className="h-4 w-4" />
                     Audio
-                    {audioUrl && <Badge variant="default" className="text-xs ml-2">✓ {audioUrl.startsWith('http') ? 'Đã có URL' : 'Đã upload'}</Badge>}
+                    {audioUrl && <Badge variant="default" className="text-xs ml-2">{audioUrl.startsWith('http') ? 'Đã có URL' : 'Đã upload'}</Badge>}
                   </Label>
                   <Tabs defaultValue="upload" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 h-8">
@@ -701,7 +701,7 @@ export default function DictationManagement() {
                 <Music className="h-4 w-4" />
                 Audio
                 {editAudioUrl && !editAudioUrl.startsWith('placeholder') && (
-                  <Badge variant="default" className="text-xs ml-2">✓ Đã có audio</Badge>
+                  <Badge variant="default" className="text-xs ml-2">Đã có audio</Badge>
                 )}
               </Label>
               <Tabs defaultValue={editAudioUrl && !editAudioUrl.startsWith('placeholder') ? 'url' : 'upload'} className="w-full">

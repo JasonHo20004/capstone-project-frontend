@@ -16,6 +16,7 @@ import {
   Users, Send, PlayCircle, StopCircle, ArrowLeft,
   MessageSquare, BookOpen, Volume2, VolumeX, WifiOff,
   RotateCcw, PlaySquare, Mic, MicOff, RefreshCw, Hand,
+  Mic2, Star, CheckCircle, Check,
 } from 'lucide-react';
 
 const RAG_BASE = import.meta.env.VITE_RAG_SERVICE_URL ?? 'http://localhost:8000';
@@ -273,7 +274,7 @@ export default function LiveRoom() {
       case 'speaker_invited': {
         const name = msg.target_user_name as string;
         const isMe = msg.target_user_id === currentUserIdRef.current;
-        setChat(p => [...p, { type: 'system', text: isMe ? `🎤 Giảng viên mời bạn phát biểu!` : `🎤 Giảng viên mời ${name} phát biểu` }]);
+        setChat(p => [...p, { type: 'system', text: isMe ? `Giảng viên mời bạn phát biểu!` : `Giảng viên mời ${name} phát biểu` }]);
         if (isMe) setHandRaised(false);
         break;
       }
@@ -282,8 +283,8 @@ export default function LiveRoom() {
         const score = msg.score as number;
         if (!isMe) {
           const name = msg.user_name as string;
-          const emoji = score >= 80 ? '🌟' : score >= 50 ? '👍' : '💪';
-          setChat(p => [...p, { type: 'system', text: `${emoji} ${name} luyện nói: "${msg.phrase}" (${score}/100)` }]);
+          const scoreLabel = score >= 80 ? '[*]' : score >= 50 ? '[+1]' : '+1';
+          setChat(p => [...p, { type: 'system', text: `${scoreLabel} ${name} luyện nói: "${msg.phrase}" (${score}/100)` }]);
         }
         break;
       }
@@ -511,7 +512,7 @@ export default function LiveRoom() {
               {room.level_label}
             </Badge>
             <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
-              {room.language === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}
+              {room.language === 'vi' ? 'VI' : 'EN'}
             </span>
             {isLive && !isQaPeriod && (
               <span className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
@@ -798,7 +799,7 @@ export default function LiveRoom() {
                             </span>
                           )}
                           {isDone && (
-                            <span className="text-[10px] text-slate-400 shrink-0">✓</span>
+                            <span className="text-[10px] text-slate-400 shrink-0"><Check size={14} /></span>
                           )}
                         </div>
 
@@ -954,7 +955,7 @@ export default function LiveRoom() {
 
               <Input
                 placeholder={
-                  isListening       ? '🎙 Đang nghe… nói câu hỏi của bạn'
+                  isListening       ? 'Đang nghe… nói câu hỏi của bạn'
                   : isEnded         ? 'Buổi học đã kết thúc'
                   : !connected      ? 'Đang kết nối…'
                   : questionsLeft === 0 ? 'Đã hết lượt — đợi 1 phút'

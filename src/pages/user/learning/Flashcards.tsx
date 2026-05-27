@@ -611,9 +611,9 @@ const Flashcards = () => {
                         <Clock className="w-4 h-4" />
                       )}
                       {publicQueueCount === 0
-                        ? 'Đã ôn hết! 🎉'
+                        ? 'Đã ôn hết!'
                         : publicHasOnlyNewCards
-                        ? `${publicQueueCount} thẻ mới — sẵn sàng để học 🌱`
+                        ? `${publicQueueCount} thẻ mới — sẵn sàng để học`
                         : `${publicQueueCount} thẻ cần ôn tập`}
                     </div>
                   </div>
@@ -749,9 +749,9 @@ const Flashcards = () => {
                           {isLoadingQueue
                             ? 'Đang tính toán thẻ cần ôn...'
                             : reviewQueueCount === 0
-                            ? 'Đã ôn hết! Hẹn gặp lại vào lần tới 🎉'
+                            ? 'Đã ôn hết! Hẹn gặp lại vào lần tới'
                             : hasOnlyNewCards
-                            ? `${reviewQueueCount} thẻ mới — sẵn sàng cho buổi học đầu tiên 🌱`
+                            ? `${reviewQueueCount} thẻ mới — sẵn sàng cho buổi học đầu tiên`
                             : `${reviewQueueCount} thẻ cần ôn tập ngay bây giờ`}
                         </span>
                       </div>

@@ -20,7 +20,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import {
   ArrowLeft, BookOpen, Star, Clock, GraduationCap,
   Layers, FileText, Settings, ClipboardCheck, ClipboardList,
-  Eye,
+  Eye, CheckCircle2, XCircle,
 } from 'lucide-react';
 import type { CourseStatus, CourseLevel, Lesson, Rating, CourseLesson } from '@/domain';
 
@@ -43,12 +43,12 @@ interface ModuleData {
 
 const DRAFT_KEY = (id: string) => `seller_course_draft_${id}`;
 
-const statusConfig: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
-  DRAFT:    { label: 'Bản nháp',   emoji: '📝', bg: 'bg-slate-100',   text: 'text-slate-700' },
-  PENDING:  { label: 'Chờ duyệt',  emoji: '⏳', bg: 'bg-amber-100',   text: 'text-amber-700' },
-  ACTIVE:   { label: 'Hoạt động',  emoji: '✅', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  REFUSE:   { label: 'Bị từ chối', emoji: '❌', bg: 'bg-red-100',     text: 'text-red-700' },
-  INACTIVE: { label: 'Tạm ngưng',  emoji: '⏸️', bg: 'bg-gray-100',    text: 'text-gray-600' },
+const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
+  DRAFT:    { label: 'Bản nháp',   bg: 'bg-slate-100',   text: 'text-slate-700' },
+  PENDING:  { label: 'Chờ duyệt',  bg: 'bg-amber-100',   text: 'text-amber-700' },
+  ACTIVE:   { label: 'Hoạt động',  bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  REFUSE:   { label: 'Bị từ chối', bg: 'bg-red-100',     text: 'text-red-700' },
+  INACTIVE: { label: 'Tạm ngưng',  bg: 'bg-gray-100',    text: 'text-gray-600' },
 };
 
 export default function SellerCourseDetail() {
@@ -308,7 +308,7 @@ export default function SellerCourseDetail() {
                   </p>
                 </div>
                 <span className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${st.bg} ${st.text}`}>
-                  {st.emoji} {st.label}
+                  {st.label}
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
@@ -392,7 +392,7 @@ export default function SellerCourseDetail() {
                   <InfoRow label="Trình độ" value={merged.courseLevel ?? '—'} />
                   <InfoRow label="Danh mục" value={(merged as any).category ?? '—'} />
                   <InfoRow label="Giá" value={formatVND(merged.price ?? 0)} />
-                  <InfoRow label="Trạng thái" value={<span className={`${st.bg} ${st.text} px-2 py-0.5 rounded-full text-xs font-semibold`}>{st.emoji} {st.label}</span>} />
+                  <InfoRow label="Trạng thái" value={<span className={`${st.bg} ${st.text} px-2 py-0.5 rounded-full text-xs font-semibold`}>{st.label}</span>} />
                 </CardContent>
               </Card>
               <Card className="border-0 shadow-sm">
@@ -400,7 +400,7 @@ export default function SellerCourseDetail() {
                   <h3 className="text-sm font-bold text-slate-700">Thời gian</h3>
                   <InfoRow label="Ngày tạo" value={merged.createdAt ? new Date(merged.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'} />
                   <InfoRow label="Cập nhật" value={merged.updatedAt ? new Date(merged.updatedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'} />
-                  <InfoRow label="Bài kiểm tra" value={course.finalTestId ? '✅ Đã có' : '❌ Chưa có'} />
+                  <InfoRow label="Bài kiểm tra" value={course.finalTestId ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={14} /> Đã có</span> : <span className="inline-flex items-center gap-1 text-red-500"><XCircle size={14} /> Chưa có</span>} />
                   <InfoRow label="Bình luận" value={`${totalComments}`} />
                 </CardContent>
               </Card>

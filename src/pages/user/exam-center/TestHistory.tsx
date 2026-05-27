@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import apiClient from "@/lib/api/config";
+import { BarChart2, BookOpen, Headphones } from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getUserId(): string | null {
@@ -112,7 +113,7 @@ export default function TestHistory() {
               <span className="material-symbols-outlined">arrow_back</span>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-slate-800">📊 Lịch sử làm bài</h1>
+              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><BarChart2 size={20} /> Lịch sử làm bài</h1>
               <p className="text-xs text-slate-500 mt-0.5">{stats.total} lần làm bài</p>
             </div>
           </div>
@@ -158,7 +159,7 @@ export default function TestHistory() {
                   : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
               }`}
             >
-              {f === "all" ? "Tất cả" : f === "READING" ? "📖 Reading" : "🎧 Listening"}
+              {f === "all" ? "Tất cả" : f === "READING" ? <><BookOpen size={14} className="inline mr-1" />Reading</> : <><Headphones size={14} className="inline mr-1" />Listening</>}
             </button>
           ))}
         </div>

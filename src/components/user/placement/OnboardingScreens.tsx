@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Check } from "lucide-react";
 
 interface BaseScreenProps {
   onContinue: () => void;
@@ -247,7 +248,7 @@ export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
             whileHover={tried ? { scale: 1.02 } : {}}
             className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            I can hear it ✓
+            I can hear it <Check size={14} className="inline" />
           </motion.button>
           <button
             onClick={() => setProblem(true)}
@@ -317,7 +318,7 @@ export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
             whileHover={{ scale: 1.02 }}
             className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600"
           >
-            I can see it ✓
+            I can see it <Check size={14} className="inline" />
           </motion.button>
           <button
             onClick={() => setProblem(true)}

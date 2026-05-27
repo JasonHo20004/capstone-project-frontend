@@ -4,6 +4,8 @@
 // =============================================================================
 
 import { useMemo } from "react";
+import { Target, BookOpen, Zap, Trophy, Wrench, Pencil, CheckCircle2, Lock } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -44,15 +46,15 @@ export const NODE_THEME: Record<string, {
   bgDark: string;
   border: string;
   glow: string;
-  icon: string;
+  icon: LucideIcon;
   ring: string;
 }> = {
-  root: { bg: "#818cf8", bgDark: "#4f46e5", border: "#a5b4fc", glow: "rgba(129,140,248,0.5)", icon: "🎯", ring: "#a5b4fc" },
-  lesson: { bg: "#60a5fa", bgDark: "#2563eb", border: "#93c5fd", glow: "rgba(96,165,250,0.4)", icon: "📖", ring: "#93c5fd" },
-  challenge: { bg: "#fbbf24", bgDark: "#d97706", border: "#fde68a", glow: "rgba(251,191,36,0.4)", icon: "⚡", ring: "#fde68a" },
-  checkpoint: { bg: "#34d399", bgDark: "#059669", border: "#6ee7b7", glow: "rgba(52,211,153,0.4)", icon: "🏆", ring: "#6ee7b7" },
-  remedial: { bg: "#f87171", bgDark: "#dc2626", border: "#fca5a5", glow: "rgba(248,113,113,0.4)", icon: "🔧", ring: "#fca5a5" },
-  practice: { bg: "#a78bfa", bgDark: "#7c3aed", border: "#c4b5fd", glow: "rgba(167,139,250,0.4)", icon: "✏️", ring: "#c4b5fd" },
+  root: { bg: "#818cf8", bgDark: "#4f46e5", border: "#a5b4fc", glow: "rgba(129,140,248,0.5)", icon: Target, ring: "#a5b4fc" },
+  lesson: { bg: "#60a5fa", bgDark: "#2563eb", border: "#93c5fd", glow: "rgba(96,165,250,0.4)", icon: BookOpen, ring: "#93c5fd" },
+  challenge: { bg: "#fbbf24", bgDark: "#d97706", border: "#fde68a", glow: "rgba(251,191,36,0.4)", icon: Zap, ring: "#fde68a" },
+  checkpoint: { bg: "#34d399", bgDark: "#059669", border: "#6ee7b7", glow: "rgba(52,211,153,0.4)", icon: Trophy, ring: "#6ee7b7" },
+  remedial: { bg: "#f87171", bgDark: "#dc2626", border: "#fca5a5", glow: "rgba(248,113,113,0.4)", icon: Wrench, ring: "#fca5a5" },
+  practice: { bg: "#a78bfa", bgDark: "#7c3aed", border: "#c4b5fd", glow: "rgba(167,139,250,0.4)", icon: Pencil, ring: "#c4b5fd" },
 };
 
 // ─── Tree-Based Layout ──────────────────────────────────────────────────────────
@@ -379,10 +381,14 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
 
                 {/* Icon */}
                 <span
-                  className={`text-2xl leading-none z-10 ${isActive ? "tower-float" : ""}`}
-                  style={{ filter: isLocked ? "grayscale(1)" : "none" }}
+                  className={`leading-none z-10 flex items-center justify-center ${isActive ? "tower-float" : ""}`}
+                  style={{ filter: isLocked ? "grayscale(1)" : "none", color: "white" }}
                 >
-                  {isCompleted ? "✅" : isLocked ? "🔒" : theme.icon}
+                  {isCompleted
+                    ? <CheckCircle2 size={22} />
+                    : isLocked
+                    ? <Lock size={22} />
+                    : <theme.icon size={22} />}
                 </span>
               </button>
 

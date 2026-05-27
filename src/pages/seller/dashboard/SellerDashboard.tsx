@@ -170,7 +170,7 @@ export default function SellerDashboard() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-display">
-            {greeting()}, {user?.fullName?.split(' ').slice(-1)[0] || 'Giảng viên'} 👋
+            {greeting()}, {user?.fullName?.split(' ').slice(-1)[0] || 'Giảng viên'}
           </h1>
           <p className="mt-1 text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="inline-flex items-center gap-1">

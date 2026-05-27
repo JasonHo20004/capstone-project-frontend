@@ -1,6 +1,6 @@
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, RotateCcw, Film } from 'lucide-react';
+import { CheckCircle2, XCircle, RotateCcw, Film, Check } from 'lucide-react';
 
 interface Props {
   percent: number;
@@ -31,7 +31,7 @@ export function UploadProgress({ percent, fileName, fileSizeMB, status, onRetry 
       </div>
 
       {status === 'done' ? (
-        <p className="text-xs text-emerald-600 font-medium">✓ Tải lên thành công</p>
+        <p className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={14} /> Tải lên thành công</p>
       ) : (
         <div className="space-y-1.5">
           <Progress value={percent} className="h-2" />

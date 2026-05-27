@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import { courseService } from '@/lib/api/services/course.service';
 import {
   Trash2, CheckCircle2, ClipboardList, Loader2, Pencil, Link2, Search,
-  AlertTriangle, Plus,
+  AlertTriangle, Plus, Check,
 } from 'lucide-react';
 
 interface FinalTestTabProps {
@@ -238,7 +238,7 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
                           }`}
                         >
                           {String.fromCharCode(65 + oi)}. {opt}
-                          {oi === q.correctAnswerIndex && ' ✓'}
+                          {oi === q.correctAnswerIndex && <Check size={12} className="inline ml-1" />}
                         </div>
                       ))}
                     </div>

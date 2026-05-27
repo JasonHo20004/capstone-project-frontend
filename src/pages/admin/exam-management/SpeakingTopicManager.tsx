@@ -404,7 +404,7 @@ export default function SpeakingTopicManager() {
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
-                        Part 2: {topic.part2Topic ? '✓ Cue card' : '✗ No cue card'}
+                        Part 2: {topic.part2Topic ? 'Cue card' : 'No cue card'}
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />

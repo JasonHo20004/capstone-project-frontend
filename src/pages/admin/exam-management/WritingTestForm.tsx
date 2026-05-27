@@ -21,6 +21,8 @@ import {
   Settings,
   Link,
   Upload,
+  Camera,
+  Timer,
 } from 'lucide-react';
 import apiClient from '@/lib/api/config';
 
@@ -501,7 +503,7 @@ export default function WritingTestForm() {
                         {form.task1Description || 'Chưa nhập mô tả'}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        {form.task1WordCountMin}–{form.task1WordCountMax} từ {form.task1ImageUrl && '· 📷 Có ảnh'}
+                        {form.task1WordCountMin}–{form.task1WordCountMax} từ {form.task1ImageUrl && <span className="inline-flex items-center gap-0.5">· <Camera size={16} className="inline" /> Có ảnh</span>}
                       </p>
                     </div>
                     <div className="p-3 rounded-lg border bg-orange-50/50 dark:bg-orange-950/20">
@@ -518,7 +520,7 @@ export default function WritingTestForm() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    ⏱️ Tổng thời gian: {form.durationInMinutes} phút · 📝 Học viên tự chọn làm Task 1, Task 2, hoặc Full Test
+                    <Timer size={16} className="inline mr-1" /> Tổng thời gian: {form.durationInMinutes} phút · <FileText size={16} className="inline mr-1" /> Học viên tự chọn làm Task 1, Task 2, hoặc Full Test
                   </p>
                 </div>
 

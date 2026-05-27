@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   ArrowLeft, BookOpen, Pencil, Save, RotateCcw, MessageSquare,
-  Clock, Hash, Film, FileText, Link2, Upload, X, CheckCircle2, Plus, Trash2, Send,
+  Clock, Hash, Film, FileText, Link2, Upload, X, CheckCircle2, Plus, Trash2, Send, AlertTriangle,
 } from 'lucide-react';
 import { useCourse, useLesson, useUpdateLesson, useDeleteLesson } from '@/hooks/api';
 import { courseService } from '@/lib/api/services/course.service';
@@ -737,7 +737,7 @@ export default function LessonDetailPage() {
                             <div className="flex-1">
                               <p className="text-[11px] text-slate-500 mb-1">
                                 Trả lời <span className="font-semibold text-teal-600">@{replyingTo.user?.fullName ?? 'Người dùng'}</span>
-                                <button className="ml-2 text-red-400 hover:text-red-500" onClick={() => setReplyingTo(null)}>✕</button>
+                                <button className="ml-2 text-red-400 hover:text-red-500 inline-flex" onClick={() => setReplyingTo(null)}><X size={16} /></button>
                               </p>
                               <div className="flex gap-1.5">
                                 <Textarea
@@ -871,7 +871,7 @@ export default function LessonDetailPage() {
               </span>
               {course?.status === 'ACTIVE' && (
                 <span className="block text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 text-sm">
-                  ⚠️ Khoá học đang ACTIVE, học viên đã mua sẽ không thấy bài học này nữa.
+                  <AlertTriangle size={14} className="inline mr-1" /> Khoá học đang ACTIVE, học viên đã mua sẽ không thấy bài học này nữa.
                 </span>
               )}
             </AlertDialogDescription>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ThumbsUp, Heart, Star, PartyPopper, HelpCircle, AlertCircle, Flame, Smile } from "lucide-react";
 
 export interface FloatingReaction {
   id: number;
@@ -61,6 +62,17 @@ function ReactionItem({ reaction, onExpire }: { reaction: FloatingReaction; onEx
 
 const REACTION_EMOJIS = ['👍', '❤️', '👏', '🎉', '🤔', '😮', '🔥', '😂'] as const;
 
+const REACTION_ICON_MAP: Record<string, React.ElementType> = {
+  '👍': ThumbsUp,
+  '❤️': Heart,
+  '👏': Star,
+  '🎉': PartyPopper,
+  '🤔': HelpCircle,
+  '😮': AlertCircle,
+  '🔥': Flame,
+  '😂': Smile,
+};
+
 interface BarProps {
   disabled?: boolean;
   onSend: (emoji: string) => void;
@@ -86,7 +98,7 @@ export function ReactionBar({ disabled, onSend }: BarProps) {
           aria-label={`Send ${e} reaction`}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 active:scale-90 transition-transform disabled:opacity-50 disabled:cursor-not-allowed text-xl"
         >
-          {e}
+          {(() => { const Icon = REACTION_ICON_MAP[e]; return Icon ? <Icon size={18} /> : null; })()}
         </button>
       ))}
     </div>

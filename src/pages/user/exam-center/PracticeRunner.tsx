@@ -5,6 +5,7 @@ import type { PracticeQuestion, PracticeQuestionGroup, PracticeSection } from "@
 import { ReadingShell, ListeningShell, WritingShell, SpeakingShell } from "@/components/user/exam-center/TestShell";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
 import { Link } from "react-router-dom";
+import { Lightbulb } from "lucide-react";
 
 type AnswerMap = Record<string, unknown>;
 type Mode = "reading" | "listening" | "writing" | "speaking";
@@ -369,7 +370,7 @@ function WritingPracticeUI({ test }: { test: any }) {
                 ))}
                 {assistantResult.suggestions.map((sug, i) => (
                   <div key={`sug-${i}`} className="text-xs mb-1 p-2 bg-white rounded border border-blue-100">
-                    <span className="font-bold text-blue-600 mr-1">💡</span> {sug.improvement}
+                    <Lightbulb size={14} className="inline text-blue-600 mr-1" /> {sug.improvement}
                   </div>
                 ))}
               </div>

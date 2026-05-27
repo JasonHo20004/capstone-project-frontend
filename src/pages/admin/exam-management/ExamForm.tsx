@@ -664,7 +664,7 @@ export default function ExamFormPage() {
                                 </Label>
                                 {section.audioTranscript && (
                                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                    ✓ Đã có
+                                    Đã có
                                   </span>
                                 )}
                               </div>

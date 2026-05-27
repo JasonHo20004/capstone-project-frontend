@@ -7,18 +7,20 @@ import { Link } from "react-router-dom";
 import apiClient from "@/lib/api/config";
 import SkillTreeFlow, { type SkillTreeNodeData, NODE_THEME } from "./components/SkillTreeFlow";
 import MiniQuizDialog from "./components/MiniQuizDialog";
+import { Globe, Pizza, Briefcase, Hospital, Laptop, BookOpen, Home, Leaf, Map, ArrowRight, BookMarked } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // ─── Topic Definitions ──────────────────────────────────────────────────────────
 
-const TOPICS = [
-  { id: "travel", label: "Travel", icon: "🌍", description: "Booking, directions, airports", color: "from-blue-500 to-cyan-500" },
-  { id: "food", label: "Food & Dining", icon: "🍕", description: "Ordering, cooking, nutrition", color: "from-orange-500 to-amber-500" },
-  { id: "business", label: "Business", icon: "💼", description: "Email, meetings, presentations", color: "from-slate-600 to-slate-800" },
-  { id: "health", label: "Health", icon: "🏥", description: "Doctor visits, symptoms, medicine", color: "from-emerald-500 to-green-600" },
-  { id: "technology", label: "Technology", icon: "💻", description: "Internet, software, AI", color: "from-violet-500 to-purple-600" },
-  { id: "education", label: "Education", icon: "📚", description: "School, lectures, exams", color: "from-indigo-500 to-blue-600" },
-  { id: "daily_life", label: "Daily Life", icon: "🏠", description: "Shopping, socializing, family", color: "from-pink-500 to-rose-500" },
-  { id: "environment", label: "Environment", icon: "🌿", description: "Pollution, conservation, recycling", color: "from-teal-500 to-emerald-600" },
+const TOPICS: Array<{ id: string; label: string; icon: LucideIcon; description: string; color: string }> = [
+  { id: "travel", label: "Travel", icon: Globe, description: "Booking, directions, airports", color: "from-blue-500 to-cyan-500" },
+  { id: "food", label: "Food & Dining", icon: Pizza, description: "Ordering, cooking, nutrition", color: "from-orange-500 to-amber-500" },
+  { id: "business", label: "Business", icon: Briefcase, description: "Email, meetings, presentations", color: "from-slate-600 to-slate-800" },
+  { id: "health", label: "Health", icon: Hospital, description: "Doctor visits, symptoms, medicine", color: "from-emerald-500 to-green-600" },
+  { id: "technology", label: "Technology", icon: Laptop, description: "Internet, software, AI", color: "from-violet-500 to-purple-600" },
+  { id: "education", label: "Education", icon: BookOpen, description: "School, lectures, exams", color: "from-indigo-500 to-blue-600" },
+  { id: "daily_life", label: "Daily Life", icon: Home, description: "Shopping, socializing, family", color: "from-pink-500 to-rose-500" },
+  { id: "environment", label: "Environment", icon: Leaf, description: "Pollution, conservation, recycling", color: "from-teal-500 to-emerald-600" },
 ];
 
 const LEVELS = [
@@ -166,7 +168,7 @@ export default function SkillTree() {
         <header className="bg-white/80 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white text-lg">
-              🗺️
+              <Map size={18} />
             </div>
             <h1 className="font-bold text-slate-800 text-lg">Learning Map</h1>
           </div>
@@ -193,7 +195,7 @@ export default function SkillTree() {
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90 group-hover:opacity-100 transition-opacity`} />
                 <div className="relative text-white">
-                  <span className="text-3xl mb-3 block">{topic.icon}</span>
+                  <topic.icon size={28} className="mb-3 text-white/90" />
                   <h3 className="font-bold text-base mb-1">{topic.label}</h3>
                   <p className="text-xs opacity-80 leading-relaxed">{topic.description}</p>
                 </div>
@@ -213,7 +215,7 @@ export default function SkillTree() {
         <header className="bg-white/80 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white text-lg">
-              🗺️
+              <Map size={18} />
             </div>
             <h1 className="font-bold text-slate-800 text-lg">Learning Map</h1>
           </div>
@@ -228,7 +230,7 @@ export default function SkillTree() {
         <div className="max-w-3xl mx-auto px-6 py-12">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full shadow-sm border border-slate-200 mb-4">
-              <span className="text-lg">{topicInfo?.icon}</span>
+              {topicInfo && <topicInfo.icon size={18} />}
               <span className="font-bold text-slate-700">{topicInfo?.label}</span>
             </div>
             <h2 className="text-3xl font-black text-slate-800 mb-3">Select Level</h2>
@@ -269,7 +271,8 @@ export default function SkillTree() {
                   AI is building your path...
                 </span>
               ) : (
-                "🚀 Start Learning"
+                <><ArrowRight size={16} className="mr-1.5" />Start Learning</>
+
               )}
             </button>
           </div>
@@ -290,7 +293,7 @@ export default function SkillTree() {
       <header className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 px-5 py-3 sticky top-0 z-30">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <span className="text-xl">{topicInfo?.icon}</span>
+            {topicInfo && <topicInfo.icon size={20} className="text-white" />}
             <div>
               <h1 className="font-bold text-white text-sm leading-tight">{topicInfo?.label}</h1>
               <span className="text-[10px] text-slate-400">Level {levelInfo?.label}</span>
@@ -387,7 +390,10 @@ export default function SkillTree() {
                     }, ${NODE_THEME[detailNode.data.type]?.bgDark || "#2563eb"})`,
                   }}
                 >
-                  {NODE_THEME[detailNode.data.type]?.icon || "📘"}
+                  {(() => {
+                    const IconComp = NODE_THEME[detailNode.data.type]?.icon || BookMarked;
+                    return <IconComp size={28} className="text-white" />;
+                  })()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-white text-lg leading-tight">

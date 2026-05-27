@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Check, PartyPopper } from "lucide-react";
 import { dictationService, type DictationExerciseDetail, type DictationSentence } from "@/lib/api/services/user/dictation/dictation.service";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -370,7 +371,7 @@ export default function DictationPractice() {
       {/* ─── Completion Celebration ─── */}
       {isComplete && (
         <div className="mb-5 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-8 text-center text-white shadow-xl shadow-teal-500/20 animate-fade-in">
-          <div className="text-5xl mb-3">🎉</div>
+          <div className="flex justify-center mb-3"><PartyPopper size={48} /></div>
           <h3 className="text-2xl font-black mb-1">Hoàn thành xuất sắc!</h3>
           <p className="text-teal-100 mb-6">Bạn đã hoàn thành cả {totalSentences} câu</p>
           <Link
@@ -591,7 +592,7 @@ export default function DictationPractice() {
                   </span>
                   {!showAnswer && attempts > 0 && (
                     <span className="text-xs text-emerald-500 ml-2">
-                      {attempts === 1 ? "Lần đầu! 🎉" : `${attempts} lần thử`}
+                      {attempts === 1 ? "Lần đầu!" : `${attempts} lần thử`}
                     </span>
                   )}
                 </div>
@@ -639,7 +640,7 @@ export default function DictationPractice() {
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
-                  {completedSet.has(i) ? "✓" : i + 1}
+                  {completedSet.has(i) ? <Check size={14} /> : i + 1}
                 </span>
                 <p
                   className={`text-sm leading-relaxed font-serif transition-all ${

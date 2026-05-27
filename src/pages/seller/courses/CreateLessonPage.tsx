@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, X, ArrowLeft, BookOpen, Film, FileText, Hash } from 'lucide-react';
+import { Upload, X, ArrowLeft, BookOpen, Film, FileText, Hash, Folder, Check } from 'lucide-react';
 import { useCreateLesson, useCourse, useModules } from '@/hooks/api';
 import { UploadProgress } from '@/components/seller/UploadProgress';
 
@@ -171,7 +171,7 @@ export default function CreateLessonPage() {
                 {course?.title}
                 {moduleName && (
                   <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-medium">
-                    📁 {moduleName}
+                    <Folder size={16} /> {moduleName}
                   </span>
                 )}
               </p>
@@ -258,7 +258,7 @@ export default function CreateLessonPage() {
 
               {formData.videoFile && formData.durationInSeconds && (
                 <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-xl text-sm">
-                  <span className="text-emerald-600 font-medium">✓ Thời lượng tự động:</span>
+                  <span className="text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={14} /> Thời lượng tự động:</span>
                   <span className="font-bold text-emerald-700">
                     {Math.floor(parseFloat(formData.durationInSeconds) / 60)} phút{' '}
                     {Math.round(parseFloat(formData.durationInSeconds) % 60)} giây

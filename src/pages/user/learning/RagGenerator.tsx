@@ -39,6 +39,10 @@ import {
   User,
   RotateCcw,
   Type,
+  XCircle,
+  Scissors,
+  Lightbulb,
+  Paperclip,
 } from "lucide-react";
 
 type InputMode = "file" | "text";
@@ -170,7 +174,7 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
       const msg = error?.response?.data?.detail || error.message || "Lỗi";
       setChatMessages(prev => [...prev, {
         role: "assistant",
-        content: `❌ ${msg}`,
+        content: `[Lỗi] ${msg}`,
       }]);
     },
   });
@@ -386,14 +390,14 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
                 </p>
                 <div className="space-y-2.5">
                   {[
-                    { step: "1", text: inputMode === "file" ? "Upload tài liệu PDF/TXT" : "Nhập văn bản trực tiếp", icon: inputMode === "file" ? "📄" : "✍️" },
-                    { step: "2", text: "Trích xuất & chia nhỏ nội dung", icon: "✂️" },
-                    { step: "3", text: "Embedding → Vector Store", icon: "🧬" },
-                    { step: "4", text: "LLM tạo Flashcard tự động", icon: "✨" },
-                    { step: "5", text: "Hỏi đáp → Retrieve → Generate", icon: "💬" },
+                    { step: "1", text: inputMode === "file" ? "Upload tài liệu PDF/TXT" : "Nhập văn bản trực tiếp", icon: <FileText size={16} /> },
+                    { step: "2", text: "Trích xuất & chia nhỏ nội dung", icon: <Scissors size={16} /> },
+                    { step: "3", text: "Embedding → Vector Store", icon: <Sparkles size={16} /> },
+                    { step: "4", text: "LLM tạo Flashcard tự động", icon: <Sparkles size={16} /> },
+                    { step: "5", text: "Hỏi đáp → Retrieve → Generate", icon: <MessageCircle size={16} /> },
                   ].map((item) => (
                     <div key={item.step} className="flex items-center gap-3">
-                      <span className="text-base">{item.icon}</span>
+                      <span className="text-slate-400 flex-shrink-0">{item.icon}</span>
                       <span className="text-sm text-slate-500">{item.text}</span>
                     </div>
                   ))}
@@ -449,8 +453,8 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
                         {card.back_content}
                       </p>
                       {card.example_sentence && (
-                        <p className="text-slate-400 text-xs italic border-t border-slate-100 pt-2 mt-2">
-                          💡 {card.example_sentence}
+                        <p className="text-slate-400 text-xs italic border-t border-slate-100 pt-2 mt-2 flex items-center gap-1">
+                          <Lightbulb size={16} /> {card.example_sentence}
                         </p>
                       )}
                     </CardContent>
@@ -493,7 +497,7 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
                               msg.role === "user" ? "text-white/70 hover:text-white" : "text-primary/70 hover:text-primary"
                             }`}
                             onClick={() => setShowChunks(showChunks === idx ? null : idx)}>
-                            {showChunks === idx ? "Ẩn nguồn" : `📎 Xem ${msg.chunks.length} nguồn tham chiếu`}
+                            {showChunks === idx ? "Ẩn nguồn" : <><Paperclip size={12} className="inline mr-1" />Xem {msg.chunks.length} nguồn tham chiếu</>}
                           </button>
                         )}
                         {showChunks === idx && msg.chunks && (

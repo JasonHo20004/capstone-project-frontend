@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { Lightbulb, BarChart2 } from 'lucide-react';
 import apiClient from "@/lib/api/config";
 import DiscussionSection from "@/components/DiscussionSection";
 import { assessmentService } from "@/lib/api/services/user/assessment/assessment.service";
@@ -195,7 +196,7 @@ export default function TestDetailPage() {
                   </div>
                 </div>
                 <div className="flex-1 text-center md:text-left">
-                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Hoàn thành bài thi! 🎉</h2>
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Hoàn thành bài thi!</h2>
                   <p className="text-sm text-slate-500 mb-4">{testTitle}</p>
                   <div className="flex flex-wrap items-center gap-6 justify-center md:justify-start">
                     <div>
@@ -257,7 +258,7 @@ export default function TestDetailPage() {
                           <td className="px-4 py-3 font-bold text-indigo-600">{d.questionOrder || i + 1}</td>
                           <td className="px-4 py-3 text-slate-700 max-w-xs">
                             <span className="line-clamp-2">{d.questionText || `Question ${i + 1}`}</span>
-                            {d.explanation && <p className="text-xs text-slate-400 mt-1 italic line-clamp-1">💡 {d.explanation}</p>}
+                            {d.explanation && <p className="text-xs text-slate-400 mt-1 italic line-clamp-1 flex items-center gap-1"><Lightbulb size={10} className="shrink-0" />{d.explanation}</p>}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
@@ -396,7 +397,7 @@ export default function TestDetailPage() {
           </Link>
           {isResultMode && (
             <Link to="/exam/history" className="px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold border-2 border-indigo-200 hover:bg-indigo-50 transition-colors">
-              📊 Lịch sử làm bài
+              <BarChart2 size={16} className="mr-1.5 inline-block" /> Lịch sử làm bài
             </Link>
           )}
         </div>

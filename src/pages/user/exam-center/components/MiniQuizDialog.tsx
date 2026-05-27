@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { useState } from "react";
+import { Pause, Volume2, Check, CheckCircle2, MousePointerClick, X, PartyPopper, FileText } from "lucide-react";
 import apiClient from "@/lib/api/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -88,7 +89,7 @@ function TTSPlayer({ text }: { text: string }) {
               : "bg-white text-indigo-600 border-2 border-indigo-300 hover:bg-indigo-100 hover:scale-105"
           }`}
         >
-          {playing ? "⏸" : "🔊"}
+          {playing ? <Pause size={20} /> : <Volume2 size={20} />}
         </button>
         <div>
           <p className="text-sm font-bold text-indigo-800">
@@ -193,7 +194,7 @@ function PairMatchQuestion({
                         : "border-slate-300 text-slate-400"
                     }`}
                   >
-                    {isMatched ? "✓" : String.fromCharCode(65 + idx)}
+                    {isMatched ? <Check size={12} /> : String.fromCharCode(65 + idx)}
                   </div>
                   <span className="leading-snug">{pair.left}</span>
                 </div>
@@ -228,9 +229,9 @@ function PairMatchQuestion({
 
       <p className="text-xs text-center text-slate-500">
         {matchCount === pairs.length
-          ? `✅ All ${pairs.length} pairs matched!`
+          ? <><CheckCircle2 size={12} className="inline mr-1" />All {pairs.length} pairs matched!</>
           : selectedLeft !== null
-          ? "👆 Now tap the matching item on the right"
+          ? <><MousePointerClick size={12} className="inline mr-1" />Now tap the matching item on the right</>
           : `${matchCount}/${pairs.length} matched — tap a term on the left to start`}
       </p>
     </div>
@@ -349,7 +350,7 @@ export default function MiniQuizDialog({
               onClick={handleClose}
               className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition-colors"
             >
-              ✕
+              <X size={14} />
             </button>
           </div>
 
@@ -383,8 +384,8 @@ export default function MiniQuizDialog({
           {/* Result state */}
           {result && (
             <div className="text-center py-8">
-              <div className={`text-6xl mb-4 ${result.score >= 70 ? "" : ""}`}>
-                {result.score >= 70 ? "🎉" : "💪"}
+              <div className={`flex justify-center mb-4 ${result.score >= 70 ? "text-emerald-500" : "text-amber-500"}`}>
+                {result.score >= 70 ? <PartyPopper size={56} /> : <FileText size={56} />}
               </div>
               <h3 className="text-2xl font-bold text-slate-800 mb-2">
                 {result.score >= 70 ? "Excellent!" : "Keep practicing!"}
@@ -400,7 +401,7 @@ export default function MiniQuizDialog({
 
               {result.wrongAnswers?.length > 0 && (
                 <div className="text-left bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                  <p className="font-bold text-amber-800 text-sm mb-2">📝 Areas to improve:</p>
+                  <p className="font-bold text-amber-800 text-sm mb-2 flex items-center gap-1"><FileText size={14} /> Areas to improve:</p>
                   {result.wrongAnswers.map((wa: any, i: number) => (
                     <div key={i} className="text-xs text-amber-700 mb-1.5 flex gap-2">
                       <span className="shrink-0 font-bold">#{i + 1}</span>

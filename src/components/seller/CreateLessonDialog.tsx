@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Check } from 'lucide-react';
 import { useCreateLesson } from '@/hooks/api';
 import { UploadProgress } from './UploadProgress';
 import type { Lesson } from "@/domain";
@@ -247,7 +247,7 @@ export default function CreateLessonDialog({
           {/* Duration - auto-detected */}
           {formData.videoFile && formData.durationInSeconds && (
             <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-lg text-sm">
-              <span className="text-emerald-600 font-medium">✓ Thời lượng tự động:</span>
+              <span className="text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={12} /> Thời lượng tự động:</span>
               <span className="font-bold text-emerald-700">
                 {Math.floor(parseFloat(formData.durationInSeconds) / 60)} phút{' '}
                 {Math.round(parseFloat(formData.durationInSeconds) % 60)} giây

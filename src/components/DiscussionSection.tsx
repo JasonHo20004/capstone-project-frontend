@@ -361,7 +361,7 @@ export default function DiscussionSection({
               <div className="flex-1">
                 <p className="text-[11px] text-slate-500 mb-1">
                   {"Trả lời "}<span className="font-semibold text-indigo-600">@{replyingTo.user?.fullName ?? 'Người dùng'}</span>
-                  <button className="ml-2 text-red-400 hover:text-red-500" onClick={() => setReplyingTo(null)}>✕</button>
+                  <button className="ml-2 text-red-400 hover:text-red-500 inline-flex items-center" onClick={() => setReplyingTo(null)}><X size={12} /></button>
                 </p>
                 <div className="flex gap-1.5">
                   <textarea
