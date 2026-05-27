@@ -19,6 +19,24 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <!-- Apply theme class BEFORE React mounts to avoid a light→dark flash on
+         first paint. Mirrors what next-themes will set after hydration. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('vibecoding-theme');
+          var theme = stored || 'system';
+          var isDark =
+            theme === 'dark' ||
+            (theme === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+        } catch (e) {
+          /* localStorage blocked — fall back to light */
+        }
+      })();
+    </script>
   </head>
 
   <body>

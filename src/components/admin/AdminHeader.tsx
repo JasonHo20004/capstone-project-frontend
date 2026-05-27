@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   useNotificationRealtime,
   useNotificationStats,
@@ -185,6 +186,7 @@ export default function AdminHeader({ onOpenSidebar }: AdminHeaderProps) {
           <Home className="mr-2 h-4 w-4" />
           Về trang chủ
         </Button>
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

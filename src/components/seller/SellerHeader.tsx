@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function SellerHeader() {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ export default function SellerHeader() {
           <Home className="mr-2 h-4 w-4" />
           Về trang chủ
         </Button>
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

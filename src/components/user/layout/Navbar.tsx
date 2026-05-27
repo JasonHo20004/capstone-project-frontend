@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/api/use-auth';
 import { useUser } from '@/hooks/api/use-user';
 import { NotificationDropdown } from './NotificationDropdown';
 import { CartDropdown } from './CartDropdown';
+import ThemeToggle from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
 const scrollToSection = (hash: string) => {
@@ -125,6 +126,7 @@ const Navbar = () => {
 
         {/* Desktop Actions */}
         <div className="hidden lg:flex items-center gap-1">
+          <ThemeToggle />
           {isLoggedIn ? (
             <>
               <NotificationDropdown userId={user?.id} />

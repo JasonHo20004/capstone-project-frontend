@@ -26,6 +26,7 @@ import { AIAdvisorBanner } from "./AIAdvisorBanner";
 import { useAIAdvisor } from "@/hooks/use-ai-advisor";
 import { useAIInsights } from "@/hooks/use-ai-insights";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { UpgradeToProButton } from "./UpgradeToProButton";
 import { ProAvatar, ProBadge } from "./ProAvatar";
@@ -187,6 +188,7 @@ export default function UserAppLayout() {
 
             <div className="flex items-center gap-2">
               {!isProUser && <UpgradeToProButton />}
+              <ThemeToggle />
               <NotificationDropdown userId={user?.id} />
               <CartDropdown />
               <div className="h-8 w-px bg-border/60 mx-1 hidden sm:block" />

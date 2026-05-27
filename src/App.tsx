@@ -234,6 +234,7 @@ const App = () => (
       </WalletProvider>
     </CartProvider>
   </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
