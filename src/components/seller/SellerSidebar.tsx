@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   BookOpen,
-  CreditCard,
+  FileText,
   Users,
   MessageSquare,
   User,
@@ -18,7 +18,7 @@ const sidebarItems = [
   { title: 'Khoá học của tôi', href: '/seller/courses', icon: BookOpen },
   { title: 'Bài kiểm tra', href: '/seller/tests', icon: ClipboardList },
   { title: 'Doanh thu', href: '/seller/earnings', icon: DollarSign },
-  { title: 'Phí hằng tháng', href: '/seller/fees', icon: CreditCard },
+  { title: 'Báo cáo tháng', href: '/seller/monthly-report', icon: FileText },
   { title: 'Người học', href: '/seller/learners', icon: Users },
   { title: 'Bình luận', href: '/seller/comments', icon: MessageSquare },
   { title: 'Hồ sơ', href: '/seller/profile', icon: User },

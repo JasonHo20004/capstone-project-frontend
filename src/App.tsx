@@ -209,7 +209,7 @@ const App = () => (
               <Route path="courses/:courseId/lessons/create" element={<CreateLessonPage />} />
               <Route path="courses/:courseId/lessons/:lessonId" element={<LessonDetailPage />} />
               <Route path="courses/:id" element={<SellerCourseDetail />} />
-              <Route path="fees" element={<SellerMonthlyFees />} />
+              <Route path="monthly-report" element={<SellerMonthlyFees />} />
               <Route path="earnings" element={<SellerEarnings />} />
               <Route path="tests" element={<SellerTests />} />
               <Route path="tests/new" element={<CreateTestPage />} />

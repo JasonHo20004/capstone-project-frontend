@@ -3,7 +3,6 @@ import {
   Settings as SettingsIcon,
   Percent,
   Landmark,
-  Wallet,
   BookOpen,
   Bell,
   Ticket,
@@ -28,7 +27,7 @@ import CommissionManagement from '@/pages/admin/revenue-management/CommissionMan
 const WITHDRAWAL_MIN_FALLBACK = 50_000;
 const WITHDRAWAL_MAX_FALLBACK = 50_000_000;
 
-const TAB_KEYS = ['overview', 'commission', 'withdrawal', 'seller-fees', 'courses', 'coupons', 'notifications'] as const;
+const TAB_KEYS = ['overview', 'commission', 'withdrawal', 'courses', 'coupons', 'notifications'] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 function isTabKey(value: string | null): value is TabKey {
@@ -75,9 +74,6 @@ export default function SettingsPage() {
           <TabsTrigger value="withdrawal" className="gap-1.5">
             <Landmark className="h-4 w-4" /> Rút tiền
           </TabsTrigger>
-          <TabsTrigger value="seller-fees" className="gap-1.5">
-            <Wallet className="h-4 w-4" /> Phí giảng viên
-          </TabsTrigger>
           <TabsTrigger value="courses" className="gap-1.5">
             <BookOpen className="h-4 w-4" /> Khóa học
           </TabsTrigger>
@@ -106,14 +102,6 @@ export default function SettingsPage() {
               value={`${formatVND(WITHDRAWAL_MIN_FALLBACK)} – ${formatVND(WITHDRAWAL_MAX_FALLBACK)}`}
               caption="Mỗi yêu cầu"
               onOpen={() => handleTabChange('withdrawal')}
-            />
-            <SettingCard
-              title="Phí hằng tháng giảng viên"
-              description="Quản lý phí duy trì subscription của seller."
-              icon={Wallet}
-              value="Theo gói đăng ký"
-              caption="Mỗi tháng"
-              onOpen={() => handleTabChange('seller-fees')}
             />
             <SettingCard
               title="Khóa học"
@@ -181,42 +169,6 @@ export default function SettingsPage() {
                   Xem yêu cầu rút tiền đang chờ
                 </Link>
               </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="seller-fees" className="space-y-4 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-primary" />
-                Phí hằng tháng giảng viên
-              </CardTitle>
-              <CardDescription>
-                Subscription mà mỗi seller phải đóng để duy trì trạng thái giảng viên. Cấu hình
-                từng gói được quản lý ở mục Gói người dùng.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-                Mỗi seller có thể xem hóa đơn hằng tháng và lịch sử thanh toán tại trang
-                <code className="mx-1 rounded bg-muted px-1.5 py-0.5">/seller/fees</code>.
-                Admin tạo / chỉnh sửa các gói (giá, kỳ hạn, ưu đãi) ở mục bên dưới.
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild>
-                  <Link to="/admin/user-plans">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Quản lý gói người dùng
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link to="/admin/transactions?type=seller_fee">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Lịch sử giao dịch phí
-                  </Link>
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
