@@ -110,7 +110,7 @@ export const useAddToCart = () => {
 export const useCheckoutFullCart = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => cartService.checkoutFullCart(),
+    mutationFn: (couponCode?: string) => cartService.checkoutFullCart(couponCode),
     onSuccess: () => {
       toast.success('Thanh toán thành công!');
       queryClient.invalidateQueries({ queryKey: cartKeys.userCart });
@@ -124,7 +124,8 @@ export const useCheckoutFullCart = () => {
 export const useCheckoutPartial = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (cartItemIds: string[]) => cartService.checkoutPartial(cartItemIds),
+    mutationFn: (vars: { cartItemIds: string[]; couponCode?: string }) =>
+      cartService.checkoutPartial(vars.cartItemIds, vars.couponCode),
     onSuccess: () => {
       toast.success('Thanh toán thành công!');
       queryClient.invalidateQueries({ queryKey: cartKeys.userCart });

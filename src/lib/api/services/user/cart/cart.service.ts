@@ -26,15 +26,22 @@ class CartService {
   }
 
   // POST /cart/checkout/full-cart
-  public async checkoutFullCart(): Promise<ApiResponse<CheckoutResponse>> {
-    const response = await apiClient.post<ApiResponse<CheckoutResponse>>('/carts/checkout/full-cart');
+  public async checkoutFullCart(couponCode?: string): Promise<ApiResponse<CheckoutResponse>> {
+    const response = await apiClient.post<ApiResponse<CheckoutResponse>>(
+      '/carts/checkout/full-cart',
+      couponCode ? { couponCode } : {}
+    );
     return response.data;
   }
 
   // POST /cart/checkout/partial
-  public async checkoutPartial(cartItemIds: string[]): Promise<ApiResponse<CheckoutResponse>> {
+  public async checkoutPartial(
+    cartItemIds: string[],
+    couponCode?: string
+  ): Promise<ApiResponse<CheckoutResponse>> {
     const response = await apiClient.post<ApiResponse<CheckoutResponse>>('/carts/checkout/partial', {
       cartItemIds,
+      ...(couponCode ? { couponCode } : {}),
     });
     return response.data;
   }

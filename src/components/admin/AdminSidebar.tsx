@@ -18,6 +18,8 @@ import {
   Shield,
   FileText,
   Receipt,
+  Settings,
+  Ticket,
 } from 'lucide-react';
 import {
   applicationManagementService,
@@ -50,6 +52,8 @@ const sidebarItems: {
   { title: 'Thông báo hệ thống', href: '/admin/notifications', icon: Bell },
   { title: 'Quản lý Tag', href: '/admin/tags', icon: Tag },
   { title: 'Gói người dùng', href: '/admin/user-plans', icon: Crown },
+  { title: 'Mã giảm giá', href: '/admin/coupons', icon: Ticket },
+  { title: 'Cài đặt hệ thống', href: '/admin/settings', icon: Settings },
 ];
 
 interface AdminSidebarProps {

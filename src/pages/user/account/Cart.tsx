@@ -4,9 +4,12 @@ import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { formatVND } from '@/lib/utils';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
-import { Trash2, Loader2, ShoppingCart } from 'lucide-react';
+import { Trash2, Loader2, ShoppingCart, Ticket, X } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useGetUserCart,
   useCheckoutFullCart,
@@ -14,6 +17,10 @@ import {
   useRemoveCartItem,
   useClearCart,
 } from '@/hooks/api/use-cart';
+import {
+  couponService,
+  type ValidateCouponResult,
+} from '@/lib/api/services/admin/coupon-management/coupon.service';
 
 const CartPage = () => {
   // 1. Fetch Cart Data
@@ -56,28 +63,82 @@ const CartPage = () => {
   // Payment Dialog State
   const [payOpen, setPayOpen] = useState(false);
 
+  // ── Coupon state ──────────────────────────────────────────────────────
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState<ValidateCouponResult | null>(null);
+  const [validating, setValidating] = useState(false);
+
+  // Reset coupon if the selected subtotal changes — server may now reject it
+  // (minOrderAmount unmet) and we don't want to send a stale discount.
+  const couponMatchesSubtotal = coupon && coupon.subtotal === selectedTotal;
+  const appliedDiscount = couponMatchesSubtotal ? coupon!.discount : 0;
+  const finalTotal = Math.max(0, selectedTotal - appliedDiscount);
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) {
+      toast.error('Vui lòng nhập mã giảm giá');
+      return;
+    }
+    if (selectedIds.length === 0) {
+      toast.error('Hãy chọn khóa học trước khi áp mã');
+      return;
+    }
+    setValidating(true);
+    try {
+      const res = await couponService.validate(code);
+      if (res.data) {
+        // Server returns discount based on FULL cart subtotal. If user only
+        // selected part of it, recompute against the selection: only honor the
+        // coupon when minOrderAmount still holds for the selected total.
+        if (res.data.subtotal !== selectedTotal) {
+          toast.error('Mã chỉ áp dụng cho toàn bộ giỏ hàng. Hãy chọn tất cả để dùng mã.');
+        } else {
+          setCoupon(res.data);
+          toast.success(`Đã áp dụng mã ${res.data.code}`);
+        }
+      }
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        (err instanceof Error ? err.message : 'Không thể áp dụng mã');
+      toast.error(msg);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCoupon(null);
+    setCouponInput('');
+  };
+
   const handleCheckoutClick = () => {
     if (selectedIds.length === 0) return;
     setPayOpen(true);
   };
 
   const handleConfirmPayment = () => {
+    const couponCode = couponMatchesSubtotal ? coupon!.code : undefined;
     if (allSelected) {
-      // Case 1: Full Checkout
-      checkoutFullMutation.mutate(undefined, {
+      checkoutFullMutation.mutate(couponCode, {
         onSuccess: () => {
           setPayOpen(false);
           setSelectedIds([]);
+          handleRemoveCoupon();
         },
       });
     } else {
-      // Case 2: Partial Checkout
-      checkoutPartialMutation.mutate(selectedIds, {
-        onSuccess: () => {
-          setPayOpen(false);
-          setSelectedIds([]);
-        },
-      });
+      checkoutPartialMutation.mutate(
+        { cartItemIds: selectedIds, couponCode },
+        {
+          onSuccess: () => {
+            setPayOpen(false);
+            setSelectedIds([]);
+            handleRemoveCoupon();
+          },
+        }
+      );
     }
   };
 
@@ -189,11 +250,82 @@ const CartPage = () => {
 
             <Card className="p-6 space-y-4 h-fit sticky top-24">
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Đã chọn ({selectedItems.length})</span>
-                  <span className="text-xl font-semibold text-primary">{formatVND(selectedTotal)}</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Tạm tính ({selectedItems.length})</span>
+                  <span className="font-medium">{formatVND(selectedTotal)}</span>
+                </div>
+                {appliedDiscount > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-emerald-600 flex items-center gap-1">
+                      <Ticket className="h-3.5 w-3.5" /> Giảm giá
+                    </span>
+                    <span className="font-medium text-emerald-600">
+                      -{formatVND(appliedDiscount)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t pt-2">
+                  <span className="text-slate-500">Tổng thanh toán</span>
+                  <span className="text-xl font-semibold text-primary">
+                    {formatVND(finalTotal)}
+                  </span>
                 </div>
               </div>
+
+              {/* Coupon input */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                  <Ticket className="h-3.5 w-3.5" /> Mã giảm giá
+                </label>
+                {coupon && couponMatchesSubtotal ? (
+                  <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-50 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="border-emerald-500/40 bg-white">
+                        {coupon.code}
+                      </Badge>
+                      <span className="text-xs text-emerald-700">
+                        {coupon.discountType === 'PERCENT'
+                          ? `-${coupon.discountValue}%`
+                          : `-${formatVND(coupon.discountValue)}`}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleRemoveCoupon}
+                      className="h-7 w-7 p-0"
+                      title="Bỏ mã"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="VD: WELCOME10"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      className="font-mono uppercase"
+                      disabled={validating || selectedIds.length === 0}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleApplyCoupon}
+                      disabled={validating || selectedIds.length === 0}
+                    >
+                      {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Áp dụng'}
+                    </Button>
+                  </div>
+                )}
+                {!coupon && selectedIds.length === 0 && (
+                  <p className="text-[11px] text-slate-400">
+                    Hãy chọn khóa học trước khi áp mã.
+                  </p>
+                )}
+              </div>
+
               <div className="flex flex-col gap-2">
                 <Button
                   className="w-full bg-primary shadow-lg shadow-primary/20"
@@ -203,7 +335,6 @@ const CartPage = () => {
                   {isProcessing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Thanh toán
                 </Button>
-                {/* Optional: Add Clear Cart button if you have the API */}
               </div>
             </Card>
           </div>
@@ -213,14 +344,15 @@ const CartPage = () => {
       <PaymentDialog
         open={payOpen}
         onOpenChange={setPayOpen}
-        amount={selectedTotal}
+        amount={finalTotal}
         title="Xác nhận thanh toán"
-        // Map cart items to the format PaymentDialog expects
-        items={selectedItems.map((i) => ({ 
-            title: i.course.title, 
-            price: i.priceAtTime 
-        }))}
-        confirmLabel={isProcessing ? "Đang xử lý..." : "Xác nhận"}
+        items={[
+          ...selectedItems.map((i) => ({ title: i.course.title, price: i.priceAtTime })),
+          ...(appliedDiscount > 0
+            ? [{ title: `Mã giảm giá ${coupon?.code ?? ''}`, price: -appliedDiscount }]
+            : []),
+        ]}
+        confirmLabel={isProcessing ? 'Đang xử lý...' : 'Xác nhận'}
         onConfirm={handleConfirmPayment}
       />
     </div>

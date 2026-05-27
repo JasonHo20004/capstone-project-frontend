@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,9 +30,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { Course, CourseWithStats } from "@/domain";
 import { CourseStatus } from "@/domain";
-import { courseManagementService } from '@/lib/api/services/admin';
+import { courseManagementService, auditLogService } from '@/lib/api/services/admin';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import { useCourses } from '@/hooks/api';
@@ -102,6 +110,54 @@ export default function CoursesManagement() {
       toast.error('Thao tác thất bại');
     },
   });
+
+  // Bulk selection — mirrors ApplicationsManagement pattern.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const pendingSelectedCourses = useMemo(() => {
+    const idSet = new Set(selectedIds);
+    return courses.filter((c) => idSet.has(c.id) && c.status === CourseStatus.PENDING);
+  }, [courses, selectedIds]);
+
+  const runBulkApprove = async () => {
+    if (pendingSelectedCourses.length === 0) {
+      toast.error('Không có khóa học PENDING nào trong lựa chọn');
+      return;
+    }
+    setBulkProgress({ done: 0, total: pendingSelectedCourses.length });
+    let success = 0;
+    let failed = 0;
+    for (const [i, course] of pendingSelectedCourses.entries()) {
+      try {
+        await courseManagementService.updateCourse(course.id, {
+          status: CourseStatus.ACTIVE,
+        });
+        auditLogService
+          .record({
+            action: 'COURSE_APPROVE',
+            entityType: 'COURSE',
+            entityId: course.id,
+            reason: 'Bulk approval',
+            metadata: { bulk: true, title: course.title },
+          })
+          .catch((err) => console.error('[Audit] bulk course approve log failed:', err));
+        success++;
+      } catch {
+        failed++;
+      }
+      setBulkProgress({ done: i + 1, total: pendingSelectedCourses.length });
+    }
+    queryClient.invalidateQueries({ queryKey: ['adminCourses'] });
+    refetch();
+    setBulkProgress(null);
+    setBulkConfirmOpen(false);
+    setSelectedIds([]);
+    toast.success(
+      `Hoàn tất: ${success} duyệt thành công${failed > 0 ? `, ${failed} thất bại` : ''}`
+    );
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -294,7 +350,83 @@ export default function CoursesManagement() {
         data={filteredCourses}
         columns={columns}
         emptyMessage="Không tìm thấy khóa học nào"
+        selectable
+        getRowId={(course) => course.id}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={() => {
+          const pendingCount = pendingSelectedCourses.length;
+          return (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+              disabled={pendingCount === 0}
+              onClick={() => setBulkConfirmOpen(true)}
+              title={pendingCount === 0 ? 'Không có khóa học PENDING trong lựa chọn' : undefined}
+            >
+              <Check className="mr-1 h-4 w-4" /> Duyệt {pendingCount} khóa học chờ
+            </Button>
+          );
+        }}
       />
+
+      {/* Bulk approve confirmation */}
+      <Dialog
+        open={bulkConfirmOpen}
+        onOpenChange={(open) => !open && !bulkProgress && setBulkConfirmOpen(false)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duyệt {pendingSelectedCourses.length} khóa học?</DialogTitle>
+            <DialogDescription>
+              Các khóa học PENDING được chọn sẽ chuyển sang trạng thái ACTIVE và hiển thị công khai
+              cho học viên mua ngay. Khóa học không ở trạng thái PENDING sẽ được bỏ qua.
+            </DialogDescription>
+          </DialogHeader>
+          {pendingSelectedCourses.length > 0 && (
+            <div className="max-h-40 overflow-y-auto rounded-md border bg-muted/30 p-2 text-sm">
+              {pendingSelectedCourses.slice(0, 10).map((c) => (
+                <div key={c.id} className="truncate py-0.5">• {c.title}</div>
+              ))}
+              {pendingSelectedCourses.length > 10 && (
+                <div className="text-xs text-muted-foreground pt-1">
+                  ... và {pendingSelectedCourses.length - 10} khóa khác
+                </div>
+              )}
+            </div>
+          )}
+          {bulkProgress && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Đang xử lý...</span>
+                <span>{bulkProgress.done}/{bulkProgress.total}</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBulkConfirmOpen(false)}
+              disabled={!!bulkProgress}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={runBulkApprove}
+              disabled={!!bulkProgress || pendingSelectedCourses.length === 0}
+            >
+              {bulkProgress ? 'Đang xử lý...' : 'Xác nhận duyệt'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!approveTarget} onOpenChange={(open) => !open && setApproveTarget(null)}>
         <AlertDialogContent>

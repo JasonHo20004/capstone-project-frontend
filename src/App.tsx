@@ -67,6 +67,8 @@ import DictationManagement from "./pages/admin/exam-management/DictationManageme
 import UserPlansManagement from "./pages/admin/management/UserPlansManagement";
 import CommissionManagement from "./pages/admin/revenue-management/CommissionManagement";
 import WithdrawalManagement from "./pages/admin/revenue-management/WithdrawalManagement";
+import SettingsPage from "./pages/admin/settings/SettingsPage";
+import AdminCoupons from "./pages/admin/coupon-management/CouponsManagement";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -186,6 +188,8 @@ const App = () => (
             <Route path="user-plans" element={<UserPlansManagement />} />
             <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="refunds" element={<AdminRefunds />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="coupons" element={<AdminCoupons />} />
           </Route>
 
           {/* Seller Routes */}

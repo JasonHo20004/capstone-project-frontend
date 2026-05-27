@@ -30,11 +30,16 @@ import {
   UserCog
 } from 'lucide-react';
 import { notificationService } from '@/lib/api/services';
+import type {
+  CampaignPayload,
+  CampaignSegment,
+} from '@/lib/api/services/notification.service';
 import type { InAppNotification, NotificationType, User } from "@/domain";
 import StatCard from '@/components/admin/StatCard';
 import FilterSection from '@/components/admin/FilterSection';
 import DataTable from '@/components/admin/DataTable';
 import { useUser } from '@/hooks/api/use-user';
+import { toast } from 'sonner';
 
 export default function NotificationsManagement() {
   const { user: adminUser } = useUser();
@@ -150,53 +155,77 @@ export default function NotificationsManagement() {
     return typeLabels[typeName] || typeName;
   };
 
-  const handleCreateNotification = () => {
-    // Calculate final recipient list based on selection type
-    let finalUserIds: string[] = [];
-    
-    if (newNotification.recipientType === 'role') {
-      // Get users by selected roles
-      if (newNotification.selectedRoles.includes('all')) {
-        finalUserIds = users.map(user => user.id);
-      } else {
-        // Support multiple role selection
-        const selectedUsers = new Set<string>();
-        
-        newNotification.selectedRoles.forEach(role => {
-          users.forEach(user => {
-            if (role === 'student' && (!user.role || (user.role !== 'COURSESELLER' && user.role !== 'ADMINISTRATOR'))) {
-              selectedUsers.add(user.id);
-            } else if (role === 'courseseller' && user.role === 'COURSESELLER') {
-              selectedUsers.add(user.id);
-            } else if (role === 'administrator' && user.role === 'ADMINISTRATOR') {
-              selectedUsers.add(user.id);
-            }
-          });
-        });
-        
-        finalUserIds = Array.from(selectedUsers);
-      }
-    } else {
-      // Use individually selected users
-      finalUserIds = newNotification.selectedUserIds;
-    }
+  const [sendingCampaign, setSendingCampaign] = useState(false);
 
-    // In a real app, this would make an API call
-    console.log('Creating notification:', {
-      ...newNotification,
-      userIds: finalUserIds,
-      recipientCount: finalUserIds.length
-    });
-    
-    setIsCreateDialogOpen(false);
-    setNewNotification({ 
-      title: '', 
-      content: '', 
-      notificationTypeId: '',
-      recipientType: 'role',
-      selectedRoles: [],
-      selectedUserIds: []
-    });
+  /** Translate the legacy UI role labels into the server's segment vocab. */
+  const buildSegment = (): CampaignSegment | null => {
+    if (newNotification.recipientType === 'individual') {
+      if (newNotification.selectedUserIds.length === 0) return null;
+      return { kind: 'user-ids', userIds: newNotification.selectedUserIds };
+    }
+    if (newNotification.selectedRoles.length === 0) return null;
+    if (newNotification.selectedRoles.includes('all')) {
+      return { kind: 'all' };
+    }
+    const roleMap: Record<string, string> = {
+      student: 'STUDENT',
+      courseseller: 'COURSESELLER',
+      administrator: 'ADMINISTRATOR',
+    };
+    const roles = newNotification.selectedRoles
+      .map((r) => roleMap[r])
+      .filter((r): r is string => Boolean(r));
+    if (roles.length === 0) return null;
+    return { kind: 'role', roles };
+  };
+
+  const handleCreateNotification = async () => {
+    const segment = buildSegment();
+    if (!segment) {
+      toast.error('Vui lòng chọn người nhận');
+      return;
+    }
+    if (!newNotification.title.trim() || !newNotification.content.trim()) {
+      toast.error('Vui lòng nhập tiêu đề và nội dung');
+      return;
+    }
+    const payload: CampaignPayload = {
+      title: newNotification.title.trim(),
+      content: newNotification.content.trim(),
+      // The dialog uses "notificationTypeId" as a free-form type label.
+      // Server stores this string on every recipient row.
+      type: newNotification.notificationTypeId || 'ADMIN_BROADCAST',
+      segment,
+    };
+
+    setSendingCampaign(true);
+    try {
+      const res = await notificationService.runCampaign(payload);
+      const created = res.data?.createdCount ?? 0;
+      if (created === 0) {
+        toast.warning('Không có người nhận phù hợp với phân khúc đã chọn');
+      } else {
+        toast.success(`Đã gửi thông báo đến ${created} người dùng`);
+      }
+      setIsCreateDialogOpen(false);
+      setNewNotification({
+        title: '',
+        content: '',
+        notificationTypeId: '',
+        recipientType: 'role',
+        selectedRoles: [],
+        selectedUserIds: [],
+      });
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data
+          ?.error ??
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        (err instanceof Error ? err.message : 'Gửi thông báo thất bại');
+      toast.error(msg);
+    } finally {
+      setSendingCampaign(false);
+    }
   };
 
   const columns = [
@@ -575,18 +604,18 @@ export default function NotificationsManagement() {
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Hủy
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateNotification}
                 disabled={
-                  !newNotification.title || 
-                  !newNotification.content || 
-                  !newNotification.notificationTypeId ||
+                  sendingCampaign ||
+                  !newNotification.title ||
+                  !newNotification.content ||
                   (newNotification.recipientType === 'role' && newNotification.selectedRoles.length === 0) ||
                   (newNotification.recipientType === 'individual' && newNotification.selectedUserIds.length === 0)
                 }
               >
                 <Send className="mr-2 h-4 w-4" />
-                Tạo và gửi
+                {sendingCampaign ? 'Đang gửi...' : 'Tạo và gửi'}
               </Button>
             </div>
           </div>

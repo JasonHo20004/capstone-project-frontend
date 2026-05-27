@@ -114,6 +114,44 @@ export class NotificationService {
     );
     return response.data;
   }
+
+  // ── Admin campaign endpoints ───────────────────────────────────────────
+  async runCampaign(payload: CampaignPayload): Promise<ApiResponse<CampaignResult>> {
+    const response = await apiClient.post<ApiResponse<CampaignResult>>(
+      "/notifications/admin/campaign",
+      payload
+    );
+    return response.data;
+  }
+
+  async previewCampaign(
+    segment: CampaignSegment
+  ): Promise<ApiResponse<{ recipientCount: number }>> {
+    const response = await apiClient.post<ApiResponse<{ recipientCount: number }>>(
+      "/notifications/admin/campaign/preview",
+      { segment }
+    );
+    return response.data;
+  }
+}
+
+export type CampaignSegment =
+  | { kind: "all" }
+  | { kind: "role"; roles: string[] }
+  | { kind: "user-ids"; userIds: string[] };
+
+export interface CampaignPayload {
+  title: string;
+  content: string;
+  type: string;
+  metadata?: Record<string, unknown>;
+  segment: CampaignSegment;
+}
+
+export interface CampaignResult {
+  recipientCount: number;
+  createdCount: number;
+  segmentKind: CampaignSegment["kind"];
 }
 
 export const notificationService = new NotificationService();
