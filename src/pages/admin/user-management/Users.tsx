@@ -245,7 +245,13 @@ export default function UsersManagement() {
     totalWalletBalance: hasBackendWallet
       ? (backendTotalWallet as number)
       : users.reduce(
-          (sum, u) => sum + Number((u as { walletBalance?: number }).walletBalance ?? 0),
+          (sum, u) =>
+            sum +
+            Number(
+              u.wallet?.allowance ??
+                (u as { walletBalance?: number }).walletBalance ??
+                0
+            ),
           0
         ),
     hasBackendTotal,

@@ -199,7 +199,13 @@ export default function CoursesManagement() {
       header: "Khóa học",
       render: (course: Course) => (
         <div>
-          <div className="font-medium">{course.title}</div>
+          <button
+            type="button"
+            onClick={() => navigate(`/admin/courses/${course.id}`)}
+            className="font-medium text-left hover:text-primary hover:underline focus:outline-none focus-visible:underline"
+          >
+            {course.title}
+          </button>
           <div className="text-sm text-muted-foreground">
             Giảng viên: {course.sellerName || course.courseSeller?.fullName || 'Chưa xác định'}
           </div>

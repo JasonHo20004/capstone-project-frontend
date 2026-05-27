@@ -116,12 +116,13 @@ export default function AdminDashboard() {
   const topCourses = dashboardData?.data?.topCourses ?? [];
   const userBreakdown = dashboardData?.data?.userBreakdown ?? { students: 0, sellers: 0, admins: 0 };
 
-  const courseStatusData = (dashboardData?.data?.courseStatusData || []).map(
-    (item) => ({
-      ...item,
-      name: getCourseStatusLabel(item.name),
-    })
-  );
+  const rawCourseStatusData = dashboardData?.data?.courseStatusData || [];
+  const draftCourses =
+    rawCourseStatusData.find((s) => s.name.toUpperCase() === "DRAFT")?.value ?? 0;
+  const courseStatusData = rawCourseStatusData.map((item) => ({
+    ...item,
+    name: getCourseStatusLabel(item.name),
+  }));
 
   if (isLoading) {
     return (
@@ -213,12 +214,15 @@ export default function AdminDashboard() {
                 <TrendBadge value={stats.monthlyGrowth.users} />
               )}
             </div>
-            <div className="flex gap-3 mt-auto pt-3 text-xs text-muted-foreground">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-auto pt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <GraduationCap className="h-3 w-3" /> {userBreakdown.students || 0} Học viên
               </span>
               <span className="flex items-center gap-1">
                 <BookOpen className="h-3 w-3" /> {userBreakdown.sellers || 0} Giảng viên
+              </span>
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" /> {userBreakdown.admins || 0} Quản trị
               </span>
             </div>
           </CardContent>
@@ -245,8 +249,8 @@ export default function AdminDashboard() {
               )}
             </div>
             <div className="flex gap-3 mt-auto pt-3 text-xs text-muted-foreground">
-              <span className="text-emerald-600 font-medium">{stats?.activeCourses ?? 0} Active</span>
-              <span className="text-amber-600 font-medium">{stats?.pendingCourses ?? 0} Pending</span>
+              <span className="text-emerald-600 font-medium">{stats?.activeCourses ?? 0} Hoạt động</span>
+              <span className="text-amber-600 font-medium">{draftCourses} Nháp</span>
             </div>
           </CardContent>
         </Card>

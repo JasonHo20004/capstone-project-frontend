@@ -440,7 +440,7 @@ export default function ApplicationsManagement() {
 
       {/* Application Detail Dialog */}
       <Dialog open={!!selectedApplication && !reviewDialogOpen} onOpenChange={() => setSelectedApplication(null)}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết đơn đăng ký</DialogTitle>
             <DialogDescription>
@@ -455,7 +455,7 @@ export default function ApplicationsManagement() {
                   <User className="mr-2 h-5 w-5" />
                   Thông tin cá nhân
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Họ và tên</label>
                     <p className="text-sm text-muted-foreground">{selectedApplication.user?.fullName ?? '—'}</p>
@@ -534,7 +534,7 @@ export default function ApplicationsManagement() {
               {/* Application Details */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Thông tin đơn đăng ký</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Ngày nộp đơn</label>
                     <p className="text-sm text-muted-foreground">
