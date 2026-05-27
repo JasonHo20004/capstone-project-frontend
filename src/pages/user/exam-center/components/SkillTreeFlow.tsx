@@ -57,20 +57,17 @@ export const NODE_THEME: Record<string, {
   practice: { bg: "#a78bfa", bgDark: "#7c3aed", border: "#c4b5fd", glow: "rgba(167,139,250,0.4)", icon: Pencil, ring: "#c4b5fd" },
 };
 
-// ─── Tree-Based Layout ──────────────────────────────────────────────────────────
-// Main path stays centered; remedial branches expand horizontally left/right.
+// ─── BFS-Based Layout ───────────────────────────────────────────────────────────
+// Every node gets a unique (x, y). Depth is the shortest path from a root via
+// BFS; each depth is packed horizontally with strict H_GAP enforcement, then
+// shifted so children sit roughly under the average of their incoming parents.
 
-// H_GAP: horizontal distance between adjacent leaf-node centres
-const H_GAP = 180;
-const ROW_HEIGHT = 160;
+// H_GAP: horizontal distance between adjacent node centres
+const H_GAP = 240;
+const ROW_HEIGHT = 230;
 const START_Y = 80;
-const EDGE_PAD = 80;
+const EDGE_PAD = 120;
 
-/**
- * Recursive subtree-width layout (Reingold-Tilford style).
- * Every node is centred over its subtree, so siblings always get
- * distinct x coordinates regardless of node type.
- */
 function computeTreeLayout(
   nodes: Array<{ id: string; type: string }>,
   edges: Array<{ source: string; target: string }>
@@ -78,54 +75,109 @@ function computeTreeLayout(
   const posMap = new Map<string, { x: number; y: number }>();
   if (nodes.length === 0) return posMap;
 
-  const childrenOf = new Map<string, string[]>();
-  const parentOf = new Map<string, string>();
-  nodes.forEach((n) => childrenOf.set(n.id, []));
+  // Build adjacency filtered to known node ids; skip self-loops & dangling edges
+  const nodeIds = new Set(nodes.map((n) => n.id));
+  const outEdges = new Map<string, string[]>();
+  const inEdges = new Map<string, string[]>();
+  nodes.forEach((n) => {
+    outEdges.set(n.id, []);
+    inEdges.set(n.id, []);
+  });
   edges.forEach((e) => {
-    childrenOf.get(e.source)?.push(e.target);
-    parentOf.set(e.target, e.source);
+    if (e.source === e.target) return;
+    if (!nodeIds.has(e.source) || !nodeIds.has(e.target)) return;
+    outEdges.get(e.source)!.push(e.target);
+    inEdges.get(e.target)!.push(e.source);
   });
 
-  const root = nodes.find((n) => !parentOf.has(n.id)) ?? nodes[0];
+  // BFS depth from nodes with no incoming edges (true roots).
+  // Falls back to the first node when the graph is one big cycle.
+  const roots = nodes.filter((n) => (inEdges.get(n.id) ?? []).length === 0);
+  const startSeeds = roots.length > 0 ? roots.map((n) => n.id) : [nodes[0].id];
 
-  // Memoised leaf-count for each subtree
-  const widthOf = new Map<string, number>();
-  function subtreeWidth(id: string): number {
-    if (widthOf.has(id)) return widthOf.get(id)!;
-    const children = childrenOf.get(id) ?? [];
-    const w = children.length === 0 ? 1 : children.reduce((s, c) => s + subtreeWidth(c), 0);
-    widthOf.set(id, w);
-    return w;
-  }
-
-  // Each node is centred over its full subtree span
-  const placed = new Set<string>();
-  function place(id: string, depth: number, centerX: number) {
-    if (placed.has(id)) return;
-    placed.add(id);
-    posMap.set(id, { x: centerX, y: START_Y + depth * ROW_HEIGHT });
-    const children = childrenOf.get(id) ?? [];
-    if (children.length === 0) return;
-    const total = children.reduce((s, c) => s + subtreeWidth(c), 0);
-    let left = centerX - (total * H_GAP) / 2;
-    for (const cid of children) {
-      const w = subtreeWidth(cid);
-      place(cid, depth + 1, left + (w * H_GAP) / 2);
-      left += w * H_GAP;
+  const depthOf = new Map<string, number>();
+  const queue: Array<{ id: string; depth: number }> = startSeeds.map((id) => ({ id, depth: 0 }));
+  while (queue.length > 0) {
+    const { id, depth } = queue.shift()!;
+    const prev = depthOf.get(id);
+    if (prev !== undefined && prev <= depth) continue;
+    depthOf.set(id, depth);
+    for (const child of outEdges.get(id) ?? []) {
+      queue.push({ id: child, depth: depth + 1 });
     }
   }
 
-  place(root.id, 0, 0);
-
-  // Fallback for nodes not reachable from root
-  nodes.forEach((n, i) => {
-    if (!posMap.has(n.id)) posMap.set(n.id, { x: 0, y: START_Y + i * ROW_HEIGHT });
+  // Any unreached nodes go below the deepest known depth
+  let maxDepth = 0;
+  depthOf.forEach((d) => {
+    if (d > maxDepth) maxDepth = d;
+  });
+  nodes.forEach((n) => {
+    if (!depthOf.has(n.id)) depthOf.set(n.id, maxDepth + 1);
   });
 
-  // Shift so leftmost node is at EDGE_PAD
+  // Group ids by depth, preserving original node order as tiebreaker
+  const byDepth = new Map<number, string[]>();
+  nodes.forEach((n) => {
+    const d = depthOf.get(n.id)!;
+    if (!byDepth.has(d)) byDepth.set(d, []);
+    byDepth.get(d)!.push(n.id);
+  });
+
+  const sortedDepths = [...byDepth.keys()].sort((a, b) => a - b);
+
+  // Place each depth. Root level centres on x=0. Deeper levels position each
+  // node near the average x of its already-placed parents, then sort and
+  // enforce H_GAP so no two share the same x.
+  for (const d of sortedDepths) {
+    const ids = byDepth.get(d)!;
+    const y = START_Y + d * ROW_HEIGHT;
+
+    if (d === sortedDepths[0]) {
+      const total = (ids.length - 1) * H_GAP;
+      const startX = -total / 2;
+      ids.forEach((id, i) => posMap.set(id, { x: startX + i * H_GAP, y }));
+      continue;
+    }
+
+    const desired = new Map<string, number>();
+    ids.forEach((id) => {
+      const parents = (inEdges.get(id) ?? []).filter((p) => posMap.has(p));
+      if (parents.length === 0) {
+        desired.set(id, 0);
+        return;
+      }
+      const avg = parents.reduce((s, p) => s + posMap.get(p)!.x, 0) / parents.length;
+      desired.set(id, avg);
+    });
+
+    const sortedIds = [...ids].sort((a, b) => desired.get(a)! - desired.get(b)!);
+
+    // First pass: place left-to-right, pushing right to maintain H_GAP
+    let lastX = -Infinity;
+    const tempX = new Map<string, number>();
+    sortedIds.forEach((id) => {
+      let x = desired.get(id)!;
+      if (x < lastX + H_GAP) x = lastX + H_GAP;
+      tempX.set(id, x);
+      lastX = x;
+    });
+
+    // Second pass: re-centre the whole row on its desired midpoint
+    const desiredMid =
+      sortedIds.reduce((s, id) => s + desired.get(id)!, 0) / sortedIds.length;
+    const actualMid =
+      sortedIds.reduce((s, id) => s + tempX.get(id)!, 0) / sortedIds.length;
+    const rowShift = desiredMid - actualMid;
+    sortedIds.forEach((id) => posMap.set(id, { x: tempX.get(id)! + rowShift, y }));
+  }
+
+  // Shift so leftmost node sits at EDGE_PAD
   const minX = Math.min(...[...posMap.values()].map((p) => p.x));
   const shift = EDGE_PAD - minX;
-  if (shift !== 0) posMap.forEach((p, id) => posMap.set(id, { x: p.x + shift, y: p.y }));
+  if (shift !== 0) {
+    posMap.forEach((p, id) => posMap.set(id, { x: p.x + shift, y: p.y }));
+  }
 
   return posMap;
 }
@@ -256,13 +308,26 @@ const NODE_R = NODE_SIZE / 2;
 export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNodeClick }: SkillTreeFlowProps) {
   injectStyles();
 
-  const posMap = useMemo(() => computeTreeLayout(rawNodes, rawEdges), [rawNodes, rawEdges]);
+  // Defend against duplicate ids from the backend (causes React key collisions
+  // and overlapping nodes at identical layout positions).
+  const dedupedNodes = useMemo(() => {
+    const seen = new Set<string>();
+    const out: typeof rawNodes = [];
+    for (const n of rawNodes) {
+      if (seen.has(n.id)) continue;
+      seen.add(n.id);
+      out.push(n);
+    }
+    return out;
+  }, [rawNodes]);
+
+  const posMap = useMemo(() => computeTreeLayout(dedupedNodes, rawEdges), [dedupedNodes, rawEdges]);
 
   const layoutNodes = useMemo(
     () =>
-      rawNodes.map((node, i) => ({
+      dedupedNodes.map((node, i) => ({
         ...node,
-        pos: posMap.get(node.id) || { x: CENTER_X, y: START_Y + i * ROW_HEIGHT },
+        pos: posMap.get(node.id) ?? { x: EDGE_PAD, y: START_Y + i * ROW_HEIGHT },
         theme: NODE_THEME[node.type] || NODE_THEME.lesson,
         data: {
           label: node.label,
@@ -273,7 +338,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
           description: node.description || "",
         } as SkillTreeNodeData,
       })),
-    [rawNodes, posMap]
+    [dedupedNodes, posMap]
   );
 
   const nodeMap = useMemo(() => new Map(layoutNodes.map((n) => [n.id, n])), [layoutNodes]);
@@ -283,8 +348,8 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
     const xs = layoutNodes.map((n) => n.pos.x);
     const ys = layoutNodes.map((n) => n.pos.y);
     return {
-      canvasW: Math.max(440, Math.max(...xs) + 70 + EDGE_PAD),
-      canvasH: Math.max(600, Math.max(...ys) + 140),
+      canvasW: Math.max(560, Math.max(...xs) + NODE_R + EDGE_PAD + 80),
+      canvasH: Math.max(600, Math.max(...ys) + 180),
     };
   }, [layoutNodes]);
 
@@ -343,6 +408,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
               <button
                 onClick={() => handleClick(node)}
                 disabled={isLocked}
+                aria-label={`${data.label} — ${isCompleted ? "completed" : isLocked ? "locked" : isNew ? "new, tap to start" : "active, tap to continue"}`}
                 className={`
                   absolute flex items-center justify-center rounded-full
                   transition-all duration-300 select-none outline-none
@@ -366,21 +432,22 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                         : theme.border
                     }`,
                   boxShadow: isNew
-                    ? `0 0 24px 8px ${theme.glow}, 0 0 48px 16px ${theme.glow}`
+                    ? `0 0 18px 6px ${theme.glow}`
                     : isActive
-                      ? `0 0 20px 4px ${theme.glow}`
+                      ? `0 0 16px 4px ${theme.glow}`
                       : isCompleted
                         ? "0 2px 8px rgba(0,0,0,0.3)"
                         : "none",
-                  opacity: isLocked ? 0.35 : 1,
-                  filter: isLocked ? "grayscale(0.8)" : "none",
+                  opacity: isLocked ? 0.65 : 1,
+                  filter: isLocked ? "grayscale(0.6)" : "none",
                 }}
               >
                 {/* Spinning progress ring for active node */}
-                <ProgressRing color={theme.ring} active={isActive} />
+                <span aria-hidden="true"><ProgressRing color={theme.ring} active={isActive} /></span>
 
                 {/* Icon */}
                 <span
+                  aria-hidden="true"
                   className={`leading-none z-10 flex items-center justify-center ${isActive ? "tower-float" : ""}`}
                   style={{ filter: isLocked ? "grayscale(1)" : "none", color: "white" }}
                 >
@@ -395,6 +462,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
               {/* ── Ambient glow below active node ── */}
               {isActive && (
                 <div
+                  aria-hidden="true"
                   className="absolute rounded-full pointer-events-none tower-glow-pulse"
                   style={{
                     width: NODE_SIZE + 32,
@@ -408,6 +476,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
 
               {/* ── Step number badge ── */}
               <div
+                aria-hidden="true"
                 className="absolute pointer-events-none"
                 style={{
                   width: 22,
@@ -432,27 +501,34 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
 
               {/* ── Label (centred below the node circle) ── */}
               <div
-                className="absolute pointer-events-none transition-opacity duration-300 text-center"
+                className="absolute pointer-events-none transition-opacity duration-300 text-center flex flex-col items-center"
                 style={{
-                  top: pos.y + NODE_R + 6,
-                  left: pos.x - 70,
-                  width: 140,
-                  opacity: isLocked ? 0.25 : 0.95,
+                  top: pos.y + NODE_R + 10,
+                  left: pos.x - 75,
+                  width: 150,
+                  opacity: isLocked ? 0.65 : 1,
                 }}
               >
-                <p className="text-[12px] font-bold text-white leading-tight drop-shadow-sm line-clamp-2">
+                <p
+                  className="text-[11px] font-bold text-white leading-snug line-clamp-2 px-2 py-0.5 rounded-md"
+                  style={{
+                    backgroundColor: "rgba(15, 23, 42, 0.72)",
+                    backdropFilter: "blur(2px)",
+                    maxWidth: "100%",
+                  }}
+                >
                   {data.label}
                 </p>
                 {isNew && (
                   <span
-                    className="inline-block mt-0.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
+                    className="inline-block mt-1 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
                     style={{ backgroundColor: theme.glow, color: theme.bgDark }}
                   >
-                    MỚI
+                    NEW
                   </span>
                 )}
-                {isActive && (
-                  <span className="block mt-0.5 text-[10px] text-slate-400 font-medium">
+                {(isActive && !isNew) && (
+                  <span className="mt-1 text-[10px] text-slate-300 font-medium px-1.5 py-0.5 rounded bg-slate-900/60">
                     Tap to start
                   </span>
                 )}
