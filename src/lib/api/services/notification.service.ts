@@ -23,6 +23,11 @@ export class NotificationService {
   /**
    * List current user's notifications (token-based, no userId needed)
    * GET /notifications
+   *
+   * Backend returns a flat envelope:
+   *   { success, data: InAppNotification[], total, page, limit, totalPages }
+   * Consumers (dropdown + /notifications page) read `data.notifications`, so
+   * we normalize the response into { notifications, pagination } here.
    */
   async getUserNotifications(params?: {
     page?: number;
@@ -30,11 +35,27 @@ export class NotificationService {
     unreadOnly?: boolean;
     type?: string;
   }): Promise<ApiResponse<UserNotificationsResponse>> {
-    const response = await apiClient.get<ApiResponse<UserNotificationsResponse>>(
-      "/notifications",
-      { params }
-    );
-    return response.data;
+    const response = await apiClient.get<{
+      success?: boolean;
+      data: InAppNotification[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>("/notifications", { params });
+    const body = response.data;
+    return {
+      success: body.success,
+      data: {
+        notifications: Array.isArray(body.data) ? body.data : [],
+        pagination: {
+          page: body.page,
+          limit: body.limit,
+          total: body.total,
+          totalPages: body.totalPages,
+        },
+      },
+    };
   }
 
   /**
