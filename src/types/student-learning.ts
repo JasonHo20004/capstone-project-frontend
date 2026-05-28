@@ -12,6 +12,7 @@ export interface LessonPlayer {
   lessonOrder: number | null;
   courseId: string;
   courseTitle: string;
+  testId?: string | null;
   mediaAssets: LessonMediaAsset[];
   recentComments: Array<{
     id: string;

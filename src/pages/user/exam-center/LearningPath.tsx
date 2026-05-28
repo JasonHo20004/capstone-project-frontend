@@ -1,133 +1,300 @@
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
 import apiClient from "@/lib/api/config";
+import { placementService } from "@/lib/api/services/user/placement/placement.service";
 
-interface Milestone {
-  id: string;
-  title: string;
-  description: string;
-  weekNumber: number;
-  skills: string[];
-  difficulty: "beginner" | "intermediate" | "advanced";
-  completedAt?: string;
-}
+import Stepper from "@/components/user/learning-path/Stepper";
+import Step1Placement from "@/components/user/learning-path/Step1Placement";
+import Step2Goal from "@/components/user/learning-path/Step2Goal";
+import Step3Lifestyle from "@/components/user/learning-path/Step3Lifestyle";
+import Step4Preferences from "@/components/user/learning-path/Step4Preferences";
+import GeneratingState from "@/components/user/learning-path/GeneratingState";
+import PlanResult from "@/components/user/learning-path/PlanResult";
+import { buildMockPlan } from "@/components/user/learning-path/mock-plan";
+import type {
+  GeneratedPlan,
+  LearnerProfile,
+  PlacementBaseline,
+  SkillKey,
+  WizardStep,
+} from "@/components/user/learning-path/types";
 
-interface LearningGoal {
-  id: string;
-  currentLevel: string;
-  targetScore: string;
-  deadline: string;
-  roadmap: {
-    milestones: Milestone[];
-    weeklyHours: number;
-    estimatedFinalScore: string;
-    examType: string;
-  };
-}
+type View = "hydrating" | "wizard" | "generating" | "result" | "error";
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "bg-green-100 text-green-700",
-  intermediate: "bg-amber-100 text-amber-700",
-  advanced: "bg-red-100 text-red-700",
+const INITIAL_PROFILE: LearnerProfile = {
+  cefrLevel: null,
+  placementTakenAt: null,
+  targetExam: "IELTS",
+  targetScore: "",
+  deadline: "6 months",
+  reasonForStudying: "",
+  weeklyStudyHours: "6-8",
+  availableDays: [],
+  preferredSessionLength: "45",
+  studyIntensity: "Standard",
+  reminderPreference: "Weekly",
+  weakestSkill: "Not sure",
+  learningPreference: [],
+  previousExamExperience: "Never",
+  confidence: "Medium",
 };
 
+function readPlacementBaseline(): PlacementBaseline {
+  try {
+    const raw = localStorage.getItem("latestPlacementResult");
+    if (!raw) return { cefrLevel: null, takenAt: null };
+    const parsed = JSON.parse(raw);
+    return {
+      cefrLevel: parsed?.cefr_level ?? parsed?.cefrLevel ?? null,
+      takenAt: parsed?.completed_at ?? parsed?.takenAt ?? null,
+      skillBreakdown: parsed?.skillBreakdown ?? undefined,
+    };
+  } catch {
+    return { cefrLevel: null, takenAt: null };
+  }
+}
+
+function writePlacementBaseline(b: PlacementBaseline): void {
+  try {
+    localStorage.setItem(
+      "latestPlacementResult",
+      JSON.stringify({
+        cefr_level: b.cefrLevel,
+        completed_at: b.takenAt,
+        cefrLevel: b.cefrLevel,
+        takenAt: b.takenAt,
+        skillBreakdown: b.skillBreakdown ?? {},
+      })
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function getUserId(): string {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.userId || payload.sub || "anonymous";
+    }
+  } catch {
+    /* ignore */
+  }
+  return "anonymous";
+}
+
 export default function LearningPath() {
-  const [step, setStep] = useState<"form" | "loading" | "result">("form");
-  const [currentLevel, setCurrentLevel] = useState("A2");
-  const [targetScore, setTargetScore] = useState("6.0");
-  const [deadline, setDeadline] = useState("6 months");
-  const [examType, setExamType] = useState("IELTS");
-  const [goal, setGoal] = useState<LearningGoal | null>(null);
+  const [baseline, setBaseline] = useState<PlacementBaseline>(readPlacementBaseline);
+  const [view, setView] = useState<View>("hydrating");
+  const [step, setStep] = useState<WizardStep>(1);
+  const [profile, setProfile] = useState<LearnerProfile>(() => ({
+    ...INITIAL_PROFILE,
+    cefrLevel: baseline.cefrLevel,
+    placementTakenAt: baseline.takenAt,
+  }));
+  const [plan, setPlan] = useState<GeneratedPlan | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  const getUserId = () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return payload.userId || payload.sub || "anonymous";
-      }
-    } catch { /* ignore */ }
-    return "anonymous";
-  };
+  // Hydrate existing saved plan on mount — skip wizard if user already has one.
+  useEffect(() => {
+    const uid = getUserId();
+    if (uid === "anonymous") {
+      setView("wizard");
+      return;
+    }
+    let cancelled = false;
+    apiClient
+      .get(`/ai/learning-path/${uid}`)
+      .then((resp) => {
+        if (cancelled) return;
+        const data = resp.data?.data;
+        const existing = (data?.plan as GeneratedPlan) ?? null;
+        if (existing && existing.summary) {
+          setPlan(existing);
+          setSaveStatus("saved");
+          setView("result");
+        } else {
+          setView("wizard");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setView("wizard");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const handleGenerate = useCallback(async () => {
-    setStep("loading");
+  // Fetch authoritative placement from backend, then refresh both state and cache.
+  useEffect(() => {
+    const uid = getUserId();
+    if (uid === "anonymous") return;
+    let cancelled = false;
+    placementService
+      .getLatest(uid)
+      .then((resp) => {
+        const d = resp?.data;
+        if (!d || cancelled) return;
+        const fresh: PlacementBaseline = {
+          cefrLevel: d.cefrLevel ?? null,
+          takenAt: d.takenAt ?? null,
+          skillBreakdown: d.skillBreakdown as Partial<Record<SkillKey, number>>,
+        };
+        setBaseline(fresh);
+        writePlacementBaseline(fresh);
+        setProfile((prev) =>
+          prev.cefrLevel || prev.placementTakenAt
+            ? prev
+            : { ...prev, cefrLevel: fresh.cefrLevel, placementTakenAt: fresh.takenAt }
+        );
+      })
+      .catch(() => {
+        /* keep localStorage cache */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const updateProfile = useCallback((updates: Partial<LearnerProfile>) => {
+    setProfile((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const goNext = useCallback(() => {
+    setStep((s) => (Math.min(s + 1, 4) as WizardStep));
+  }, []);
+  const goBack = useCallback(() => {
+    setStep((s) => (Math.max(s - 1, 1) as WizardStep));
+  }, []);
+
+  const generatePlan = useCallback(async () => {
+    setView("generating");
+    const startedAt = Date.now();
+    const mock = buildMockPlan(profile);
+
     try {
       const resp = await apiClient.post("/ai/learning-path/generate", {
         userId: getUserId(),
-        currentLevel,
-        targetScore,
-        deadline,
-        examType,
+        profile,
+        skillBreakdown: baseline.skillBreakdown ?? {},
       });
-      setGoal(resp.data?.data);
-      setStep("result");
-    } catch (err) {
-      console.error("Failed to generate learning path:", err);
-      setStep("form");
+      const apiPlan =
+        (resp.data?.data?.plan as GeneratedPlan) ??
+        (resp.data?.data as GeneratedPlan) ??
+        null;
+      setSaveStatus("saved"); // /generate already upserted on the backend
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(0, 3300 - elapsed);
+      window.setTimeout(() => {
+        setPlan(apiPlan ?? mock);
+        setView("result");
+      }, wait);
+    } catch {
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(0, 3300 - elapsed);
+      window.setTimeout(() => {
+        setPlan(mock);
+        setView("result");
+      }, wait);
     }
-  }, [currentLevel, targetScore, deadline, examType]);
+  }, [profile, baseline.skillBreakdown]);
 
-  // ─── Form Screen ────────────────────────────────────────────────────────────
-  if (step === "form") {
+  const handleRegenerate = useCallback(() => {
+    setPlan(null);
+    setSaveStatus("idle");
+    void generatePlan();
+  }, [generatePlan]);
+
+  const handleEditInputs = useCallback(() => {
+    setView("wizard");
+    setStep(2);
+  }, []);
+
+  const handleSavePlan = useCallback(async () => {
+    if (!plan) return;
+    setSaveStatus("saving");
+    try {
+      await apiClient.post("/ai/learning-path/save", {
+        userId: getUserId(),
+        currentLevel: profile.cefrLevel,
+        targetScore: profile.targetScore,
+        deadline: profile.deadline,
+        plan,
+      });
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("error");
+    }
+  }, [plan, profile.cefrLevel, profile.targetScore, profile.deadline]);
+
+  /* ── Hydrating (loading existing plan) ─────────────────────────── */
+  if (view === "hydrating") {
     return (
-      <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900">
-        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold">
-              <span className="material-symbols-outlined text-lg">route</span>
-            </div>
-            <h1 className="font-bold text-slate-800">Learning Path Generator</h1>
-          </div>
-          <Link to="/dashboard" className="text-sm text-cyan-600 hover:text-cyan-700 font-medium">← Dashboard</Link>
-        </header>
+      <div className="max-w-[1280px] mx-auto px-2 py-2">
+        <PageHeader />
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-200 border-t-cyan-500" />
+        </div>
+      </div>
+    );
+  }
 
-        <div className="max-w-lg mx-auto p-8">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-            <h2 className="text-xl font-bold text-slate-800 mb-6">Set Your Goal</h2>
+  /* ── Generating ────────────────────────────────────────────────── */
+  if (view === "generating") {
+    return (
+      <div className="max-w-[1280px] mx-auto px-2 py-2">
+        <PageHeader />
+        <GeneratingState />
+      </div>
+    );
+  }
 
-            {/* Current Level */}
-            <div className="mb-5">
-              <label className="block text-sm font-bold text-slate-600 mb-2">Current Level</label>
-              <select value={currentLevel} onChange={e => setCurrentLevel(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-cyan-200">
-                {["A1", "A2", "B1", "B2", "C1"].map(lv => <option key={lv} value={lv}>{lv}</option>)}
-              </select>
-            </div>
+  /* ── Result ────────────────────────────────────────────────────── */
+  if (view === "result" && plan) {
+    return (
+      <div className="max-w-[1280px] mx-auto px-2 py-2">
+        <PageHeader compact />
+        <PlanResult
+          plan={plan}
+          onRegenerate={handleRegenerate}
+          onEditInputs={handleEditInputs}
+          onSave={handleSavePlan}
+          saveStatus={saveStatus}
+        />
+      </div>
+    );
+  }
 
-            {/* Exam Type */}
-            <div className="mb-5">
-              <label className="block text-sm font-bold text-slate-600 mb-2">Exam Type</label>
-              <div className="flex gap-3">
-                <button
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all bg-cyan-600 text-white border-cyan-600"
-                >
-                  IELTS
-                </button>
-              </div>
-            </div>
-
-            {/* Target Score */}
-            <div className="mb-5">
-              <label className="block text-sm font-bold text-slate-600 mb-2">Target Score</label>
-              <input type="text" value={targetScore} onChange={e => setTargetScore(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-cyan-200"
-                placeholder="e.g., 6.5" />
-            </div>
-
-            {/* Deadline */}
-            <div className="mb-8">
-              <label className="block text-sm font-bold text-slate-600 mb-2">Deadline</label>
-              <select value={deadline} onChange={e => setDeadline(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-cyan-200">
-                {["3 months", "6 months", "9 months", "12 months"].map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-
-            <button onClick={handleGenerate}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3.5 rounded-xl font-bold text-lg transition-colors shadow-lg">
-              Generate AI Learning Path
+  /* ── Error ─────────────────────────────────────────────────────── */
+  if (view === "error") {
+    return (
+      <div className="max-w-[1280px] mx-auto px-2 py-2">
+        <PageHeader />
+        <div className="mx-auto max-w-xl rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center">
+          <h2 className="text-lg font-bold text-rose-900">
+            We couldn't generate your plan right now
+          </h2>
+          <p className="mt-1 text-sm text-rose-700">
+            Your inputs are saved. Try again, or edit them and retry.
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setView("wizard");
+                setStep(4);
+              }}
+              className="rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+            >
+              Edit inputs
+            </button>
+            <button
+              type="button"
+              onClick={() => void generatePlan()}
+              className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700"
+            >
+              Try again
             </button>
           </div>
         </div>
@@ -135,95 +302,82 @@ export default function LearningPath() {
     );
   }
 
-  // ─── Loading Screen ─────────────────────────────────────────────────────────
-  if (step === "loading") {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-200 border-t-cyan-600 rounded-full animate-spin mb-6 mx-auto"></div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">AI đang tạo lộ trình...</h2>
-          <p className="text-slate-500">Phân tích trình độ và tạo milestone phù hợp</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Result Screen ──────────────────────────────────────────────────────────
-  const milestones = goal?.roadmap?.milestones || [];
-
+  /* ── Wizard ────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900">
-      <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold">
-            <span className="material-symbols-outlined text-lg">route</span>
-          </div>
-          <h1 className="font-bold text-slate-800">Your Learning Path</h1>
-        </div>
-        <Link to="/dashboard" className="text-sm text-cyan-600 hover:text-cyan-700 font-medium">← Dashboard</Link>
-      </header>
+    <div className="max-w-[1280px] mx-auto px-2 py-2">
+      <PageHeader />
 
-      <div className="max-w-3xl mx-auto p-8">
-        {/* Summary Card */}
-        <div className="bg-gradient-to-r from-cyan-600 to-indigo-600 rounded-2xl p-8 text-white mb-8 shadow-xl">
-          <div className="grid grid-cols-4 gap-6 text-center">
-            <div>
-              <p className="text-xs opacity-70 uppercase tracking-wider font-bold">Current</p>
-              <p className="text-2xl font-black mt-1">{goal?.currentLevel}</p>
-            </div>
-            <div>
-              <p className="text-xs opacity-70 uppercase tracking-wider font-bold">Target</p>
-              <p className="text-2xl font-black mt-1">{goal?.targetScore}</p>
-            </div>
-            <div>
-              <p className="text-xs opacity-70 uppercase tracking-wider font-bold">Deadline</p>
-              <p className="text-2xl font-black mt-1">{goal?.deadline}</p>
-            </div>
-            <div>
-              <p className="text-xs opacity-70 uppercase tracking-wider font-bold">Weekly</p>
-              <p className="text-2xl font-black mt-1">{goal?.roadmap?.weeklyHours}h</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Milestones Timeline */}
-        <div className="space-y-4">
-          {milestones.map((m, i) => (
-            <div key={m.id} className="flex gap-4">
-              {/* Timeline Line */}
-              <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                  m.completedAt ? "bg-green-500 text-white" : "bg-white border-2 border-slate-300 text-slate-500"
-                }`}>
-                  {m.completedAt ? <Check size={14} /> : i + 1}
-                </div>
-                {i < milestones.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 my-1"></div>}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 bg-white rounded-xl border border-slate-200 p-5 mb-2">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-bold text-slate-800">{m.title}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Week {m.weekNumber}</p>
-                  </div>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${DIFFICULTY_COLORS[m.difficulty]}`}>
-                    {m.difficulty}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-600 mb-3">{m.description}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {m.skills.map(skill => (
-                    <span key={skill} className="text-xs bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded font-medium border border-cyan-100">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="mb-6">
+        <Stepper current={step} onJump={(s) => setStep(s)} />
       </div>
+
+      {step === 1 && (
+        <Step1Placement
+          baseline={baseline}
+          profile={profile}
+          onUpdate={updateProfile}
+          onNext={goNext}
+        />
+      )}
+      {step === 2 && (
+        <Step2Goal
+          profile={profile}
+          onUpdate={updateProfile}
+          onNext={goNext}
+          onBack={goBack}
+        />
+      )}
+      {step === 3 && (
+        <Step3Lifestyle
+          profile={profile}
+          onUpdate={updateProfile}
+          onNext={goNext}
+          onBack={goBack}
+        />
+      )}
+      {step === 4 && (
+        <Step4Preferences
+          profile={profile}
+          onUpdate={updateProfile}
+          onGenerate={() => void generatePlan()}
+          onBack={goBack}
+        />
+      )}
     </div>
+  );
+}
+
+function PageHeader({ compact = false }: { compact?: boolean }) {
+  return (
+    <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <div className="flex items-center gap-2">
+          <h1
+            className={[
+              "font-black tracking-tight text-slate-900",
+              compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl",
+            ].join(" ")}
+          >
+            {compact ? "Your Learning Path" : "Create Your Personalized Learning Path"}
+          </h1>
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+            <span className="material-symbols-outlined text-[12px]">auto_awesome</span>
+            AI-powered
+          </span>
+        </div>
+        {!compact && (
+          <p className="mt-1 text-sm text-slate-500 max-w-2xl">
+            SkillBoost AI uses your placement level, goals and study habits to build a
+            roadmap that fits you — not a generic learner.
+          </p>
+        )}
+      </div>
+      <Link
+        to="/dashboard"
+        className="text-sm font-medium text-cyan-700 hover:text-cyan-800"
+      >
+        ← Back to dashboard
+      </Link>
+    </header>
   );
 }

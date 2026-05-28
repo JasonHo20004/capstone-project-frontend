@@ -76,7 +76,21 @@ export interface PlacementResult {
   completed_at: string | null;
 }
 
+export interface PlacementLatest {
+  cefrLevel: string | null;
+  takenAt: string | null;
+  skillBreakdown: Record<string, number>;
+}
+
 class PlacementService {
+  async getLatest(userId: string): Promise<ApiResponse<PlacementLatest>> {
+    const response = await apiClient.get<ApiResponse<PlacementLatest>>(
+      `/placement/latest`,
+      { params: { userId } }
+    );
+    return response.data;
+  }
+
   async generateExam(userId: string): Promise<ApiResponse<PlacementExamPayload>> {
     const response = await apiClient.get<ApiResponse<PlacementExamPayload>>(
       `/placement/exam/generate`,
