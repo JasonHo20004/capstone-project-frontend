@@ -133,6 +133,20 @@ class WithdrawalService {
     );
     return response.data;
   }
+
+  /**
+   * Upload a single proof-of-transfer image (admin only).
+   * Returns the public S3 URL to pass to `approveWithdrawal`.
+   */
+  async uploadProofImage(file: File): Promise<ApiResponse<{ url: string }>> {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await apiClient.post<ApiResponse<{ url: string }>>(
+      '/withdrawals/admin/upload-proof',
+      form
+    );
+    return response.data;
+  }
 }
 
 export const withdrawalService = new WithdrawalService();

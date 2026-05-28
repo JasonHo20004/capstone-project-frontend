@@ -30,6 +30,7 @@ import {
   UserCog
 } from 'lucide-react';
 import { notificationService } from '@/lib/api/services';
+import { userManagementService } from '@/lib/api/services/admin';
 import type {
   CampaignPayload,
   CampaignSegment,
@@ -51,6 +52,7 @@ export default function NotificationsManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedNotification, setSelectedNotification] = useState<InAppNotification | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
   const [newNotification, setNewNotification] = useState({
     title: '',
     content: '',
@@ -65,9 +67,16 @@ export default function NotificationsManagement() {
     const fetchData = async () => {
       try {
         // Platform-wide feed — was previously pulling the admin's own inbox.
-        const [notificationsRes, typesRes] = await Promise.all([
+        const [notificationsRes, typesRes, usersRes] = await Promise.all([
           notificationService.listAllForAdmin({ page: 1, limit: 100 }),
-          notificationService.listAdminNotificationTypes().catch(() => null),
+          notificationService.listAdminNotificationTypes().catch((e) => {
+            console.error('[NotificationsManagement] listAdminNotificationTypes failed:', e);
+            return null;
+          }),
+          userManagementService.getUsers().catch((e) => {
+            console.error('[NotificationsManagement] getUsers failed:', e);
+            return null;
+          }),
         ]);
 
         setNotifications(notificationsRes.data ?? []);
@@ -75,6 +84,15 @@ export default function NotificationsManagement() {
         if (Array.isArray(types) && types.length > 0) {
           setNotificationTypes(types);
         }
+        // Backend may return either { data: User[] } or { data: { users: User[] } }
+        const rawUsers = usersRes as unknown as { data?: User[] | { users?: User[] } } | null;
+        let userList: User[] = [];
+        if (Array.isArray(rawUsers?.data)) {
+          userList = rawUsers!.data as User[];
+        } else if (Array.isArray((rawUsers?.data as { users?: User[] } | undefined)?.users)) {
+          userList = (rawUsers!.data as { users: User[] }).users;
+        }
+        setUsers(userList);
       } catch (err) {
         console.error('[NotificationsManagement] fetch failed:', err);
         toast.error('Không thể tải danh sách thông báo');
@@ -249,6 +267,7 @@ export default function NotificationsManagement() {
         toast.success(`Đã gửi thông báo đến ${created} người dùng`);
       }
       setIsCreateDialogOpen(false);
+      setUserSearchTerm('');
       setNewNotification({
         title: '',
         content: '',
@@ -548,56 +567,125 @@ export default function NotificationsManagement() {
               )}
 
               {/* Individual User Selection */}
-              {newNotification.recipientType === 'individual' && (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">Chọn người dùng cụ thể:</p>
-                  <div className="max-h-60 overflow-y-auto border rounded-lg">
-                    {users.map((user) => (
-                      <label key={user.id} className="flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50">
-                        <input
-                          type="checkbox"
-                          checked={newNotification.selectedUserIds.includes(user.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setNewNotification(prev => ({
-                                ...prev,
-                                selectedUserIds: [...prev.selectedUserIds, user.id]
-                              }));
-                            } else {
-                              setNewNotification(prev => ({
-                                ...prev,
-                                selectedUserIds: prev.selectedUserIds.filter(id => id !== user.id)
-                              }));
-                            }
+              {newNotification.recipientType === 'individual' && (() => {
+                const q = userSearchTerm.trim().toLowerCase();
+                const filteredUsers = q
+                  ? users.filter(
+                      (u) =>
+                        u.fullName?.toLowerCase().includes(q) ||
+                        u.email?.toLowerCase().includes(q)
+                    )
+                  : users;
+                const filteredIds = filteredUsers.map((u) => u.id);
+                const allFilteredSelected =
+                  filteredIds.length > 0 &&
+                  filteredIds.every((id) => newNotification.selectedUserIds.includes(id));
+                return (
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Chọn người dùng cụ thể:</p>
+                    <input
+                      type="text"
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                      placeholder="Tìm theo tên hoặc email..."
+                      className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                    />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        {filteredUsers.length}/{users.length} người dùng
+                        {q ? ' khớp' : ''}
+                      </span>
+                      {filteredUsers.length > 0 && (
+                        <button
+                          type="button"
+                          className="text-primary hover:underline"
+                          onClick={() => {
+                            setNewNotification((prev) => {
+                              if (allFilteredSelected) {
+                                return {
+                                  ...prev,
+                                  selectedUserIds: prev.selectedUserIds.filter(
+                                    (id) => !filteredIds.includes(id)
+                                  ),
+                                };
+                              }
+                              const merged = Array.from(
+                                new Set([...prev.selectedUserIds, ...filteredIds])
+                              );
+                              return { ...prev, selectedUserIds: merged };
+                            });
                           }}
-                          className="rounded"
-                        />
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
+                        >
+                          {allFilteredSelected ? 'Bỏ chọn tất cả (đã lọc)' : 'Chọn tất cả (đã lọc)'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-60 overflow-y-auto border rounded-lg">
+                      {filteredUsers.length === 0 ? (
+                        <div className="p-6 text-center text-sm text-muted-foreground">
+                          Không tìm thấy người dùng phù hợp
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{user.fullName}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
-                        </div>
-                        <div>
-                          {user.role === 'COURSESELLER' && (
-                            <Badge variant="secondary" className="text-xs">Course Seller</Badge>
-                          )}
-                          {user.role === 'ADMINISTRATOR' && (
-                            <Badge variant="destructive" className="text-xs">Admin</Badge>
-                          )}
-                          {(!user.role || (user.role !== 'COURSESELLER' && user.role !== 'ADMINISTRATOR')) && (
-                            <Badge variant="outline" className="text-xs">Student</Badge>
-                          )}
-                        </div>
-                      </label>
-                    ))}
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <label
+                            key={user.id}
+                            className="flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={newNotification.selectedUserIds.includes(user.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setNewNotification((prev) => ({
+                                    ...prev,
+                                    selectedUserIds: [...prev.selectedUserIds, user.id],
+                                  }));
+                                } else {
+                                  setNewNotification((prev) => ({
+                                    ...prev,
+                                    selectedUserIds: prev.selectedUserIds.filter(
+                                      (id) => id !== user.id
+                                    ),
+                                  }));
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                              <Users className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{user.fullName}</p>
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                            </div>
+                            <div>
+                              {user.role === 'COURSESELLER' && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Course Seller
+                                </Badge>
+                              )}
+                              {user.role === 'ADMINISTRATOR' && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Admin
+                                </Badge>
+                              )}
+                              {(!user.role ||
+                                (user.role !== 'COURSESELLER' && user.role !== 'ADMINISTRATOR')) && (
+                                <Badge variant="outline" className="text-xs">
+                                  Student
+                                </Badge>
+                              )}
+                            </div>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Đã chọn: {newNotification.selectedUserIds.length} người dùng
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Đã chọn: {newNotification.selectedUserIds.length} người dùng
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Recipient Summary */}
               <div className="mt-4 p-3 bg-muted/50 rounded-lg space-y-1">

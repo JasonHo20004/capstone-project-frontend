@@ -65,11 +65,21 @@ export default function AdminRefunds() {
     staleTime: 30_000,
   });
 
+  // Dedicated query so the "Chờ duyệt" stat card stays accurate regardless of
+  // the visible filter/pagination. 100 is enough headroom — backlog grows
+  // slower than admins can clear it.
+  const { data: pendingData } = useQuery({
+    queryKey: ["adminRefundsPendingStats"],
+    queryFn: () => refundService.listAdmin({ page: 1, limit: 100, status: "PENDING" }),
+    staleTime: 30_000,
+  });
+
   const approveMutation = useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) =>
       refundService.approve(id, note),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["adminRefunds"] });
+      queryClient.invalidateQueries({ queryKey: ["adminRefundsPendingStats"] });
       toast.success("Đã duyệt hoàn tiền");
       if (selected) {
         auditLogService
@@ -103,6 +113,7 @@ export default function AdminRefunds() {
       refundService.reject(id, note),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["adminRefunds"] });
+      queryClient.invalidateQueries({ queryKey: ["adminRefundsPendingStats"] });
       toast.success("Đã từ chối yêu cầu");
       if (selected) {
         auditLogService
@@ -134,11 +145,13 @@ export default function AdminRefunds() {
   const refunds = data?.data ?? [];
   const pagination = data?.pagination;
 
+  // Stats come from the dedicated pending-only query so they don't change when
+  // admin filters/pages through the table. `pendingData.pagination.total` is
+  // the authoritative pending count (not capped by the 100-row page).
+  const pendingRefunds = pendingData?.data ?? [];
   const stats = {
-    pending: refunds.filter((r) => r.status === "PENDING").length,
-    totalPendingAmount: refunds
-      .filter((r) => r.status === "PENDING")
-      .reduce((sum, r) => sum + Number(r.amount), 0),
+    pending: pendingData?.pagination?.total ?? pendingRefunds.length,
+    totalPendingAmount: pendingRefunds.reduce((sum, r) => sum + Number(r.amount), 0),
   };
 
   const columns = [
@@ -390,6 +403,22 @@ export default function AdminRefunds() {
                   </p>
                 </div>
               )}
+              {selected.processedAt && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Thời gian xử lý</Label>
+                    <p className="text-sm">
+                      {new Date(selected.processedAt).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                  {selected.adminId && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Admin xử lý</Label>
+                      <p className="font-mono text-xs">{selected.adminId}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -399,8 +428,11 @@ export default function AdminRefunds() {
         open={!!action}
         onOpenChange={(open) => {
           if (!open) {
+            // Reset BOTH action and selected — otherwise the detail dialog
+            // (`open={!!selected && !action}`) pops up the moment this one closes.
             setAction(null);
             setAdminNote("");
+            setSelected(null);
           }
         }}
       >
@@ -445,6 +477,7 @@ export default function AdminRefunds() {
               onClick={() => {
                 setAction(null);
                 setAdminNote("");
+                setSelected(null);
               }}
             >
               Huỷ
@@ -452,7 +485,9 @@ export default function AdminRefunds() {
             <Button
               variant={action === "reject" ? "destructive" : "default"}
               disabled={
-                (action === "reject" && !adminNote.trim()) ||
+                // Backend enforces reason ≥ 3 chars on reject — mirror that
+                // here so the user sees the constraint before submitting.
+                (action === "reject" && adminNote.trim().length < 3) ||
                 approveMutation.isPending ||
                 rejectMutation.isPending
               }

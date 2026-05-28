@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import {
   useRejectWithdrawal,
 } from '@/hooks/api';
 import type { WithdrawalRequest } from '@/lib/api/services/withdrawal.service';
+import { withdrawalService } from '@/lib/api/services/withdrawal.service';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import DataTable from '@/components/admin/DataTable';
@@ -33,6 +34,10 @@ import {
   DollarSign,
   Ban,
   BarChart3,
+  Upload,
+  ImageIcon,
+  Loader2,
+  Trash2,
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -62,7 +67,10 @@ export default function WithdrawalManagement() {
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [proofUrl, setProofUrl] = useState('');
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
   const [adminNote, setAdminNote] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   if (isLoading) {
     return (
@@ -79,8 +87,54 @@ export default function WithdrawalManagement() {
   const openApprove = (request: WithdrawalRequest) => {
     setSelectedRequest(request);
     setProofUrl('');
+    setProofPreview(null);
+    setIsUploadingProof(false);
     setAdminNote('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setIsApproveOpen(true);
+  };
+
+  const handleProofFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      toast.error('Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ảnh phải nhỏ hơn 5 MB');
+      e.target.value = '';
+      return;
+    }
+    // Local preview shows immediately; URL fills in once S3 acks the upload.
+    const localUrl = URL.createObjectURL(file);
+    setProofPreview(localUrl);
+    setIsUploadingProof(true);
+    try {
+      const res = await withdrawalService.uploadProofImage(file);
+      const url = res.data?.url;
+      if (!url) throw new Error('Không nhận được URL ảnh');
+      setProofUrl(url);
+    } catch (err) {
+      console.error('[Withdrawal] proof upload failed:', err);
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Tải ảnh biên lai thất bại. Vui lòng thử lại.';
+      toast.error(message);
+      setProofPreview(null);
+      setProofUrl('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } finally {
+      setIsUploadingProof(false);
+    }
+  };
+
+  const clearProof = () => {
+    setProofUrl('');
+    setProofPreview(null);
+    setIsUploadingProof(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const openReject = (request: WithdrawalRequest) => {
@@ -91,10 +145,14 @@ export default function WithdrawalManagement() {
 
   const handleApprove = async () => {
     if (!selectedRequest) return;
+    if (!proofUrl) {
+      toast.error('Vui lòng tải lên ảnh biên lai chuyển khoản');
+      return;
+    }
     try {
       await approveWithdrawal.mutateAsync({
         id: selectedRequest.id,
-        proofImageUrl: proofUrl || undefined,
+        proofImageUrl: proofUrl,
         adminNote: adminNote || undefined,
       });
       auditLogService
@@ -454,15 +512,67 @@ export default function WithdrawalManagement() {
               </Card>
 
               <div className="grid gap-2">
-                <Label htmlFor="proofUrl">Link ảnh biên lai (Tùy chọn)</Label>
-                <Input
-                  id="proofUrl"
-                  value={proofUrl}
-                  onChange={(e) => setProofUrl(e.target.value)}
-                  placeholder="https://imgur.com/..."
+                <Label htmlFor="proofFile" className="flex items-center gap-1">
+                  Ảnh biên lai chuyển khoản
+                  <span className="text-red-500">*</span>
+                </Label>
+                <input
+                  ref={fileInputRef}
+                  id="proofFile"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleProofFileChange}
+                  className="hidden"
                 />
+                {!proofPreview ? (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingProof}
+                    className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-input bg-muted/30 px-4 py-8 text-sm text-muted-foreground transition hover:border-emerald-500/50 hover:bg-emerald-500/5 disabled:opacity-60"
+                  >
+                    <Upload className="h-6 w-6" />
+                    <span className="font-medium">Chọn ảnh biên lai từ máy</span>
+                    <span className="text-xs">JPEG, PNG hoặc WebP — tối đa 5 MB</span>
+                  </button>
+                ) : (
+                  <div className="relative overflow-hidden rounded-md border border-input">
+                    <img
+                      src={proofPreview}
+                      alt="Biên lai chuyển khoản"
+                      className="block max-h-64 w-full object-contain bg-muted/40"
+                    />
+                    {isUploadingProof ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Đang tải lên...
+                      </div>
+                    ) : (
+                      <div className="absolute right-2 top-2 flex gap-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1 bg-background/90"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <ImageIcon className="h-3.5 w-3.5" /> Đổi ảnh
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          className="h-7 gap-1"
+                          onClick={clearProof}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Xóa
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  Tải ảnh lên Imgur hoặc dịch vụ hosting ảnh và dán link vào đây.
+                  Bắt buộc — đây là bằng chứng duy nhất chứng minh đã chuyển khoản nếu seller khiếu nại.
                 </p>
               </div>
               <div className="grid gap-2">
@@ -481,11 +591,15 @@ export default function WithdrawalManagement() {
             <Button variant="outline" onClick={() => setIsApproveOpen(false)}>Hủy</Button>
             <Button
               onClick={handleApprove}
-              disabled={approveWithdrawal.isPending}
+              disabled={approveWithdrawal.isPending || isUploadingProof || !proofUrl}
               className="bg-emerald-600 hover:bg-emerald-700 gap-1.5"
             >
               <CheckCircle2 className="h-4 w-4" />
-              {approveWithdrawal.isPending ? 'Đang duyệt...' : 'Xác nhận Đã Chuyển Khoản'}
+              {approveWithdrawal.isPending
+                ? 'Đang duyệt...'
+                : isUploadingProof
+                  ? 'Đang tải ảnh...'
+                  : 'Xác nhận Đã Chuyển Khoản'}
             </Button>
           </DialogFooter>
         </DialogContent>
