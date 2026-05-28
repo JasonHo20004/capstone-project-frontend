@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Loader2,
   Edit,
@@ -101,6 +101,23 @@ export default function UserPlansManagement() {
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const [editingFeature, setEditingFeature] = useState<PlanFeatureDefinition | null>(null);
   const [featureForm, setFeatureForm] = useState(EMPTY_FEATURE);
+  const featureListRef = useRef<HTMLDivElement | null>(null);
+  const prevFeatureCount = useRef(0);
+
+  // After a successful create, scroll the feature list to the bottom so the
+  // newly added row is visible (toast alone is easy to miss).
+  useEffect(() => {
+    if (
+      featureDefs.length > prevFeatureCount.current &&
+      featureListRef.current
+    ) {
+      featureListRef.current.scrollTo({
+        top: featureListRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+    prevFeatureCount.current = featureDefs.length;
+  }, [featureDefs.length]);
 
   const usedTypes = useMemo(() => new Set(plans.map((p) => p.type)), [plans]);
   const availableTypes = (['FREE', 'PRO'] as const).filter((t) => !usedTypes.has(t));
@@ -574,14 +591,18 @@ export default function UserPlansManagement() {
                     <Label className="text-xs">Thứ tự</Label>
                     <Input
                       type="number"
+                      min={0}
                       className="w-20"
                       value={featureForm.displayOrder}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const raw = parseInt(e.target.value, 10);
                         setFeatureForm((p) => ({
                           ...p,
-                          displayOrder: parseInt(e.target.value, 10) || 0,
-                        }))
-                      }
+                          // Clamp to non-negative — display order is a sort key,
+                          // negative values don't make sense.
+                          displayOrder: Number.isFinite(raw) ? Math.max(0, raw) : 0,
+                        }));
+                      }}
                     />
                   </div>
                 </div>
@@ -610,22 +631,15 @@ export default function UserPlansManagement() {
                   >
                     {editingFeature ? 'Cập nhật' : 'Tạo'}
                   </Button>
-                  {!editingFeature && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={openCreateFeature}
-                      title="Reset form"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* List */}
-            <div className="max-h-72 overflow-y-auto rounded-md border">
+            <div
+              ref={featureListRef}
+              className="max-h-72 overflow-y-auto rounded-md border"
+            >
               {featureDefs.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">
                   Chưa có feature nào. Tạo feature đầu tiên ở form trên.
@@ -983,35 +997,67 @@ function PlanFormFields({
       <div>
         <Label className="text-sm font-medium mb-3 block">Feature</Label>
         <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-          {featureDefs.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">
-              Chưa có feature nào. Tạo trong dialog "Quản lý feature".
-            </p>
-          ) : (
-            featureDefs.map((feature) => (
-              <div
-                key={feature.key}
-                className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{feature.label}</span>
-                  {feature.isPremium && (
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] px-1.5 py-0 h-4 border-amber-300 text-amber-600"
-                    >
-                      PREMIUM
-                    </Badge>
-                  )}
+          {(() => {
+            // Render union of (master feature defs ∪ keys the plan already
+            // has). Legacy keys without a definition still show up so admin
+            // can toggle them off — plus a hint to seed the master list.
+            const defByKey = new Map(featureDefs.map((d) => [d.key, d]));
+            const allKeys = Array.from(
+              new Set([
+                ...featureDefs.map((d) => d.key),
+                ...form.features,
+              ])
+            );
+            if (allKeys.length === 0) {
+              return (
+                <p className="text-xs text-muted-foreground italic">
+                  Chưa có feature nào. Tạo trong dialog "Quản lý feature".
+                </p>
+              );
+            }
+            return allKeys.map((key) => {
+              const def = defByKey.get(key);
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm truncate">{def?.label ?? key}</span>
+                    {def?.isPremium && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 border-amber-300 text-amber-600"
+                      >
+                        PREMIUM
+                      </Badge>
+                    )}
+                    {!def && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 border-orange-300 text-orange-600"
+                        title="Chưa có definition trong bảng plan_feature_definitions"
+                      >
+                        LEGACY
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={form.features.includes(key)}
+                    onCheckedChange={() => toggleFeature(key)}
+                  />
                 </div>
-                <Switch
-                  checked={form.features.includes(feature.key)}
-                  onCheckedChange={() => toggleFeature(feature.key)}
-                />
-              </div>
-            ))
-          )}
+              );
+            });
+          })()}
         </div>
+        {featureDefs.length === 0 && form.features.length > 0 && (
+          <p className="mt-2 text-xs text-orange-600">
+            Plan đang dùng feature chưa có định nghĩa. Vào "Quản lý feature" để
+            seed master list (key, label, premium) — learner sẽ thấy label thay
+            vì key.
+          </p>
+        )}
       </div>
     </div>
   );
