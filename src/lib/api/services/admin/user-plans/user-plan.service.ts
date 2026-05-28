@@ -16,6 +16,49 @@ export interface CreateUserPlanRequest {
   price: number;
   description?: string;
   features: string[];
+  isActive?: boolean;
+}
+
+export interface PlanFeatureDefinition {
+  id: string;
+  key: string;
+  label: string;
+  isPremium: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface CreatePlanFeatureRequest {
+  key: string;
+  label: string;
+  isPremium?: boolean;
+  displayOrder?: number;
+}
+
+export interface UpdatePlanFeatureRequest {
+  label?: string;
+  isPremium?: boolean;
+  displayOrder?: number;
+}
+
+export interface PlanStatsRow {
+  planId: string;
+  name: string;
+  type: "FREE" | "PRO";
+  price: number;
+  activeCount: number;
+  last30dCount: number;
+  mrr: number;
+}
+
+export interface PlanStats {
+  perPlan: PlanStatsRow[];
+  totals: {
+    activeCount: number;
+    mrr: number;
+    last30dCount: number;
+  };
 }
 
 class AdminUserPlanService {
@@ -52,6 +95,52 @@ class AdminUserPlanService {
   async seedPlans(): Promise<ApiResponse<UserPlan[]>> {
     const response = await apiClient.post<ApiResponse<UserPlan[]>>(
       "/subscriptions/admin/plans/seed"
+    );
+    return response.data;
+  }
+
+  // ── Plan stats (admin dashboard) ────────────────────────────────────
+  async getStats(): Promise<ApiResponse<PlanStats>> {
+    const response = await apiClient.get<ApiResponse<PlanStats>>(
+      "/subscriptions/admin/plans/stats"
+    );
+    return response.data;
+  }
+
+  // ── Feature definitions (master list, drives plan edit UI) ─────────
+  async listFeatures(): Promise<ApiResponse<PlanFeatureDefinition[]>> {
+    // Public GET — anyone can read the feature catalog (the marketing
+    // /pricing page also benefits from this).
+    const response = await apiClient.get<ApiResponse<PlanFeatureDefinition[]>>(
+      "/subscriptions/features"
+    );
+    return response.data;
+  }
+
+  async createFeature(
+    data: CreatePlanFeatureRequest
+  ): Promise<ApiResponse<PlanFeatureDefinition>> {
+    const response = await apiClient.post<ApiResponse<PlanFeatureDefinition>>(
+      "/subscriptions/admin/features",
+      data
+    );
+    return response.data;
+  }
+
+  async updateFeature(
+    id: string,
+    data: UpdatePlanFeatureRequest
+  ): Promise<ApiResponse<PlanFeatureDefinition>> {
+    const response = await apiClient.put<ApiResponse<PlanFeatureDefinition>>(
+      `/subscriptions/admin/features/${id}`,
+      data
+    );
+    return response.data;
+  }
+
+  async deleteFeature(id: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.delete<ApiResponse<null>>(
+      `/subscriptions/admin/features/${id}`
     );
     return response.data;
   }
