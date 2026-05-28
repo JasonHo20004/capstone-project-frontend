@@ -38,6 +38,7 @@ export {
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
   useArchiveNotification,
+  useUnarchiveNotification,
   useDeleteNotification,
   useNotificationRealtime,
 } from './use-notifications';

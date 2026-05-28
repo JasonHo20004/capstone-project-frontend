@@ -12,6 +12,7 @@ interface NotificationQueryParams {
   limit?: number;
   unreadOnly?: boolean;
   type?: string;
+  isArchived?: boolean;
 }
 
 const NOTIFICATIONS_QUERY_KEY = (params: NotificationQueryParams) => [
@@ -27,6 +28,7 @@ export const useNotifications = (params: {
   limit?: number;
   unreadOnly?: boolean;
   type?: string;
+  isArchived?: boolean;
   enabled?: boolean;
 }) => {
   const { enabled = true, ...rest } = params;
@@ -102,7 +104,8 @@ export const useMarkAllNotificationsAsRead = () => {
 };
 
 /**
- * Archive a notification
+ * Archive (save) a notification — moves it out of the active inbox
+ * into the "Đã lưu trữ" list.
  */
 export const useArchiveNotification = () => {
   const queryClient = useQueryClient();
@@ -110,6 +113,22 @@ export const useArchiveNotification = () => {
   return useMutation({
     mutationFn: (notificationId: string) =>
       notificationService.archiveNotification(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+};
+
+/**
+ * Unarchive a notification — restores it from the saved list back
+ * to the active inbox.
+ */
+export const useUnarchiveNotification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      notificationService.unarchiveNotification(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },

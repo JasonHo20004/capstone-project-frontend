@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Bell, Eye, Filter, Search, CheckCheck, Sparkles, Archive, BellOff } from 'lucide-react';
+import { Bell, BookmarkCheck, Eye, Filter, Search, CheckCheck, Sparkles, Bookmark, BellOff, Inbox, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/hooks/api/use-user';
 import {
@@ -12,6 +12,7 @@ import {
   useNotificationRealtime,
   useNotifications,
   useArchiveNotification,
+  useUnarchiveNotification,
 } from '@/hooks/api';
 import type { InAppNotification } from '@/domain';
 import {
@@ -81,11 +82,13 @@ export default function Notifications() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'unseen' | 'seen'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [view, setView] = useState<'inbox' | 'saved'>('inbox');
 
   const { data } = useNotifications({
     page: 1,
     limit: 50,
     unreadOnly: false,
+    isArchived: view === 'saved',
     enabled: Boolean(userId),
   });
 
@@ -97,6 +100,7 @@ export default function Notifications() {
   const { mutate: markReadMutation } = useMarkNotificationAsRead();
   const { mutate: markAllReadMutation } = useMarkAllNotificationsAsRead();
   const { mutate: archiveMutation, isPending: isArchiving } = useArchiveNotification();
+  const { mutate: unarchiveMutation, isPending: isUnarchiving } = useUnarchiveNotification();
 
   // Mute lives client-side — read once on mount, write on user toggle.
   const [mutedUntil, setMutedUntil] = useState<Date | null>(() => {
@@ -239,6 +243,42 @@ export default function Notifications() {
               </Button>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* View tabs: inbox vs saved (lưu trữ) */}
+      <section className="container mx-auto px-0">
+        <div
+          role="tablist"
+          aria-label="Chế độ xem thông báo"
+          className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === 'inbox'}
+            onClick={() => setView('inbox')}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              view === 'inbox'
+                ? 'bg-primary text-primary-foreground shadow'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Inbox className="w-4 h-4" /> Hộp thư
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === 'saved'}
+            onClick={() => setView('saved')}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              view === 'saved'
+                ? 'bg-primary text-primary-foreground shadow'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <BookmarkCheck className="w-4 h-4" /> Đã lưu trữ
+          </button>
         </div>
       </section>
 
@@ -465,19 +505,43 @@ export default function Notifications() {
                           <Eye className="w-3.5 h-3.5 mr-1" /> Đã đọc
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Lưu trữ"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-500 hover:text-slate-700"
-                        disabled={isArchiving}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          archiveMutation(n.id);
-                        }}
-                      >
-                        <Archive className="w-3.5 h-3.5" />
-                      </Button>
+                      {view === 'inbox' ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Lưu trữ (đánh dấu quan trọng)"
+                          aria-label="Lưu trữ thông báo"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-500 hover:text-primary"
+                          disabled={isArchiving}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            archiveMutation(n.id, {
+                              onSuccess: () => toast.success('Đã lưu vào mục Đã lưu trữ'),
+                              onError: () => toast.error('Không thể lưu thông báo'),
+                            });
+                          }}
+                        >
+                          <Bookmark className="w-3.5 h-3.5 mr-1" /> Lưu
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Đưa về hộp thư"
+                          aria-label="Bỏ lưu trữ"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-500 hover:text-primary"
+                          disabled={isUnarchiving}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            unarchiveMutation(n.id, {
+                              onSuccess: () => toast.success('Đã đưa về Hộp thư'),
+                              onError: () => toast.error('Không thể bỏ lưu trữ'),
+                            });
+                          }}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" /> Bỏ lưu
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );

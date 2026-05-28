@@ -93,12 +93,23 @@ export class NotificationService {
   }
 
   /**
-   * Archive a notification
+   * Archive a notification (save / mark as important)
    * PATCH /notifications/:id/archive
    */
   async archiveNotification(notificationId: string): Promise<ApiResponse<InAppNotification>> {
     const response = await apiClient.patch<ApiResponse<InAppNotification>>(
       `/notifications/${notificationId}/archive`
+    );
+    return response.data;
+  }
+
+  /**
+   * Unarchive a notification (restore from saved list back to the active inbox)
+   * PATCH /notifications/:id/unarchive
+   */
+  async unarchiveNotification(notificationId: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.patch<ApiResponse<InAppNotification>>(
+      `/notifications/${notificationId}/unarchive`
     );
     return response.data;
   }

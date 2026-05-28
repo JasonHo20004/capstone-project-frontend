@@ -14,9 +14,6 @@ interface CartDropdownProps {
   onNavigate?: () => void;
 }
 
-const PLACEHOLDER_IMG =
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&h=120&fit=crop';
-
 export function CartDropdown({
   triggerClassName,
   onNavigate,
@@ -65,13 +62,13 @@ export function CartDropdown({
                   className="flex gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors"
                 >
                   <div className="h-14 w-20 shrink-0 rounded-lg overflow-hidden bg-slate-100">
-                    <img
-                      src={
-                        item.course?.thumbnailUrl || PLACEHOLDER_IMG
-                      }
-                      alt={item.title}
-                      className="h-full w-full object-cover"
-                    />
+                    {item.course?.thumbnailUrl && (
+                      <img
+                        src={item.course.thumbnailUrl}
+                        alt={item.title}
+                        className="h-full w-full object-cover"
+                      />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-900 line-clamp-2">
