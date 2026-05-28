@@ -193,6 +193,18 @@ export default function PlacementTest() {
       { session_id: exam.session_id, userId, answers: payload },
       {
         onSuccess: (data) => {
+          try {
+            localStorage.setItem(
+              "latestPlacementResult",
+              JSON.stringify({
+                cefr_level: data.cefr_level,
+                completed_at: data.completed_at,
+                section_scores: data.section_scores,
+              })
+            );
+          } catch {
+            /* ignore storage errors */
+          }
           const remaining = Math.max(0, minWaitMs - (Date.now() - startedAt));
           window.setTimeout(() => {
             setResult(data);

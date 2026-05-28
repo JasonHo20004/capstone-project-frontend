@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Target, Layers, ClipboardCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useCourses } from '@/hooks/api';
+import { useCourses, useUnreadNotificationCount } from '@/hooks/api';
+import { useEnrolledCourses } from '@/hooks/api/use-courses';
+import { useGetDecks } from '@/hooks/api/use-flashcards';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { StatPill } from '@/components/ui/stat-pill';
@@ -18,13 +20,26 @@ const Index = () => {
     refetch: refetchCourses,
   } = useCourses({
     page: 1,
-    limit: 6,
+    limit: 12,
     sortBy: 'ratingCount',
     sortOrder: 'desc',
     status: 'ACTIVE',
   });
 
-  const popularCourses = popularCoursesResponse?.data?.slice(0, 3) ?? [];
+  const { data: enrolled } = useEnrolledCourses();
+  const { data: unreadData } = useUnreadNotificationCount();
+  const { data: decks } = useGetDecks();
+
+  const ownedIds = new Set((enrolled ?? []).map((c) => c.id));
+  const popularCourses = (popularCoursesResponse?.data ?? [])
+    .filter((c) => !ownedIds.has(c.id))
+    .slice(0, 3);
+
+  const enrolledCount = enrolled?.length ?? 0;
+  const unreadCount = unreadData?.total ?? 0;
+  const deckCount = Array.isArray(decks) ? decks.length : 0;
+
+  const pad2 = (n: number) => String(n).padStart(2, '0');
 
   const reveal = (i = 0) => ({
     initial: reduce ? { opacity: 0 } : { opacity: 0, y: 16 },
@@ -53,7 +68,7 @@ const Index = () => {
                   Learning Workspace
                 </p>
                 <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-                  Giao diện học tập mới, <span className="text-secondary-light">giữ nguyên trải nghiệm cũ</span>
+                  Học mọi nơi, <span className="text-secondary-light">tiến bộ mỗi ngày</span>
                 </h1>
                 <p className="mt-4 text-lg text-white/80">
                   Khám phá khoá học, theo dõi tiến độ và học theo nhịp của bạn với giao diện trực quan hơn.
@@ -66,7 +81,11 @@ const Index = () => {
                     </Button>
                   </Link>
                   <Link to="/my-courses">
-                    <Button variant="glass" size="lg" className="text-white hover:text-foreground">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-primary"
+                    >
                       Khóa học của tôi
                     </Button>
                   </Link>
@@ -81,9 +100,30 @@ const Index = () => {
         <section className="container mx-auto mt-10 px-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {[
-              { icon: <Target className="h-5 w-5" />, label: 'Lộ trình cá nhân hóa', value: '08 đang theo học', tone: 'primary' as const },
-              { icon: <BookOpen className="h-5 w-5" />, label: 'Nhiệm vụ hôm nay', value: '05 cần hoàn thành', tone: 'secondary' as const },
-              { icon: <Layers className="h-5 w-5" />, label: 'Thẻ ghi nhớ cần ôn', value: '12 đến hạn', tone: 'muted' as const },
+              {
+                icon: <Target className="h-5 w-5" />,
+                label: 'Khoá học đang theo học',
+                value: `${pad2(enrolledCount)} khoá học`,
+                tone: 'primary' as const,
+              },
+              {
+                icon: <BookOpen className="h-5 w-5" />,
+                label: 'Thông báo chưa đọc',
+                value:
+                  unreadCount > 0
+                    ? `${pad2(unreadCount)} cần xem`
+                    : 'Đã xem hết',
+                tone: 'secondary' as const,
+              },
+              {
+                icon: <Layers className="h-5 w-5" />,
+                label: 'Bộ thẻ ghi nhớ',
+                value:
+                  deckCount > 0
+                    ? `${pad2(deckCount)} bộ thẻ`
+                    : 'Chưa có bộ thẻ',
+                tone: 'muted' as const,
+              },
             ].map((item, i) => (
               <motion.div key={item.label} {...reveal(i)}>
                 <StatPill

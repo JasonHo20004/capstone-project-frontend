@@ -15,6 +15,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LearningTabs, type LearningTabId } from "@/components/user/student-learning/LearningTabs";
 import { VideoSection } from "@/components/user/student-learning/VideoSection";
+import { LessonTestRunner } from "@/components/user/student-learning/LessonTestRunner";
 import { SyllabusSidebar } from "@/components/user/student-learning/SyllabusSidebar";
 import { CourseOverview } from "@/components/user/student-learning/CourseOverview";
 import DiscussionSection from "@/components/DiscussionSection";
@@ -152,12 +153,27 @@ const StudentLearningPage = () => {
           <div className="container mx-auto px-4">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
               <div className="space-y-6">
-                <VideoSection
-                  lesson={lesson}
-                  isLoading={loadingContext || loadingLesson}
-                  onMarkComplete={handleMarkComplete}
-                  markCompletedLoading={markCompleteMutation.isPending}
-                />
+                {lesson?.testId ? (
+                  <LessonTestRunner
+                    testId={lesson.testId}
+                    lessonTitle={lesson.title}
+                    onContinue={() => {
+                      if (!context?.syllabus || !effectiveLessonId) return;
+                      const idx = context.syllabus.findIndex((l) => l.id === effectiveLessonId);
+                      const next = idx >= 0 ? context.syllabus[idx + 1] : undefined;
+                      if (next && courseId) {
+                        navigate(`/learning/courses/${courseId}/lessons/${next.id}`);
+                      }
+                    }}
+                  />
+                ) : (
+                  <VideoSection
+                    lesson={lesson}
+                    isLoading={loadingContext || loadingLesson}
+                    onMarkComplete={handleMarkComplete}
+                    markCompletedLoading={markCompleteMutation.isPending}
+                  />
+                )}
 
                 <LearningTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
