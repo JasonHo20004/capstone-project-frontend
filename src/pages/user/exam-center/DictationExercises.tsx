@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { dictationService, type DictationExercise } from "@/lib/api/services/user/dictation/dictation.service";
 import { useSubscription } from "@/context/SubscriptionContext";
 
@@ -15,6 +16,7 @@ const LEVEL_COLORS: Record<string, { bg: string; text: string; glow: string }> =
 const DEFAULT_LEVEL = { bg: "from-slate-400 to-slate-500", text: "text-white", glow: "shadow-slate-500/20" };
 
 function DictationExercisesContent() {
+  const { t } = useTranslation("exam");
   const [exercises, setExercises] = useState<DictationExercise[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
@@ -65,10 +67,10 @@ function DictationExercisesContent() {
             </div>
             <div>
               <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-                Dictation Practice
+                {t("dictation.title")}
               </h2>
               <p className="text-slate-500 mt-1 text-sm">
-                Cải thiện kỹ năng Listening — nghe, gõ và kiểm tra từng câu.
+                {t("dictation.subtitle")}
               </p>
             </div>
           </div>
@@ -77,7 +79,7 @@ function DictationExercisesContent() {
             className="text-sm text-slate-400 hover:text-teal-600 font-medium flex items-center gap-1 transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-            Quay lại Exam Center
+            {t("dictation.backToExamCenter")}
           </Link>
         </div>
 
@@ -86,12 +88,12 @@ function DictationExercisesContent() {
           <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-xl px-4 py-2 shadow-sm">
             <span className="material-symbols-outlined text-teal-500 text-lg">library_books</span>
             <span className="text-sm font-bold text-slate-700">{exercises.length}</span>
-            <span className="text-xs text-slate-400">bài tập</span>
+            <span className="text-xs text-slate-400">{t("dictation.exercisesLabel")}</span>
           </div>
           <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-xl px-4 py-2 shadow-sm">
             <span className="material-symbols-outlined text-emerald-500 text-lg">folder</span>
             <span className="text-sm font-bold text-slate-700">{categories.length}</span>
-            <span className="text-xs text-slate-400">danh mục</span>
+            <span className="text-xs text-slate-400">{t("dictation.categoriesLabel")}</span>
           </div>
         </div>
       </div>
@@ -107,7 +109,7 @@ function DictationExercisesContent() {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Tất cả
+            {t("dictation.categoryAll")}
           </button>
           {categories.map((cat) => (
             <button
@@ -132,7 +134,7 @@ function DictationExercisesContent() {
             <div className="absolute inset-0 rounded-full border-4 border-teal-100" />
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-teal-600 animate-spin" />
           </div>
-          <p className="text-slate-400 text-sm font-medium">Đang tải bài tập...</p>
+          <p className="text-slate-400 text-sm font-medium">{t("dictation.loading")}</p>
         </div>
       )}
 
@@ -180,7 +182,7 @@ function DictationExercisesContent() {
                     <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <span className="material-symbols-outlined text-[14px]">format_list_numbered</span>
-                        <span className="font-medium">{ex.totalSentences} câu</span>
+                        <span className="font-medium">{t("dictation.sentencesCount", { count: ex.totalSentences })}</span>
                       </div>
                       <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">lock</span>
@@ -216,10 +218,10 @@ function DictationExercisesContent() {
                     <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <span className="material-symbols-outlined text-[14px]">format_list_numbered</span>
-                        <span className="font-medium">{ex.totalSentences} câu</span>
+                        <span className="font-medium">{t("dictation.sentencesCount", { count: ex.totalSentences })}</span>
                       </div>
                       <span className="text-xs font-bold text-teal-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0">
-                        Luyện tập
+                        {t("dictation.practice")}
                         <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                       </span>
                     </div>
@@ -236,8 +238,8 @@ function DictationExercisesContent() {
           <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-4">
             <span className="material-symbols-outlined text-4xl text-slate-300">headphones_off</span>
           </div>
-          <p className="text-slate-500 text-lg font-semibold mb-1">Chưa có bài tập nào</p>
-          <p className="text-slate-400 text-sm">Quay lại sau để xem bài tập mới!</p>
+          <p className="text-slate-500 text-lg font-semibold mb-1">{t("dictation.empty")}</p>
+          <p className="text-slate-400 text-sm">{t("dictation.emptyHint")}</p>
         </div>
       )}
 
@@ -248,20 +250,20 @@ function DictationExercisesContent() {
             <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200/50">
               <span className="material-symbols-outlined text-white text-[28px]">diamond</span>
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">Bài tập PRO</h3>
-            <p className="text-sm text-slate-500 mb-6">Bài tập này dành cho gói Pro. Nâng cấp để truy cập tất cả bài Dictation.</p>
+            <h3 className="text-xl font-black text-slate-900 mb-2">{t("dictation.upgrade.title")}</h3>
+            <p className="text-sm text-slate-500 mb-6">{t("dictation.upgrade.body")}</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowUpgradeDialog(false)}
                 className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
               >
-                Đóng
+                {t("dictation.upgrade.close")}
               </button>
               <button
                 onClick={() => navigate("/#pricing")}
                 className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-200/30 hover:scale-105 transition-all cursor-pointer"
               >
-                Nâng cấp Pro
+                {t("dictation.upgrade.upgradeBtn")}
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { InfoCallout } from "./shared";
 import type {
   GeneratedPlan,
@@ -9,22 +10,22 @@ import type {
 
 const PERSONALIZATION_STYLES = {
   Basic: {
-    label: "Basic",
     tone: "bg-slate-100 text-slate-700 border-slate-200",
     dot: "bg-slate-400",
     width: "33%",
+    progressValue: 33,
   },
   Good: {
-    label: "Good",
     tone: "bg-cyan-100 text-cyan-800 border-cyan-200",
     dot: "bg-cyan-500",
     width: "66%",
+    progressValue: 66,
   },
   High: {
-    label: "High",
     tone: "bg-emerald-100 text-emerald-800 border-emerald-200",
     dot: "bg-emerald-500",
     width: "100%",
+    progressValue: 100,
   },
 } as const;
 
@@ -63,15 +64,10 @@ export default function PlanResult({
   onSave,
   saveStatus = "idle",
 }: PlanResultProps) {
+  const { t } = useTranslation("exam");
   const persona = PERSONALIZATION_STYLES[plan.personalizationLevel];
-  const saveLabel =
-    saveStatus === "saving"
-      ? "Saving…"
-      : saveStatus === "saved"
-        ? "Saved ✓"
-        : saveStatus === "error"
-          ? "Retry save"
-          : "Save plan";
+  const personaLabel = t(`learningPath.result.personalization.${plan.personalizationLevel}`);
+  const saveLabel = t(`learningPath.result.save.${saveStatus}`);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -84,10 +80,13 @@ export default function PlanResult({
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider backdrop-blur">
               <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-              Your personalized plan
+              {t("learningPath.result.badge")}
             </span>
             <h2 id="plan-summary-heading" className="mt-2 text-2xl sm:text-3xl font-black">
-              {plan.summary.targetExam} {plan.summary.targetScore} roadmap
+              {t("learningPath.result.headline", {
+                exam: plan.summary.targetExam,
+                score: plan.summary.targetScore,
+              })}
             </h2>
             <p className="mt-1 text-sm text-white/80">
               {plan.summary.estimatedWeeklyWorkload}
@@ -99,14 +98,14 @@ export default function PlanResult({
               onClick={onEditInputs}
               className="rounded-xl bg-white/10 px-3.5 py-2 text-xs font-semibold backdrop-blur transition hover:bg-white/20"
             >
-              Edit inputs
+              {t("learningPath.result.editInputs")}
             </button>
             <button
               type="button"
               onClick={onRegenerate}
               className="rounded-xl bg-white/10 px-3.5 py-2 text-xs font-semibold backdrop-blur transition hover:bg-white/20"
             >
-              Regenerate
+              {t("learningPath.result.regenerate")}
             </button>
             <button
               type="button"
@@ -121,10 +120,13 @@ export default function PlanResult({
 
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Current", value: plan.summary.currentLevel },
-            { label: "Target", value: plan.summary.targetScore },
-            { label: "Deadline", value: plan.summary.deadline },
-            { label: "Weekly", value: `${plan.summary.weeklyStudyHours}h` },
+            { label: t("learningPath.result.summary.current"), value: plan.summary.currentLevel },
+            { label: t("learningPath.result.summary.target"), value: plan.summary.targetScore },
+            { label: t("learningPath.result.summary.deadline"), value: plan.summary.deadline },
+            {
+              label: t("learningPath.result.summary.weekly"),
+              value: t("learningPath.result.summary.weeklyValue", { hours: plan.summary.weeklyStudyHours }),
+            },
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl bg-white/10 px-3 py-2 backdrop-blur">
               <dt className="text-[10px] font-bold uppercase tracking-wider text-white/70">
@@ -144,7 +146,7 @@ export default function PlanResult({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 id="personalization-heading" className="text-base font-bold text-slate-900">
-              Personalization level
+              {t("learningPath.result.personalization.title")}
             </h3>
             <p className="mt-1 text-sm text-slate-500 max-w-2xl">
               {plan.personalizationReason}
@@ -154,15 +156,15 @@ export default function PlanResult({
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${persona.tone}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${persona.dot}`} aria-hidden />
-            {persona.label}
+            {personaLabel}
           </span>
         </div>
         <div
           role="progressbar"
-          aria-valuenow={persona.label === "High" ? 100 : persona.label === "Good" ? 66 : 33}
+          aria-valuenow={persona.progressValue}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label="Personalization level"
+          aria-label={t("learningPath.result.personalization.ariaLabel")}
           className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100"
         >
           <div
@@ -171,9 +173,9 @@ export default function PlanResult({
           />
         </div>
         <div className="mt-1.5 flex justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          <span>Basic</span>
-          <span>Good</span>
-          <span>High</span>
+          <span>{t("learningPath.result.personalization.Basic")}</span>
+          <span>{t("learningPath.result.personalization.Good")}</span>
+          <span>{t("learningPath.result.personalization.High")}</span>
         </div>
       </section>
 
@@ -202,7 +204,7 @@ export default function PlanResult({
           </span>
           <div>
             <h3 id="why-heading" className="text-base font-bold text-slate-900">
-              Why this plan?
+              {t("learningPath.result.why.heading")}
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
               {plan.explanation}
@@ -213,43 +215,43 @@ export default function PlanResult({
 
       {/* ── 7. Recommended content ────────────────────────────────────── */}
       <RecommendedSection
-        title="Lessons & courses"
-        description="Start here to build the skills your plan prioritizes."
+        title={t("learningPath.result.sections.lessons.title")}
+        description={t("learningPath.result.sections.lessons.description")}
         items={plan.recommendedLessons}
       />
       <RecommendedSection
-        title="Flashcards to drill"
-        description="Short, focused decks to keep recall sharp."
+        title={t("learningPath.result.sections.flashcards.title")}
+        description={t("learningPath.result.sections.flashcards.description")}
         items={plan.recommendedFlashcards}
       />
       <RecommendedSection
-        title="Quizzes & practice tests"
-        description="Measure progress with real SkillBoost assessments."
+        title={t("learningPath.result.sections.quizzes.title")}
+        description={t("learningPath.result.sections.quizzes.description")}
         items={plan.recommendedQuizzes}
       />
 
       {/* ── 8. Action bar ─────────────────────────────────────────────── */}
       <section
-        aria-label="Plan actions"
+        aria-label={t("learningPath.result.actionBar.ariaLabel")}
         className="sticky bottom-4 z-10 rounded-2xl border border-slate-200 bg-white/95 p-3 sm:p-4 shadow-xl backdrop-blur"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-slate-500">
-            You can adjust your plan any time — your inputs are saved.
+            {t("learningPath.result.actionBar.note")}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Link
               to="/placement-test"
               className="rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Retake placement
+              {t("learningPath.result.actionBar.retake")}
             </Link>
             <button
               type="button"
               onClick={onRegenerate}
               className="rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Regenerate
+              {t("learningPath.result.regenerate")}
             </button>
             <button
               type="button"
@@ -269,6 +271,7 @@ export default function PlanResult({
 /* ── Sub-cards ─────────────────────────────────────────────────────── */
 
 function GapAnalysisCard({ plan }: { plan: GeneratedPlan }) {
+  const { t } = useTranslation("exam");
   const f = FEASIBILITY_STYLES[plan.gapAnalysis.feasibility];
   return (
     <section
@@ -277,16 +280,16 @@ function GapAnalysisCard({ plan }: { plan: GeneratedPlan }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 id="gap-heading" className="text-base font-bold text-slate-900">
-          Goal-gap analysis
+          {t("learningPath.result.gap.heading")}
         </h3>
         <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${f}`}>
-          {plan.gapAnalysis.feasibility}
+          {t(`learningPath.result.feasibility.${plan.gapAnalysis.feasibility}`)}
         </span>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl bg-slate-50 px-4 py-3 border border-slate-100">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            From
+            {t("learningPath.result.gap.from")}
           </p>
           <p className="mt-1 text-lg font-bold text-slate-800">
             {plan.gapAnalysis.currentLevel}
@@ -294,7 +297,7 @@ function GapAnalysisCard({ plan }: { plan: GeneratedPlan }) {
         </div>
         <div className="rounded-xl bg-slate-50 px-4 py-3 border border-slate-100">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            To
+            {t("learningPath.result.gap.to")}
           </p>
           <p className="mt-1 text-lg font-bold text-slate-800">
             {plan.gapAnalysis.targetLabel}
@@ -302,15 +305,17 @@ function GapAnalysisCard({ plan }: { plan: GeneratedPlan }) {
         </div>
         <div className="rounded-xl bg-slate-50 px-4 py-3 border border-slate-100">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Estimated gap
+            {t("learningPath.result.gap.estimatedGap")}
           </p>
-          <p className="mt-1 text-lg font-bold text-slate-800">{plan.gapAnalysis.gap}</p>
+          <p className="mt-1 text-lg font-bold text-slate-800">
+            {t(`learningPath.result.gapSize.${plan.gapAnalysis.gap}`)}
+          </p>
         </div>
       </div>
       <p className="mt-4 text-sm text-slate-600">{plan.gapAnalysis.recommendation}</p>
       {plan.gapAnalysis.warning && (
         <div className="mt-3">
-          <InfoCallout tone="warning" title="Feasibility note">
+          <InfoCallout tone="warning" title={t("learningPath.result.gap.warningTitle")}>
             {plan.gapAnalysis.warning}
           </InfoCallout>
         </div>
@@ -320,16 +325,17 @@ function GapAnalysisCard({ plan }: { plan: GeneratedPlan }) {
 }
 
 function SkillPriorityCard({ priorities }: { priorities: SkillPriority[] }) {
+  const { t } = useTranslation("exam");
   return (
     <section
       aria-labelledby="priority-heading"
       className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm"
     >
       <h3 id="priority-heading" className="text-base font-bold text-slate-900">
-        Skill priority ranking
+        {t("learningPath.result.priorities.heading")}
       </h3>
       <p className="mt-1 text-sm text-slate-500">
-        Your roadmap allocates time based on this ranking.
+        {t("learningPath.result.priorities.subtitle")}
       </p>
       <ol className="mt-4 space-y-3">
         {priorities.map((p) => (
@@ -341,15 +347,19 @@ function SkillPriorityCard({ priorities }: { priorities: SkillPriority[] }) {
               aria-hidden
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-sm font-bold text-slate-700"
             >
-              #{p.rank}
+              {t("learningPath.result.priorities.rank", { rank: p.rank })}
             </span>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-bold text-slate-900">{p.skill}</p>
+                <p className="text-sm font-bold text-slate-900">
+                  {t(`learningPath.result.skillsList.${p.skill}`)}
+                </p>
                 <span
                   className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${INTENSITY_STYLES[p.intensity]}`}
                 >
-                  {p.intensity} priority
+                  {t("learningPath.result.priorities.priorityLabel", {
+                    intensity: t(`learningPath.result.intensity.${p.intensity}`),
+                  })}
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-600 leading-relaxed">{p.reason}</p>
@@ -362,16 +372,17 @@ function SkillPriorityCard({ priorities }: { priorities: SkillPriority[] }) {
 }
 
 function PhasesCard({ phases }: { phases: GeneratedPlan["phases"] }) {
+  const { t } = useTranslation("exam");
   return (
     <section
       aria-labelledby="phases-heading"
       className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm"
     >
       <h3 id="phases-heading" className="text-base font-bold text-slate-900">
-        Roadmap phases
+        {t("learningPath.result.phases.heading")}
       </h3>
       <p className="mt-1 text-sm text-slate-500">
-        Three phases shape your milestone progression.
+        {t("learningPath.result.phases.subtitle")}
       </p>
       <ol className="mt-4 space-y-3">
         {phases.map((phase, idx) => (
@@ -403,7 +414,7 @@ function PhasesCard({ phases }: { phases: GeneratedPlan["phases"] }) {
                     key={skill}
                     className="rounded-md bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200"
                   >
-                    {skill}
+                    {t(`learningPath.result.skillsList.${skill}`)}
                   </span>
                 ))}
               </div>
@@ -416,16 +427,17 @@ function PhasesCard({ phases }: { phases: GeneratedPlan["phases"] }) {
 }
 
 function WeeklyScheduleCard({ tasks }: { tasks: WeeklyTask[] }) {
+  const { t } = useTranslation("exam");
   return (
     <section
       aria-labelledby="weekly-heading"
       className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm"
     >
       <h3 id="weekly-heading" className="text-base font-bold text-slate-900">
-        Weekly schedule
+        {t("learningPath.result.weekly.heading")}
       </h3>
       <p className="mt-1 text-sm text-slate-500">
-        We dropped sessions onto the days you marked free.
+        {t("learningPath.result.weekly.subtitle")}
       </p>
       <ul className="mt-4 space-y-2.5">
         {tasks.map((task, idx) => (
@@ -435,21 +447,24 @@ function WeeklyScheduleCard({ tasks }: { tasks: WeeklyTask[] }) {
           >
             <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-white border border-slate-200">
               <span className="text-[10px] font-bold uppercase text-slate-500">
-                {task.day.slice(0, 3)}
+                {t(`learningPath.step3.daysShort.${task.day}`)}
               </span>
-              <span className="text-[10px] text-slate-400">{task.durationMinutes}m</span>
+              <span className="text-[10px] text-slate-400">
+                {t("learningPath.result.weekly.duration", { minutes: task.durationMinutes })}
+              </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800 truncate">{task.title}</p>
               <p className="mt-0.5 text-[11px] text-slate-500">
-                {task.type} · {task.skill}
+                {t(`learningPath.result.taskTypes.${task.type}`)} ·{" "}
+                {t(`learningPath.result.skillsList.${task.skill}`)}
               </p>
             </div>
             <button
               type="button"
               className="rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 opacity-0 transition group-hover:opacity-100 hover:border-cyan-300 hover:text-cyan-700"
             >
-              Start
+              {t("learningPath.result.weekly.start")}
             </button>
           </li>
         ))}
@@ -467,6 +482,7 @@ function RecommendedSection({
   description: string;
   items: RecommendedItem[];
 }) {
+  const { t } = useTranslation("exam");
   if (items.length === 0) return null;
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
@@ -490,7 +506,7 @@ function RecommendedSection({
                 </span>
               </span>
               <span className="rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                {item.type}
+                {t(`learningPath.result.types.${item.type}`)}
               </span>
             </div>
             <h4 className="text-sm font-bold text-slate-900 leading-snug">
@@ -499,15 +515,15 @@ function RecommendedSection({
             <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
               <span className="inline-flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">timer</span>
-                {item.estimatedMinutes}m
+                {t("learningPath.result.itemMeta.minutes", { minutes: item.estimatedMinutes })}
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">trending_up</span>
-                {item.difficulty}
+                {t(`learningPath.result.difficulty.${item.difficulty}`)}
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">label</span>
-                {item.skill}
+                {t(`learningPath.result.skillsList.${item.skill}`)}
               </span>
             </div>
             <button
@@ -517,7 +533,7 @@ function RecommendedSection({
               <span className="material-symbols-outlined text-[14px]">
                 {item.cta === "Practice" ? "fitness_center" : "play_arrow"}
               </span>
-              {item.cta}
+              {t(`learningPath.result.cta.${item.cta}`)}
             </button>
           </article>
         ))}

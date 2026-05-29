@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   Bell, MessageSquare, BookOpen, UserPlus, RefreshCw, Reply,
   CheckCircle2, XCircle, ClipboardCheck, Wallet, AlertCircle, ShieldAlert,
@@ -30,7 +32,7 @@ interface NotificationDropdownProps {
 
 interface NotificationTypeConfig {
   icon: React.ElementType;
-  label: string;
+  labelKey: string;
   color: string;
   bgColor: string;
   bgColorUnread: string;
@@ -43,28 +45,28 @@ interface NotificationTypeConfig {
 const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
   course_comment: {
     icon: MessageSquare,
-    label: 'Bình luận',
+    labelKey: 'course_comment',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     bgColorUnread: 'bg-blue-100',
   },
   comment_reply: {
     icon: Reply,
-    label: 'Trả lời',
+    labelKey: 'comment_reply',
     color: 'text-violet-600',
     bgColor: 'bg-violet-50',
     bgColorUnread: 'bg-violet-100',
   },
   course_enrollment: {
     icon: UserPlus,
-    label: 'Đăng ký',
+    labelKey: 'course_enrollment',
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
     bgColorUnread: 'bg-emerald-100',
   },
   course_update: {
     icon: RefreshCw,
-    label: 'Cập nhật',
+    labelKey: 'course_update',
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
     bgColorUnread: 'bg-amber-100',
@@ -72,21 +74,21 @@ const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
   // ── Seller-specific events (emitted by course-service) ──────────────────
   COURSE_APPROVED: {
     icon: CheckCircle2,
-    label: 'Khoá học duyệt',
+    labelKey: 'COURSE_APPROVED',
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
     bgColorUnread: 'bg-emerald-100',
   },
   COURSE_REJECTED: {
     icon: XCircle,
-    label: 'Khoá học bị từ chối',
+    labelKey: 'COURSE_REJECTED',
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     bgColorUnread: 'bg-red-100',
   },
   COURSE_SUBMITTED: {
     icon: ClipboardCheck,
-    label: 'Khoá học cần duyệt',
+    labelKey: 'COURSE_SUBMITTED',
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
     bgColorUnread: 'bg-amber-100',
@@ -94,14 +96,14 @@ const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
   // ── Wallet / withdrawal events (emitted by payment-service) ─────────────
   WITHDRAWAL_APPROVED: {
     icon: Wallet,
-    label: 'Rút tiền thành công',
+    labelKey: 'WITHDRAWAL_APPROVED',
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
     bgColorUnread: 'bg-emerald-100',
   },
   WITHDRAWAL_REJECTED: {
     icon: AlertCircle,
-    label: 'Rút tiền bị từ chối',
+    labelKey: 'WITHDRAWAL_REJECTED',
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     bgColorUnread: 'bg-red-100',
@@ -109,7 +111,7 @@ const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
   // ── Moderation alert (admin-facing) ─────────────────────────────────────
   comment_report: {
     icon: ShieldAlert,
-    label: 'Báo cáo bình luận',
+    labelKey: 'comment_report',
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     bgColorUnread: 'bg-red-100',
@@ -118,7 +120,7 @@ const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
 
 const DEFAULT_TYPE_CONFIG: NotificationTypeConfig = {
   icon: Bell,
-  label: 'Thông báo',
+  labelKey: 'default',
   color: 'text-slate-600',
   bgColor: 'bg-slate-100',
   bgColorUnread: 'bg-slate-200',
@@ -172,7 +174,7 @@ export function getNotificationLink(notification: InAppNotification): string | n
 
 // ============== Timestamp formatter ==============
 
-function formatTimestamp(dateStr: string) {
+function formatTimestamp(dateStr: string, t: TFunction, dateLocale: string): string {
   const d = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
@@ -180,11 +182,11 @@ function formatTimestamp(dateStr: string) {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Vừa xong';
-  if (diffMins < 60) return `${diffMins} phút trước`;
-  if (diffHours < 24) return `${diffHours} giờ trước`;
-  if (diffDays < 7) return `${diffDays} ngày trước`;
-  return d.toLocaleDateString('vi-VN');
+  if (diffMins < 1) return t('common:relativeTime.justNow');
+  if (diffMins < 60) return t('common:relativeTime.minutesAgo', { count: diffMins });
+  if (diffHours < 24) return t('common:relativeTime.hoursAgo', { count: diffHours });
+  if (diffDays < 7) return t('common:relativeTime.daysAgo', { count: diffDays });
+  return d.toLocaleDateString(dateLocale);
 }
 
 // ============== Component ==============
@@ -194,6 +196,8 @@ export function NotificationDropdown({
   triggerClassName,
   onNavigate,
 }: NotificationDropdownProps) {
+  const { t, i18n } = useTranslation(['account', 'common']);
+  const dateLocale = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-GB';
   const navigate = useNavigate();
   const { data: stats } = useNotificationStats();
   const { data: notificationsResponse } = useNotifications({
@@ -230,7 +234,7 @@ export function NotificationDropdown({
           variant="ghost"
           size="icon"
           className={`relative h-10 w-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors duration-200 cursor-pointer ${triggerClassName ?? ''}`}
-          aria-label="Thông báo"
+          aria-label={t('account:notifications.dropdown.ariaLabel')}
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -246,10 +250,10 @@ export function NotificationDropdown({
         sideOffset={8}
       >
         <DropdownMenuLabel className="px-4 py-3 font-semibold text-slate-900 flex items-center justify-between">
-          <span>Thông báo</span>
+          <span>{t('account:notifications.dropdown.title')}</span>
           {unreadCount > 0 && (
             <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-              {unreadCount} mới
+              {t('account:notifications.dropdown.newBadge', { count: unreadCount })}
             </span>
           )}
         </DropdownMenuLabel>
@@ -259,7 +263,7 @@ export function NotificationDropdown({
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
               <Bell className="h-6 w-6 text-slate-300" />
             </div>
-            <p className="text-sm text-slate-500">Không có thông báo nào</p>
+            <p className="text-sm text-slate-500">{t('account:notifications.dropdown.empty')}</p>
           </div>
         ) : (
           <div className="max-h-96 overflow-y-auto">
@@ -267,6 +271,9 @@ export function NotificationDropdown({
               const typeConfig = getNotificationTypeConfig(n.type);
               const IconComponent = typeConfig.icon;
               const link = getNotificationLink(n);
+              const typeLabel = t(`account:notifications.dropdownTypes.${typeConfig.labelKey}`, {
+                defaultValue: t('account:notifications.dropdownTypes.default'),
+              });
 
               return (
                 <div
@@ -298,10 +305,10 @@ export function NotificationDropdown({
                       <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{n.content}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${typeConfig.bgColor} ${typeConfig.color}`}>
-                          {typeConfig.label}
+                          {typeLabel}
                         </span>
                         <span className="text-[10px] text-slate-400">
-                          {formatTimestamp(n.createdAt)}
+                          {formatTimestamp(n.createdAt, t, dateLocale)}
                         </span>
                       </div>
                     </div>
@@ -318,7 +325,7 @@ export function NotificationDropdown({
             onClick={onNavigate}
             className="block text-center text-sm font-medium text-primary hover:underline py-2 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
           >
-            Xem tất cả thông báo
+            {t('account:notifications.dropdown.viewAll')}
           </Link>
         </div>
       </DropdownMenuContent>

@@ -1,0 +1,123 @@
+{
+  "myCourses": {
+    "loading": "Loading your courses...",
+    "eyebrow": "Learning library",
+    "title": "Your courses",
+    "subtitle": "Manage, track progress, and continue your learning journey here.",
+    "stats": {
+      "owned": "Owned",
+      "status": "Status",
+      "studying": "Studying",
+      "notStarted": "Not started"
+    },
+    "search": "Search within your courses...",
+    "filterCount": "{{filtered}} / {{total}} courses",
+    "emptyTitle": "Start your learning journey",
+    "emptyDesc": "You don't own any courses yet. Explore our quality catalog and start conquering your goals today!",
+    "exploreBtn": "Explore courses",
+    "features": {
+      "anytime": "Learn anytime",
+      "anytimeDesc": "24/7 access on any device",
+      "progress": "Track progress",
+      "progressDesc": "Detailed learning analytics",
+      "certificate": "Certificate",
+      "certificateDesc": "Get a certificate when you complete"
+    },
+    "noResults": "No results found",
+    "noResultsHint": "Try a different keyword or",
+    "clearFilter": "clear filters"
+  },
+  "courseCard": {
+    "purchased": "Owned",
+    "unknownInstructor": "Unknown instructor",
+    "loginRequired": "Please sign in to add items to your cart",
+    "alreadyInCart": "Already in cart",
+    "addToCartTitle": "Add to cart"
+  },
+  "courseDetail": {
+    "loading": "Loading course information...",
+    "loadError": "Failed to load the course.",
+    "notFoundTitle": "Course not found",
+    "notFoundDesc": "This course may have been removed or does not exist.",
+    "backToList": "Back to course list",
+    "breadcrumbCourses": "Courses",
+    "ownedBadge": "Owned",
+    "ratingsCount": "({{count}} reviews)",
+    "lessonCount": "{{count}} lessons",
+    "instructor": "Instructor",
+    "tabs": {
+      "overview": "Overview",
+      "instructor": "Instructor",
+      "content": "Content"
+    },
+    "sections": {
+      "description": "Course description",
+      "whatYouGet": "What you'll get",
+      "requirements": "Requirements",
+      "audience": "Who is this course for?",
+      "myReports": "Your reports",
+      "lessons": "Lessons ({{count}})",
+      "tests": "Tests",
+      "finalTest": "Final test",
+      "moreFromInstructor": "More courses from <0>{{name}}</0>"
+    },
+    "benefits": {
+      "videoLessons": "{{count}} video lessons",
+      "lifetime": "Lifetime access",
+      "freeUpdates": "Free updates",
+      "certificate": "Completion certificate"
+    },
+    "lessons": {
+      "minutes": "{{count}} minutes",
+      "materials": "{{count}} materials",
+      "empty": "No lessons yet.",
+      "lockedNotice": "Buy the course to unlock all content"
+    },
+    "tests": {
+      "empty": "No tests yet.",
+      "doTest": "Take test",
+      "questionCount": "{{count}} questions",
+      "minutesAndMax": "{{minutes}} mins • Max score: {{score}}"
+    },
+    "finalTest": {
+      "description": "Complete this test to confirm you've mastered the material.",
+      "allComplete": "You've completed all lessons!",
+      "doTestBtn": "Take the test",
+      "lockedTitle": "Complete all lessons to unlock",
+      "progress": "Progress: {{completed}}/{{total}} lessons"
+    },
+    "reports": {
+      "writeReport": "Write a report",
+      "reportIncident": "Report an issue",
+      "empty": "You have not reported any issues for this course yet."
+    },
+    "instructorTab": {
+      "email": "Email:",
+      "phone": "Phone:",
+      "level": "Level:"
+    },
+    "sidebar": {
+      "ownedNotice": "You own this course",
+      "startLearning": "Start learning",
+      "continueLearning": "Continue learning",
+      "buyNow": "Buy now",
+      "addToCart": "Add to cart",
+      "inCartCta": "Already in cart — View cart",
+      "trust": {
+        "lifetime": "Lifetime access",
+        "freeUpdates": "Free updates",
+        "certificate": "Completion certificate"
+      }
+    },
+    "payment": {
+      "dialogTitle": "Confirm quick checkout",
+      "processing": "Processing...",
+      "confirm": "Pay now"
+    },
+    "toasts": {
+      "loginRequiredCart": "Please sign in to add items to your cart",
+      "loginRequiredBuy": "Please sign in to buy this course",
+      "loginAction": "Sign in"
+    }
+  }
+}

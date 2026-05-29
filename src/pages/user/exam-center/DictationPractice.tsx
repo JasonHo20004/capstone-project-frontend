@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Check, PartyPopper } from "lucide-react";
 import { dictationService, type DictationExerciseDetail, type DictationSentence } from "@/lib/api/services/user/dictation/dictation.service";
 
@@ -76,6 +77,7 @@ function compareWords(
 
 export default function DictationPractice() {
   const { exerciseId } = useParams<{ exerciseId: string }>();
+  const { t } = useTranslation("exam");
 
   const [exercise, setExercise] = useState<DictationExerciseDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +134,7 @@ export default function DictationPractice() {
           }
         }
       } catch {
-        setError("Exercise not found.");
+        setError(t("dictationPractice.notFound"));
       } finally {
         setLoading(false);
       }
@@ -273,7 +275,7 @@ export default function DictationPractice() {
             <div className="absolute inset-0 rounded-full border-4 border-teal-100" />
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-teal-600 animate-spin" />
           </div>
-          <p className="text-slate-400 text-sm font-medium">Loading exercise...</p>
+          <p className="text-slate-400 text-sm font-medium">{t("dictationPractice.loading")}</p>
         </div>
       </div>
     );
@@ -286,9 +288,9 @@ export default function DictationPractice() {
           <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
             <span className="material-symbols-outlined text-red-400 text-3xl">error</span>
           </div>
-          <p className="text-slate-600 font-medium mb-1">{error || "Exercise not found."}</p>
+          <p className="text-slate-600 font-medium mb-1">{error || t("dictationPractice.notFound")}</p>
           <Link to="/dictation" className="text-teal-600 hover:text-teal-700 font-semibold text-sm mt-4 inline-block">
-            ← Back to exercises
+            ← {t("dictationPractice.backToList")}
           </Link>
         </div>
       </div>
@@ -306,7 +308,7 @@ export default function DictationPractice() {
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-teal-600 font-medium mb-3 transition-colors"
         >
           <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Quay lại danh sách
+          {t("dictationPractice.backToListShort")}
         </Link>
         <div className="flex items-start justify-between">
           <div>
@@ -330,7 +332,7 @@ export default function DictationPractice() {
             <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
               <span className="material-symbols-outlined text-teal-600 text-lg">trending_up</span>
             </div>
-            <span className="text-sm font-bold text-slate-700">Tiến độ</span>
+            <span className="text-sm font-bold text-slate-700">{t("dictationPractice.progress")}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xl font-black text-teal-600">{progressPercent}%</span>
@@ -348,8 +350,8 @@ export default function DictationPractice() {
       {/* ─── Tabs ─── */}
       <div className="flex gap-1 p-1 bg-slate-100/80 rounded-xl mb-5 w-fit">
         {[
-          { key: "dictation" as const, label: "Luyện tập", icon: "headphones" },
-          { key: "transcript" as const, label: "Transcript", icon: "description" },
+          { key: "dictation" as const, label: t("dictationPractice.tabs.dictation"), icon: "headphones" },
+          { key: "transcript" as const, label: t("dictationPractice.tabs.transcript"), icon: "description" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -372,14 +374,14 @@ export default function DictationPractice() {
       {isComplete && (
         <div className="mb-5 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl p-8 text-center text-white shadow-xl shadow-teal-500/20 animate-fade-in">
           <div className="flex justify-center mb-3"><PartyPopper size={48} /></div>
-          <h3 className="text-2xl font-black mb-1">Hoàn thành xuất sắc!</h3>
-          <p className="text-teal-100 mb-6">Bạn đã hoàn thành cả {totalSentences} câu</p>
+          <h3 className="text-2xl font-black mb-1">{t("dictationPractice.complete.title")}</h3>
+          <p className="text-teal-100 mb-6">{t("dictationPractice.complete.body", { count: totalSentences })}</p>
           <Link
             to="/dictation"
             className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-8 py-3 rounded-xl font-bold transition-colors inline-flex items-center gap-2 border border-white/20"
           >
             <span className="material-symbols-outlined">arrow_back</span>
-            Chọn bài khác
+            {t("dictationPractice.complete.chooseAnother")}
           </Link>
         </div>
       )}
@@ -398,7 +400,7 @@ export default function DictationPractice() {
             </button>
             <div className="flex items-center gap-3">
               <span className="text-sm font-extrabold text-slate-800">
-                Câu {currentIndex + 1}
+                {t("dictationPractice.sentenceLabel", { n: currentIndex + 1 })}
               </span>
               <span className="text-xs text-slate-400">/ {totalSentences}</span>
               {/* Mini progress dots */}
@@ -449,7 +451,7 @@ export default function DictationPractice() {
               <button
                 onClick={playSegment}
                 className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 flex items-center justify-center transition-all cursor-pointer"
-                title="Nghe lại"
+                title={t("dictationPractice.replayTitle")}
               >
                 <span className="material-symbols-outlined text-slate-500 text-[20px]">replay</span>
               </button>
@@ -476,15 +478,15 @@ export default function DictationPractice() {
                       />
                     ))}
                   </span>
-                  <span className="text-xs text-teal-600 font-semibold">Đang phát...</span>
+                  <span className="text-xs text-teal-600 font-semibold">{t("dictationPractice.playing")}</span>
                 </div>
               )}
 
               <div className="ml-auto hidden sm:flex items-center gap-3 text-[11px] text-slate-400">
                 <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">Ctrl</kbd>
-                <span>Nghe lại</span>
+                <span>{t("dictationPractice.keyboard.replay")}</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">Enter</kbd>
-                <span>Kiểm tra</span>
+                <span>{t("dictationPractice.keyboard.check")}</span>
               </div>
             </div>
 
@@ -496,7 +498,7 @@ export default function DictationPractice() {
                   ? "border-2 border-emerald-300 bg-emerald-50/50 text-emerald-800"
                   : "border-2 border-slate-200 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 hover:border-slate-300"
               }`}
-              placeholder="Nghe và gõ những gì bạn nghe được..."
+              placeholder={t("dictationPractice.placeholder")}
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               disabled={showAnswer}
@@ -512,17 +514,17 @@ export default function DictationPractice() {
                     className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 disabled:from-slate-300 disabled:to-slate-300 text-white px-7 py-2.5 rounded-xl font-bold transition-all disabled:cursor-not-allowed cursor-pointer shadow-sm disabled:shadow-none flex items-center gap-2"
                   >
                     <span className="material-symbols-outlined text-[18px]">check</span>
-                    Kiểm tra
+                    {t("dictationPractice.check")}
                   </button>
                   <button
                     onClick={handleSkip}
                     className="bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 px-6 py-2.5 rounded-xl font-bold transition-all cursor-pointer"
                   >
-                    Bỏ qua
+                    {t("dictationPractice.skip")}
                   </button>
                   {attempts > 0 && results && (
                     <span className="ml-auto text-xs text-slate-400">
-                      Lần thử: {attempts}
+                      {t("dictationPractice.attemptsLabel", { count: attempts })}
                     </span>
                   )}
                 </>
@@ -532,7 +534,7 @@ export default function DictationPractice() {
                   disabled={currentIndex >= totalSentences - 1}
                   className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 disabled:from-slate-300 disabled:to-slate-300 text-white px-7 py-2.5 rounded-xl font-bold transition-all disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 shadow-sm"
                 >
-                  Câu tiếp
+                  {t("dictationPractice.next")}
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </button>
               )}
@@ -545,8 +547,8 @@ export default function DictationPractice() {
                   <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
                     <span className="material-symbols-outlined text-amber-600 text-[18px]">lightbulb</span>
                   </div>
-                  <span className="font-bold text-amber-800 text-sm">Gợi ý</span>
-                  <span className="text-[11px] text-amber-500 ml-auto">Lần {attempts}</span>
+                  <span className="font-bold text-amber-800 text-sm">{t("dictationPractice.hint")}</span>
+                  <span className="text-[11px] text-amber-500 ml-auto">{t("dictationPractice.attemptN", { n: attempts })}</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {(() => {
@@ -588,11 +590,11 @@ export default function DictationPractice() {
                     <span className="material-symbols-outlined text-white text-[18px]">check</span>
                   </div>
                   <span className="font-bold text-emerald-800 text-sm">
-                    {showAnswer ? "Đáp án" : "Chính xác!"}
+                    {showAnswer ? t("dictationPractice.revealedAnswer") : t("dictationPractice.correct")}
                   </span>
                   {!showAnswer && attempts > 0 && (
                     <span className="text-xs text-emerald-500 ml-2">
-                      {attempts === 1 ? "Lần đầu!" : `${attempts} lần thử`}
+                      {attempts === 1 ? t("dictationPractice.firstTry") : t("dictationPractice.attemptsTaken", { count: attempts })}
                     </span>
                   )}
                 </div>
@@ -609,10 +611,10 @@ export default function DictationPractice() {
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <span className="material-symbols-outlined text-slate-400 text-lg">description</span>
-              Toàn bộ Transcript
+              {t("dictationPractice.transcriptTitle")}
             </h3>
             <span className="text-xs text-slate-400">
-              {completedCount} / {totalSentences} đã hoàn thành
+              {t("dictationPractice.transcriptProgress", { completed: completedCount, total: totalSentences })}
             </span>
           </div>
           <div className="space-y-1.5">

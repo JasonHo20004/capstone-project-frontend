@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { usePracticeTestDetail, useSubmitPracticeTest } from "@/hooks/api/use-practice";
 import type { PracticeQuestion, PracticeQuestionGroup, PracticeSection } from "@/lib/api/services/user/practice/practice.service";
 import { ReadingShell, ListeningShell, WritingShell, SpeakingShell } from "@/components/user/exam-center/TestShell";
@@ -49,6 +50,7 @@ interface WritingSection {
 
 function WritingPracticeUI({ test }: { test: any }) {
   const navigate = useNavigate();
+  const { t } = useTranslation("exam");
 
   // Parse writing sections from test data
   const writingSections = useMemo<WritingSection[]>(() => {
@@ -60,7 +62,7 @@ function WritingPracticeUI({ test }: { test: any }) {
             const isTask1 = q.questionType?.includes("TASK1") || q.questionText?.toLowerCase().includes("task 1");
             sections.push({
               id: q.id || group.id,
-              title: isTask1 ? "Task 1 — Biểu đồ" : "Task 2 — Essay",
+              title: isTask1 ? t("practiceRunner.writing.task1Title") : t("practiceRunner.writing.task2Title"),
               taskType: isTask1 ? 1 : 2,
               imageUrl: group.imageUrl || q.imageUrl || sec.imageUrl || (q as any).content?.imageUrl,
               prompt: q.questionText || (q as any).content?.prompt || "",
@@ -71,8 +73,8 @@ function WritingPracticeUI({ test }: { test: any }) {
         }
       }
     }
-    return sections.length > 0 ? sections : [{ id: "fallback", title: "Task 2 — Essay", taskType: 2 as const, prompt: "Write your essay here.", wordCountMin: 250 }];
-  }, [test]);
+    return sections.length > 0 ? sections : [{ id: "fallback", title: t("practiceRunner.writing.task2Title"), taskType: 2 as const, prompt: t("practiceRunner.writing.fallbackPrompt"), wordCountMin: 250 }];
+  }, [test, t]);
 
   const [activeTab, setActiveTab] = useState(0);
   const [essays, setEssays] = useState<Record<number, string>>({});
@@ -152,10 +154,10 @@ function WritingPracticeUI({ test }: { test: any }) {
             <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
               <span className="material-symbols-outlined text-[20px]">edit_note</span>
             </div>
-            <h1 className="font-bold text-slate-800">Kết quả chấm Writing</h1>
+            <h1 className="font-bold text-slate-800">{t("practiceRunner.writing.resultHeader")}</h1>
           </div>
           <button onClick={() => navigate("/practice")} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-            ← Quay lại
+            {t("practiceRunner.writing.backLink")}
           </button>
         </header>
 
@@ -163,18 +165,18 @@ function WritingPracticeUI({ test }: { test: any }) {
           {(!evaluation || evaluation.status === "PENDING" || evaluation.status === "PROCESSING") && (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-6" />
-              <h2 className="text-xl font-bold text-slate-800 mb-2">AI đang chấm bài...</h2>
-              <p className="text-slate-500">Thường mất 15-30 giây. Vui lòng đợi.</p>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">{t("practiceRunner.writing.aiGrading")}</h2>
+              <p className="text-slate-500">{t("practiceRunner.writing.aiGradingHint")}</p>
             </div>
           )}
 
           {evaluation?.status === "FAILED" && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-              <h2 className="text-xl font-bold text-red-800 mb-2">Chấm bài thất bại</h2>
-              <p className="text-red-600 mb-4">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
+              <h2 className="text-xl font-bold text-red-800 mb-2">{t("practiceRunner.writing.gradingFailed")}</h2>
+              <p className="text-red-600 mb-4">{t("practiceRunner.writing.errorOccurred")}</p>
               <button onClick={() => { setShowResult(false); setEvaluationId(null); setIsSubmitting(false); }}
                 className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700">
-                Thử lại
+                {t("practiceRunner.writing.retry")}
               </button>
             </div>
           )}
@@ -182,18 +184,18 @@ function WritingPracticeUI({ test }: { test: any }) {
           {evaluation?.status === "COMPLETED" && evaluation.criteria && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-                <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">Overall Band Score</p>
+                <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">{t("practiceRunner.writing.overallBand")}</p>
                 <div className="text-7xl font-black text-emerald-600 mb-2">{evaluation.overallBand}</div>
                 <p className="text-slate-600 text-sm max-w-xl mx-auto">{evaluation.overallFeedback}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { key: "task_achievement", label: "Task Achievement", icon: "task_alt" },
-                  { key: "coherence", label: "Coherence & Cohesion", icon: "link" },
-                  { key: "lexical", label: "Lexical Resource", icon: "dictionary" },
-                  { key: "grammar", label: "Grammar Range & Accuracy", icon: "spellcheck" },
-                ].map(({ key, label, icon }) => {
+                  { key: "task_achievement", labelKey: "taskAchievement", icon: "task_alt" },
+                  { key: "coherence", labelKey: "coherence", icon: "link" },
+                  { key: "lexical", labelKey: "lexical", icon: "dictionary" },
+                  { key: "grammar", labelKey: "grammar", icon: "spellcheck" },
+                ].map(({ key, labelKey, icon }) => {
                   const c = evaluation.criteria?.[key as keyof typeof evaluation.criteria];
                   if (!c) return null;
                   return (
@@ -201,7 +203,7 @@ function WritingPracticeUI({ test }: { test: any }) {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-emerald-500 text-xl">{icon}</span>
-                          <span className="font-semibold text-slate-800 text-sm">{label}</span>
+                          <span className="font-semibold text-slate-800 text-sm">{t(`practiceRunner.writing.criteria.${labelKey}`)}</span>
                         </div>
                         <span className="text-2xl font-black text-emerald-600">{c.score}</span>
                       </div>
@@ -215,7 +217,7 @@ function WritingPracticeUI({ test }: { test: any }) {
                 <div className="bg-white rounded-xl border border-slate-200 p-6">
                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-500">warning</span>
-                    Lỗi phát hiện ({evaluation.highlightedErrors.length})
+                    {t("practiceRunner.writing.errorsDetected", { count: evaluation.highlightedErrors.length })}
                   </h3>
                   <div className="space-y-3">
                     {evaluation.highlightedErrors.map((err: any, i: number) => (
@@ -236,7 +238,7 @@ function WritingPracticeUI({ test }: { test: any }) {
 
               <div className="text-center pt-4">
                 <button onClick={() => navigate("/practice")} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors">
-                  Quay lại Practice
+                  {t("practiceRunner.writing.backToPractice")}
                 </button>
               </div>
             </div>
@@ -260,14 +262,14 @@ function WritingPracticeUI({ test }: { test: any }) {
           </div>
           <div>
             <h1 className="font-bold text-slate-800 text-sm leading-tight">{test.title}</h1>
-            <span className="text-[11px] text-slate-500">IELTS Writing</span>
+            <span className="text-[11px] text-slate-500">{t("practiceRunner.writing.brand")}</span>
           </div>
         </div>
         <div className="flex items-center gap-4">
           {assistantLoading && (
             <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 animate-pulse">
               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-              AI đang kiểm tra...
+              {t("practiceRunner.writing.aiChecking")}
             </div>
           )}
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm ${timeLeft < 300 ? "bg-red-100 text-red-700" : "bg-slate-100"}`}>
@@ -279,7 +281,7 @@ function WritingPracticeUI({ test }: { test: any }) {
             disabled={isSubmitting || wordCount < 20}
             className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-colors"
           >
-            {isSubmitting ? "Đang nộp..." : "Nộp bài"}
+            {isSubmitting ? t("practiceRunner.writing.submitting") : t("practiceRunner.writing.submit")}
           </button>
         </div>
       </header>
@@ -315,7 +317,7 @@ function WritingPracticeUI({ test }: { test: any }) {
               </span>
               <h2 className="font-bold text-slate-700 text-sm">{activeSection.title}</h2>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-auto">
-                {activeSection.wordCountMin}+ từ
+                {t("practiceRunner.writing.wordsMin", { count: activeSection.wordCountMin })}
               </span>
             </div>
           </div>
@@ -324,7 +326,7 @@ function WritingPracticeUI({ test }: { test: any }) {
             {/* Chart/Image for Task 1 */}
             {activeSection.imageUrl && (
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 overflow-hidden">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Biểu đồ / Sơ đồ</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{t("practiceRunner.writing.chartLabel")}</p>
                 <img
                   src={activeSection.imageUrl}
                   alt="Task 1 Visual"
@@ -335,18 +337,16 @@ function WritingPracticeUI({ test }: { test: any }) {
 
             {/* Prompt */}
             <div className="bg-emerald-50/60 rounded-xl p-4 border border-emerald-100">
-              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">Đề bài</p>
+              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">{t("practiceRunner.writing.promptLabel")}</p>
               <p className="text-sm text-slate-800 leading-relaxed italic">{activeSection.prompt}</p>
               {activeSection.taskType === 1 && (
                 <p className="text-xs text-slate-600 mt-3">
-                  Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
-                  Write at least {activeSection.wordCountMin} words.
+                  {t("practiceRunner.writing.task1Instruction", { count: activeSection.wordCountMin })}
                 </p>
               )}
               {activeSection.taskType === 2 && (
                 <p className="text-xs text-slate-600 mt-3">
-                  Give reasons for your answer and include any relevant examples from your own knowledge or experience.
-                  Write at least {activeSection.wordCountMin} words.
+                  {t("practiceRunner.writing.task2Instruction", { count: activeSection.wordCountMin })}
                 </p>
               )}
             </div>
@@ -356,7 +356,7 @@ function WritingPracticeUI({ test }: { test: any }) {
               <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                 <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px]">auto_fix_high</span>
-                  AI Writing Assistant
+                  {t("practiceRunner.writing.assistantTitle")}
                 </h4>
                 {assistantResult.errors.map((err, i) => (
                   <div key={`err-${i}`} className="text-xs mb-2 p-2 bg-white rounded border border-amber-100">
@@ -378,21 +378,21 @@ function WritingPracticeUI({ test }: { test: any }) {
 
             {/* Tips */}
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mẹo viết</h4>
+              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">{t("practiceRunner.writing.tipsTitle")}</h4>
               <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
                 {activeSection.taskType === 1 ? (
                   <>
-                    <li>Bắt đầu bằng câu paraphrase đề bài</li>
-                    <li>Nêu overview/tổng quan trước khi vào chi tiết</li>
-                    <li>So sánh số liệu nổi bật, không liệt kê tất cả</li>
-                    <li>Sử dụng từ vựng mô tả xu hướng chính xác</li>
+                    <li>{t("practiceRunner.writing.task1Tips.paraphrase")}</li>
+                    <li>{t("practiceRunner.writing.task1Tips.overview")}</li>
+                    <li>{t("practiceRunner.writing.task1Tips.compare")}</li>
+                    <li>{t("practiceRunner.writing.task1Tips.vocabulary")}</li>
                   </>
                 ) : (
                   <>
-                    <li>Lập dàn ý trước khi viết: Mở bài → Thân bài → Kết luận</li>
-                    <li>Trình bày cả 2 quan điểm rồi đưa ý kiến cá nhân</li>
-                    <li>Dùng linking words: However, Furthermore, In contrast...</li>
-                    <li>Kiểm tra lỗi chính tả và ngữ pháp trước khi nộp</li>
+                    <li>{t("practiceRunner.writing.task2Tips.plan")}</li>
+                    <li>{t("practiceRunner.writing.task2Tips.views")}</li>
+                    <li>{t("practiceRunner.writing.task2Tips.linking")}</li>
+                    <li>{t("practiceRunner.writing.task2Tips.proofread")}</li>
                   </>
                 )}
               </ul>
@@ -404,19 +404,19 @@ function WritingPracticeUI({ test }: { test: any }) {
         <div className="w-[62%] bg-white flex flex-col h-full">
           {/* Toolbar */}
           <div className="px-5 py-2 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0">
-            <span className="text-xs text-slate-500 font-medium">Bài viết của bạn</span>
+            <span className="text-xs text-slate-500 font-medium">{t("practiceRunner.writing.yourEssay")}</span>
             <div className="flex items-center gap-3">
               <span className="text-xs font-medium text-slate-400">
-                Số từ:{" "}
+                {t("practiceRunner.writing.wordCountLabel")}{" "}
                 <span className={`font-bold ${
                   wordCount >= activeSection.wordCountMin ? "text-emerald-600" :
                   wordCount >= activeSection.wordCountMin * 0.8 ? "text-amber-600" : "text-slate-700"
                 }`}>{wordCount}</span>
-                <span className="text-slate-300 ml-1">/ {activeSection.wordCountMin} min</span>
+                <span className="text-slate-300 ml-1">/ {activeSection.wordCountMin} {t("practiceRunner.writing.wordCountMinSuffix")}</span>
               </span>
               {wordCount >= activeSection.wordCountMin && (
                 <span className="text-[10px] flex items-center gap-0.5 text-emerald-600 font-bold">
-                  <span className="material-symbols-outlined text-[14px]">check_circle</span> Đủ từ
+                  <span className="material-symbols-outlined text-[14px]">check_circle</span> {t("practiceRunner.writing.wordsEnough")}
                 </span>
               )}
             </div>
@@ -426,8 +426,8 @@ function WritingPracticeUI({ test }: { test: any }) {
           <textarea
             className="flex-1 p-6 text-base leading-[1.8] text-slate-800 outline-none resize-none font-serif placeholder:text-slate-300"
             placeholder={activeSection.taskType === 1
-              ? "The chart/diagram illustrates..."
-              : "In today's society, the issue of..."
+              ? t("practiceRunner.writing.placeholderTask1")
+              : t("practiceRunner.writing.placeholderTask2")
             }
             value={currentEssay}
             onChange={(e) => handleEssayChange(e.target.value)}
@@ -446,6 +446,7 @@ function WritingPracticeUI({ test }: { test: any }) {
 export default function PracticeRunner() {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation("exam");
 
   const { data: test, isLoading, isError } = usePracticeTestDetail(testId);
   const submitMutation = useSubmitPracticeTest();
@@ -484,7 +485,7 @@ export default function PracticeRunner() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600">
-        Loading test...
+        {t("practiceRunner.shell.loading")}
       </div>
     );
   }
@@ -493,7 +494,7 @@ export default function PracticeRunner() {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="bg-white border border-red-200 rounded-xl p-6 text-red-700">
-          Failed to load test.
+          {t("practiceRunner.shell.loadError")}
         </div>
       </div>
     );
@@ -531,7 +532,7 @@ export default function PracticeRunner() {
       <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
         <h2 className="font-bold text-slate-700 flex items-center gap-2 min-w-0">
           <span className="material-symbols-outlined text-[20px] text-indigo-500">article</span>
-          <span className="truncate">Context</span>
+          <span className="truncate">{t("practiceRunner.shell.context")}</span>
         </h2>
         <div className="flex gap-2">
           <select
@@ -541,7 +542,7 @@ export default function PracticeRunner() {
           >
             {groups.map((g, idx) => (
               <option key={g.id} value={g.id}>
-                Group {idx + 1}
+                {t("practiceRunner.shell.groupOption", { n: idx + 1 })}
               </option>
             ))}
           </select>
@@ -551,7 +552,7 @@ export default function PracticeRunner() {
       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
         {activeGroup?.audioUrl ? (
           <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Audio</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t("practiceRunner.shell.audio")}</p>
             <audio controls className="w-full">
               <source src={activeGroup.audioUrl} />
             </audio>
@@ -560,7 +561,7 @@ export default function PracticeRunner() {
 
         {activeGroup?.imageUrl ? (
           <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Image</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t("practiceRunner.shell.image")}</p>
             <img src={activeGroup.imageUrl} alt="" className="w-full rounded-lg border border-slate-200" />
           </div>
         ) : null}
@@ -570,7 +571,7 @@ export default function PracticeRunner() {
             <p className="whitespace-pre-wrap">{activeGroup.passage}</p>
           </div>
         ) : (
-          <div className="text-sm text-slate-500">No passage for this question group.</div>
+          <div className="text-sm text-slate-500">{t("practiceRunner.shell.noPassage")}</div>
         )}
       </div>
     </>
@@ -579,8 +580,8 @@ export default function PracticeRunner() {
   const rightContent = (
     <>
       <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center">
-        <h2 className="font-bold text-slate-700">Questions</h2>
-        <div className="text-xs font-medium text-slate-500">{activeQuestions.length} items</div>
+        <h2 className="font-bold text-slate-700">{t("practiceRunner.shell.questions")}</h2>
+        <div className="text-xs font-medium text-slate-500">{t("practiceRunner.shell.itemsCount", { count: activeQuestions.length })}</div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
@@ -629,7 +630,7 @@ export default function PracticeRunner() {
                   <div className="pl-12">
                     <textarea
                       className="w-full min-h-[120px] rounded-lg border border-slate-200 p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="Type your answer..."
+                      placeholder={t("practiceRunner.shell.answerPlaceholder")}
                       value={typeof chosen === "string" ? chosen : ""}
                       onChange={(e) => handleSelect(q.id, e.target.value)}
                     />
@@ -680,10 +681,10 @@ export default function PracticeRunner() {
       isSubmitting={submitMutation.isPending}
       onBackClick={() => navigate("/dashboard")}
       backConfirm={{
-        title: "Thoát khỏi bài làm?",
-        description: "Bạn sẽ rời khỏi màn hình làm bài. Tiến độ hiện tại có thể bị mất. Bạn có chắc muốn thoát?",
-        confirmText: "Thoát",
-        cancelText: "Ở lại",
+        title: t("practiceRunner.shell.exitConfirm.title"),
+        description: t("practiceRunner.shell.exitConfirm.description"),
+        confirmText: t("practiceRunner.shell.exitConfirm.confirm"),
+        cancelText: t("practiceRunner.shell.exitConfirm.cancel"),
       }}
       leftContent={leftContent}
       rightContent={rightContent}

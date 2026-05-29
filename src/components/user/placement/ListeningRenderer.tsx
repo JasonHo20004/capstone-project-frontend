@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import type { PlacementQuestionPayload } from "@/lib/api/services/user/placement/placement.service";
 import { OptionCard } from "./OptionCard";
 
@@ -20,6 +21,7 @@ export function ListeningRenderer({
   onSelect,
   onAudioReadyChange,
 }: ListeningRendererProps) {
+  const { t } = useTranslation("exam");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [plays, setPlays] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -124,7 +126,7 @@ export function ListeningRenderer({
           transition={{ duration: 0.25 }}
           className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
-          <span className="font-semibold">Context:</span> {question.audio_context}
+          <span className="font-semibold">{t("placementTest.listening.contextLabel")}</span> {question.audio_context}
         </motion.p>
       )}
 
@@ -150,7 +152,7 @@ export function ListeningRenderer({
               ? "bg-teal-500 text-white hover:bg-teal-600"
               : "bg-slate-300 text-slate-500 cursor-not-allowed",
           ].join(" ")}
-          aria-label="Play audio"
+          aria-label={t("placementTest.listening.playAriaLabel")}
         >
           {audioLoading && question.audio_url ? (
             <svg className="h-7 w-7 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -187,23 +189,26 @@ export function ListeningRenderer({
           ) : (
             <span className="text-sm text-slate-500">
               {audioLoading && question.audio_url
-                ? "Preparing audio…"
+                ? t("placementTest.listening.preparing")
                 : audioError
-                  ? "Audio failed to load. Please refresh."
+                  ? t("placementTest.listening.audioError")
                   : hasPlayed
-                    ? "You can answer at any time."
-                    : "Press play to hear the question."}
+                    ? t("placementTest.listening.answerAny")
+                    : t("placementTest.listening.pressPlay")}
             </span>
           )}
         </div>
 
         <div className="text-xs text-slate-500">
-          Plays remaining: {MAX_PLAYS - plays} / {MAX_PLAYS}
+          {t("placementTest.listening.playsRemaining", {
+            remaining: MAX_PLAYS - plays,
+            total: MAX_PLAYS,
+          })}
         </div>
 
         {ttsUnavailable && question.audio_script && (
           <div className="w-full rounded-xl bg-white p-3 text-sm text-slate-700">
-            <span className="font-semibold">Transcript:</span> {question.audio_script}
+            <span className="font-semibold">{t("placementTest.listening.transcript")}</span> {question.audio_script}
           </div>
         )}
       </div>

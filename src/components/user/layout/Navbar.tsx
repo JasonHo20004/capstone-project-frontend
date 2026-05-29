@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, BookOpen, User, Wallet, LogOut, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useUser } from '@/hooks/api/use-user';
 import { NotificationDropdown } from './NotificationDropdown';
 import { CartDropdown } from './CartDropdown';
 import ThemeToggle from '@/components/ThemeToggle';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { cn } from '@/lib/utils';
 
 const scrollToSection = (hash: string) => {
@@ -16,6 +18,7 @@ const scrollToSection = (hash: string) => {
 };
 
 const Navbar = () => {
+  const { t } = useTranslation(['layout', 'common']);
   const [isOpen, setIsOpen] = useState(false);
   const { count } = useCart();
   const location = useLocation();
@@ -25,18 +28,16 @@ const Navbar = () => {
   const isLoggedIn = !!user;
   const isHomePage = location.pathname === '/';
 
-  // Group 1: Page scroll (homepage sections) — order mirrors landing page top-to-bottom
   const scrollLinks = [
-    { to: '/', hash: '', label: 'Trang chủ' },
-    { to: '/#about', hash: 'about', label: 'Giới thiệu' },
-    { to: '/#courses', hash: 'courses', label: 'Khóa học' },
-    { to: '/#pricing', hash: 'pricing', label: 'Bảng giá' },
+    { to: '/', hash: '', i18nKey: 'publicNav.home' },
+    { to: '/#about', hash: 'about', i18nKey: 'publicNav.about' },
+    { to: '/#courses', hash: 'courses', i18nKey: 'publicNav.courses' },
+    { to: '/#pricing', hash: 'pricing', i18nKey: 'publicNav.pricing' },
   ];
 
-  // Group 2: Page navigation (separate routes)
   const pageLinks = [
-    ...(isLoggedIn ? [{ to: '/dashboard', label: 'Khu vực học tập' }] : []),
-    { to: '/flashcards', label: 'Thẻ ghi nhớ', highlight: true },
+    ...(isLoggedIn ? [{ to: '/dashboard', i18nKey: 'publicNav.workspace', highlight: false }] : []),
+    { to: '/flashcards', i18nKey: 'publicNav.flashcards', highlight: true },
   ];
 
   const handleScrollNavClick = (to: string, hash: string) => {
@@ -63,7 +64,6 @@ const Navbar = () => {
   return (
     <header className="glass fixed left-0 right-0 top-0 z-50 border-b border-border/15">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
         <Link
           to="/"
           className="flex items-center gap-2.5 shrink-0 cursor-pointer group"
@@ -72,13 +72,11 @@ const Navbar = () => {
             <BookOpen className="h-4 w-4 text-white" />
           </div>
           <span className="text-lg font-bold tracking-tight text-slate-900 font-display sm:text-xl">
-            SkillBoost
+            {t('app.name', { ns: 'common' })}
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-8">
-          {/* Group 1 - Scroll nav */}
           <div className="flex items-center gap-1">
             {scrollLinks.map((link) => (
               <button
@@ -92,12 +90,11 @@ const Navbar = () => {
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 )}
               >
-                {link.label}
+                {t(link.i18nKey, { ns: 'layout' })}
               </button>
             ))}
           </div>
           <div className="h-4 w-px bg-slate-200" />
-          {/* Group 2 - Page nav */}
           <div className="flex items-center gap-1">
             {pageLinks.map((link) => (
               <NavLink
@@ -118,14 +115,14 @@ const Navbar = () => {
                 {link.highlight && (
                   <Layers className="inline-block w-3.5 h-3.5 mr-1.5 -mt-0.5 align-middle" />
                 )}
-                {link.label}
+                {t(link.i18nKey, { ns: 'layout' })}
               </NavLink>
             ))}
           </div>
         </div>
 
-        {/* Desktop Actions */}
         <div className="hidden lg:flex items-center gap-1">
+          <LanguageSwitcher />
           <ThemeToggle />
           {isLoggedIn ? (
             <>
@@ -157,7 +154,7 @@ const Navbar = () => {
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-1.5" />
-                Đăng xuất
+                {t('auth.logout', { ns: 'layout' })}
               </Button>
             </>
           ) : (
@@ -167,37 +164,35 @@ const Navbar = () => {
                   variant="ghost"
                   className="h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium cursor-pointer"
                 >
-                  Đăng nhập
+                  {t('publicNav.login', { ns: 'layout' })}
                 </Button>
               </Link>
               <Link to="/login?register=1">
                 <Button
                   className="h-9 rounded-lg bg-primary hover:bg-primary/90 text-white font-semibold px-5 cursor-pointer"
                 >
-                  Bắt đầu
+                  {t('publicNav.getStarted', { ns: 'layout' })}
                 </Button>
               </Link>
             </div>
           )}
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
-          aria-label={isOpen ? 'Đóng menu' : 'Mở menu'}
+          aria-label={isOpen ? t('header.closeMenu', { ns: 'layout' }) : t('header.openMenu', { ns: 'layout' })}
         >
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </nav>
 
-      {/* Mobile Menu */}
       {isOpen && (
         <div className="lg:hidden border-t border-slate-200/80 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-4 space-y-1">
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 py-2">
-              Trang chủ
+              {t('publicNav.sectionHome', { ns: 'layout' })}
             </div>
             {scrollLinks.map((link) => (
               <button
@@ -211,11 +206,11 @@ const Navbar = () => {
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 )}
               >
-                {link.label}
+                {t(link.i18nKey, { ns: 'layout' })}
               </button>
             ))}
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 py-2 mt-2">
-              Hệ thống
+              {t('publicNav.sectionSystem', { ns: 'layout' })}
             </div>
             {pageLinks.map((link) => (
               <NavLink
@@ -234,10 +229,14 @@ const Navbar = () => {
                 }
               >
                 {link.highlight && <Layers className="h-4 w-4" />}
-                {link.label}
+                {t(link.i18nKey, { ns: 'layout' })}
               </NavLink>
             ))}
             <div className="pt-3 mt-3 border-t border-slate-200 space-y-1">
+              <div className="flex items-center gap-2 px-3 py-2">
+                <LanguageSwitcher variant="default" />
+                <ThemeToggle variant="default" />
+              </div>
               {isLoggedIn ? (
                 <>
                   <Link
@@ -245,21 +244,21 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
                   >
-                    <span className="text-sm font-medium">Thông báo</span>
+                    <span className="text-sm font-medium">{t('publicNav.notifications', { ns: 'layout' })}</span>
                   </Link>
                   <Link
                     to="/wallet"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
                   >
-                    <span className="text-sm font-medium">Ví</span>
+                    <span className="text-sm font-medium">{t('publicNav.wallet', { ns: 'layout' })}</span>
                   </Link>
                   <Link
                     to="/cart"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
                   >
-                    <span className="text-sm font-medium">Giỏ hàng</span>
+                    <span className="text-sm font-medium">{t('publicNav.cart', { ns: 'layout' })}</span>
                     {count > 0 && (
                       <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
                         {count}
@@ -271,7 +270,7 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
                   >
-                    <span className="text-sm font-medium">Hồ sơ</span>
+                    <span className="text-sm font-medium">{t('publicNav.profile', { ns: 'layout' })}</span>
                   </Link>
                   <button
                     type="button"
@@ -279,19 +278,19 @@ const Navbar = () => {
                     className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 text-left cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
-                    <span className="text-sm font-medium">Đăng xuất</span>
+                    <span className="text-sm font-medium">{t('auth.logout', { ns: 'layout' })}</span>
                   </button>
                 </>
               ) : (
                 <div className="flex flex-col gap-2 pt-2">
                   <Link to="/login" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full h-11 rounded-lg" size="lg">
-                      Đăng nhập
+                      {t('publicNav.login', { ns: 'layout' })}
                     </Button>
                   </Link>
                   <Link to="/login?register=1" onClick={() => setIsOpen(false)}>
                     <Button className="w-full h-11 rounded-lg bg-primary hover:bg-primary/90" size="lg">
-                      Bắt đầu
+                      {t('publicNav.getStarted', { ns: 'layout' })}
                     </Button>
                   </Link>
                 </div>

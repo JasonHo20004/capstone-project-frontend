@@ -1,30 +1,26 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Check, Crown, Zap, Sparkles, Loader2, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUserPlans, useMySubscription } from '@/hooks/api/use-user-subscription';
 import { useUser } from '@/hooks/api/use-user';
-
-const featureDisplayMap: Record<string, string> = {
-  course_access: 'Truy cập khóa học',
-  flashcards: 'Flashcard học từ vựng',
-  basic_tests: 'Bài test cơ bản',
-  ai_speaking: 'AI chấm Speaking',
-  ai_writing: 'AI chấm Writing',
-  dictation: 'Luyện Dictation',
-  learning_path: 'Lộ trình học cá nhân',
-  skill_tree: 'Cây kỹ năng',
-};
 
 const formatVND = (amount: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
 export default function Pricing() {
   const reduce = useReducedMotion();
+  const { t } = useTranslation('landing');
   const { user } = useUser();
   const { data: plans = [], isLoading } = useUserPlans();
   const { data: subscription } = useMySubscription();
+
+  const featureLabel = (key: string): string => {
+    const translated = t(`pricing.features.${key}`, { defaultValue: '' });
+    return translated || key;
+  };
 
   const freePlan = plans.find((p) => p.type === 'FREE');
   const proPlan = plans.find((p) => p.type === 'PRO');
@@ -45,13 +41,13 @@ export default function Pricing() {
         <motion.div {...reveal()} className="mx-auto mb-14 max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-1.5">
             <Sparkles className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-semibold text-amber-700">Gói học tập</span>
+            <span className="text-sm font-semibold text-amber-700">{t('pricing.eyebrow')}</span>
           </div>
           <h2 className="mt-4 font-display text-4xl font-bold tracking-tight md:text-5xl">
-            Chọn gói phù hợp với <span className="text-secondary">hành trình</span> của bạn
+            {t('pricing.title')} <span className="text-secondary">{t('pricing.titleAccent')}</span> {t('pricing.titleTail')}
           </h2>
           <p className="mt-3 text-lg text-muted-foreground">
-            Mở khóa AI chấm Speaking, Writing, lộ trình học cá nhân và nhiều tính năng cao cấp khác.
+            {t('pricing.subtitle')}
           </p>
         </motion.div>
 
@@ -72,7 +68,7 @@ export default function Pricing() {
               >
                 {currentPlanType === 'FREE' && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="border-0 bg-primary px-3 text-primary-foreground">Gói hiện tại</Badge>
+                    <Badge className="border-0 bg-primary px-3 text-primary-foreground">{t('pricing.currentPlan')}</Badge>
                   </div>
                 )}
 
@@ -87,14 +83,14 @@ export default function Pricing() {
                 </div>
 
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-display text-5xl font-extrabold">Miễn phí</span>
+                  <span className="font-display text-5xl font-extrabold">{t('pricing.free')}</span>
                 </div>
 
                 <ul className="mt-6 space-y-3">
                   {freePlan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 flex-shrink-0 text-green-500" />
-                      {featureDisplayMap[f] ?? f}
+                      {featureLabel(f)}
                     </li>
                   ))}
                   {proPlan?.features
@@ -104,7 +100,7 @@ export default function Pricing() {
                         key={f}
                         className="flex items-center gap-2 text-sm text-muted-foreground/60 line-through"
                       >
-                        {featureDisplayMap[f] ?? f}
+                        {featureLabel(f)}
                       </li>
                     ))}
                 </ul>
@@ -117,10 +113,10 @@ export default function Pricing() {
                     disabled={currentPlanType === 'FREE'}
                   >
                     {currentPlanType === 'FREE'
-                      ? 'Đang sử dụng'
+                      ? t('pricing.inUse')
                       : isLoggedIn
-                        ? 'Vào khu vực học'
-                        : 'Bắt đầu miễn phí'}
+                        ? t('pricing.goToDashboard')
+                        : t('pricing.startFree')}
                   </Button>
                 </Link>
               </motion.div>
@@ -137,7 +133,7 @@ export default function Pricing() {
               >
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <Badge className="border-0 bg-gradient-to-r from-amber-500 to-orange-500 px-3 text-white">
-                    {currentPlanType === 'PRO' ? 'Gói hiện tại' : 'Phổ biến nhất'}
+                    {currentPlanType === 'PRO' ? t('pricing.currentPlan') : t('pricing.mostPopular')}
                   </Badge>
                 </div>
 
@@ -158,7 +154,7 @@ export default function Pricing() {
 
                 <div className="relative mt-6 flex items-baseline gap-1">
                   <span className="font-display text-5xl font-extrabold">{formatVND(proPlan.price)}</span>
-                  <span className="text-muted-foreground">/tháng</span>
+                  <span className="text-muted-foreground">{t('pricing.perMonth')}</span>
                 </div>
 
                 <ul className="relative mt-6 space-y-3">
@@ -168,7 +164,7 @@ export default function Pricing() {
                       <li key={f} className="flex items-center gap-2 text-sm">
                         <Check className="h-4 w-4 flex-shrink-0 text-amber-500" />
                         <span className={isProOnly ? 'font-medium' : ''}>
-                          {featureDisplayMap[f] ?? f}
+                          {featureLabel(f)}
                         </span>
                         {isProOnly && (
                           <Badge
@@ -192,11 +188,11 @@ export default function Pricing() {
                     {currentPlanType === 'PRO' ? (
                       <>
                         <Crown className="mr-2 h-4 w-4" />
-                        Đang sử dụng
+                        {t('pricing.inUse')}
                       </>
                     ) : (
                       <>
-                        Nâng cấp lên Pro
+                        {t('pricing.upgradeToPro')}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
@@ -208,7 +204,7 @@ export default function Pricing() {
         )}
 
         <motion.p {...reveal(2)} className="mt-10 text-center text-sm text-muted-foreground">
-          Hủy bất cứ lúc nào · Hoàn tiền theo số ngày còn lại · Thanh toán an toàn qua ví SkillBoost
+          {t('pricing.footnote')}
         </motion.p>
       </div>
     </section>

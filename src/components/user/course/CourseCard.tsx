@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Star, User, ShoppingCart, Loader2, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import type { Course } from "@/domain";
 import { formatVND } from '@/lib/utils';
@@ -21,6 +22,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
   const reduce = useReducedMotion();
   const addToCartMutation = useAddToCart();
   const isInCart = useIsInCart(course.id);
+  const { t } = useTranslation('courses');
   const instructor: { profilePicture?: string; fullName?: string } =
     course.user || course.courseSeller || {};
 
@@ -29,7 +31,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
     e.stopPropagation();
 
     if (!user) {
-      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+      toast.error(t('courseCard.loginRequired'));
       return;
     }
 
@@ -51,7 +53,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
         {purchased && (
           <div className="absolute right-3 top-3 z-10">
             <Badge className="rounded-full bg-secondary/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground ring-1 ring-secondary/30 hover:bg-secondary/15">
-              Đã sở hữu
+              {t('courseCard.purchased')}
             </Badge>
           </div>
         )}
@@ -92,7 +94,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
               </div>
             )}
             <span className="text-xs font-medium text-muted-foreground">
-              {instructor.fullName || 'Unknown Instructor'}
+              {instructor.fullName || t('courseCard.unknownInstructor')}
             </span>
           </div>
 
@@ -117,7 +119,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
                   className="h-9 w-9 rounded-full p-0"
                   onClick={handleAddToCart}
                   disabled={addToCartMutation.isPending || isInCart}
-                  title={isInCart ? "Đã có trong giỏ hàng" : "Thêm vào giỏ hàng"}
+                  title={isInCart ? t('courseCard.alreadyInCart') : t('courseCard.addToCartTitle')}
                 >
                   {addToCartMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

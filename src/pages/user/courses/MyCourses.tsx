@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import CourseCard from '@/components/user/course/CourseCard';
 import { usePurchases } from '@/context/PurchasesContext';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import {
 export default function MyCourses() {
   const { items, isLoading, count } = usePurchases();
   const reduce = useReducedMotion();
+  const { t } = useTranslation('courses');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -41,7 +43,7 @@ export default function MyCourses() {
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-        <p className="font-medium text-muted-foreground">Đang tải khóa học của bạn...</p>
+        <p className="font-medium text-muted-foreground">{t('myCourses.loading')}</p>
       </div>
     );
   }
@@ -80,14 +82,14 @@ export default function MyCourses() {
                 <GraduationCap className="h-5 w-5 text-white" />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-secondary-light">
-                Thư viện học tập
+                {t('myCourses.eyebrow')}
               </span>
             </div>
             <h1 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">
-              Khóa học của bạn
+              {t('myCourses.title')}
             </h1>
             <p className="max-w-md text-sm leading-relaxed text-white/80">
-              Quản lý, theo dõi tiến độ và tiếp tục hành trình học tập của bạn tại đây.
+              {t('myCourses.subtitle')}
             </p>
           </div>
 
@@ -95,17 +97,17 @@ export default function MyCourses() {
             <div className="glass min-w-[120px] rounded-xl px-5 py-4">
               <div className="mb-1 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground">Đã sở hữu</span>
+                <span className="text-xs font-medium text-muted-foreground">{t('myCourses.stats.owned')}</span>
               </div>
               <p className="font-display text-2xl font-extrabold text-foreground">{totalCourses}</p>
             </div>
             <div className="glass min-w-[120px] rounded-xl px-5 py-4">
               <div className="mb-1 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-secondary" />
-                <span className="text-xs font-medium text-muted-foreground">Trạng thái</span>
+                <span className="text-xs font-medium text-muted-foreground">{t('myCourses.stats.status')}</span>
               </div>
               <p className="mt-1 text-sm font-bold text-secondary-foreground">
-                {totalCourses > 0 ? 'Đang học' : 'Chưa bắt đầu'}
+                {totalCourses > 0 ? t('myCourses.stats.studying') : t('myCourses.stats.notStarted')}
               </p>
             </div>
           </div>
@@ -118,7 +120,7 @@ export default function MyCourses() {
           <div className="relative max-w-md flex-1">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm trong khóa học của bạn..."
+              placeholder={t('myCourses.search')}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -126,7 +128,7 @@ export default function MyCourses() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
-              {filteredItems.length} / {totalCourses} khóa học
+              {t('myCourses.filterCount', { filtered: filteredItems.length, total: totalCourses })}
             </span>
             <div className="h-5 w-px bg-border/30" />
             <div className="flex rounded-xl bg-surface-container p-0.5">
@@ -165,24 +167,24 @@ export default function MyCourses() {
               </div>
             </div>
 
-            <h2 className="mb-2 font-display text-2xl font-bold">Bắt đầu hành trình học tập</h2>
+            <h2 className="mb-2 font-display text-2xl font-bold">{t('myCourses.emptyTitle')}</h2>
             <p className="mb-8 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Bạn chưa sở hữu khóa học nào. Khám phá kho khóa học chất lượng và bắt đầu chinh phục mục tiêu của bạn ngay hôm nay!
+              {t('myCourses.emptyDesc')}
             </p>
 
             <Link to="/courses">
               <Button variant="default" size="lg">
                 <Sparkles className="mr-1 h-4 w-4" />
-                Khám phá khóa học
+                {t('myCourses.exploreBtn')}
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
 
             <div className="mt-12 grid w-full max-w-2xl grid-cols-1 gap-4 sm:grid-cols-3">
               {[
-                { icon: BookOpen, title: 'Học mọi lúc', desc: 'Truy cập 24/7 trên mọi thiết bị' },
-                { icon: TrendingUp, title: 'Theo dõi tiến độ', desc: 'Biểu đồ học tập chi tiết' },
-                { icon: GraduationCap, title: 'Chứng chỉ', desc: 'Nhận chứng chỉ khi hoàn thành' },
+                { icon: BookOpen, title: t('myCourses.features.anytime'), desc: t('myCourses.features.anytimeDesc') },
+                { icon: TrendingUp, title: t('myCourses.features.progress'), desc: t('myCourses.features.progressDesc') },
+                { icon: GraduationCap, title: t('myCourses.features.certificate'), desc: t('myCourses.features.certificateDesc') },
               ].map((feature, i) => (
                 <motion.div
                   key={feature.title}
@@ -205,11 +207,11 @@ export default function MyCourses() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-container">
               <Search className="h-7 w-7 text-muted-foreground" />
             </div>
-            <p className="mb-1 font-display text-lg font-semibold">Không tìm thấy kết quả</p>
+            <p className="mb-1 font-display text-lg font-semibold">{t('myCourses.noResults')}</p>
             <p className="text-sm text-muted-foreground">
-              Thử tìm với từ khóa khác hoặc{' '}
+              {t('myCourses.noResultsHint')}{' '}
               <button onClick={() => setSearchQuery('')} className="font-medium text-primary hover:underline">
-                xóa bộ lọc
+                {t('myCourses.clearFilter')}
               </button>
             </p>
           </div>

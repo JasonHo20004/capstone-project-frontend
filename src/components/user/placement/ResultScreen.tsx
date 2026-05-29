@@ -1,18 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import type { PlacementResult } from "@/lib/api/services/user/placement/placement.service";
-
-const LEVEL_DESCRIPTIONS: Record<string, string> = {
-  "Pre-A1":
-    "You are just starting your English journey. You can recognize a few familiar words and simple phrases. Focus on building basic vocabulary and simple sentence patterns.",
-  A1: "You can understand and use familiar everyday expressions and very basic phrases. You can introduce yourself and ask simple personal questions.",
-  A2: "You can communicate in simple, routine tasks. You can describe your background, immediate environment, and matters of immediate need in simple terms.",
-  B1: "You can deal with most situations likely to arise while travelling. You can produce simple connected text on familiar topics and briefly give reasons and explanations for opinions and plans.",
-  B2: "You can interact with a degree of fluency and spontaneity with native speakers. You can produce clear, detailed text on a wide range of subjects and explain a viewpoint on a topical issue.",
-  C1: "You can express yourself fluently and spontaneously without much obvious searching for expressions. You can use language flexibly and effectively for social, academic, and professional purposes.",
-  C2: "You can understand with ease virtually everything heard or read. You can express yourself spontaneously, very fluently, and precisely, differentiating finer shades of meaning even in complex situations.",
-};
 
 const LEVEL_GRADIENTS: Record<string, string> = {
   "Pre-A1": "from-rose-500 via-orange-500 to-amber-500",
@@ -25,13 +15,13 @@ const LEVEL_GRADIENTS: Record<string, string> = {
 };
 
 const COMPARISON_ROWS = [
-  { cefr: "Pre-A1", desc: "Beginner", ielts: "< 3.0", toeic: "0–219" },
-  { cefr: "A1", desc: "Elementary", ielts: "3.0", toeic: "220–344" },
-  { cefr: "A2", desc: "Pre-Intermediate", ielts: "3.5–4.0", toeic: "345–549" },
-  { cefr: "B1", desc: "Intermediate", ielts: "4.5–5.5", toeic: "550–784" },
-  { cefr: "B2", desc: "Upper-Intermediate", ielts: "6.0–6.5", toeic: "785–944" },
-  { cefr: "C1", desc: "Advanced", ielts: "7.0–8.0", toeic: "945+" },
-  { cefr: "C2", desc: "Proficiency", ielts: "8.5–9.0", toeic: "945+" },
+  { cefr: "Pre-A1", ielts: "< 3.0", toeic: "0–219" },
+  { cefr: "A1", ielts: "3.0", toeic: "220–344" },
+  { cefr: "A2", ielts: "3.5–4.0", toeic: "345–549" },
+  { cefr: "B1", ielts: "4.5–5.5", toeic: "550–784" },
+  { cefr: "B2", ielts: "6.0–6.5", toeic: "785–944" },
+  { cefr: "C1", ielts: "7.0–8.0", toeic: "945+" },
+  { cefr: "C2", ielts: "8.5–9.0", toeic: "945+" },
 ];
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -63,6 +53,7 @@ interface ResultScreenProps {
 
 export function ResultScreen({ result, onRetake }: ResultScreenProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation("exam");
   const level = result.cefr_level ?? "A1";
   const label = result.cefr_label ?? "";
   const totalScore = useCountUp(result.raw_score ?? 0);
@@ -84,7 +75,7 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
         className="relative text-center"
       >
         <div className="text-sm font-semibold uppercase tracking-widest text-slate-500">
-          Your level
+          {t("placementTest.resultScreen.yourLevel")}
         </div>
         <div className="relative mx-auto mt-5 inline-block">
           <motion.div
@@ -114,7 +105,7 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
           transition={{ delay: 0.55, duration: 0.4 }}
           className="mt-1 text-sm text-slate-500"
         >
-          Congratulations on completing the placement test!
+          {t("placementTest.resultScreen.congrats")}
         </motion.p>
       </motion.div>
 
@@ -125,7 +116,9 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
         className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
       >
         <div className="flex items-baseline justify-between">
-          <span className="text-sm font-medium text-slate-500">Total score</span>
+          <span className="text-sm font-medium text-slate-500">
+            {t("placementTest.resultScreen.totalScore")}
+          </span>
           <span className="font-bold text-slate-900">
             <span className="text-4xl">{totalScore}</span>
             <span className="text-xl text-slate-400"> / {result.max_score ?? 85}</span>
@@ -134,9 +127,24 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
         </div>
 
         <div className="mt-6 space-y-5">
-          <SectionRow title="Section 1 — Grammar & Vocabulary" earned={sec1.earned} max={sec1.max} delay={0.4} />
-          <SectionRow title="Section 2 — Reading" earned={sec2.earned} max={sec2.max} delay={0.55} />
-          <SectionRow title="Section 3 — Listening" earned={sec3.earned} max={sec3.max} delay={0.7} />
+          <SectionRow
+            title={t("placementTest.resultScreen.sectionTitles.1")}
+            earned={sec1.earned}
+            max={sec1.max}
+            delay={0.4}
+          />
+          <SectionRow
+            title={t("placementTest.resultScreen.sectionTitles.2")}
+            earned={sec2.earned}
+            max={sec2.max}
+            delay={0.55}
+          />
+          <SectionRow
+            title={t("placementTest.resultScreen.sectionTitles.3")}
+            earned={sec3.earned}
+            max={sec3.max}
+            delay={0.7}
+          />
         </div>
       </motion.div>
 
@@ -148,9 +156,13 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
       >
         <h3 className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
           <span className={`inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-br ${gradient}`} />
-          About your level
+          {t("placementTest.resultScreen.aboutLevel")}
         </h3>
-        <p className="leading-relaxed text-slate-700">{LEVEL_DESCRIPTIONS[level]}</p>
+        <p className="leading-relaxed text-slate-700">
+          {t(`placementTest.resultScreen.levelDescriptions.${level}`, {
+            defaultValue: t("placementTest.resultScreen.levelDescriptions.A1"),
+          })}
+        </p>
       </motion.div>
 
       <motion.div
@@ -162,10 +174,10 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
         <table className="w-full text-left">
           <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-600">
             <tr>
-              <th className="px-4 py-3">CEFR</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3">IELTS</th>
-              <th className="px-4 py-3">TOEIC</th>
+              <th className="px-4 py-3">{t("placementTest.resultScreen.comparisonHeaders.cefr")}</th>
+              <th className="px-4 py-3">{t("placementTest.resultScreen.comparisonHeaders.description")}</th>
+              <th className="px-4 py-3">{t("placementTest.resultScreen.comparisonHeaders.ielts")}</th>
+              <th className="px-4 py-3">{t("placementTest.resultScreen.comparisonHeaders.toeic")}</th>
             </tr>
           </thead>
           <tbody>
@@ -184,7 +196,9 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
                   }
                 >
                   <td className="px-4 py-3">{isMine ? `→ ${row.cefr}` : row.cefr}</td>
-                  <td className="px-4 py-3">{row.desc}</td>
+                  <td className="px-4 py-3">
+                    {t(`placementTest.resultScreen.comparisonDescriptions.${row.cefr}`)}
+                  </td>
                   <td className="px-4 py-3">{row.ielts}</td>
                   <td className="px-4 py-3">{row.toeic}</td>
                 </motion.tr>
@@ -206,7 +220,7 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
           whileHover={{ scale: 1.02 }}
           className="flex-1 rounded-full border-2 border-slate-300 py-3 font-semibold text-slate-800 transition hover:bg-slate-50"
         >
-          Retake Test
+          {t("placementTest.resultScreen.retake")}
         </motion.button>
         <motion.button
           onClick={() => navigate("/dashboard")}
@@ -214,7 +228,7 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
           whileHover={{ scale: 1.02 }}
           className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600"
         >
-          Back to Learning Hub
+          {t("placementTest.resultScreen.backToHub")}
         </motion.button>
       </motion.div>
     </div>

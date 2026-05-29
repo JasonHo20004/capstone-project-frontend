@@ -1,15 +1,9 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Field, OptionCard, SectionHeader, InfoCallout, PreviewCard } from "./shared";
 import type { CefrLevel, LearnerProfile, PlacementBaseline } from "./types";
 
-const CEFR_LEVELS: Array<{ value: CefrLevel; label: string; description: string }> = [
-  { value: "A1", label: "A1", description: "Beginner — basic everyday phrases" },
-  { value: "A2", label: "A2", description: "Elementary — simple routine tasks" },
-  { value: "B1", label: "B1", description: "Intermediate — main ideas of familiar topics" },
-  { value: "B2", label: "B2", description: "Upper-intermediate — complex texts and arguments" },
-  { value: "C1", label: "C1", description: "Advanced — flexible & effective use of English" },
-  { value: "C2", label: "C2", description: "Proficient — near-native command" },
-];
+const CEFR_LEVELS: CefrLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 interface Step1Props {
   baseline: PlacementBaseline;
@@ -18,10 +12,10 @@ interface Step1Props {
   onNext: () => void;
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "Not available";
+function formatDate(iso: string | null, locale: string, fallback: string): string {
+  if (!iso) return fallback;
   try {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -37,15 +31,17 @@ export default function Step1Placement({
   onUpdate,
   onNext,
 }: Step1Props) {
+  const { t, i18n } = useTranslation("exam");
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-GB";
   const hasPlacement = Boolean(baseline.cefrLevel);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <SectionHeader
-          title="Confirm your starting level"
-          description="Your placement test result is the baseline. You can override it if you've already improved."
-          badge="Step 1 of 4"
+          title={t("learningPath.step1.title")}
+          description={t("learningPath.step1.description")}
+          badge={t("learningPath.step1.badge")}
         />
 
         {hasPlacement ? (
@@ -53,18 +49,24 @@ export default function Step1Placement({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
-                  Most recent placement
+                  {t("learningPath.step1.placement.recent")}
                 </p>
                 <p className="mt-1 text-3xl font-black text-slate-900">
                   {baseline.cefrLevel}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Taken {formatDate(baseline.takenAt)}
+                  {t("learningPath.step1.placement.takenOn", {
+                    date: formatDate(
+                      baseline.takenAt,
+                      dateLocale,
+                      t("learningPath.step1.placement.notAvailable"),
+                    ),
+                  })}
                 </p>
               </div>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                Recent placement result
+                {t("learningPath.step1.placement.recentBadge")}
               </span>
             </div>
             {baseline.skillBreakdown && (
@@ -85,10 +87,9 @@ export default function Step1Placement({
           <div className="mb-6">
             <InfoCallout
               tone="warning"
-              title="No placement result on record"
+              title={t("learningPath.step1.noPlacement.title")}
             >
-              Take a quick placement test so SkillBoost can pinpoint your CEFR level. You
-              can still continue manually below — accuracy will be limited.
+              {t("learningPath.step1.noPlacement.body")}
             </InfoCallout>
             <div className="mt-3 flex flex-wrap gap-3">
               <Link
@@ -96,25 +97,33 @@ export default function Step1Placement({
                 className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60"
               >
                 <span className="material-symbols-outlined text-[18px]">quiz</span>
-                Take placement test
+                {t("learningPath.step1.noPlacement.takeTest")}
               </Link>
             </div>
           </div>
         )}
 
         <Field
-          label={hasPlacement ? "Override level (optional)" : "Select your level"}
-          hint="CEFR levels describe overall English ability — we'll personalize per skill later."
+          label={
+            hasPlacement
+              ? t("learningPath.step1.levelField.labelOverride")
+              : t("learningPath.step1.levelField.labelSelect")
+          }
+          hint={t("learningPath.step1.levelField.hint")}
         >
-          <div role="radiogroup" aria-label="CEFR level" className="grid gap-2.5 sm:grid-cols-2">
+          <div
+            role="radiogroup"
+            aria-label={t("learningPath.step1.levelField.ariaLabel")}
+            className="grid gap-2.5 sm:grid-cols-2"
+          >
             {CEFR_LEVELS.map((level) => (
               <OptionCard
-                key={level.value}
-                value={level.value}
-                selected={profile.cefrLevel === level.value}
+                key={level}
+                value={level}
+                selected={profile.cefrLevel === level}
                 onSelect={(v) => onUpdate({ cefrLevel: v })}
-                title={level.label}
-                description={level.description}
+                title={level}
+                description={t(`learningPath.step1.cefr.${level}`)}
               />
             ))}
           </div>
@@ -125,7 +134,7 @@ export default function Step1Placement({
             to="/dashboard"
             className="text-sm font-medium text-slate-500 hover:text-slate-700"
           >
-            ← Back to dashboard
+            {t("learningPath.step1.backDashboard")}
           </Link>
           <button
             type="button"
@@ -133,28 +142,37 @@ export default function Step1Placement({
             disabled={!profile.cefrLevel}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60"
           >
-            Continue
+            {t("learningPath.common.continue")}
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </div>
       </div>
 
       <PreviewCard
-        title="Why CEFR matters"
-        description="CEFR is your baseline, but we'll combine it with your goal, schedule and learning style to truly personalize the plan."
+        title={t("learningPath.step1.preview.title")}
+        description={t("learningPath.step1.preview.description")}
       >
         <div className="space-y-2 text-xs text-slate-600">
           <div className="flex items-start gap-2">
             <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-100 text-[10px] font-bold text-cyan-700">1</span>
-            <span><strong>Baseline only.</strong> Two B1 learners can have very different weak spots.</span>
+            <span>
+              <strong>{t("learningPath.step1.preview.bullet1Strong")}</strong>{" "}
+              {t("learningPath.step1.preview.bullet1Text")}
+            </span>
           </div>
           <div className="flex items-start gap-2">
             <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-100 text-[10px] font-bold text-cyan-700">2</span>
-            <span><strong>Layered with skill data.</strong> When skill breakdown becomes available, we'll prioritize automatically.</span>
+            <span>
+              <strong>{t("learningPath.step1.preview.bullet2Strong")}</strong>{" "}
+              {t("learningPath.step1.preview.bullet2Text")}
+            </span>
           </div>
           <div className="flex items-start gap-2">
             <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-100 text-[10px] font-bold text-cyan-700">3</span>
-            <span><strong>Tracked over time.</strong> Retake placement to keep your plan calibrated.</span>
+            <span>
+              <strong>{t("learningPath.step1.preview.bullet3Strong")}</strong>{" "}
+              {t("learningPath.step1.preview.bullet3Text")}
+            </span>
           </div>
         </div>
       </PreviewCard>

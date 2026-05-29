@@ -1,0 +1,140 @@
+{
+  "about": {
+    "hero": {
+      "title": "Về SkillBoost",
+      "subtitle": "Trao quyền cho người học trên toàn thế giới để làm chủ tiếng Anh và đạt được ước mơ"
+    },
+    "stats": {
+      "activeStudents": "Học viên đang hoạt động",
+      "courses": "Khoá học chuyên sâu",
+      "successRate": "Tỷ lệ thành công",
+      "countries": "Quốc gia"
+    },
+    "story": {
+      "title": "Câu chuyện của chúng tôi",
+      "p1": "Được thành lập năm 2020, SkillBoost ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.",
+      "p2": "Bắt đầu từ một đội ngũ nhỏ đầy nhiệt huyết, chúng tôi đã phát triển thành nền tảng toàn cầu phục vụ hàng nghìn học viên tại hơn 50 quốc gia. Cam kết về chất lượng và thành công của học viên luôn được giữ vững.",
+      "p3": "Ngày nay, chúng tôi tiếp tục đổi mới và cải tiến khóa học để đảm bảo mỗi học viên nhận được trải nghiệm học tập tốt nhất. Hãy cùng chúng tôi trên hành trình chinh phục tiếng Anh.",
+      "imgAlt": "Câu chuyện của chúng tôi"
+    },
+    "values": {
+      "title": "Giá trị cốt lõi",
+      "subtitle": "Những nguyên tắc định hướng mọi hoạt động của chúng tôi",
+      "items": {
+        "mission": {
+          "title": "Sứ mệnh của chúng tôi",
+          "description": "Mang giáo dục tiếng Anh chất lượng đến với mọi người, mọi nơi và trao quyền cho người học đạt được mục tiêu."
+        },
+        "experts": {
+          "title": "Đội ngũ chuyên gia",
+          "description": "Giảng viên là các chuyên gia được chứng nhận, giàu kinh nghiệm và đam mê giảng dạy."
+        },
+        "quality": {
+          "title": "Chất lượng là trên hết",
+          "description": "Duy trì tiêu chuẩn cao nhất trong nội dung khóa học, cách triển khai và hỗ trợ học viên."
+        },
+        "studentSuccess": {
+          "title": "Thành công của học viên",
+          "description": "Sự thành công của bạn là ưu tiên của chúng tôi. Luôn đồng hành và hỗ trợ trong suốt hành trình học tập."
+        }
+      }
+    },
+    "team": {
+      "title": "Đội ngũ giảng viên",
+      "subtitle": "Học với các chuyên gia giàu kinh nghiệm, tận tâm với thành công của bạn",
+      "members": {
+        "sarah": "Giảng viên trưởng",
+        "michael": "Chuyên gia tiếng Anh thương mại",
+        "emma": "Chuyên gia IELTS",
+        "david": "Huấn luyện viên Speaking"
+      }
+    },
+    "cta": {
+      "title": "Tham gia cộng đồng đang phát triển của chúng tôi",
+      "subtitle": "Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành và hỗ trợ từ các chuyên gia",
+      "exploreCourses": "Khám phá khóa học"
+    }
+  },
+  "contact": {
+    "hero": {
+      "title": "Liên hệ với chúng tôi",
+      "subtitle": "Bạn có câu hỏi? Hãy gửi tin nhắn cho chúng tôi và chúng tôi sẽ phản hồi trong thời gian sớm nhất."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Gọi cho chúng tôi",
+      "address": "Địa chỉ",
+      "addressValue": "123 Learning Street, Education City, EC 12345"
+    },
+    "form": {
+      "title": "Gửi tin nhắn cho chúng tôi",
+      "name": "Họ và tên",
+      "namePlaceholder": "Nguyễn Văn A",
+      "email": "Địa chỉ email",
+      "emailPlaceholder": "ten@example.com",
+      "subject": "Chủ đề",
+      "subjectPlaceholder": "Chúng tôi có thể giúp gì cho bạn?",
+      "message": "Nội dung",
+      "messagePlaceholder": "Hãy mô tả chi tiết về yêu cầu của bạn...",
+      "submit": "Gửi tin nhắn"
+    },
+    "toast": {
+      "title": "Đã gửi tin nhắn!",
+      "description": "Chúng tôi sẽ phản hồi bạn sớm nhất có thể."
+    },
+    "map": {
+      "label": "Vị trí bản đồ",
+      "addressShort": "123 Learning Street, Education City"
+    }
+  },
+  "blog": {
+    "hero": {
+      "title": "Tài nguyên và mẹo học tập",
+      "subtitle": "Lời khuyên từ chuyên gia, mẹo học tập và góc nhìn giúp bạn chinh phục tiếng Anh"
+    },
+    "featuredBadge": "Nổi bật",
+    "readMore": "Đọc bài viết",
+    "latestArticles": "Bài viết mới nhất",
+    "newsletter": {
+      "title": "Đăng ký nhận bản tin",
+      "subtitle": "Nhận mẹo học và tài nguyên mới nhất qua email",
+      "placeholder": "Nhập email của bạn",
+      "submit": "Đăng ký"
+    },
+    "readTime": "Đọc trong {{minutes}} phút",
+    "categories": {
+      "studyTips": "Mẹo học tập",
+      "methodology": "Phương pháp học",
+      "business": "Tiếng Anh thương mại",
+      "grammar": "Ngữ pháp",
+      "testPrep": "Luyện thi",
+      "vocabulary": "Từ vựng"
+    },
+    "posts": {
+      "tips10": {
+        "title": "10 mẹo thiết yếu để học tiếng Anh nhanh hơn",
+        "excerpt": "Khám phá các chiến lược đã được chứng minh để tăng tốc hành trình học tiếng Anh và đạt độ lưu loát nhanh hơn bạn nghĩ."
+      },
+      "immersion": {
+        "title": "Sức mạnh của sự đắm chìm: Cách tạo môi trường tiếng Anh",
+        "excerpt": "Tìm hiểu cách bao quanh mình bằng tiếng Anh trong cuộc sống hằng ngày và tăng tốc học tập thông qua kỹ thuật immersion."
+      },
+      "businessEnglish": {
+        "title": "Làm chủ tiếng Anh thương mại: Hướng dẫn đầy đủ",
+        "excerpt": "Tất cả những gì bạn cần biết về giao tiếp tiếng Anh chuyên nghiệp, từ email đến thuyết trình."
+      },
+      "grammarMistakes": {
+        "title": "Các lỗi ngữ pháp thường gặp và cách tránh",
+        "excerpt": "Nhận diện và sửa các lỗi ngữ pháp phổ biến mà người học tiếng Anh hay mắc phải, kèm ví dụ thực tế."
+      },
+      "ieltsSpeaking": {
+        "title": "Thi Speaking IELTS: Chiến lược đạt Band 7+",
+        "excerpt": "Mẹo từ giám khảo IELTS giúp bạn vượt qua bài thi speaking và đạt band điểm mục tiêu."
+      },
+      "vocabulary": {
+        "title": "Xây dựng từ vựng: Đúng cách",
+        "excerpt": "Các kỹ thuật hiệu quả để mở rộng vốn từ và ghi nhớ lâu dài."
+      }
+    }
+  }
+}

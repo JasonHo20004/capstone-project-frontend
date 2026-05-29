@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -27,36 +28,38 @@ import { useAIAdvisor } from "@/hooks/use-ai-advisor";
 import { useAIInsights } from "@/hooks/use-ai-insights";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { UpgradeToProButton } from "./UpgradeToProButton";
 import { ProAvatar, ProBadge } from "./ProAvatar";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
-  name: string;
+  i18nKey: string;
   path: string;
   icon: LucideIcon;
 };
 
 const navItems: NavItem[] = [
-  { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { name: "My Courses", path: "/my-courses", icon: BookOpen },
-  { name: "Flashcards", path: "/flashcards", icon: Layers },
-  { name: "Cart", path: "/cart", icon: ShoppingCart },
-  { name: "Wallet", path: "/wallet", icon: WalletIcon },
-  { name: "Notifications", path: "/notifications", icon: Bell },
+  { i18nKey: "nav.dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { i18nKey: "nav.myCourses", path: "/my-courses", icon: BookOpen },
+  { i18nKey: "nav.flashcards", path: "/flashcards", icon: Layers },
+  { i18nKey: "nav.cart", path: "/cart", icon: ShoppingCart },
+  { i18nKey: "nav.wallet", path: "/wallet", icon: WalletIcon },
+  { i18nKey: "nav.notifications", path: "/notifications", icon: Bell },
 ];
 
 const aiNavItems: NavItem[] = [
-  { name: "Exam Center", path: "/exam", icon: GraduationCap },
-  { name: "My Progress", path: "/my-progress", icon: BarChart3 },
-  { name: "Skill Tree", path: "/skill-tree", icon: Network },
-  { name: "Dictation", path: "/dictation", icon: Headphones },
-  { name: "Learning Path", path: "/learning-path", icon: RouteIcon },
-  { name: "Live Classroom", path: "/live", icon: Tv },
+  { i18nKey: "nav.examCenter", path: "/exam", icon: GraduationCap },
+  { i18nKey: "nav.myProgress", path: "/my-progress", icon: BarChart3 },
+  { i18nKey: "nav.skillTree", path: "/skill-tree", icon: Network },
+  { i18nKey: "nav.dictation", path: "/dictation", icon: Headphones },
+  { i18nKey: "nav.learningPath", path: "/learning-path", icon: RouteIcon },
+  { i18nKey: "nav.liveClassroom", path: "/live", icon: Tv },
 ];
 
 export default function UserAppLayout() {
+  const { t } = useTranslation(["layout", "common"]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -84,31 +87,38 @@ export default function UserAppLayout() {
     const current = allNavItems.find((item) =>
       item.path === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.path)
     );
-    return current?.name ?? "Learning Workspace";
-  }, [location.pathname, allNavItems]);
+    return current ? t(current.i18nKey, { ns: "layout" }) : t("header.pageDefault", { ns: "layout" });
+  }, [location.pathname, allNavItems, t]);
 
-  const renderNavLink = (item: NavItem) => (
-    <NavLink
-      key={item.path}
-      to={item.path}
-      end={item.path === "/dashboard"}
-      onClick={() => setIsMobileMenuOpen(false)}
-      title={item.name}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200",
-          isActive
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-        )
-      }
-    >
-      <item.icon className="h-5 w-5 shrink-0" />
-      <span className="whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 max-md:opacity-100 max-md:translate-x-0">
-        {item.name}
-      </span>
-    </NavLink>
-  );
+  const renderNavLink = (item: NavItem) => {
+    const label = t(item.i18nKey, { ns: "layout" });
+    return (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        end={item.path === "/dashboard"}
+        onClick={() => setIsMobileMenuOpen(false)}
+        title={label}
+        className={({ isActive }) =>
+          cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200",
+            isActive
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          )
+        }
+      >
+        <item.icon className="h-5 w-5 shrink-0" />
+        <span className="whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 max-md:opacity-100 max-md:translate-x-0">
+          {label}
+        </span>
+      </NavLink>
+    );
+  };
+
+  const roleLabel = user?.role
+    ? t(`roles.${user.role}`, { ns: "common", defaultValue: t("header.learner", { ns: "layout" }) })
+    : t("header.learner", { ns: "layout" });
 
   return (
     <div className="flex h-screen w-full bg-background font-sans overflow-hidden">
@@ -130,14 +140,14 @@ export default function UserAppLayout() {
             <GraduationCap className="h-5 w-5 text-primary" />
           </div>
           <div className="overflow-hidden whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 max-md:opacity-100 max-md:translate-x-0">
-            <h2 className="font-semibold font-display tracking-tight leading-tight">SkillBoost</h2>
-            <p className="text-[10px] text-muted-foreground leading-tight">Khu vực học tập</p>
+            <h2 className="font-semibold font-display tracking-tight leading-tight">{t("app.name", { ns: "common" })}</h2>
+            <p className="text-[10px] text-muted-foreground leading-tight">{t("app.tagline", { ns: "common" })}</p>
           </div>
           <button
             type="button"
             className="ml-auto md:hidden text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="Đóng menu"
+            aria-label={t("header.closeMenu", { ns: "layout" })}
           >
             <X className="h-5 w-5" />
           </button>
@@ -148,7 +158,7 @@ export default function UserAppLayout() {
 
           <div className="pt-3 mt-2 border-t border-border/60">
             <div className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity duration-300">
-              AI Features
+              {t("nav.aiFeatures", { ns: "layout" })}
             </div>
             <div className="space-y-1">
               {aiNavItems.map(renderNavLink)}
@@ -160,12 +170,12 @@ export default function UserAppLayout() {
           <button
             type="button"
             onClick={() => logout()}
-            title="Đăng xuất"
+            title={t("auth.logout", { ns: "layout" })}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
           >
             <LogOut className="h-5 w-5 shrink-0" />
             <span className="whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 max-md:opacity-100 max-md:translate-x-0">
-              Đăng xuất
+              {t("auth.logout", { ns: "layout" })}
             </span>
           </button>
         </div>
@@ -179,7 +189,7 @@ export default function UserAppLayout() {
                 type="button"
                 className="md:hidden text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setIsMobileMenuOpen(true)}
-                aria-label="Mở menu"
+                aria-label={t("header.openMenu", { ns: "layout" })}
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -188,6 +198,7 @@ export default function UserAppLayout() {
 
             <div className="flex items-center gap-2">
               {!isProUser && <UpgradeToProButton />}
+              <LanguageSwitcher />
               <ThemeToggle />
               <NotificationDropdown userId={user?.id} />
               <CartDropdown />
@@ -204,14 +215,12 @@ export default function UserAppLayout() {
                 <div className="hidden md:block text-left mr-2">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-semibold text-foreground leading-none">
-                      {user?.fullName ?? "Learner"}
+                      {user?.fullName ?? t("header.learner", { ns: "layout" })}
                     </p>
                     {isProUser && <ProBadge />}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {user?.role === 'ADMINISTRATOR' ? 'Quản trị viên'
-                      : user?.role === 'COURSESELLER' ? 'Giảng viên'
-                      : 'Học viên'}
+                    {roleLabel}
                   </p>
                 </div>
               </NavLink>

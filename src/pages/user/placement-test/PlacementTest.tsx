@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Trans, useTranslation } from "react-i18next";
 import {
   useGeneratePlacementExam,
   useSubmitPlacementExam,
@@ -64,6 +65,7 @@ const isActivePhase = (p: Phase) => ACTIVE_PHASES.includes(p);
 
 export default function PlacementTest() {
   const navigate = useNavigate();
+  const { t } = useTranslation("exam");
   const { user: profile, isLoading: profileLoading, isError: profileError } = useProfile();
   const userId = profile?.id ?? "";
 
@@ -279,9 +281,9 @@ export default function PlacementTest() {
         isLoading={profileLoading || generateMut.isPending}
         error={
           profileError
-            ? "Could not load your profile. Please refresh and try again."
+            ? t("placementTest.errors.profileLoad")
             : generateMut.isError
-              ? "Failed to load test. Please try again."
+              ? t("placementTest.errors.generate")
               : null
         }
       />
@@ -311,7 +313,7 @@ export default function PlacementTest() {
       "break1",
       <BreakScreen
         durationSeconds={BREAK_SECONDS}
-        nextSectionTitle={`Section 2 — ${next.title}`}
+        nextSectionTitle={t("placementTest.section.nextHeader", { number: 2, title: next.title })}
         nextSectionQuestions={next.questions.length}
         nextSectionTimePer={next.time_per_question}
         onComplete={() => startSection(1)}
@@ -325,7 +327,7 @@ export default function PlacementTest() {
       "break2",
       <BreakScreen
         durationSeconds={BREAK_SECONDS}
-        nextSectionTitle={`Section 3 — ${next.title}`}
+        nextSectionTitle={t("placementTest.section.nextHeader", { number: 3, title: next.title })}
         nextSectionQuestions={next.questions.length}
         nextSectionTimePer={next.time_per_question}
         onComplete={() => startSection(2)}
@@ -341,8 +343,8 @@ export default function PlacementTest() {
         className="flex min-h-[60vh] flex-col items-center justify-center gap-6"
       >
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-teal-200 border-t-teal-500" />
-        <p className="text-xl font-medium text-slate-700">Analyzing your answers…</p>
-        <p className="text-sm text-slate-500">Calculating your level…</p>
+        <p className="text-xl font-medium text-slate-700">{t("placementTest.analyzing.title")}</p>
+        <p className="text-sm text-slate-500">{t("placementTest.analyzing.subtitle")}</p>
       </motion.div>
     );
   }
@@ -366,11 +368,14 @@ export default function PlacementTest() {
 
   // === Active question ===
   if (!exam || !section || !question) {
-    return <div className="p-8 text-center text-slate-500">Loading…</div>;
+    return <div className="p-8 text-center text-slate-500">{t("placementTest.loading")}</div>;
   }
 
   const stored = answers.get(question.id);
-  const sectionLabel = `Section ${section.section}: ${section.title.toUpperCase()}`;
+  const sectionLabel = t("placementTest.section.label", {
+    number: section.section,
+    title: section.title.toUpperCase(),
+  });
 
   return (
     <>
@@ -384,7 +389,7 @@ export default function PlacementTest() {
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Back to Learning Hub
+            {t("placementTest.backToHub")}
           </button>
           <Timer
             seconds={question.time_limit}
@@ -451,7 +456,7 @@ export default function PlacementTest() {
               animate={{ opacity: 1 }}
               className="text-xs text-slate-400"
             >
-              Take a moment to read…
+              {t("placementTest.readingHint")}
             </motion.span>
           )}
           <motion.button
@@ -467,7 +472,7 @@ export default function PlacementTest() {
                 : "bg-slate-200 text-slate-400 cursor-not-allowed",
             ].join(" ")}
           >
-            {question.type === "reorder" ? "Confirm Order" : "Next →"}
+            {question.type === "reorder" ? t("placementTest.confirmOrder") : t("placementTest.nextArrow")}
           </motion.button>
         </div>
       </div>
@@ -496,6 +501,7 @@ function ExitConfirmModal({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useTranslation("exam");
   return (
     <AnimatePresence>
       {open && (
@@ -527,13 +533,15 @@ function ExitConfirmModal({
                 </svg>
               </div>
               <h3 id="exit-modal-title" className="text-xl font-bold text-slate-900">
-                Leave the placement test?
+                {t("placementTest.exitModal.title")}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                If you exit now,{" "}
-                <span className="font-semibold">your current session will be cancelled</span> and
-                your answers will <span className="font-semibold">not be saved</span>. You'll need
-                to start over from the beginning if you want to take the test again.
+                <Trans
+                  i18nKey="placementTest.exitModal.body"
+                  ns="exam"
+                  components={{ strong: <span className="font-semibold" /> }}
+                  defaults="If you exit now, <strong>your current session will be cancelled</strong> and your answers will <strong>not be saved</strong>. You'll need to start over from the beginning if you want to take the test again."
+                />
               </p>
             </div>
 
@@ -543,14 +551,14 @@ function ExitConfirmModal({
                 onClick={onCancel}
                 className="rounded-full border-2 border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Continue test
+                {t("placementTest.exitModal.continue")}
               </button>
               <button
                 type="button"
                 onClick={onConfirm}
                 className="rounded-full bg-rose-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-rose-600"
               >
-                Exit & cancel session
+                {t("placementTest.exitModal.confirm")}
               </button>
             </div>
           </motion.div>

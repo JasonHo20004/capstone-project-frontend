@@ -1,0 +1,106 @@
+{
+  "app": {
+    "name": "SkillBoost",
+    "tagline": "Khu vực học tập"
+  },
+  "actions": {
+    "save": "Lưu",
+    "cancel": "Huỷ",
+    "confirm": "Xác nhận",
+    "delete": "Xoá",
+    "edit": "Sửa",
+    "create": "Tạo",
+    "update": "Cập nhật",
+    "back": "Quay lại",
+    "next": "Tiếp",
+    "previous": "Trước",
+    "submit": "Gửi",
+    "search": "Tìm kiếm",
+    "loading": "Đang tải...",
+    "retry": "Thử lại",
+    "close": "Đóng",
+    "view": "Xem",
+    "viewAll": "Xem tất cả",
+    "viewDetails": "Xem chi tiết",
+    "more": "Thêm",
+    "less": "Thu gọn",
+    "yes": "Có",
+    "no": "Không",
+    "continue": "Tiếp tục",
+    "start": "Bắt đầu",
+    "finish": "Hoàn tất",
+    "saving": "Đang lưu...",
+    "saved": "Đã lưu",
+    "savingFailed": "Lưu thất bại",
+    "retrySave": "Thử lưu lại",
+    "send": "Gửi",
+    "filter": "Lọc",
+    "reset": "Đặt lại",
+    "apply": "Áp dụng",
+    "select": "Chọn",
+    "upload": "Tải lên",
+    "download": "Tải xuống"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Ngưng hoạt động",
+    "completed": "Hoàn tất",
+    "pending": "Đang chờ",
+    "inProgress": "Đang thực hiện",
+    "failed": "Thất bại",
+    "success": "Thành công",
+    "error": "Lỗi",
+    "empty": "Chưa có dữ liệu"
+  },
+  "labels": {
+    "email": "Email",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "name": "Tên",
+    "fullName": "Họ và tên",
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "role": "Vai trò",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "settings": "Cài đặt"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "switchTo": "Đổi ngôn ngữ"
+  },
+  "theme": {
+    "label": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Theo hệ thống",
+    "switchTo": "Đổi giao diện"
+  },
+  "errors": {
+    "title": "Đã xảy ra lỗi",
+    "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+    "network": "Lỗi mạng. Vui lòng kiểm tra kết nối.",
+    "notFound": "Không tìm thấy",
+    "unauthorized": "Bạn không có quyền truy cập.",
+    "required": "Trường này là bắt buộc."
+  },
+  "roles": {
+    "ADMINISTRATOR": "Quản trị viên",
+    "COURSESELLER": "Giảng viên",
+    "STUDENT": "Học viên"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Rất tiếc! Không tìm thấy trang",
+    "backHome": "Về Trang chủ"
+  },
+  "backToTop": "Cuộn lên đầu trang",
+  "relativeTime": {
+    "justNow": "Vừa xong",
+    "minutesAgo": "{{count}} phút trước",
+    "hoursAgo": "{{count}} giờ trước",
+    "daysAgo": "{{count}} ngày trước"
+  }
+}

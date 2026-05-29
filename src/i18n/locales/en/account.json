@@ -1,0 +1,345 @@
+{
+  "profile": {
+    "title": "Personal profile",
+    "subtitle": "Manage your personal information and account settings",
+    "tabs": {
+      "overview": "Overview",
+      "personal": "Personal info",
+      "security": "Security",
+      "preferences": "Preferences"
+    },
+    "fields": {
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone number",
+      "address": "Address",
+      "bio": "Bio",
+      "avatar": "Avatar",
+      "dateOfBirth": "Date of birth",
+      "englishLevel": "English level"
+    },
+    "actions": {
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "changePassword": "Change password",
+      "uploadAvatar": "Upload new photo",
+      "removeAvatar": "Remove",
+      "adminDashboard": "Admin",
+      "sellerDashboard": "Courses",
+      "changeEmail": "Change email",
+      "reload": "Reload page"
+    },
+    "loadError": "Unable to load your profile.",
+    "sections": {
+      "personalInfo": "Personal information",
+      "account": "Account",
+      "learningGoals": "Learning goals",
+      "becomeInstructor": "Become an instructor"
+    },
+    "badges": {
+      "instructor": "Instructor",
+      "admin": "Administrator",
+      "alreadyInstructor": "Already an instructor"
+    },
+    "wallet": {
+      "balance": "Wallet balance",
+      "topUp": "Top up →",
+      "joined": "Joined"
+    },
+    "goals": {
+      "empty": "No goals yet.",
+      "placeholder": "e.g. Reach IELTS 7.0, Speak fluently...",
+      "add": "+ Add",
+      "hint": "Click \"Edit\" above to add or remove goals."
+    },
+    "email": {
+      "notVerified": "Email is not verified",
+      "dialogTitle": "Change email address",
+      "currentNotice": "Your current email <strong>{{email}}</strong> will stay active until you confirm the new one.",
+      "newLabel": "New email",
+      "placeholder": "email@example.com",
+      "sentTitle": "Verification email sent!",
+      "sentDesc": "Check the inbox of <strong>{{email}}</strong> and click the confirmation link.",
+      "close": "Close",
+      "cancel": "Cancel",
+      "send": "Send verification email"
+    },
+    "application": {
+      "intro": "Submit an application for the admin team to review. Provide certifications and expertise related to teaching.",
+      "latestStatus": "Latest status",
+      "statusPending": "Pending review",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "noApplication": "No applications yet",
+      "apply": "Apply",
+      "history": "Application history",
+      "message": "Message",
+      "rejectionReason": "Rejection reason",
+      "expertise": "Expertise",
+      "certification": "Certification",
+      "certificationView": "Click to view original image",
+      "submitSuccess": "Application submitted successfully!"
+    },
+    "toasts": {
+      "goalExists": "Goal already exists",
+      "fileTooLarge": "File too large. Please choose an image under 5MB.",
+      "updateSuccess": "Profile updated successfully!",
+      "updateFailed": "Update failed. Please try again.",
+      "invalidEmail": "Invalid email",
+      "verificationSent": "Verification email sent to {{email}}"
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully.",
+      "updateFailed": "Profile update failed.",
+      "passwordChanged": "Password changed successfully.",
+      "passwordFailed": "Password change failed."
+    }
+  },
+  "wallet": {
+    "title": "My wallet",
+    "subtitle": "Manage balance and transaction history",
+    "hero": {
+      "badge": "Premium wallet workspace",
+      "title": "Keep payments effortless while staying in control of every balance update.",
+      "subtitle": "Move from browsing courses to checkout faster with a cleaner wallet flow, clearer activity tracking, and a layout consistent with the rest of the platform.",
+      "chips": {
+        "unified": "Unified payment overview",
+        "realtime": "Real-time transaction visibility",
+        "faster": "Faster checkout for course access"
+      },
+      "overview": {
+        "eyebrow": "Wallet overview",
+        "useCase": "Use case",
+        "useCaseValue": "Course checkout",
+        "gateway": "Gateway",
+        "minTopup": "Minimum top-up"
+      }
+    },
+    "balance": {
+      "available": "Available balance",
+      "monthlyTopup": "Top-ups this month",
+      "monthlyTransactions": "Successful transactions",
+      "security": {
+        "title": "Built for secure course payments",
+        "desc": "Add funds once, manage study purchases faster, and keep every wallet action visible in one place."
+      }
+    },
+    "topup": {
+      "eyebrow": "Funding details",
+      "title": "Add funds to your wallet",
+      "subtitle": "Choose a quick amount or enter a custom value, then you'll be redirected to Stripe to complete the payment securely.",
+      "quickStart": {
+        "title": "Quick start",
+        "desc": "Use a preset amount to move through the payment flow faster."
+      },
+      "amountLabel": "Top-up amount (VND)",
+      "amountPlaceholder": "Example: 50000",
+      "minNote": "Minimum amount: {{amount}}.",
+      "quickAmounts": "Quick amounts",
+      "summary": {
+        "title": "Payment summary",
+        "amount": "Amount",
+        "method": "Method",
+        "status": "Status",
+        "statusValue": "Ready",
+        "redirect": {
+          "title": "Secure redirect",
+          "desc": "You'll be redirected to Stripe's secure payment page. After completing, you'll return here automatically."
+        }
+      },
+      "creating": "Creating order...",
+      "payNow": "Pay with Stripe"
+    },
+    "transactions": {
+      "eyebrow": "Recent activity",
+      "title": "Transaction history",
+      "subtitle": "Review deposits and payments in one place with cleaner filtering and quick scanning.",
+      "filters": {
+        "all": "All",
+        "deposit": "Deposit",
+        "payment": "Payment"
+      },
+      "empty": "No transactions match this filter yet.",
+      "viewMore": "View more",
+      "walletTopup": "Wallet top-up",
+      "coursePayment": "Course payment",
+      "deposit": "Deposit",
+      "payment": "Payment",
+      "statuses": {
+        "SUCCESS": "Success",
+        "FAILED": "Failed",
+        "PENDING": "Pending"
+      }
+    },
+    "loginRequired": {
+      "title": "Sign in to access your wallet",
+      "desc": "Your wallet dashboard requires an active session to load balance details, transaction history, and payment requests. Please sign in, then return here to continue.",
+      "signIn": "Go to sign in"
+    },
+    "toasts": {
+      "needLogin": "Please sign in before starting a payment.",
+      "invalidAmount": "Please enter a valid amount of at least {{amount}}.",
+      "redirecting": "Redirecting to Stripe...",
+      "missingPaymentUrl": "Missing payment URL from the server response.",
+      "defaultError": "Unable to create payment order."
+    }
+  },
+  "cart": {
+    "title": "Cart",
+    "subtitle": "Review and manage the courses you've added",
+    "empty": "Your cart is empty.",
+    "emptyHint": "Add courses from the course catalog.",
+    "exploreCourses": "Explore courses",
+    "selectAll": "Select all ({{count}} courses)",
+    "selectItem": "Select {{title}}",
+    "removeAll": "Remove all",
+    "remove": "Remove",
+    "subtotalCount": "Subtotal ({{count}})",
+    "discount": "Discount",
+    "grandTotal": "Total to pay",
+    "couponLabel": "Coupon code",
+    "couponPlaceholder": "e.g. WELCOME10",
+    "applyCoupon": "Apply",
+    "removeCoupon": "Remove coupon",
+    "selectBeforeApply": "Select courses before applying a coupon.",
+    "checkout": "Checkout",
+    "confirmTitle": "Confirm payment",
+    "confirm": "Confirm",
+    "processing": "Processing...",
+    "couponLineItem": "Coupon {{code}}",
+    "toasts": {
+      "couponRequired": "Please enter a coupon code",
+      "selectBeforeApply": "Select courses before applying a coupon",
+      "couponFullCartOnly": "This coupon applies only to the full cart. Select all items to use it.",
+      "couponApplied": "Coupon {{code}} applied",
+      "couponDefaultError": "Could not apply the coupon"
+    }
+  },
+  "paymentResult": {
+    "successTitle": "Payment successful",
+    "failedTitle": "Payment failed",
+    "successDesc": "Your wallet has been topped up. The balance will reflect shortly.",
+    "failedDesc": "Your payment could not be completed. No funds were deducted.",
+    "redirect": "Returning to your wallet in {{count}}s…",
+    "amount": "Amount",
+    "reference": "Reference",
+    "gateway": "Gateway",
+    "status": "Status",
+    "statusSuccess": "Success",
+    "statusFailed": "Failed",
+    "goToWallet": "Go to wallet",
+    "dashboard": "Dashboard"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Stay up to date with your activities",
+    "markAllRead": "Mark all as read",
+    "empty": "You have no notifications.",
+    "filters": {
+      "all": "All",
+      "unread": "Unread",
+      "read": "Read"
+    },
+    "header": {
+      "title": "Your notifications",
+      "unreadCount": "You have {{count}} unread notifications",
+      "allRead": "All notifications have been read",
+      "back": "Back",
+      "muteLabel": "Snooze:",
+      "mutedTitle": "Notifications muted until {{time}}",
+      "unmute": "Turn on",
+      "markAllRead": "Mark all as read"
+    },
+    "mute": {
+      "presets": {
+        "1h": "1 hour",
+        "4h": "4 hours",
+        "endOfDay": "Until end of day"
+      },
+      "toastUnmuted": "Notifications turned back on",
+      "toastMuted": "Notifications muted until {{time}}"
+    },
+    "view": {
+      "ariaLabel": "Notification view mode",
+      "inbox": "Inbox",
+      "saved": "Archived"
+    },
+    "filtersPanel": {
+      "title": "Filters",
+      "status": "Status",
+      "type": "Notification type",
+      "search": "Search",
+      "searchPlaceholder": "Enter a keyword..."
+    },
+    "status": {
+      "all": "All",
+      "unseen": "Unread",
+      "seen": "Read"
+    },
+    "types": {
+      "all": "All",
+      "ai_insight": "AI Insight",
+      "course_comment": "Comments",
+      "comment_reply": "Replies",
+      "course_enrollment": "Enrollment",
+      "course_update": "Updates",
+      "COURSE_APPROVED": "Course approved",
+      "COURSE_REJECTED": "Course rejected",
+      "COURSE_SUBMITTED": "Course pending review",
+      "WITHDRAWAL_APPROVED": "Withdrawal approved",
+      "WITHDRAWAL_REJECTED": "Withdrawal rejected"
+    },
+    "aiActions": {
+      "SHOW_BANNER": "AI Insight",
+      "SUGGEST_COURSE": "Course Recommendation",
+      "UNLOCK_TIP": "Study Tip",
+      "SEND_REMINDER": "Study Reminder",
+      "default": "AI Insight"
+    },
+    "systemDivider": "System notifications",
+    "emptyRegular": {
+      "title": "No matching notifications",
+      "hint": "Try adjusting the filters to see more"
+    },
+    "emptyAi": {
+      "title": "No AI Insights yet",
+      "hint": "AI will send suggestions after analyzing your learning results"
+    },
+    "actions": {
+      "markRead": "Read",
+      "archive": "Save",
+      "archiveTitle": "Archive (mark as important)",
+      "archiveAria": "Archive notification",
+      "unarchive": "Unsave",
+      "unarchiveTitle": "Move back to inbox",
+      "unarchiveAria": "Remove from archive"
+    },
+    "toasts": {
+      "archiveSuccess": "Saved to Archived",
+      "archiveError": "Could not save notification",
+      "unarchiveSuccess": "Moved back to Inbox",
+      "unarchiveError": "Could not remove from archive"
+    },
+    "dropdown": {
+      "title": "Notifications",
+      "ariaLabel": "Notifications",
+      "newBadge": "{{count}} new",
+      "empty": "No notifications yet",
+      "viewAll": "View all notifications"
+    },
+    "dropdownTypes": {
+      "course_comment": "Comment",
+      "comment_reply": "Reply",
+      "course_enrollment": "Enrollment",
+      "course_update": "Update",
+      "COURSE_APPROVED": "Course approved",
+      "COURSE_REJECTED": "Course rejected",
+      "COURSE_SUBMITTED": "Pending review",
+      "WITHDRAWAL_APPROVED": "Withdrawal approved",
+      "WITHDRAWAL_REJECTED": "Withdrawal rejected",
+      "comment_report": "Comment report",
+      "default": "Notification"
+    }
+  }
+}

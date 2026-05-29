@@ -1,0 +1,345 @@
+{
+  "profile": {
+    "title": "Hồ sơ cá nhân",
+    "subtitle": "Quản lý thông tin cá nhân và cài đặt tài khoản",
+    "tabs": {
+      "overview": "Tổng quan",
+      "personal": "Thông tin cá nhân",
+      "security": "Bảo mật",
+      "preferences": "Tuỳ chọn"
+    },
+    "fields": {
+      "fullName": "Họ và tên",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "address": "Địa chỉ",
+      "bio": "Giới thiệu",
+      "avatar": "Ảnh đại diện",
+      "dateOfBirth": "Ngày sinh",
+      "englishLevel": "Trình độ tiếng Anh"
+    },
+    "actions": {
+      "edit": "Chỉnh sửa",
+      "save": "Lưu",
+      "cancel": "Huỷ",
+      "changePassword": "Đổi mật khẩu",
+      "uploadAvatar": "Tải ảnh mới",
+      "removeAvatar": "Xoá",
+      "adminDashboard": "Quản trị",
+      "sellerDashboard": "Khóa học",
+      "changeEmail": "Đổi email",
+      "reload": "Tải lại trang"
+    },
+    "loadError": "Không thể tải thông tin cá nhân.",
+    "sections": {
+      "personalInfo": "Thông tin cá nhân",
+      "account": "Tài khoản",
+      "learningGoals": "Mục tiêu học tập",
+      "becomeInstructor": "Trở thành giảng viên"
+    },
+    "badges": {
+      "instructor": "Giảng viên",
+      "admin": "Quản trị viên",
+      "alreadyInstructor": "Đã là giảng viên"
+    },
+    "wallet": {
+      "balance": "Số dư ví",
+      "topUp": "Nạp tiền →",
+      "joined": "Tham gia"
+    },
+    "goals": {
+      "empty": "Chưa có mục tiêu nào.",
+      "placeholder": "Ví dụ: Đạt IELTS 7.0, Giao tiếp trôi chảy...",
+      "add": "+ Thêm",
+      "hint": "Nhấn \"Chỉnh sửa\" ở trên để thêm hoặc xóa mục tiêu."
+    },
+    "email": {
+      "notVerified": "Email chưa được xác thực",
+      "dialogTitle": "Đổi địa chỉ email",
+      "currentNotice": "Email hiện tại <strong>{{email}}</strong> sẽ được giữ nguyên cho đến khi bạn xác nhận địa chỉ mới.",
+      "newLabel": "Email mới",
+      "placeholder": "email@example.com",
+      "sentTitle": "Email xác thực đã được gửi!",
+      "sentDesc": "Kiểm tra hộp thư của <strong>{{email}}</strong> và nhấn vào liên kết xác nhận để hoàn tất.",
+      "close": "Đóng",
+      "cancel": "Hủy",
+      "send": "Gửi email xác thực"
+    },
+    "application": {
+      "intro": "Gửi đơn đăng ký để đội ngũ admin xét duyệt. Cung cấp chứng chỉ và chuyên môn liên quan đến giảng dạy.",
+      "latestStatus": "Trạng thái mới nhất",
+      "statusPending": "Đang chờ duyệt",
+      "statusApproved": "Đã duyệt",
+      "statusRejected": "Từ chối",
+      "noApplication": "Chưa có đơn nào",
+      "apply": "Nộp đơn",
+      "history": "Lịch sử đơn đã nộp",
+      "message": "Lời nhắn",
+      "rejectionReason": "Lý do từ chối",
+      "expertise": "Chuyên môn",
+      "certification": "Chứng chỉ",
+      "certificationView": "Nhấn để xem ảnh gốc",
+      "submitSuccess": "Nộp đơn thành công!"
+    },
+    "toasts": {
+      "goalExists": "Mục tiêu đã tồn tại",
+      "fileTooLarge": "File quá lớn. Vui lòng chọn ảnh dưới 5MB.",
+      "updateSuccess": "Cập nhật hồ sơ thành công!",
+      "updateFailed": "Cập nhật thất bại. Vui lòng thử lại.",
+      "invalidEmail": "Email không hợp lệ",
+      "verificationSent": "Email xác thực đã được gửi đến {{email}}"
+    },
+    "messages": {
+      "updateSuccess": "Cập nhật hồ sơ thành công.",
+      "updateFailed": "Cập nhật hồ sơ thất bại.",
+      "passwordChanged": "Đổi mật khẩu thành công.",
+      "passwordFailed": "Đổi mật khẩu thất bại."
+    }
+  },
+  "wallet": {
+    "title": "Ví của tôi",
+    "subtitle": "Quản lý số dư và lịch sử giao dịch",
+    "hero": {
+      "badge": "Không gian ví cao cấp",
+      "title": "Giữ thanh toán mượt mà mà vẫn kiểm soát từng biến động số dư.",
+      "subtitle": "Đi từ duyệt khoá học đến thanh toán nhanh hơn với luồng ví gọn gàng, theo dõi giao dịch rõ ràng và bố cục đồng nhất với toàn nền tảng.",
+      "chips": {
+        "unified": "Tổng quan thanh toán hợp nhất",
+        "realtime": "Theo dõi giao dịch thời gian thực",
+        "faster": "Thanh toán khoá học nhanh hơn"
+      },
+      "overview": {
+        "eyebrow": "Tổng quan ví",
+        "useCase": "Mục đích",
+        "useCaseValue": "Thanh toán khoá học",
+        "gateway": "Cổng thanh toán",
+        "minTopup": "Nạp tối thiểu"
+      }
+    },
+    "balance": {
+      "available": "Số dư khả dụng",
+      "monthlyTopup": "Đã nạp trong tháng",
+      "monthlyTransactions": "Giao dịch thành công",
+      "security": {
+        "title": "Được thiết kế cho thanh toán khoá học an toàn",
+        "desc": "Nạp một lần, quản lý mua khoá học nhanh hơn và xem mọi hoạt động ví ở cùng một nơi."
+      }
+    },
+    "topup": {
+      "eyebrow": "Chi tiết nạp tiền",
+      "title": "Nạp tiền vào ví",
+      "subtitle": "Chọn nhanh một mức hoặc nhập số tiền tuỳ ý, sau đó bạn sẽ được chuyển sang Stripe để hoàn tất thanh toán an toàn.",
+      "quickStart": {
+        "title": "Bắt đầu nhanh",
+        "desc": "Dùng mức nạp gợi ý để đi qua luồng thanh toán nhanh hơn."
+      },
+      "amountLabel": "Số tiền nạp (VND)",
+      "amountPlaceholder": "Ví dụ: 50000",
+      "minNote": "Số tiền tối thiểu: {{amount}}.",
+      "quickAmounts": "Số tiền gợi ý",
+      "summary": {
+        "title": "Tóm tắt thanh toán",
+        "amount": "Số tiền",
+        "method": "Phương thức",
+        "status": "Trạng thái",
+        "statusValue": "Sẵn sàng",
+        "redirect": {
+          "title": "Chuyển hướng an toàn",
+          "desc": "Bạn sẽ được chuyển sang trang thanh toán bảo mật của Stripe. Sau khi hoàn tất, bạn sẽ tự động quay lại đây."
+        }
+      },
+      "creating": "Đang tạo đơn...",
+      "payNow": "Thanh toán bằng Stripe"
+    },
+    "transactions": {
+      "eyebrow": "Hoạt động gần đây",
+      "title": "Lịch sử giao dịch",
+      "subtitle": "Xem nạp tiền và thanh toán ở cùng một nơi với bộ lọc gọn và đọc nhanh hơn.",
+      "filters": {
+        "all": "Tất cả",
+        "deposit": "Nạp tiền",
+        "payment": "Thanh toán"
+      },
+      "empty": "Chưa có giao dịch nào khớp với bộ lọc.",
+      "viewMore": "Xem thêm",
+      "walletTopup": "Nạp ví",
+      "coursePayment": "Thanh toán khoá học",
+      "deposit": "Nạp",
+      "payment": "Chi",
+      "statuses": {
+        "SUCCESS": "Thành công",
+        "FAILED": "Thất bại",
+        "PENDING": "Đang xử lý"
+      }
+    },
+    "loginRequired": {
+      "title": "Đăng nhập để xem ví",
+      "desc": "Bảng điều khiển ví cần một phiên đăng nhập để tải số dư, lịch sử giao dịch và các yêu cầu thanh toán. Vui lòng đăng nhập rồi quay lại đây để tiếp tục.",
+      "signIn": "Đến trang đăng nhập"
+    },
+    "toasts": {
+      "needLogin": "Vui lòng đăng nhập trước khi thanh toán.",
+      "invalidAmount": "Vui lòng nhập số tiền hợp lệ, tối thiểu {{amount}}.",
+      "redirecting": "Đang chuyển sang Stripe...",
+      "missingPaymentUrl": "Thiếu URL thanh toán từ phản hồi máy chủ.",
+      "defaultError": "Không thể tạo đơn thanh toán."
+    }
+  },
+  "cart": {
+    "title": "Giỏ hàng",
+    "subtitle": "Xem và quản lý các khoá học đã thêm",
+    "empty": "Giỏ hàng trống.",
+    "emptyHint": "Hãy thêm khoá học từ danh sách khoá học.",
+    "exploreCourses": "Khám phá khoá học",
+    "selectAll": "Chọn tất cả ({{count}} khóa học)",
+    "selectItem": "Chọn {{title}}",
+    "removeAll": "Xoá tất cả",
+    "remove": "Xoá",
+    "subtotalCount": "Tạm tính ({{count}})",
+    "discount": "Giảm giá",
+    "grandTotal": "Tổng thanh toán",
+    "couponLabel": "Mã giảm giá",
+    "couponPlaceholder": "VD: WELCOME10",
+    "applyCoupon": "Áp dụng",
+    "removeCoupon": "Bỏ mã",
+    "selectBeforeApply": "Hãy chọn khóa học trước khi áp mã.",
+    "checkout": "Thanh toán",
+    "confirmTitle": "Xác nhận thanh toán",
+    "confirm": "Xác nhận",
+    "processing": "Đang xử lý...",
+    "couponLineItem": "Mã giảm giá {{code}}",
+    "toasts": {
+      "couponRequired": "Vui lòng nhập mã giảm giá",
+      "selectBeforeApply": "Hãy chọn khóa học trước khi áp mã",
+      "couponFullCartOnly": "Mã chỉ áp dụng cho toàn bộ giỏ hàng. Hãy chọn tất cả để dùng mã.",
+      "couponApplied": "Đã áp dụng mã {{code}}",
+      "couponDefaultError": "Không thể áp dụng mã"
+    }
+  },
+  "paymentResult": {
+    "successTitle": "Thanh toán thành công",
+    "failedTitle": "Thanh toán thất bại",
+    "successDesc": "Ví của bạn đã được nạp tiền. Số dư sẽ cập nhật trong giây lát.",
+    "failedDesc": "Không thể hoàn tất thanh toán. Bạn chưa bị trừ tiền.",
+    "redirect": "Tự động quay về ví sau {{count}}s…",
+    "amount": "Số tiền",
+    "reference": "Mã giao dịch",
+    "gateway": "Cổng thanh toán",
+    "status": "Trạng thái",
+    "statusSuccess": "Thành công",
+    "statusFailed": "Thất bại",
+    "goToWallet": "Vào ví",
+    "dashboard": "Bảng điều khiển"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "subtitle": "Cập nhật các hoạt động mới nhất",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "empty": "Bạn chưa có thông báo nào.",
+    "filters": {
+      "all": "Tất cả",
+      "unread": "Chưa đọc",
+      "read": "Đã đọc"
+    },
+    "header": {
+      "title": "Thông báo của bạn",
+      "unreadCount": "Có {{count}} thông báo chưa đọc",
+      "allRead": "Tất cả thông báo đã được đọc",
+      "back": "Quay lại",
+      "muteLabel": "Tạm tắt:",
+      "mutedTitle": "Đang tắt thông báo đến {{time}}",
+      "unmute": "Bật lại",
+      "markAllRead": "Đọc tất cả"
+    },
+    "mute": {
+      "presets": {
+        "1h": "1 giờ",
+        "4h": "4 giờ",
+        "endOfDay": "Đến cuối ngày"
+      },
+      "toastUnmuted": "Đã bật lại thông báo",
+      "toastMuted": "Tạm ẩn thông báo đến {{time}}"
+    },
+    "view": {
+      "ariaLabel": "Chế độ xem thông báo",
+      "inbox": "Hộp thư",
+      "saved": "Đã lưu trữ"
+    },
+    "filtersPanel": {
+      "title": "Bộ lọc",
+      "status": "Trạng thái",
+      "type": "Loại thông báo",
+      "search": "Tìm kiếm",
+      "searchPlaceholder": "Nhập từ khóa..."
+    },
+    "status": {
+      "all": "Tất cả",
+      "unseen": "Chưa đọc",
+      "seen": "Đã đọc"
+    },
+    "types": {
+      "all": "Tất cả",
+      "ai_insight": "AI Insight",
+      "course_comment": "Bình luận",
+      "comment_reply": "Trả lời",
+      "course_enrollment": "Đăng ký",
+      "course_update": "Cập nhật",
+      "COURSE_APPROVED": "Khoá học duyệt",
+      "COURSE_REJECTED": "Khoá học bị từ chối",
+      "COURSE_SUBMITTED": "Khoá học chờ duyệt",
+      "WITHDRAWAL_APPROVED": "Rút tiền thành công",
+      "WITHDRAWAL_REJECTED": "Rút tiền bị từ chối"
+    },
+    "aiActions": {
+      "SHOW_BANNER": "AI Insight",
+      "SUGGEST_COURSE": "Course Recommendation",
+      "UNLOCK_TIP": "Study Tip",
+      "SEND_REMINDER": "Study Reminder",
+      "default": "AI Insight"
+    },
+    "systemDivider": "Thông báo hệ thống",
+    "emptyRegular": {
+      "title": "Không có thông báo phù hợp",
+      "hint": "Thử thay đổi bộ lọc để xem thêm"
+    },
+    "emptyAi": {
+      "title": "Chưa có AI Insight nào",
+      "hint": "AI sẽ gửi gợi ý khi phân tích kết quả học tập của bạn"
+    },
+    "actions": {
+      "markRead": "Đã đọc",
+      "archive": "Lưu",
+      "archiveTitle": "Lưu trữ (đánh dấu quan trọng)",
+      "archiveAria": "Lưu trữ thông báo",
+      "unarchive": "Bỏ lưu",
+      "unarchiveTitle": "Đưa về hộp thư",
+      "unarchiveAria": "Bỏ lưu trữ"
+    },
+    "toasts": {
+      "archiveSuccess": "Đã lưu vào mục Đã lưu trữ",
+      "archiveError": "Không thể lưu thông báo",
+      "unarchiveSuccess": "Đã đưa về Hộp thư",
+      "unarchiveError": "Không thể bỏ lưu trữ"
+    },
+    "dropdown": {
+      "title": "Thông báo",
+      "ariaLabel": "Thông báo",
+      "newBadge": "{{count}} mới",
+      "empty": "Không có thông báo nào",
+      "viewAll": "Xem tất cả thông báo"
+    },
+    "dropdownTypes": {
+      "course_comment": "Bình luận",
+      "comment_reply": "Trả lời",
+      "course_enrollment": "Đăng ký",
+      "course_update": "Cập nhật",
+      "COURSE_APPROVED": "Khoá học duyệt",
+      "COURSE_REJECTED": "Khoá học bị từ chối",
+      "COURSE_SUBMITTED": "Khoá học cần duyệt",
+      "WITHDRAWAL_APPROVED": "Rút tiền thành công",
+      "WITHDRAWAL_REJECTED": "Rút tiền bị từ chối",
+      "comment_report": "Báo cáo bình luận",
+      "default": "Thông báo"
+    }
+  }
+}

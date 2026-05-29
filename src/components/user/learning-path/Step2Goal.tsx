@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Chip, Field, InfoCallout, OptionCard, PreviewCard, SectionHeader } from "./shared";
 import type {
   CefrLevel,
@@ -7,21 +8,15 @@ import type {
   LearnerProfile,
 } from "./types";
 
-const EXAMS: Array<{ value: ExamType; label: string; subtitle: string; icon: string }> = [
-  { value: "IELTS", label: "IELTS", subtitle: "Academic / General", icon: "school" },
-  { value: "TOEIC", label: "TOEIC", subtitle: "Workplace English", icon: "work" },
-  { value: "TOEFL", label: "TOEFL", subtitle: "iBT / Essentials", icon: "language" },
-  { value: "CEFR", label: "CEFR", subtitle: "Level-based goal", icon: "trending_up" },
-  { value: "General", label: "General", subtitle: "No exam, just improve", icon: "auto_awesome" },
+const EXAMS: Array<{ value: ExamType; icon: string }> = [
+  { value: "IELTS", icon: "school" },
+  { value: "TOEIC", icon: "work" },
+  { value: "TOEFL", icon: "language" },
+  { value: "CEFR", icon: "trending_up" },
+  { value: "General", icon: "auto_awesome" },
 ];
 
-const DEADLINES: Array<{ value: DeadlineOption; label: string; hint: string }> = [
-  { value: "1 month", label: "1 month", hint: "Sprint" },
-  { value: "3 months", label: "3 months", hint: "Focused" },
-  { value: "6 months", label: "6 months", hint: "Balanced" },
-  { value: "12 months", label: "12 months", hint: "Long game" },
-  { value: "Custom", label: "Custom date", hint: "Pick a date" },
-];
+const DEADLINES: DeadlineOption[] = ["1 month", "3 months", "6 months", "12 months", "Custom"];
 
 const REASONS = [
   "Study abroad",
@@ -66,34 +61,32 @@ function isAggressive(
   return false;
 }
 
-function validateTarget(exam: ExamType, raw: string): string | null {
+function validateTarget(exam: ExamType, raw: string): keyof typeof VALIDATION_KEYS | null {
   if (!raw.trim()) return null;
   if (exam === "IELTS") {
     const n = parseFloat(raw);
-    if (!Number.isFinite(n) || n < 1 || n > 9) {
-      return "Enter an IELTS band between 1.0 and 9.0.";
-    }
+    if (!Number.isFinite(n) || n < 1 || n > 9) return "IELTS";
   }
   if (exam === "TOEIC") {
     const n = parseInt(raw, 10);
-    if (!Number.isFinite(n) || n < 10 || n > 990) {
-      return "Enter a TOEIC score between 10 and 990.";
-    }
+    if (!Number.isFinite(n) || n < 10 || n > 990) return "TOEIC";
   }
   if (exam === "TOEFL") {
     const n = parseInt(raw, 10);
-    if (!Number.isFinite(n) || n < 0 || n > 120) {
-      return "Enter a TOEFL iBT score between 0 and 120.";
-    }
+    if (!Number.isFinite(n) || n < 0 || n > 120) return "TOEFL";
   }
   return null;
 }
 
+const VALIDATION_KEYS = { IELTS: 1, TOEIC: 1, TOEFL: 1 } as const;
+
 export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Props) {
-  const validationError = useMemo(
+  const { t } = useTranslation("exam");
+  const validationKey = useMemo(
     () => validateTarget(profile.targetExam, profile.targetScore),
     [profile.targetExam, profile.targetScore],
   );
+  const validationError = validationKey ? t(`learningPath.step2.validation.${validationKey}`) : null;
   const showWarning = isAggressive(
     profile.cefrLevel,
     profile.targetExam,
@@ -107,25 +100,32 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
     !validationError &&
     (profile.deadline !== "Custom" || !!profile.customDeadline);
 
+  const targetExamKey = profile.targetExam;
+  const dash = t("learningPath.common.dash");
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <SectionHeader
-          title="Set your target"
-          description="Tell SkillBoost what you're working toward. We'll check feasibility against your level and timeline."
-          badge="Step 2 of 4"
+          title={t("learningPath.step2.title")}
+          description={t("learningPath.step2.description")}
+          badge={t("learningPath.step2.badge")}
         />
 
-        <Field label="Exam type" required>
-          <div role="radiogroup" aria-label="Exam type" className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+        <Field label={t("learningPath.step2.fields.exam")} required>
+          <div
+            role="radiogroup"
+            aria-label={t("learningPath.step2.fields.examAria")}
+            className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3"
+          >
             {EXAMS.map((exam) => (
               <OptionCard
                 key={exam.value}
                 value={exam.value}
                 selected={profile.targetExam === exam.value}
                 onSelect={(v) => onUpdate({ targetExam: v, targetScore: "" })}
-                title={exam.label}
-                description={exam.subtitle}
+                title={t(`learningPath.step2.exams.${exam.value}.label`)}
+                description={t(`learningPath.step2.exams.${exam.value}.subtitle`)}
                 icon={<span className="material-symbols-outlined text-[18px]">{exam.icon}</span>}
               />
             ))}
@@ -133,19 +133,9 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
         </Field>
 
         <Field
-          label="Target score"
+          label={t("learningPath.step2.fields.target")}
           htmlFor="target-score"
-          hint={
-            profile.targetExam === "IELTS"
-              ? "IELTS bands range from 1.0 to 9.0 (e.g. 6.5)."
-              : profile.targetExam === "TOEIC"
-              ? "TOEIC scores range from 10 to 990."
-              : profile.targetExam === "TOEFL"
-              ? "TOEFL iBT scores range from 0 to 120."
-              : profile.targetExam === "CEFR"
-              ? "Choose a CEFR target like B2 or C1."
-              : "Describe the level you want to reach."
-          }
+          hint={t(`learningPath.step2.targetHints.${targetExamKey}`)}
           required
         >
           <input
@@ -154,17 +144,7 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
             inputMode="decimal"
             value={profile.targetScore}
             onChange={(e) => onUpdate({ targetScore: e.target.value })}
-            placeholder={
-              profile.targetExam === "IELTS"
-                ? "e.g. 6.5"
-                : profile.targetExam === "TOEIC"
-                ? "e.g. 750"
-                : profile.targetExam === "TOEFL"
-                ? "e.g. 90"
-                : profile.targetExam === "CEFR"
-                ? "e.g. B2"
-                : "e.g. Confident at work meetings"
-            }
+            placeholder={t(`learningPath.step2.targetPlaceholders.${targetExamKey}`)}
             aria-invalid={!!validationError}
             aria-describedby={validationError ? "target-score-error" : undefined}
             className={[
@@ -182,23 +162,27 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
           )}
         </Field>
 
-        <Field label="Deadline" required>
-          <div role="radiogroup" aria-label="Deadline" className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+        <Field label={t("learningPath.step2.fields.deadline")} required>
+          <div
+            role="radiogroup"
+            aria-label={t("learningPath.step2.fields.deadlineAria")}
+            className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3"
+          >
             {DEADLINES.map((d) => (
               <OptionCard
-                key={d.value}
-                value={d.value}
-                selected={profile.deadline === d.value}
+                key={d}
+                value={d}
+                selected={profile.deadline === d}
                 onSelect={(v) => onUpdate({ deadline: v })}
-                title={d.label}
-                description={d.hint}
+                title={t(`learningPath.step2.deadlines.${d}.label`)}
+                description={t(`learningPath.step2.deadlines.${d}.hint`)}
               />
             ))}
           </div>
           {profile.deadline === "Custom" && (
             <div className="mt-3">
               <label htmlFor="custom-deadline" className="sr-only">
-                Custom deadline date
+                {t("learningPath.step2.fields.deadlineCustomAria")}
               </label>
               <input
                 id="custom-deadline"
@@ -211,7 +195,7 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
           )}
         </Field>
 
-        <Field label="Why are you studying?" required>
+        <Field label={t("learningPath.step2.fields.reason")} required>
           <div className="flex flex-wrap gap-2">
             {REASONS.map((reason) => (
               <Chip
@@ -219,7 +203,7 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
                 selected={profile.reasonForStudying === reason}
                 onClick={() => onUpdate({ reasonForStudying: reason })}
               >
-                {reason}
+                {t(`learningPath.step2.reasons.${reason}`)}
               </Chip>
             ))}
           </div>
@@ -229,10 +213,9 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
           <div className="mb-5">
             <InfoCallout
               tone="warning"
-              title="Heads up — this goal may be challenging with your timeline"
+              title={t("learningPath.step2.warning.title")}
             >
-              You can still continue. We'll recommend a more intensive plan, or you can extend
-              the deadline / lower the target slightly on the result screen.
+              {t("learningPath.step2.warning.body")}
             </InfoCallout>
           </div>
         )}
@@ -244,7 +227,7 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
             className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"
           >
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-            Back
+            {t("learningPath.common.back")}
           </button>
           <button
             type="button"
@@ -252,40 +235,42 @@ export default function Step2Goal({ profile, onUpdate, onNext, onBack }: Step2Pr
             disabled={!canContinue}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60"
           >
-            Continue
+            {t("learningPath.common.continue")}
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </div>
       </div>
 
       <PreviewCard
-        title="Personalization preview"
-        description="As you add details, your plan accuracy improves."
+        title={t("learningPath.step2.preview.title")}
+        description={t("learningPath.step2.preview.description")}
       >
         <div className="space-y-2.5 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">CEFR baseline</span>
-            <span className="font-semibold text-slate-800">{profile.cefrLevel ?? "—"}</span>
+            <span className="text-slate-500">{t("learningPath.step2.preview.cefr")}</span>
+            <span className="font-semibold text-slate-800">{profile.cefrLevel ?? dash}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Target</span>
+            <span className="text-slate-500">{t("learningPath.step2.preview.target")}</span>
             <span className="font-semibold text-slate-800">
               {profile.targetExam}
               {profile.targetScore ? ` · ${profile.targetScore}` : ""}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Timeline</span>
+            <span className="text-slate-500">{t("learningPath.step2.preview.timeline")}</span>
             <span className="font-semibold text-slate-800">
               {profile.deadline === "Custom"
-                ? profile.customDeadline || "—"
-                : profile.deadline}
+                ? profile.customDeadline || dash
+                : t(`learningPath.step2.deadlines.${profile.deadline}.label`)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Reason</span>
+            <span className="text-slate-500">{t("learningPath.step2.preview.reason")}</span>
             <span className="font-semibold text-slate-800 text-right">
-              {profile.reasonForStudying || "—"}
+              {profile.reasonForStudying
+                ? t(`learningPath.step2.reasons.${profile.reasonForStudying}`)
+                : dash}
             </span>
           </div>
         </div>

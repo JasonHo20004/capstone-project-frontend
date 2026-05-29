@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/api/use-auth';
 import { InlineLoading } from '@/components/ui/loading-spinner';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const Login = () => {
+  const { t } = useTranslation(['auth', 'common']);
   const { login, isLoggingIn } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -25,7 +28,6 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Gọi API Login thông qua hook
     login({
       email: formData.email,
       password: formData.password,
@@ -33,7 +35,10 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div className="min-h-screen grid lg:grid-cols-2 relative">
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
       {/* Left Side */}
       <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white p-12">
         <div className="max-w-md space-y-8">
@@ -41,15 +46,15 @@ const Login = () => {
             <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
               <BookOpen className="w-8 h-8" />
             </div>
-            <span className="text-4xl font-bold font-display">SkillBoost</span>
+            <span className="text-4xl font-bold font-display">{t('app.name', { ns: 'common' })}</span>
           </Link>
-          
+
           <div className="space-y-4">
             <h1 className="text-4xl font-bold leading-tight font-display">
-              Chào mừng trở lại!
+              {t('login.welcomeBack')}
             </h1>
             <p className="text-xl text-white/70">
-              Tiếp tục lộ trình học tập của bạn và chinh phục các thử thách mới.
+              {t('login.welcomeSubtitle')}
             </p>
           </div>
 
@@ -57,15 +62,15 @@ const Login = () => {
           <div className="grid grid-cols-3 gap-6 pt-8">
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">50K+</div>
-              <div className="text-sm text-white/70">Học viên</div>
+              <div className="text-sm text-white/70">{t('login.stats.learners')}</div>
             </div>
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">200+</div>
-              <div className="text-sm text-white/70">Khóa học</div>
+              <div className="text-sm text-white/70">{t('login.stats.courses')}</div>
             </div>
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">98%</div>
-              <div className="text-sm text-white/70">Hài lòng</div>
+              <div className="text-sm text-white/70">{t('login.stats.satisfaction')}</div>
             </div>
           </div>
         </div>
@@ -80,19 +85,19 @@ const Login = () => {
               <BookOpen className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold bg-primary bg-clip-text text-transparent font-display">
-              SkillBoost
+              {t('app.name', { ns: 'common' })}
             </span>
           </Link>
 
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold font-display">Đăng nhập</h2>
-            <p className="text-slate-500">Nhập email và mật khẩu của bạn</p>
+            <h2 className="text-3xl font-bold font-display">{t('login.title')}</h2>
+            <p className="text-slate-500">{t('login.subtitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">{t('labels.email', { ns: 'common' })}</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <Input
@@ -102,7 +107,7 @@ const Login = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="ten@example.com"
+                  placeholder={t('login.emailPlaceholder')}
                   className="pl-10 h-12"
                 />
               </div>
@@ -110,7 +115,7 @@ const Login = () => {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-2">Mật khẩu</label>
+              <label htmlFor="password" className="block text-sm font-medium mb-2">{t('labels.password', { ns: 'common' })}</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <Input
@@ -120,7 +125,7 @@ const Login = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="••••••••"
+                  placeholder={t('login.passwordPlaceholder')}
                   className="pl-10 pr-10 h-12"
                 />
                 <button
@@ -138,42 +143,42 @@ const Login = () => {
               <div className="flex items-center gap-2">
                 <Checkbox id="remember" />
                 <label htmlFor="remember" className="text-sm cursor-pointer">
-                  Ghi nhớ
+                  {t('login.rememberMe')}
                 </label>
               </div>
               <a href="#" className="text-sm text-primary hover:underline">
-                Quên mật khẩu?
+                {t('login.forgotPassword')}
               </a>
             </div>
 
-            <Button 
-              type="submit" 
-              size="lg" 
+            <Button
+              type="submit"
+              size="lg"
               className="w-full bg-primary shadow-lg shadow-primary/20 text-lg h-12"
               disabled={isLoggingIn}
             >
               {isLoggingIn ? (
                 <>
                   <InlineLoading />
-                  <span className="ml-2">Đang đăng nhập...</span>
+                  <span className="ml-2">{t('login.submitting')}</span>
                 </>
               ) : (
-                'Đăng nhập'
+                t('login.submit')
               )}
             </Button>
           </form>
 
-          {/* Link chuyển qua Register */}
+          {/* Link to Register */}
           <div className="text-center">
-            <span className="text-sm text-slate-500">Chưa có tài khoản? </span>
+            <span className="text-sm text-slate-500">{t('login.noAccount')} </span>
             <Link to="/register" className="text-sm font-semibold text-primary hover:underline">
-              Đăng ký ngay
+              {t('login.registerNow')}
             </Link>
           </div>
 
           <div className="text-center pt-4">
             <Link to="/" className="text-sm text-slate-500 hover:text-primary">
-              ← Về trang chủ
+              {t('login.backHome')}
             </Link>
           </div>
         </div>

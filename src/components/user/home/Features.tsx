@@ -1,76 +1,79 @@
 import { Award, Clock, Users, Globe, BookOpen, Trophy } from 'lucide-react';
-
-const FEATURES = [
-  {
-    icon: BookOpen,
-    title: 'Khóa học do chuyên gia giảng dạy',
-    description: 'Học với giảng viên bản ngữ có nhiều năm kinh nghiệm giảng dạy',
-    gradient: 'from-blue-500 to-cyan-500',
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-  },
-  {
-    icon: Clock,
-    title: 'Lịch học linh hoạt',
-    description: 'Học theo tốc độ của bạn với quyền truy cập tài liệu 24/7',
-    gradient: 'from-violet-500 to-purple-500',
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
-  },
-  {
-    icon: Users,
-    title: 'Học tập tương tác',
-    description: 'Tương tác với bạn học và giảng viên qua các buổi học trực tuyến và diễn đàn',
-    gradient: 'from-rose-500 to-pink-500',
-    iconBg: 'bg-rose-50',
-    iconColor: 'text-rose-600',
-  },
-  {
-    icon: Globe,
-    title: 'Cộng đồng toàn cầu',
-    description: 'Kết nối với người học khắp thế giới và cùng luyện tập',
-    gradient: 'from-emerald-500 to-teal-500',
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-  },
-  {
-    icon: Award,
-    title: 'Chương trình được chứng nhận',
-    description: 'Nhận chứng chỉ được công nhận khi hoàn thành khóa học',
-    gradient: 'from-amber-500 to-orange-500',
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-600',
-  },
-  {
-    icon: Trophy,
-    title: 'Hiệu quả đã được chứng minh',
-    description: '98% học viên của chúng tôi ghi nhận sự tiến bộ rõ rệt',
-    gradient: 'from-indigo-500 to-blue-600',
-    iconBg: 'bg-indigo-50',
-    iconColor: 'text-indigo-600',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const Features = () => {
+  const { t } = useTranslation('landing');
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: t('features.items.expert.title'),
+      description: t('features.items.expert.description'),
+      gradient: 'from-blue-500 to-cyan-500',
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+    },
+    {
+      icon: Clock,
+      title: t('features.items.flexible.title'),
+      description: t('features.items.flexible.description'),
+      gradient: 'from-violet-500 to-purple-500',
+      iconBg: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+    },
+    {
+      icon: Users,
+      title: t('features.items.interactive.title'),
+      description: t('features.items.interactive.description'),
+      gradient: 'from-rose-500 to-pink-500',
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-600',
+    },
+    {
+      icon: Globe,
+      title: t('features.items.global.title'),
+      description: t('features.items.global.description'),
+      gradient: 'from-emerald-500 to-teal-500',
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+    },
+    {
+      icon: Award,
+      title: t('features.items.certified.title'),
+      description: t('features.items.certified.description'),
+      gradient: 'from-amber-500 to-orange-500',
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+    },
+    {
+      icon: Trophy,
+      title: t('features.items.proven.title'),
+      description: t('features.items.proven.description'),
+      gradient: 'from-indigo-500 to-blue-600',
+      iconBg: 'bg-indigo-50',
+      iconColor: 'text-indigo-600',
+    },
+  ];
+
   return (
     <section className="py-24 bg-slate-50">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4">
-            Tại sao chọn chúng tôi
+            {t('features.eyebrow')}
           </span>
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900 font-display">
-            Vì sao chọn <span className="text-primary">SkillBoost</span>?
+            {t('features.title')} <span className="text-primary">{t('features.titleAccent')}</span>?
           </h2>
           <p className="text-lg text-slate-500 leading-relaxed">
-            Chúng tôi cung cấp mọi thứ bạn cần để thành thạo tiếng Anh và đạt được mục tiêu học tập
+            {t('features.subtitle')}
           </p>
         </div>
 
         {/* Features Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FEATURES.map((feature, index) => (
+          {features.map((feature, index) => (
             <div
               key={index}
               className="group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 hover:border-slate-200 overflow-hidden"

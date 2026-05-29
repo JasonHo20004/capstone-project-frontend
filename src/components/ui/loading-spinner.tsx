@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -7,10 +8,6 @@ interface LoadingSpinnerProps {
   text?: string;
 }
 
-/**
- * Loading Spinner Component
- * Sử dụng để hiển thị trạng thái loading
- */
 export const LoadingSpinner = ({
   size = 'md',
   className,
@@ -39,20 +36,15 @@ export const LoadingSpinner = ({
   );
 };
 
-/**
- * Full Page Loading Spinner
- */
 export const FullPageLoading = ({ text }: { text?: string }) => {
+  const { t } = useTranslation('common');
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
-      <LoadingSpinner size="lg" text={text || 'Đang tải...'} />
+      <LoadingSpinner size="lg" text={text || t('actions.loading')} />
     </div>
   );
 };
 
-/**
- * Inline Loading Spinner (cho buttons, etc.)
- */
 export const InlineLoading = () => {
   return <LoadingSpinner size="sm" />;
 };

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 interface ProgressBarProps {
   sectionTitle: string;
   sectionIndex: number;
@@ -14,6 +16,7 @@ export function ProgressBar({
   globalIndex,
   globalTotal,
 }: ProgressBarProps) {
+  const { t } = useTranslation("exam");
   const pct = ((globalIndex + 1) / globalTotal) * 100;
   return (
     <div className="w-full">
@@ -22,7 +25,7 @@ export function ProgressBar({
           {sectionTitle}
         </span>
         <span className="text-slate-500">
-          {questionInSection + 1} / {sectionTotal} · Q{globalIndex + 1} / {globalTotal}
+          {questionInSection + 1} / {sectionTotal} · {t("placementTest.progressBar.questionShort")}{globalIndex + 1} / {globalTotal}
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
