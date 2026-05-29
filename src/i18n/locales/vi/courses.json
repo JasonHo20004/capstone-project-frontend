@@ -1,0 +1,123 @@
+{
+  "myCourses": {
+    "loading": "Đang tải khoá học của bạn...",
+    "eyebrow": "Thư viện học tập",
+    "title": "Khoá học của bạn",
+    "subtitle": "Quản lý, theo dõi tiến độ và tiếp tục hành trình học tập của bạn tại đây.",
+    "stats": {
+      "owned": "Đã sở hữu",
+      "status": "Trạng thái",
+      "studying": "Đang học",
+      "notStarted": "Chưa bắt đầu"
+    },
+    "search": "Tìm kiếm trong khoá học của bạn...",
+    "filterCount": "{{filtered}} / {{total}} khoá học",
+    "emptyTitle": "Bắt đầu hành trình học tập",
+    "emptyDesc": "Bạn chưa sở hữu khoá học nào. Khám phá kho khoá học chất lượng và bắt đầu chinh phục mục tiêu của bạn ngay hôm nay!",
+    "exploreBtn": "Khám phá khoá học",
+    "features": {
+      "anytime": "Học mọi lúc",
+      "anytimeDesc": "Truy cập 24/7 trên mọi thiết bị",
+      "progress": "Theo dõi tiến độ",
+      "progressDesc": "Biểu đồ học tập chi tiết",
+      "certificate": "Chứng chỉ",
+      "certificateDesc": "Nhận chứng chỉ khi hoàn thành"
+    },
+    "noResults": "Không tìm thấy kết quả",
+    "noResultsHint": "Thử tìm với từ khoá khác hoặc",
+    "clearFilter": "xoá bộ lọc"
+  },
+  "courseCard": {
+    "purchased": "Đã sở hữu",
+    "unknownInstructor": "Giảng viên ẩn danh",
+    "loginRequired": "Vui lòng đăng nhập để thêm vào giỏ hàng",
+    "alreadyInCart": "Đã có trong giỏ hàng",
+    "addToCartTitle": "Thêm vào giỏ hàng"
+  },
+  "courseDetail": {
+    "loading": "Đang tải thông tin khoá học...",
+    "loadError": "Không thể tải khoá học.",
+    "notFoundTitle": "Không tìm thấy khoá học",
+    "notFoundDesc": "Khoá học này có thể đã bị xoá hoặc không tồn tại.",
+    "backToList": "Quay lại danh sách",
+    "breadcrumbCourses": "Khoá học",
+    "ownedBadge": "Đã sở hữu",
+    "ratingsCount": "({{count}} đánh giá)",
+    "lessonCount": "{{count}} bài học",
+    "instructor": "Giảng viên",
+    "tabs": {
+      "overview": "Tổng quan",
+      "instructor": "Giảng viên",
+      "content": "Nội dung"
+    },
+    "sections": {
+      "description": "Mô tả khoá học",
+      "whatYouGet": "Bạn sẽ nhận được",
+      "requirements": "Yêu cầu",
+      "audience": "Khoá học này dành cho ai?",
+      "myReports": "Báo cáo của bạn",
+      "lessons": "Bài học ({{count}})",
+      "tests": "Bài kiểm tra",
+      "finalTest": "Bài kiểm tra cuối khoá",
+      "moreFromInstructor": "Thêm khoá học từ <0>{{name}}</0>"
+    },
+    "benefits": {
+      "videoLessons": "{{count}} bài học video",
+      "lifetime": "Truy cập trọn đời",
+      "freeUpdates": "Cập nhật miễn phí",
+      "certificate": "Chứng chỉ hoàn thành"
+    },
+    "lessons": {
+      "minutes": "{{count}} phút",
+      "materials": "{{count}} tài liệu",
+      "empty": "Chưa có bài học nào.",
+      "lockedNotice": "Mua khoá học để mở khoá toàn bộ nội dung"
+    },
+    "tests": {
+      "empty": "Chưa có bài kiểm tra nào.",
+      "doTest": "Làm bài",
+      "questionCount": "{{count}} câu hỏi",
+      "minutesAndMax": "{{minutes}} phút • Điểm tối đa: {{score}}"
+    },
+    "finalTest": {
+      "description": "Hoàn thành bài kiểm tra này để xác nhận bạn đã nắm vững kiến thức.",
+      "allComplete": "Bạn đã hoàn thành tất cả bài học!",
+      "doTestBtn": "Làm bài kiểm tra",
+      "lockedTitle": "Hoàn thành tất cả bài học để mở khoá",
+      "progress": "Tiến độ: {{completed}}/{{total}} bài học"
+    },
+    "reports": {
+      "writeReport": "Viết báo cáo",
+      "reportIncident": "Báo cáo sự cố",
+      "empty": "Bạn chưa có báo cáo nào cho khoá học này."
+    },
+    "instructorTab": {
+      "email": "Email:",
+      "phone": "Điện thoại:",
+      "level": "Trình độ:"
+    },
+    "sidebar": {
+      "ownedNotice": "Đã sở hữu khoá học",
+      "startLearning": "Vào học ngay",
+      "continueLearning": "Tiếp tục học",
+      "buyNow": "Mua ngay",
+      "addToCart": "Thêm vào giỏ",
+      "inCartCta": "Đã có trong giỏ — Xem giỏ hàng",
+      "trust": {
+        "lifetime": "Truy cập trọn đời",
+        "freeUpdates": "Cập nhật miễn phí",
+        "certificate": "Chứng chỉ hoàn thành"
+      }
+    },
+    "payment": {
+      "dialogTitle": "Xác nhận thanh toán nhanh",
+      "processing": "Đang xử lý...",
+      "confirm": "Thanh toán ngay"
+    },
+    "toasts": {
+      "loginRequiredCart": "Bạn cần đăng nhập để thêm vào giỏ hàng",
+      "loginRequiredBuy": "Bạn cần đăng nhập để mua khoá học",
+      "loginAction": "Đăng nhập"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Moon, Sun, Monitor, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +31,7 @@ export default function ThemeToggle({
   align = 'end',
 }: ThemeToggleProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { t } = useTranslation('common');
   // Avoid hydration mismatch — only render the live icon after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -43,7 +45,7 @@ export default function ThemeToggle({
         variant="ghost"
         size="icon"
         className={cn('h-9 w-9', className)}
-        aria-label="Đổi giao diện"
+        aria-label={t('theme.switchTo')}
       >
         {mounted ? (
           isDark ? (
@@ -54,7 +56,7 @@ export default function ThemeToggle({
         ) : (
           <Sun className="h-[18px] w-[18px] opacity-0" />
         )}
-        <span className="sr-only">Đổi giao diện</span>
+        <span className="sr-only">{t('theme.switchTo')}</span>
       </Button>
     ) : (
       <Button variant="outline" size="sm" className={cn('gap-2', className)}>
@@ -63,7 +65,7 @@ export default function ThemeToggle({
         ) : (
           <Sun className="h-4 w-4" />
         )}
-        Giao diện
+        {t('theme.label')}
       </Button>
     );
 
@@ -72,22 +74,22 @@ export default function ThemeToggle({
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-44">
         <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-          Giao diện
+          {t('theme.label')}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => setTheme('light')} className="gap-2">
           <Sun className="h-4 w-4" />
-          <span className="flex-1">Sáng</span>
+          <span className="flex-1">{t('theme.light')}</span>
           {active === 'light' && <Check className="h-4 w-4 text-primary" />}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('dark')} className="gap-2">
           <Moon className="h-4 w-4" />
-          <span className="flex-1">Tối</span>
+          <span className="flex-1">{t('theme.dark')}</span>
           {active === 'dark' && <Check className="h-4 w-4 text-primary" />}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('system')} className="gap-2">
           <Monitor className="h-4 w-4" />
-          <span className="flex-1">Theo hệ thống</span>
+          <span className="flex-1">{t('theme.system')}</span>
           {active === 'system' && <Check className="h-4 w-4 text-primary" />}
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { ChevronUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 export function BackToTopButton() {
   const [visible, setVisible] = useState(false);
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,7 +24,7 @@ export function BackToTopButton() {
     <button
       type="button"
       onClick={scrollToTop}
-      aria-label="Cuộn lên đầu trang"
+      aria-label={t('backToTop')}
       className={cn(
         'fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-xl',
         'bg-white border border-slate-200/80 shadow-lg shadow-slate-200/50',

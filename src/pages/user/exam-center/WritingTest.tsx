@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
 
 // ─── Helper: extract last 2 sentences ────────────────────────────────────────
@@ -12,6 +13,7 @@ function extractLastTwoSentences(text: string): { lastSentence: string; prevSent
 
 export default function WritingTest() {
   const navigate = useNavigate();
+  const { t } = useTranslation("exam");
 
   // ─── State ──────────────────────────────────────────────────────────────────
   const [essayText, setEssayText] = useState("");
@@ -109,10 +111,10 @@ export default function WritingTest() {
         <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">W</div>
-            <h1 className="font-bold text-slate-800">Writing Assessment Results</h1>
+            <h1 className="font-bold text-slate-800">{t("writingTest.result.header")}</h1>
           </div>
           <Link to="/practice" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-            ← Back to Tests
+            {t("writingTest.result.backToTests")}
           </Link>
         </header>
 
@@ -121,8 +123,8 @@ export default function WritingTest() {
           {(!evaluation || evaluation.status === "PENDING" || evaluation.status === "PROCESSING") && (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-              <h2 className="text-xl font-bold text-slate-800 mb-2">AI đang chấm bài...</h2>
-              <p className="text-slate-500">Thường mất 15-30 giây. Vui lòng đợi.</p>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">{t("writingTest.result.evaluatingTitle")}</h2>
+              <p className="text-slate-500">{t("writingTest.result.evaluatingSubtitle")}</p>
             </div>
           )}
 
@@ -130,11 +132,11 @@ export default function WritingTest() {
           {evaluation?.status === "FAILED" && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
               <span className="material-symbols-outlined text-red-500 text-5xl mb-4 block">error</span>
-              <h2 className="text-xl font-bold text-red-800 mb-2">Chấm bài thất bại</h2>
-              <p className="text-red-600 mb-4">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
+              <h2 className="text-xl font-bold text-red-800 mb-2">{t("writingTest.result.failedTitle")}</h2>
+              <p className="text-red-600 mb-4">{t("writingTest.result.failedBody")}</p>
               <button onClick={() => { setShowResult(false); setEvaluationId(null); setIsSubmitting(false); }}
                 className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700">
-                Thử lại
+                {t("writingTest.result.retry")}
               </button>
             </div>
           )}
@@ -144,20 +146,20 @@ export default function WritingTest() {
             <div className="space-y-6">
               {/* Overall Band */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-                <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">Estimated Band</p>
+                <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">{t("writingTest.result.estimatedBand")}</p>
                 <div className="text-7xl font-black text-indigo-600 mb-2">{evaluation.overallBand}</div>
-                <p className="text-xs text-slate-400 italic mb-3">AI evaluation may vary ±0.5 band from official IELTS scoring</p>
+                <p className="text-xs text-slate-400 italic mb-3">{t("writingTest.result.disclaimer")}</p>
                 <p className="text-slate-600 text-sm max-w-xl mx-auto">{evaluation.overallFeedback}</p>
               </div>
 
               {/* Criteria Scores */}
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { key: "task_achievement", label: "Task Achievement", icon: "task_alt" },
-                  { key: "coherence", label: "Coherence & Cohesion", icon: "link" },
-                  { key: "lexical", label: "Lexical Resource", icon: "dictionary" },
-                  { key: "grammar", label: "Grammar Range & Accuracy", icon: "spellcheck" },
-                ].map(({ key, label, icon }) => {
+                  { key: "task_achievement", labelKey: "taskAchievement", icon: "task_alt" },
+                  { key: "coherence", labelKey: "coherence", icon: "link" },
+                  { key: "lexical", labelKey: "lexical", icon: "dictionary" },
+                  { key: "grammar", labelKey: "grammar", icon: "spellcheck" },
+                ].map(({ key, labelKey, icon }) => {
                   const c = evaluation.criteria?.[key as keyof typeof evaluation.criteria] as any;
                   if (!c) return null;
                   return (
@@ -165,7 +167,7 @@ export default function WritingTest() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-indigo-500 text-xl">{icon}</span>
-                          <span className="font-semibold text-slate-800 text-sm">{label}</span>
+                          <span className="font-semibold text-slate-800 text-sm">{t(`writingTest.result.criteria.${labelKey}`)}</span>
                         </div>
                         <span className="text-2xl font-black text-indigo-600">{c.score}</span>
                       </div>
@@ -174,7 +176,7 @@ export default function WritingTest() {
                         <div className="mt-3 pt-3 border-t border-slate-100">
                           <p className="text-xs font-semibold text-emerald-700 flex items-center gap-1 mb-1">
                             <span className="material-symbols-outlined text-sm">tips_and_updates</span>
-                            How to improve
+                            {t("writingTest.result.improvementsTitle")}
                           </p>
                           <p className="text-xs text-emerald-600 leading-relaxed">{c.improvements}</p>
                         </div>
@@ -189,13 +191,13 @@ export default function WritingTest() {
                 <div className="bg-white rounded-xl border border-slate-200 p-6">
                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-500">edit_note</span>
-                    Key Corrections ({evaluation.highlightedErrors.length})
+                    {t("writingTest.result.keyCorrections")} ({evaluation.highlightedErrors.length})
                   </h3>
                   <div className="space-y-3">
                     {evaluation.highlightedErrors.map((err: any, i: number) => (
                       <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                         <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                          err.type === "grammar" ? "bg-red-100 text-red-700" : 
+                          err.type === "grammar" ? "bg-red-100 text-red-700" :
                           err.type === "vocab" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
                         }`}>
                           {err.type}
@@ -215,7 +217,7 @@ export default function WritingTest() {
 
               <div className="text-center pt-4">
                 <Link to="/practice" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">
-                  Quay lại Practice
+                  {t("writingTest.result.backToPractice")}
                 </Link>
               </div>
             </div>
@@ -232,16 +234,16 @@ export default function WritingTest() {
       <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shrink-0 z-20">
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">W</div>
-          <h1 className="font-bold text-slate-800">IELTS Writing Assessment</h1>
+          <h1 className="font-bold text-slate-800">{t("writingTest.editor.header")}</h1>
           <div className="h-4 w-[1px] bg-slate-300 mx-2"></div>
-          <span className="text-sm font-medium text-slate-500">Task 2: Essay</span>
+          <span className="text-sm font-medium text-slate-500">{t("writingTest.editor.taskLabel")}</span>
         </div>
         <div className="flex items-center gap-6">
           {/* Writing Assistant Indicator */}
           {assistantLoading && (
             <div className="flex items-center gap-2 text-xs text-indigo-600 animate-pulse">
               <div className="w-2 h-2 bg-indigo-500 rounded-full animate-ping"></div>
-              AI đang đọc...
+              {t("writingTest.editor.assistantReading")}
             </div>
           )}
           {/* Timer */}
@@ -254,7 +256,7 @@ export default function WritingTest() {
             disabled={isSubmitting || wordCount < 20}
             className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
           >
-            {isSubmitting ? "Submitting..." : "Submit Essay"}
+            {isSubmitting ? t("writingTest.editor.submitting") : t("writingTest.editor.submit")}
           </button>
         </div>
       </header>
@@ -264,14 +266,14 @@ export default function WritingTest() {
         {/* Left Panel: Prompt */}
         <div className="w-1/3 bg-slate-50 border-r border-slate-200 flex flex-col h-full overflow-y-auto p-6">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Task Prompt</h2>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">The Impact of Remote Work</h3>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("writingTest.editor.taskPromptLabel")}</h2>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{t("writingTest.editor.promptTitle")}</h3>
             <p className="text-sm text-slate-600 mb-4 italic border-l-4 border-indigo-500 pl-4 py-1 bg-indigo-50/50 rounded-r">
-              &quot;Some people believe that remote work has improved work-life balance, while others argue it has blurred the lines between professional and personal life. Discuss both views and give your own opinion.&quot;
+              &quot;{t("writingTest.editor.promptQuote")}&quot;
             </p>
             <div className="space-y-2 text-sm text-slate-600">
-              <p>Give reasons for your answer and include any relevant examples from your own knowledge or experience.</p>
-              <p>Write at least 250 words.</p>
+              <p>{t("writingTest.editor.promptHint1")}</p>
+              <p>{t("writingTest.editor.promptHint2")}</p>
             </div>
           </div>
 
@@ -280,7 +282,7 @@ export default function WritingTest() {
             <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 mb-4">
               <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-3 flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">auto_fix_high</span>
-                AI Writing Assistant
+                {t("writingTest.editor.assistantTitle")}
               </h4>
               {assistantResult.errors.map((err, i) => (
                 <div key={`err-${i}`} className="text-xs mb-2 p-2 bg-white rounded border border-amber-100">
@@ -302,12 +304,12 @@ export default function WritingTest() {
           )}
 
           <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
-            <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">Tips</h4>
+            <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">{t("writingTest.editor.tipsTitle")}</h4>
             <ul className="text-xs text-indigo-700 space-y-1 list-disc list-inside">
-              <li>Plan your essay structure before writing.</li>
-              <li>Use a mix of complex and simple sentences.</li>
-              <li>Check for spelling and grammar errors.</li>
-              <li>Ensure you address all parts of the prompt.</li>
+              <li>{t("writingTest.editor.tips.plan")}</li>
+              <li>{t("writingTest.editor.tips.mix")}</li>
+              <li>{t("writingTest.editor.tips.check")}</li>
+              <li>{t("writingTest.editor.tips.address")}</li>
             </ul>
           </div>
         </div>
@@ -317,15 +319,15 @@ export default function WritingTest() {
           <div className="p-2 border-b border-slate-200 flex items-center gap-1 bg-slate-50">
             <div className="ml-auto flex items-center gap-3 px-3">
               <span className="text-xs font-medium text-slate-400">
-                Word Count: <span className={`font-bold ${wordCount >= 250 ? "text-green-600" : wordCount >= 200 ? "text-amber-600" : "text-slate-700"}`}>{wordCount}</span>
-                <span className="text-slate-300 ml-1">/ 250 min</span>
+                {t("writingTest.editor.wordCountLabel")} <span className={`font-bold ${wordCount >= 250 ? "text-green-600" : wordCount >= 200 ? "text-amber-600" : "text-slate-700"}`}>{wordCount}</span>
+                <span className="text-slate-300 ml-1">{t("writingTest.editor.wordCountMin")}</span>
               </span>
             </div>
           </div>
           <textarea
             ref={textareaRef}
             className="flex-1 p-8 text-lg leading-relaxed text-slate-800 outline-none resize-none font-serif"
-            placeholder="Start typing your essay here..."
+            placeholder={t("writingTest.editor.placeholder")}
             value={essayText}
             onChange={(e) => setEssayText(e.target.value)}
           />

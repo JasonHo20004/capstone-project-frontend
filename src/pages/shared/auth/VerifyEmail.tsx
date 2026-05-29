@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, XCircle, Mail, Loader2 } from "lucide-react";
 import { AxiosError } from "axios";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/api/use-auth";
 
@@ -12,6 +13,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation("auth");
   const { verifyEmail, resendVerification, isResending } = useAuth();
 
   const [status, setStatus] = useState<Status>("idle");
@@ -37,7 +39,7 @@ const VerifyEmailPage = () => {
 
     if (!token) {
       setStatus("error");
-      setMessage("Mã xác thực không hợp lệ hoặc đã hết hạn.");
+      setMessage(t("verifyEmail.tokenInvalid"));
       return;
     }
 
@@ -52,7 +54,7 @@ const VerifyEmailPage = () => {
         await verifyEmail(token);
         if (cancelled) return;
         setStatus("success");
-        setMessage("Xác thực email thành công. Đang đưa bạn về trang chủ...");
+        setMessage(t("verifyEmail.successRedirect"));
         window.setTimeout(() => {
           if (!cancelled) navigate("/", { replace: true });
         }, 1500);
@@ -61,7 +63,7 @@ const VerifyEmailPage = () => {
         const axiosError = error as AxiosError<{ error?: string }>;
         const apiMessage =
           axiosError?.response?.data?.error ||
-          "Liên kết xác thực không hợp lệ hoặc đã hết hạn.";
+          t("verifyEmail.failedDesc");
         setStatus("error");
         setMessage(apiMessage);
       }
@@ -71,7 +73,7 @@ const VerifyEmailPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, verifyEmail, navigate]);
+  }, [searchParams, verifyEmail, navigate, t]);
 
   // Cooldown countdown
   useEffect(() => {
@@ -113,10 +115,10 @@ const VerifyEmailPage = () => {
 
   const resendDisabled = isResending || cooldownRemaining > 0 || !emailFromUrl;
   const resendLabel = isResending
-    ? "Đang gửi..."
+    ? t("verifyEmail.resending")
     : cooldownRemaining > 0
-    ? `Gửi lại sau ${cooldownRemaining}s`
-    : "Gửi lại email xác thực";
+    ? t("verifyEmail.resendWait", { seconds: cooldownRemaining })
+    : t("verifyEmail.resend");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -126,7 +128,7 @@ const VerifyEmailPage = () => {
             <>
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <h1 className="text-xl font-semibold text-foreground">
-                Đang chuẩn bị xác thực email...
+                {t("verifyEmail.preparing")}
               </h1>
             </>
           )}
@@ -135,11 +137,10 @@ const VerifyEmailPage = () => {
             <>
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <h1 className="text-xl font-semibold text-foreground">
-                Đang xác thực email...
+                {t("verifyEmail.checking")}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Vui lòng đợi trong giây lát trong khi chúng tôi kiểm tra mã xác
-                thực của bạn.
+                {t("verifyEmail.checkingDesc")}
               </p>
             </>
           )}
@@ -148,14 +149,14 @@ const VerifyEmailPage = () => {
             <>
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
               <h1 className="text-xl font-semibold text-foreground">
-                Email đã được xác thực!
+                {t("verifyEmail.success")}
               </h1>
               <p className="text-sm text-muted-foreground">{message}</p>
               <Button
                 className="mt-2 w-full"
                 onClick={() => navigate("/", { replace: true })}
               >
-                Vào trang chủ ngay
+                {t("verifyEmail.goHome")}
               </Button>
             </>
           )}
@@ -164,13 +165,13 @@ const VerifyEmailPage = () => {
             <>
               <XCircle className="h-12 w-12 text-destructive" />
               <h1 className="text-xl font-semibold text-foreground">
-                Xác thực email thất bại
+                {t("verifyEmail.failed")}
               </h1>
               <p className="text-sm text-muted-foreground">{message}</p>
 
               {emailFromUrl && (
                 <p className="text-xs text-muted-foreground">
-                  Email: <span className="text-foreground">{emailFromUrl}</span>
+                  {t("verifyEmail.emailLabel")}: <span className="text-foreground">{emailFromUrl}</span>
                 </p>
               )}
 
@@ -188,7 +189,7 @@ const VerifyEmailPage = () => {
                     className="w-full"
                     onClick={() => navigate("/register")}
                   >
-                    Đăng ký lại
+                    {t("verifyEmail.registerAgain")}
                   </Button>
                 )}
                 <Button
@@ -196,14 +197,14 @@ const VerifyEmailPage = () => {
                   onClick={() => navigate("/login")}
                   variant="outline"
                 >
-                  Đến trang đăng nhập
+                  {t("verifyEmail.goLogin")}
                 </Button>
                 <Button
                   className="w-full"
                   onClick={() => navigate("/")}
                   variant="secondary"
                 >
-                  Về trang chủ
+                  {t("verifyEmail.backHome")}
                 </Button>
               </div>
             </>
@@ -213,20 +214,18 @@ const VerifyEmailPage = () => {
             <>
               <Mail className="h-12 w-12 text-primary" />
               <h1 className="text-xl font-semibold text-foreground">
-                Vui lòng kiểm tra email của bạn
+                {t("verifyEmail.pendingTitle")}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Chúng tôi đã gửi một liên kết xác thực đến email của bạn. Vui
-                lòng kiểm tra hộp thư và nhấp vào liên kết để kích hoạt tài
-                khoản.
+                {t("verifyEmail.pendingDesc")}
               </p>
               <p className="text-xs text-muted-foreground">
-                Không thấy email? Vui lòng kiểm tra thư mục spam.
+                {t("verifyEmail.checkSpam")}
               </p>
 
               {emailFromUrl && (
                 <p className="text-xs text-muted-foreground">
-                  Email: <span className="text-foreground">{emailFromUrl}</span>
+                  {t("verifyEmail.emailLabel")}: <span className="text-foreground">{emailFromUrl}</span>
                 </p>
               )}
 
@@ -245,14 +244,14 @@ const VerifyEmailPage = () => {
                   onClick={() => navigate("/login")}
                   variant="outline"
                 >
-                  Đến trang đăng nhập
+                  {t("verifyEmail.goLogin")}
                 </Button>
                 <Button
                   className="w-full"
                   onClick={() => navigate("/")}
                   variant="secondary"
                 >
-                  Về trang chủ
+                  {t("verifyEmail.backHome")}
                 </Button>
               </div>
             </>

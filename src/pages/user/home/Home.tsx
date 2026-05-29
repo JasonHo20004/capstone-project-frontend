@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Target, Layers, ClipboardCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useCourses, useUnreadNotificationCount } from '@/hooks/api';
 import { useEnrolledCourses } from '@/hooks/api/use-courses';
 import { useGetDecks } from '@/hooks/api/use-flashcards';
@@ -12,6 +13,7 @@ import { StatPill } from '@/components/ui/stat-pill';
 
 const Index = () => {
   const reduce = useReducedMotion();
+  const { t } = useTranslation('dashboard');
   const {
     data: popularCoursesResponse,
     isLoading: isLoadingCourses,
@@ -65,18 +67,18 @@ const Index = () => {
             <div className="relative z-10 grid gap-8 md:grid-cols-[1.6fr_1fr] md:items-center">
               <div className="max-w-3xl">
                 <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-glass ring-1 ring-white/15">
-                  Learning Workspace
+                  {t('hero.eyebrow')}
                 </p>
                 <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-                  Học mọi nơi, <span className="text-secondary-light">tiến bộ mỗi ngày</span>
+                  {t('hero.title')} <span className="text-secondary-light">{t('hero.titleAccent')}</span>
                 </h1>
                 <p className="mt-4 text-lg text-white/80">
-                  Khám phá khoá học, theo dõi tiến độ và học theo nhịp của bạn với giao diện trực quan hơn.
+                  {t('hero.subtitle')}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link to="/#courses">
                     <Button variant="default" size="lg">
-                      Bắt đầu học
+                      {t('hero.startLearning')}
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </Link>
@@ -86,7 +88,7 @@ const Index = () => {
                       size="lg"
                       className="border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-primary"
                     >
-                      Khóa học của tôi
+                      {t('hero.myCourses')}
                     </Button>
                   </Link>
                 </div>
@@ -102,26 +104,26 @@ const Index = () => {
             {[
               {
                 icon: <Target className="h-5 w-5" />,
-                label: 'Khoá học đang theo học',
-                value: `${pad2(enrolledCount)} khoá học`,
+                label: t('stats.enrolledLabel'),
+                value: t('stats.enrolledValue', { count: pad2(enrolledCount) }),
                 tone: 'primary' as const,
               },
               {
                 icon: <BookOpen className="h-5 w-5" />,
-                label: 'Thông báo chưa đọc',
+                label: t('stats.unreadLabel'),
                 value:
                   unreadCount > 0
-                    ? `${pad2(unreadCount)} cần xem`
-                    : 'Đã xem hết',
+                    ? t('stats.unreadValue', { count: pad2(unreadCount) })
+                    : t('stats.unreadAllRead'),
                 tone: 'secondary' as const,
               },
               {
                 icon: <Layers className="h-5 w-5" />,
-                label: 'Bộ thẻ ghi nhớ',
+                label: t('stats.decksLabel'),
                 value:
                   deckCount > 0
-                    ? `${pad2(deckCount)} bộ thẻ`
-                    : 'Chưa có bộ thẻ',
+                    ? t('stats.decksValue', { count: pad2(deckCount) })
+                    : t('stats.decksEmpty'),
                 tone: 'muted' as const,
               },
             ].map((item, i) => (
@@ -147,15 +149,15 @@ const Index = () => {
                   <ClipboardCheck className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-display text-lg font-bold text-slate-900">Kiểm tra trình độ tiếng Anh</h3>
+                  <h3 className="font-display text-lg font-bold text-slate-900">{t('placement.title')}</h3>
                   <p className="mt-0.5 text-sm text-slate-600">
-                    50 câu hỏi · ~40 phút · Xác định cấp độ CEFR A1–C2 và nhận lộ trình học phù hợp
+                    {t('placement.subtitle')}
                   </p>
                 </div>
               </div>
               <Link to="/placement-test" className="shrink-0">
                 <Button variant="default" className="w-full bg-teal-500 hover:bg-teal-600 md:w-auto">
-                  Làm bài kiểm tra
+                  {t('placement.cta')}
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
@@ -167,27 +169,27 @@ const Index = () => {
         <section className="container mx-auto mt-16 px-4">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Khoá học nổi bật</h2>
-              <p className="mt-1 text-muted-foreground">Danh sách được cập nhật theo xu hướng học viên</p>
+              <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">{t('popular.title')}</h2>
+              <p className="mt-1 text-muted-foreground">{t('popular.subtitle')}</p>
             </div>
             <Link to="/courses" className="font-semibold text-primary hover:underline">
-              Xem tất cả →
+              {t('popular.viewAll')}
             </Link>
           </div>
           <div className="grid min-h-[220px] gap-8 md:grid-cols-2 lg:grid-cols-3">
             {isLoadingCourses && (
-              <LoadingSpinner className="col-span-full py-8" text="Đang tải khoá học nổi bật..." />
+              <LoadingSpinner className="col-span-full py-8" text={t('popular.loading')} />
             )}
             {isCoursesError && (
               <ErrorMessage
                 className="col-span-full"
-                message={coursesError instanceof Error ? coursesError.message : 'Không thể tải dữ liệu.'}
+                message={coursesError instanceof Error ? coursesError.message : t('popular.loadError')}
                 onRetry={refetchCourses}
               />
             )}
             {!isLoadingCourses && !isCoursesError && popularCourses.length === 0 && (
               <p className="col-span-full text-center text-muted-foreground">
-                Hiện chưa có khoá học nào phù hợp.
+                {t('popular.empty')}
               </p>
             )}
             {!isLoadingCourses &&

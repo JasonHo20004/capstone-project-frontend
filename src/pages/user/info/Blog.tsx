@@ -1,77 +1,73 @@
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
-import { Link } from 'react-router-dom';
-import { Calendar, User, ArrowRight } from 'lucide-react';
+import { Calendar, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const Blog = () => {
+  const { t } = useTranslation('info');
+
   const posts = [
     {
       id: 1,
-      title: '10 mẹo thiết yếu để học tiếng Anh nhanh hơn',
-      excerpt: 'Khám phá các chiến lược đã được chứng minh để tăng tốc hành trình học tiếng Anh và đạt độ lưu loát nhanh hơn bạn nghĩ.',
+      key: 'tips10',
       author: 'Dr. Sarah Johnson',
       authorImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
       date: 'Jan 15, 2025',
-      category: 'Mẹo học tập',
+      categoryKey: 'studyTips',
       thumbnail: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&h=450&fit=crop',
-      readTime: 'Đọc trong 5 phút',
+      readMinutes: 5,
     },
     {
       id: 2,
-      title: 'Sức mạnh của sự đắm chìm: Cách tạo môi trường tiếng Anh',
-      excerpt: 'Tìm hiểu cách bao quanh mình bằng tiếng Anh trong cuộc sống hằng ngày và tăng tốc học tập thông qua kỹ thuật immersion.',
+      key: 'immersion',
       author: 'Michael Chen',
       authorImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
       date: 'Jan 12, 2025',
-      category: 'Phương pháp học',
+      categoryKey: 'methodology',
       thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=450&fit=crop',
-      readTime: 'Đọc trong 8 phút',
+      readMinutes: 8,
     },
     {
       id: 3,
-      title: 'Làm chủ tiếng Anh thương mại: Hướng dẫn đầy đủ',
-      excerpt: 'Tất cả những gì bạn cần biết về giao tiếp tiếng Anh chuyên nghiệp, từ email đến thuyết trình.',
+      key: 'businessEnglish',
       author: 'Emma Williams',
       authorImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
       date: 'Jan 10, 2025',
-      category: 'Tiếng Anh thương mại',
+      categoryKey: 'business',
       thumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=450&fit=crop',
-      readTime: 'Đọc trong 10 phút',
+      readMinutes: 10,
     },
     {
       id: 4,
-      title: 'Các lỗi ngữ pháp thường gặp và cách tránh',
-      excerpt: 'Nhận diện và sửa các lỗi ngữ pháp phổ biến mà người học tiếng Anh hay mắc phải, kèm ví dụ thực tế.',
+      key: 'grammarMistakes',
       author: 'David Martinez',
       authorImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
       date: 'Jan 8, 2025',
-      category: 'Ngữ pháp',
+      categoryKey: 'grammar',
       thumbnail: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&h=450&fit=crop',
-      readTime: 'Đọc trong 6 phút',
+      readMinutes: 6,
     },
     {
       id: 5,
-      title: 'Thi Speaking IELTS: Chiến lược đạt Band 7+',
-      excerpt: 'Mẹo từ giám khảo IELTS giúp bạn vượt qua bài thi speaking và đạt band điểm mục tiêu.',
+      key: 'ieltsSpeaking',
       author: 'Prof. Lisa Anderson',
       authorImage: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=100&h=100&fit=crop',
       date: 'Jan 5, 2025',
-      category: 'Luyện thi',
+      categoryKey: 'testPrep',
       thumbnail: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=450&fit=crop',
-      readTime: 'Đọc trong 12 phút',
+      readMinutes: 12,
     },
     {
       id: 6,
-      title: 'Xây dựng từ vựng: Đúng cách',
-      excerpt: 'Các kỹ thuật hiệu quả để mở rộng vốn từ và ghi nhớ lâu dài.',
+      key: 'vocabulary',
       author: 'Rachel Green',
       authorImage: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop',
       date: 'Jan 3, 2025',
-      category: 'Từ vựng',
+      categoryKey: 'vocabulary',
       thumbnail: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=450&fit=crop',
-      readTime: 'Đọc trong 7 phút',
+      readMinutes: 7,
     },
   ];
 
@@ -80,17 +76,17 @@ const Blog = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      
+
       <main className="pt-20">
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl md:text-6xl font-bold mb-6 font-display">
-                Tài nguyên và mẹo học tập
+                {t('blog.hero.title')}
               </h1>
               <p className="text-xl text-white/70">
-                Lời khuyên từ chuyên gia, mẹo học tập và góc nhìn giúp bạn chinh phục tiếng Anh
+                {t('blog.hero.subtitle')}
               </p>
             </div>
           </div>
@@ -105,22 +101,22 @@ const Blog = () => {
                   <div className="relative aspect-video md:aspect-auto">
                     <img
                       src={featuredPost.thumbnail}
-                      alt={featuredPost.title}
+                      alt={t(`blog.posts.${featuredPost.key}.title`)}
                       className="w-full h-full object-cover"
                     />
                     <Badge className="absolute top-4 left-4 bg-secondary shadow-md">
-                      Nổi bật
+                      {t('blog.featuredBadge')}
                     </Badge>
                   </div>
                   <div className="p-8 flex flex-col justify-center">
                     <Badge variant="outline" className="w-fit mb-4">
-                      {featuredPost.category}
+                      {t(`blog.categories.${featuredPost.categoryKey}`)}
                     </Badge>
                     <h2 className="text-3xl font-bold mb-4 font-display">
-                      {featuredPost.title}
+                      {t(`blog.posts.${featuredPost.key}.title`)}
                     </h2>
                     <p className="text-slate-500 mb-6 leading-relaxed">
-                      {featuredPost.excerpt}
+                      {t(`blog.posts.${featuredPost.key}.excerpt`)}
                     </p>
                     <div className="flex items-center gap-4 mb-6">
                       <img
@@ -136,12 +132,12 @@ const Blog = () => {
                             {featuredPost.date}
                           </span>
                           <span>•</span>
-                          <span>{featuredPost.readTime}</span>
+                          <span>{t('blog.readTime', { minutes: featuredPost.readMinutes })}</span>
                         </div>
                       </div>
                     </div>
                     <Button className="w-fit bg-primary shadow-lg shadow-primary/20">
-                      Đọc bài viết
+                      {t('blog.readMore')}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -154,8 +150,8 @@ const Blog = () => {
         {/* Blog Posts Grid */}
         <section className="py-16 bg-slate-50">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-12 font-display">Bài viết mới nhất</h2>
-            
+            <h2 className="text-3xl font-bold mb-12 font-display">{t('blog.latestArticles')}</h2>
+
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {posts.slice(1).map((post) => (
                 <article
@@ -165,19 +161,19 @@ const Blog = () => {
                   <div className="relative aspect-video overflow-hidden">
                     <img
                       src={post.thumbnail}
-                      alt={post.title}
+                      alt={t(`blog.posts.${post.key}.title`)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <Badge variant="outline" className="absolute top-4 left-4 bg-card/90 backdrop-blur-sm">
-                      {post.category}
+                      {t(`blog.categories.${post.categoryKey}`)}
                     </Badge>
                   </div>
                   <div className="p-6">
                     <h3 className="text-xl font-semibold mb-3 line-clamp-2 group-hover:text-primary transition-colors font-display">
-                      {post.title}
+                      {t(`blog.posts.${post.key}.title`)}
                     </h3>
                     <p className="text-slate-500 text-sm mb-4 line-clamp-3">
-                      {post.excerpt}
+                      {t(`blog.posts.${post.key}.excerpt`)}
                     </p>
                     <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
                       <img
@@ -190,7 +186,7 @@ const Blog = () => {
                         <div className="text-xs text-slate-500 flex items-center gap-2">
                           <span>{post.date}</span>
                           <span>•</span>
-                          <span>{post.readTime}</span>
+                          <span>{t('blog.readTime', { minutes: post.readMinutes })}</span>
                         </div>
                       </div>
                     </div>
@@ -206,19 +202,19 @@ const Blog = () => {
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-2xl mx-auto space-y-6">
               <h2 className="text-4xl font-bold text-white font-display">
-                Đăng ký nhận bản tin
+                {t('blog.newsletter.title')}
               </h2>
               <p className="text-xl text-white/70">
-                Nhận mẹo học và tài nguyên mới nhất qua email
+                {t('blog.newsletter.subtitle')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto pt-4">
                 <input
                   type="email"
-                  placeholder="Nhập email của bạn"
+                  placeholder={t('blog.newsletter.placeholder')}
                   className="flex-1 h-12 px-4 rounded-lg border-0 focus:ring-2 focus:ring-secondary"
                 />
                 <Button size="lg" variant="secondary" className="shadow-lg shadow-primary/20">
-                  Đăng ký
+                  {t('blog.newsletter.submit')}
                 </Button>
               </div>
             </div>

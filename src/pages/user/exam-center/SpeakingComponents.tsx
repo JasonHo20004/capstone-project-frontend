@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { formatTime } from "./speaking-utils";
 
 interface WaveformProps {
@@ -137,6 +138,7 @@ interface CountdownProps {
 }
 
 export function Countdown({ from = 3, onDone }: CountdownProps) {
+  const { t } = useTranslation("exam");
   const [n, setN] = useState(from);
   useEffect(() => {
     if (n <= 0) {
@@ -158,7 +160,7 @@ export function Countdown({ from = 3, onDone }: CountdownProps) {
           {n > 0 ? n : "GO"}
         </div>
         <p className="text-white/70 text-sm mt-4 font-bold tracking-widest uppercase">
-          {n > 0 ? "Chuẩn bị..." : "Bắt đầu nói!"}
+          {n > 0 ? t("speakingComponents.countdown.prepare") : t("speakingComponents.countdown.go")}
         </p>
       </div>
     </div>
@@ -172,6 +174,7 @@ interface Part2TimerProps {
 }
 
 export function Part2Timer({ seconds, max, warnAt }: Part2TimerProps) {
+  const { t } = useTranslation("exam");
   const remaining = Math.max(0, max - seconds);
   const isWarn = remaining <= warnAt && remaining > 0;
   const isOver = seconds >= max;
@@ -183,10 +186,10 @@ export function Part2Timer({ seconds, max, warnAt }: Part2TimerProps) {
     : "text-emerald-700 bg-emerald-50 border-emerald-200";
 
   const label = isOver
-    ? "Quá thời gian! Nên kết thúc."
+    ? t("speakingComponents.timer.overtime")
     : isWarn
-    ? `Còn ${remaining}s - chuẩn bị kết bài`
-    : `Đang nói...`;
+    ? t("speakingComponents.timer.warning", { remaining })
+    : t("speakingComponents.timer.speaking");
 
   return (
     <div

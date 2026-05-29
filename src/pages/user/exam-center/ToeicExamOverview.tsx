@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function ToeicExamOverview() {
+  const { t } = useTranslation("exam");
+
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
       {/* Header */}
@@ -15,17 +18,17 @@ export default function ToeicExamOverview() {
               <div className="w-8 h-8 rounded bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
                 <span className="material-symbols-outlined text-[20px]">corporate_fare</span>
               </div>
-              <h1 className="font-bold text-lg tracking-tight">TOEIC® Listening and Reading Test</h1>
+              <h1 className="font-bold text-lg tracking-tight">{t("toeicOverview.title")}</h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-semibold text-slate-600">
               <span className="material-symbols-outlined text-[16px]">timer</span>
-              <span>120 Mins</span>
+              <span>{t("toeicOverview.duration")}</span>
             </div>
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-semibold text-slate-600">
               <span className="material-symbols-outlined text-[16px]">help</span>
-              <span>200 Questions</span>
+              <span>{t("toeicOverview.totalQuestions")}</span>
             </div>
             <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
               <span className="material-symbols-outlined">share</span>
@@ -46,22 +49,22 @@ export default function ToeicExamOverview() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#10b981]/20 to-transparent rounded-bl-full -mr-16 -mt-16 pointer-events-none"></div>
               <div className="relative z-10">
                 <span className="inline-block px-3 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] text-xs font-bold uppercase tracking-wider mb-4">
-                  Business English
+                  {t("toeicOverview.hero.badge")}
                 </span>
-                <h2 className="text-3xl font-bold text-slate-900 mb-4">Master Business Communication</h2>
+                <h2 className="text-3xl font-bold text-slate-900 mb-4">{t("toeicOverview.hero.title")}</h2>
                 <p className="text-slate-600 leading-relaxed mb-6 max-w-2xl">
-                  The TOEIC Listening and Reading test measures the everyday English skills of people working in an international environment. This practice exam simulates the actual test conditions to help you prepare effectively.
+                  {t("toeicOverview.hero.description")}
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Link
                     to="/exam/test/listening"
                     className="px-6 py-3 bg-[#10b981] hover:bg-[#059669] text-white font-bold rounded-xl shadow-lg shadow-[#10b981]/20 transition-all flex items-center gap-2"
                   >
-                    <span>Start Full Exam</span>
+                    <span>{t("toeicOverview.hero.startFullExam")}</span>
                     <span className="material-symbols-outlined text-[20px]">play_arrow</span>
                   </Link>
                   <button className="px-6 py-3 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2">
-                    <span>Download Syllabus</span>
+                    <span>{t("toeicOverview.hero.downloadSyllabus")}</span>
                     <span className="material-symbols-outlined text-[20px]">download</span>
                   </button>
                 </div>
@@ -72,25 +75,25 @@ export default function ToeicExamOverview() {
             <div className="border-b border-slate-200">
               <nav className="flex gap-8">
                 <button className="pb-4 border-b-2 border-[#10b981] text-[#10b981] font-bold text-sm">
-                  Description
+                  {t("toeicOverview.tabs.description")}
                 </button>
                 <button className="pb-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors">
-                  Exam Breakdown
+                  {t("toeicOverview.tabs.breakdown")}
                 </button>
                 <button className="pb-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors">
-                  Study Plan
+                  {t("toeicOverview.tabs.studyPlan")}
                 </button>
                 <button className="pb-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors">
-                  Reviews
+                  {t("toeicOverview.tabs.reviews")}
                 </button>
               </nav>
             </div>
 
             {/* Description Content */}
             <div className="prose prose-slate max-w-none">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">About this Exam</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">{t("toeicOverview.description.heading")}</h3>
               <p className="text-slate-600 mb-6">
-                The test is a two-hour multiple-choice assessment that consists of 200 questions divided into two sections: Listening and Reading.
+                {t("toeicOverview.description.intro")}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -98,26 +101,26 @@ export default function ToeicExamOverview() {
                   <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
                     <span className="material-symbols-outlined">headphones</span>
                   </div>
-                  <h4 className="font-bold text-slate-900 mb-2">Section I: Listening</h4>
+                  <h4 className="font-bold text-slate-900 mb-2">{t("toeicOverview.description.listening.title")}</h4>
                   <p className="text-sm text-slate-600 mb-4">
-                    Test takers listen to a variety of questions and short conversations recorded in English, then answer questions based on what they have heard (100 items total).
+                    {t("toeicOverview.description.listening.body")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                      Part 1: Photographs
+                      {t("toeicOverview.description.listening.part1")}
                     </li>
                     <li className="flex items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                      Part 2: Question-Response
+                      {t("toeicOverview.description.listening.part2")}
                     </li>
                     <li className="flex items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                      Part 3: Conversations
+                      {t("toeicOverview.description.listening.part3")}
                     </li>
                     <li className="flex items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                      Part 4: Talks
+                      {t("toeicOverview.description.listening.part4")}
                     </li>
                   </ul>
                 </div>
@@ -126,44 +129,44 @@ export default function ToeicExamOverview() {
                   <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 mb-4">
                     <span className="material-symbols-outlined">menu_book</span>
                   </div>
-                  <h4 className="font-bold text-slate-900 mb-2">Section II: Reading</h4>
+                  <h4 className="font-bold text-slate-900 mb-2">{t("toeicOverview.description.reading.title")}</h4>
                   <p className="text-sm text-slate-600 mb-4">
-                    Test takers read a variety of materials and respond at their own pace (100 items total).
+                    {t("toeicOverview.description.reading.body")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                      Part 5: Incomplete Sentences
+                      {t("toeicOverview.description.reading.part5")}
                     </li>
                     <li className="flex items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                      Part 6: Text Completion
+                      {t("toeicOverview.description.reading.part6")}
                     </li>
                     <li className="flex items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                      Part 7: Reading Comprehension
+                      {t("toeicOverview.description.reading.part7")}
                     </li>
                   </ul>
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold text-slate-900 mb-4">What you'll learn</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">{t("toeicOverview.description.learn.heading")}</h3>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-green-500 mt-0.5 text-[20px]">check_circle</span>
-                  <span className="text-sm text-slate-600">Understand detailed explanations and instructions</span>
+                  <span className="text-sm text-slate-600">{t("toeicOverview.description.learn.item1")}</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-green-500 mt-0.5 text-[20px]">check_circle</span>
-                  <span className="text-sm text-slate-600">Comprehend complex business documents</span>
+                  <span className="text-sm text-slate-600">{t("toeicOverview.description.learn.item2")}</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-green-500 mt-0.5 text-[20px]">check_circle</span>
-                  <span className="text-sm text-slate-600">Follow extended conversations and talks</span>
+                  <span className="text-sm text-slate-600">{t("toeicOverview.description.learn.item3")}</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-green-500 mt-0.5 text-[20px]">check_circle</span>
-                  <span className="text-sm text-slate-600">Connect information across multiple texts</span>
+                  <span className="text-sm text-slate-600">{t("toeicOverview.description.learn.item4")}</span>
                 </li>
               </ul>
             </div>
@@ -173,57 +176,57 @@ export default function ToeicExamOverview() {
           <div className="space-y-6">
             {/* Exam Info Card */}
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-900 mb-4">Exam Information</h3>
+              <h3 className="font-bold text-slate-900 mb-4">{t("toeicOverview.info.heading")}</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                  <span className="text-sm text-slate-500">Format</span>
-                  <span className="text-sm font-semibold text-slate-900">Multiple Choice</span>
+                  <span className="text-sm text-slate-500">{t("toeicOverview.info.format")}</span>
+                  <span className="text-sm font-semibold text-slate-900">{t("toeicOverview.info.formatValue")}</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                  <span className="text-sm text-slate-500">Questions</span>
-                  <span className="text-sm font-semibold text-slate-900">200 Items</span>
+                  <span className="text-sm text-slate-500">{t("toeicOverview.info.questions")}</span>
+                  <span className="text-sm font-semibold text-slate-900">{t("toeicOverview.info.questionsValue")}</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                  <span className="text-sm text-slate-500">Duration</span>
-                  <span className="text-sm font-semibold text-slate-900">2 Hours</span>
+                  <span className="text-sm text-slate-500">{t("toeicOverview.info.duration")}</span>
+                  <span className="text-sm font-semibold text-slate-900">{t("toeicOverview.info.durationValue")}</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                  <span className="text-sm text-slate-500">Skill Level</span>
-                  <span className="text-sm font-semibold text-slate-900">Intermediate - Advanced</span>
+                  <span className="text-sm text-slate-500">{t("toeicOverview.info.skillLevel")}</span>
+                  <span className="text-sm font-semibold text-slate-900">{t("toeicOverview.info.skillLevelValue")}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-500">Language</span>
-                  <span className="text-sm font-semibold text-slate-900">English</span>
+                  <span className="text-sm text-slate-500">{t("toeicOverview.info.language")}</span>
+                  <span className="text-sm font-semibold text-slate-900">{t("toeicOverview.info.languageValue")}</span>
                 </div>
               </div>
             </div>
 
             {/* Instructor / Provider */}
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-900 mb-4">Provided By</h3>
+              <h3 className="font-bold text-slate-900 mb-4">{t("toeicOverview.provider.heading")}</h3>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
                   <span className="material-symbols-outlined text-slate-400 text-[24px]">school</span>
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">ETS Official</p>
-                  <p className="text-xs text-slate-500">Educational Testing Service</p>
+                  <p className="font-bold text-slate-900">{t("toeicOverview.provider.name")}</p>
+                  <p className="text-xs text-slate-500">{t("toeicOverview.provider.subtitle")}</p>
                 </div>
               </div>
               <p className="text-xs text-slate-500 mb-4">
-                The creator of the TOEIC tests, ETS is the world's largest private nonprofit educational testing and assessment organization.
+                {t("toeicOverview.provider.description")}
               </p>
               <button className="w-full py-2 text-sm font-semibold text-[#10b981] border border-[#10b981]/20 rounded-lg hover:bg-[#10b981]/5 transition-colors">
-                View Provider Profile
+                {t("toeicOverview.provider.viewProfile")}
               </button>
             </div>
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Business</span>
-              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Communication</span>
-              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Workplace</span>
-              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">International</span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">{t("toeicOverview.tags.business")}</span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">{t("toeicOverview.tags.communication")}</span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">{t("toeicOverview.tags.workplace")}</span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">{t("toeicOverview.tags.international")}</span>
             </div>
           </div>
         </div>
@@ -231,4 +234,3 @@ export default function ToeicExamOverview() {
     </div>
   );
 }
-

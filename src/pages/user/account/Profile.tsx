@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,13 +33,9 @@ const LEVEL_COLORS: Record<string, string> = {
   C2: 'bg-purple-600 border-purple-600',
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMINISTRATOR: 'Quản trị viên',
-  COURSESELLER: 'Giảng viên',
-  STUDENT: 'Học viên',
-};
-
 export default function Profile() {
+  const { t, i18n } = useTranslation('account');
+  const dateLocale = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-GB';
   const { user, myApplications, isLoading, isError, error } = useProfile();
   const queryClient = useQueryClient();
   const updateProfileMutation = useUpdateProfile();
@@ -94,7 +91,7 @@ export default function Profile() {
   const addGoal = () => {
     const v = goalInput.trim();
     if (!v) return;
-    if (form.learningGoals.includes(v)) { toast.warning('Mục tiêu đã tồn tại'); return; }
+    if (form.learningGoals.includes(v)) { toast.warning(t('profile.toasts.goalExists')); return; }
     setForm((prev) => ({ ...prev, learningGoals: [...prev.learningGoals, v] }));
     setGoalInput('');
   };
@@ -108,7 +105,7 @@ export default function Profile() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('File quá lớn. Vui lòng chọn ảnh dưới 5MB.'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t('profile.toasts.fileTooLarge')); return; }
     const objectUrl = URL.createObjectURL(file);
     setRawImageSrc(objectUrl);
     setCropOpen(true);
@@ -145,14 +142,14 @@ export default function Profile() {
     }
     updateProfileMutation.mutate(payload as any, {
       onSuccess: () => {
-        toast.success('Cập nhật hồ sơ thành công!');
+        toast.success(t('profile.toasts.updateSuccess'));
         setEditing(false);
       },
       onError: (err: any) => {
         const msg = err?.response?.data?.message
           || err?.response?.data?.error
           || err?.message
-          || 'Cập nhật thất bại. Vui lòng thử lại.';
+          || t('profile.toasts.updateFailed');
         toast.error(msg);
       },
     });
@@ -161,11 +158,11 @@ export default function Profile() {
   // Email change handlers
   const handleEmailChangeSend = () => {
     if (!newEmail || !newEmail.includes('@')) {
-      toast.error('Email không hợp lệ');
+      toast.error(t('profile.toasts.invalidEmail'));
       return;
     }
     setEmailSent(true);
-    toast.success(`Email xác thực đã được gửi đến ${newEmail}`);
+    toast.success(t('profile.toasts.verificationSent', { email: newEmail }));
   };
 
   const handleEmailDialogClose = () => {
@@ -186,9 +183,9 @@ export default function Profile() {
   if (isError || !user) {
     return (
       <div className="container mx-auto px-4 pt-16 text-center space-y-4">
-        <p className="text-xl font-semibold text-destructive">Không thể tải thông tin cá nhân.</p>
+        <p className="text-xl font-semibold text-destructive">{t('profile.loadError')}</p>
         <p className="text-slate-500 text-sm">{String(error ?? '')}</p>
-        <Button onClick={() => window.location.reload()}>Tải lại trang</Button>
+        <Button onClick={() => window.location.reload()}>{t('profile.actions.reload')}</Button>
       </div>
     );
   }
@@ -248,32 +245,32 @@ export default function Profile() {
                         {form.englishLevel}
                       </span>
                     )}
-                    {isSeller && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">Giảng viên</Badge>}
-                    {isAdmin  && <Badge className="bg-rose-100 text-rose-700 border-rose-200 text-xs font-semibold">Quản trị viên</Badge>}
+                    {isSeller && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">{t('profile.badges.instructor')}</Badge>}
+                    {isAdmin  && <Badge className="bg-rose-100 text-rose-700 border-rose-200 text-xs font-semibold">{t('profile.badges.admin')}</Badge>}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 pt-0.5">
                   {isAdmin && (
                     <Button asChild size="sm" variant="outline">
-                      <Link to="/admin"><LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />Quản trị</Link>
+                      <Link to="/admin"><LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.adminDashboard')}</Link>
                     </Button>
                   )}
                   {isSeller && (
                     <Button asChild size="sm" variant="outline">
-                      <Link to="/seller"><LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />Khóa học</Link>
+                      <Link to="/seller"><LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.sellerDashboard')}</Link>
                     </Button>
                   )}
                   {!editing ? (
                     <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-                      <Edit className="w-3.5 h-3.5 mr-1.5" />Chỉnh sửa
+                      <Edit className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.edit')}
                     </Button>
                   ) : (
                     <div className="flex gap-1.5">
                       <Button size="sm" onClick={saveEdit} disabled={updateProfileMutation.isPending}>
                         {updateProfileMutation.isPending
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <><Save className="w-3.5 h-3.5 mr-1.5" />Lưu</>}
+                          : <><Save className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.save')}</>}
                       </Button>
                       <Button size="sm" variant="outline" onClick={cancelEdit}>
                         <X className="w-4 h-4" />
@@ -294,12 +291,12 @@ export default function Profile() {
         <Card className="lg:col-span-2 p-6">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2">
             <div className="w-1 h-4 bg-indigo-500 rounded-full" />
-            Thông tin cá nhân
+            {t('profile.sections.personalInfo')}
           </h2>
 
           <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <Label htmlFor="fullName" className="text-xs font-medium text-slate-500">Họ và tên</Label>
+              <Label htmlFor="fullName" className="text-xs font-medium text-slate-500">{t('profile.fields.fullName')}</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <Input id="fullName" className="pl-10" value={form.fullName} disabled={!editing}
@@ -310,7 +307,7 @@ export default function Profile() {
             {/* Email — locked, change via dialog */}
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                Email
+                {t('profile.fields.email')}
                 {(user as any).isEmailVerified
                   ? <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                   : <AlertCircle className="w-3 h-3 text-amber-500" />}
@@ -322,20 +319,20 @@ export default function Profile() {
                 </div>
                 {editing && (
                   <Button size="icon" variant="outline" className="shrink-0 h-10 w-10" type="button"
-                    onClick={() => setEmailDialogOpen(true)} title="Đổi email">
+                    onClick={() => setEmailDialogOpen(true)} title={t('profile.actions.changeEmail')}>
                     <KeyRound className="w-4 h-4" />
                   </Button>
                 )}
               </div>
               {!(user as any).isEmailVerified && (
                 <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />Email chưa được xác thực
+                  <AlertCircle className="w-3 h-3" />{t('profile.email.notVerified')}
                 </p>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-xs font-medium text-slate-500">Số điện thoại</Label>
+              <Label htmlFor="phone" className="text-xs font-medium text-slate-500">{t('profile.fields.phone')}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <Input id="phone" type="tel" className="pl-10" value={form.phoneNumber} disabled={!editing}
@@ -344,7 +341,7 @@ export default function Profile() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="dob" className="text-xs font-medium text-slate-500">Ngày sinh</Label>
+              <Label htmlFor="dob" className="text-xs font-medium text-slate-500">{t('profile.fields.dateOfBirth')}</Label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <Input id="dob" type="date" className="pl-10" value={form.dateOfBirth} disabled={!editing}
@@ -354,7 +351,7 @@ export default function Profile() {
 
             {/* English level */}
             <div className="space-y-2 md:col-span-2">
-              <Label className="text-xs font-medium text-slate-500">Trình độ tiếng Anh</Label>
+              <Label className="text-xs font-medium text-slate-500">{t('profile.fields.englishLevel')}</Label>
               <div className="flex flex-wrap gap-2">
                 {ENGLISH_LEVELS.map((lvl) => {
                   const active = form.englishLevel === lvl;
@@ -381,13 +378,13 @@ export default function Profile() {
         <Card className="p-6 flex flex-col gap-5">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <div className="w-1 h-4 bg-violet-500 rounded-full" />
-            Tài khoản
+            {t('profile.sections.account')}
           </h2>
 
           {/* Wallet */}
           <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 p-4 text-center">
             <div className="flex items-center justify-center gap-1.5 text-xs font-medium text-slate-500 mb-1">
-              <Wallet className="w-3.5 h-3.5" />Số dư ví
+              <Wallet className="w-3.5 h-3.5" />{t('profile.wallet.balance')}
             </div>
             {walletLoading ? (
               <div className="flex justify-center py-1">
@@ -400,7 +397,7 @@ export default function Profile() {
             )}
             <Link to="/wallet"
               className="text-xs text-indigo-400 hover:text-indigo-600 hover:underline mt-1 inline-block transition-colors">
-              Nạp tiền →
+              {t('profile.wallet.topUp')}
             </Link>
           </div>
 
@@ -408,7 +405,7 @@ export default function Profile() {
           <div className="space-y-0 text-sm divide-y divide-slate-100">
             <div className="flex items-center justify-between py-2.5">
               <span className="text-slate-400 flex items-center gap-1.5 text-xs">
-                <Clock className="w-3.5 h-3.5" />Tham gia
+                <Clock className="w-3.5 h-3.5" />{t('profile.wallet.joined')}
               </span>
               <span className="font-medium text-slate-700 text-xs text-right">{formatDate(user.createdAt)}</span>
             </div>
@@ -420,7 +417,7 @@ export default function Profile() {
       <Card className="p-6">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
           <div className="w-1 h-4 bg-emerald-500 rounded-full" />
-          Mục tiêu học tập
+          {t('profile.sections.learningGoals')}
         </h2>
 
         <div className="flex flex-wrap gap-2 mb-4 min-h-[2.25rem]">
@@ -438,22 +435,22 @@ export default function Profile() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-400 italic self-center">Chưa có mục tiêu nào.</p>
+            <p className="text-sm text-slate-400 italic self-center">{t('profile.goals.empty')}</p>
           )}
         </div>
 
         {editing ? (
           <div className="flex gap-2">
             <Input className="flex-1"
-              placeholder="Ví dụ: Đạt IELTS 7.0, Giao tiếp trôi chảy..."
+              placeholder={t('profile.goals.placeholder')}
               value={goalInput}
               onChange={(e) => setGoalInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGoal(); } }}
             />
-            <Button type="button" onClick={addGoal} className="shrink-0">+ Thêm</Button>
+            <Button type="button" onClick={addGoal} className="shrink-0">{t('profile.goals.add')}</Button>
           </div>
         ) : (
-          <p className="text-xs text-slate-400">Nhấn "Chỉnh sửa" ở trên để thêm hoặc xóa mục tiêu.</p>
+          <p className="text-xs text-slate-400">{t('profile.goals.hint')}</p>
         )}
       </Card>
 
@@ -463,23 +460,23 @@ export default function Profile() {
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <div className="w-1 h-4 bg-amber-500 rounded-full" />
-              Trở thành giảng viên
+              {t('profile.sections.becomeInstructor')}
             </h2>
             {isSeller && (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">
-                Đã là giảng viên
+                {t('profile.badges.alreadyInstructor')}
               </Badge>
             )}
           </div>
 
           <p className="text-sm text-slate-500">
-            Gửi đơn đăng ký để đội ngũ admin xét duyệt. Cung cấp chứng chỉ và chuyên môn liên quan đến giảng dạy.
+            {t('profile.application.intro')}
           </p>
 
           {!isSeller && (
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Trạng thái mới nhất</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">{t('profile.application.latestStatus')}</p>
                 {myApplications.length > 0 ? (() => {
                   const latest = [...myApplications].sort((a, b) =>
                     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
@@ -489,16 +486,16 @@ export default function Profile() {
                         latest.status === 'APPROVED' ? 'default' :
                         latest.status === 'REJECTED' ? 'destructive' : 'secondary'
                       }>
-                        {latest.status === 'PENDING' ? 'Đang chờ duyệt' :
-                         latest.status === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
+                        {latest.status === 'PENDING' ? t('profile.application.statusPending') :
+                         latest.status === 'APPROVED' ? t('profile.application.statusApproved') : t('profile.application.statusRejected')}
                       </Badge>
                       <span className="text-xs text-slate-400">
-                        {new Date(latest.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(latest.createdAt).toLocaleDateString(dateLocale)}
                       </span>
                     </div>
                   );
                 })() : (
-                  <p className="text-sm text-slate-400 italic">Chưa có đơn nào</p>
+                  <p className="text-sm text-slate-400 italic">{t('profile.application.noApplication')}</p>
                 )}
               </div>
               <Button
@@ -506,14 +503,14 @@ export default function Profile() {
                 disabled={myApplications.some((a) => a.status === 'PENDING')}
                 className="shrink-0"
               >
-                {myApplications.some((a) => a.status === 'PENDING') ? 'Đang chờ duyệt' : 'Nộp đơn'}
+                {myApplications.some((a) => a.status === 'PENDING') ? t('profile.application.statusPending') : t('profile.application.apply')}
               </Button>
             </div>
           )}
 
           {myApplications.length > 0 && !isSeller && (
             <div className="pt-4 border-t border-slate-100 space-y-3">
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Lịch sử đơn đã nộp</p>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{t('profile.application.history')}</p>
               {[...myApplications]
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((app) => (
@@ -523,24 +520,24 @@ export default function Profile() {
                         app.status === 'APPROVED' ? 'default' :
                         app.status === 'REJECTED' ? 'destructive' : 'secondary'
                       }>
-                        {app.status === 'PENDING' ? 'Đang chờ duyệt' :
-                         app.status === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
+                        {app.status === 'PENDING' ? t('profile.application.statusPending') :
+                         app.status === 'APPROVED' ? t('profile.application.statusApproved') : t('profile.application.statusRejected')}
                       </Badge>
                       <span className="text-xs text-slate-400">
-                        {new Date(app.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(app.createdAt).toLocaleDateString(dateLocale)}
                       </span>
                     </div>
 
                     {app.message && (
                       <div>
-                        <p className="text-xs font-medium text-slate-500 mb-1">Lời nhắn</p>
+                        <p className="text-xs font-medium text-slate-500 mb-1">{t('profile.application.message')}</p>
                         <p className="text-sm bg-white p-2.5 rounded-lg border border-slate-200">{app.message}</p>
                       </div>
                     )}
 
                     {app.rejectionReason && (
                       <div>
-                        <p className="text-xs font-medium text-destructive mb-1">Lý do từ chối</p>
+                        <p className="text-xs font-medium text-destructive mb-1">{t('profile.application.rejectionReason')}</p>
                         <p className="text-sm text-destructive bg-destructive/5 p-2.5 rounded-lg border border-destructive/20">
                           {app.rejectionReason}
                         </p>
@@ -549,7 +546,7 @@ export default function Profile() {
 
                     {app.expertise && app.expertise.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-slate-500 mb-1.5">Chuyên môn</p>
+                        <p className="text-xs font-medium text-slate-500 mb-1.5">{t('profile.application.expertise')}</p>
                         <div className="flex flex-wrap gap-1.5">
                           {app.expertise.map((exp, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs font-normal">{exp}</Badge>
@@ -560,7 +557,7 @@ export default function Profile() {
 
                     {app.certification && app.certification.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-slate-500 mb-1.5">Chứng chỉ</p>
+                        <p className="text-xs font-medium text-slate-500 mb-1.5">{t('profile.application.certification')}</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                           {app.certification.map((url, idx) => (
                             <a
@@ -568,7 +565,7 @@ export default function Profile() {
                               href={url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              title="Nhấn để xem ảnh gốc"
+                              title={t('profile.application.certificationView')}
                               className="block aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-white hover:opacity-90 hover:shadow-md transition-all"
                             >
                               <img
@@ -594,7 +591,7 @@ export default function Profile() {
         onOpenChange={setApplicationOpen}
         existingApplication={myApplications[0] ?? null}
         onSubmitted={() => {
-          toast.success('Nộp đơn thành công!');
+          toast.success(t('profile.application.submitSuccess'));
           queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
         }}
       />
@@ -615,23 +612,28 @@ export default function Profile() {
           <DialogHeader>
             <DialogTitle className="text-base font-semibold flex items-center gap-2">
               <KeyRound className="w-4 h-4 text-indigo-500" />
-              Đổi địa chỉ email
+              {t('profile.email.dialogTitle')}
             </DialogTitle>
           </DialogHeader>
 
           {!emailSent ? (
             <div className="space-y-4 py-1">
               <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
-                Email hiện tại <strong>{user.email}</strong> sẽ được giữ nguyên cho đến khi bạn xác nhận địa chỉ mới.
+                <Trans
+                  i18nKey="profile.email.currentNotice"
+                  ns="account"
+                  values={{ email: user.email }}
+                  components={{ strong: <strong /> }}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-500">Email mới</Label>
+                <Label className="text-xs font-medium text-slate-500">{t('profile.email.newLabel')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   <Input
                     type="email"
                     className="pl-10"
-                    placeholder="email@example.com"
+                    placeholder={t('profile.email.placeholder')}
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleEmailChangeSend()}
@@ -645,9 +647,14 @@ export default function Profile() {
                 <CheckCircle2 className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-800">Email xác thực đã được gửi!</p>
+                <p className="text-sm font-medium text-slate-800">{t('profile.email.sentTitle')}</p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Kiểm tra hộp thư của <strong>{newEmail}</strong> và nhấn vào liên kết xác nhận để hoàn tất.
+                  <Trans
+                    i18nKey="profile.email.sentDesc"
+                    ns="account"
+                    values={{ email: newEmail }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
               </div>
             </div>
@@ -655,11 +662,11 @@ export default function Profile() {
 
           <DialogFooter className="flex gap-2 flex-row justify-end pt-1">
             <Button variant="outline" size="sm" onClick={handleEmailDialogClose}>
-              {emailSent ? 'Đóng' : 'Hủy'}
+              {emailSent ? t('profile.email.close') : t('profile.email.cancel')}
             </Button>
             {!emailSent && (
               <Button size="sm" onClick={handleEmailChangeSend}>
-                Gửi email xác thực
+                {t('profile.email.send')}
               </Button>
             )}
           </DialogFooter>

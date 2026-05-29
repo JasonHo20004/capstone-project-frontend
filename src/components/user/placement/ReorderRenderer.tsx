@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { PlacementQuestionPayload } from "@/lib/api/services/user/placement/placement.service";
 
 type FragmentKey = "A" | "B" | "C";
@@ -10,6 +11,7 @@ interface ReorderRendererProps {
 }
 
 export function ReorderRenderer({ question, order, onChange }: ReorderRendererProps) {
+  const { t } = useTranslation("exam");
   const initial: FragmentKey[] = (order && order.length === 3
     ? (order.split("") as FragmentKey[])
     : ["A", "B", "C"]
@@ -75,7 +77,7 @@ export function ReorderRenderer({ question, order, onChange }: ReorderRendererPr
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 1l3 6 6 1-4.5 4.5L18 19l-6-3-6 3 1.5-6.5L3 8l6-1z" opacity=".4" />
           </svg>
-          Opening paragraph
+          {t("placementTest.reorder.openingParagraph")}
         </div>
         <p className="text-base text-slate-800">{question.fixed_fragment}</p>
       </div>
@@ -114,7 +116,7 @@ export function ReorderRenderer({ question, order, onChange }: ReorderRendererPr
                 : "border-slate-200",
               keyboardPicked === idx ? "border-teal-500 ring-2 ring-teal-200" : "",
             ].join(" ")}
-            aria-label={`Fragment ${key}, position ${idx + 1}`}
+            aria-label={t("placementTest.reorder.fragmentAria", { key, position: idx + 1 })}
           >
             <span className="cursor-grab text-slate-400" aria-hidden="true">
               ⠿
@@ -130,7 +132,7 @@ export function ReorderRenderer({ question, order, onChange }: ReorderRendererPr
       </ul>
 
       <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-        Your order:{" "}
+        {t("placementTest.reorder.yourOrder")}{" "}
         <span className="font-mono font-semibold text-teal-700">
           {items.join(" → ")}
         </span>

@@ -13,6 +13,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -36,6 +37,7 @@ interface BalanceCardProps {
 }
 
 function BalanceCard({ currentBalance, monthlyTopupAmount, monthlySuccessfulTransactions }: BalanceCardProps) {
+  const { t } = useTranslation('account');
   return (
     <Card className="group relative overflow-hidden rounded-[32px] border border-slate-200/70 bg-[linear-gradient(145deg,hsl(224_71%_18%)_0%,hsl(214_78%_25%)_48%,hsl(196_79%_34%)_100%)] p-6 text-white shadow-[0_28px_90px_-36px_rgba(15,23,42,0.7)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_36px_110px_-42px_rgba(15,23,42,0.76)] animate-in fade-in slide-in-from-bottom-3">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_30%)]" />
@@ -44,7 +46,7 @@ function BalanceCard({ currentBalance, monthlyTopupAmount, monthlySuccessfulTran
       <div className="relative space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.28em] text-white/65">Available balance</p>
+            <p className="text-sm font-medium uppercase tracking-[0.28em] text-white/65">{t('wallet.balance.available')}</p>
             <p className="mt-4 text-4xl font-semibold tracking-tight sm:text-[2.75rem]">{formatVND(currentBalance)}</p>
           </div>
           <div className="rounded-2xl border border-white/15 bg-white/10 p-3 shadow-lg shadow-slate-950/20 backdrop-blur-md">
@@ -54,11 +56,11 @@ function BalanceCard({ currentBalance, monthlyTopupAmount, monthlySuccessfulTran
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/14">
-            <p className="text-xs uppercase tracking-[0.18em] text-white/65">Top-ups this month</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/65">{t('wallet.balance.monthlyTopup')}</p>
             <p className="mt-3 text-2xl font-semibold">{formatVND(monthlyTopupAmount)}</p>
           </div>
           <div className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/14">
-            <p className="text-xs uppercase tracking-[0.18em] text-white/65">Successful transactions</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/65">{t('wallet.balance.monthlyTransactions')}</p>
             <p className="mt-3 text-2xl font-semibold">{monthlySuccessfulTransactions}</p>
           </div>
         </div>
@@ -66,9 +68,9 @@ function BalanceCard({ currentBalance, monthlyTopupAmount, monthlySuccessfulTran
         <div className="flex items-start gap-3 rounded-3xl border border-white/15 bg-slate-950/15 p-4 text-sm text-white/85 backdrop-blur-md">
           <ShieldCheck className="mt-0.5 h-5 w-5 text-sky-100" />
           <div>
-            <p className="font-medium text-white">Built for secure course payments</p>
+            <p className="font-medium text-white">{t('wallet.balance.security.title')}</p>
             <p className="mt-1 text-white/70">
-              Add funds once, manage study purchases faster, and keep every wallet action visible in one place.
+              {t('wallet.balance.security.desc')}
             </p>
           </div>
         </div>
@@ -82,6 +84,7 @@ interface WalletHeroProps {
 }
 
 function WalletHero({ currentBalance }: WalletHeroProps) {
+  const { t } = useTranslation('account');
   return (
     <section className="group relative overflow-hidden rounded-[36px] border border-slate-200/70 bg-[linear-gradient(135deg,hsl(0_0%_100%)_0%,hsl(210_40%_98%)_38%,hsl(201_100%_97%)_100%)] px-6 py-8 shadow-[0_30px_90px_-50px_rgba(15,23,42,0.4)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_36px_100px_-48px_rgba(15,23,42,0.45)] sm:px-8 lg:px-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(37,99,235,0.12),transparent_30%)]" />
@@ -90,43 +93,43 @@ function WalletHero({ currentBalance }: WalletHeroProps) {
         <div className="space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/80 px-4 py-2 text-sm font-medium text-sky-700 shadow-sm backdrop-blur-sm">
             <Sparkles className="h-4 w-4" />
-            Premium wallet workspace
+            {t('wallet.hero.badge')}
           </div>
           <div className="space-y-3">
             <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Keep payments effortless while staying in control of every balance update.
+              {t('wallet.hero.title')}
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Move from browsing courses to checkout faster with a cleaner wallet flow, clearer activity tracking, and a layout consistent with the rest of the platform.
+              {t('wallet.hero.subtitle')}
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm text-slate-600">
             <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:text-slate-900">
-              Unified payment overview
+              {t('wallet.hero.chips.unified')}
             </div>
             <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:text-slate-900">
-              Real-time transaction visibility
+              {t('wallet.hero.chips.realtime')}
             </div>
             <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:text-slate-900">
-              Faster checkout for course access
+              {t('wallet.hero.chips.faster')}
             </div>
           </div>
         </div>
 
         <div className="rounded-[30px] border border-slate-900/80 bg-slate-950 p-6 text-white shadow-[0_24px_80px_-36px_rgba(15,23,42,0.75)] transition-all duration-500 group-hover:-translate-y-1">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Wallet overview</p>
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">{t('wallet.hero.overview.eyebrow')}</p>
           <p className="mt-5 text-4xl font-semibold tracking-tight">{formatVND(currentBalance)}</p>
           <div className="mt-6 grid gap-3 text-sm text-slate-300">
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <span>Use case</span>
-              <span className="font-medium text-white">Course checkout</span>
+              <span>{t('wallet.hero.overview.useCase')}</span>
+              <span className="font-medium text-white">{t('wallet.hero.overview.useCaseValue')}</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <span>Gateway</span>
+              <span>{t('wallet.hero.overview.gateway')}</span>
               <span className="font-medium text-white">Stripe</span>
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <span>Minimum top-up</span>
+              <span>{t('wallet.hero.overview.minTopup')}</span>
               <span className="font-medium text-white">{formatVND(MINIMUM_TOPUP_AMOUNT)}</span>
             </div>
           </div>
@@ -144,45 +147,46 @@ interface CreatePaymentCardProps {
 }
 
 function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment }: CreatePaymentCardProps) {
+  const { t } = useTranslation('account');
   return (
     <Card className="group rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_26px_80px_-48px_rgba(15,23,42,0.38)] backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_36px_96px_-48px_rgba(15,23,42,0.42)] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 transition-colors duration-300 group-hover:bg-slate-900 group-hover:text-white">
             <CreditCard className="h-4 w-4" />
-            Funding details
+            {t('wallet.topup.eyebrow')}
           </div>
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">Add funds to your wallet</h2>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">{t('wallet.topup.title')}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Choose a quick amount or enter a custom value, then you'll be redirected to Stripe to complete the payment securely.
+            {t('wallet.topup.subtitle')}
           </p>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700 shadow-sm">
-          <p className="font-medium text-slate-950">Quick start</p>
-          <p className="mt-1 text-slate-600">Use a preset amount to move through the payment flow faster.</p>
+          <p className="font-medium text-slate-950">{t('wallet.topup.quickStart.title')}</p>
+          <p className="mt-1 text-slate-600">{t('wallet.topup.quickStart.desc')}</p>
         </div>
       </div>
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="amount">Top-up amount (VND)</Label>
+            <Label htmlFor="amount">{t('wallet.topup.amountLabel')}</Label>
             <Input
               id="amount"
               type="number"
               min={MINIMUM_TOPUP_AMOUNT}
               step={1000}
-              placeholder="Example: 50000"
+              placeholder={t('wallet.topup.amountPlaceholder')}
               value={amount}
               onChange={(event) => onAmountChange(event.target.value)}
               disabled={isCreating}
               className="h-14 rounded-2xl border-slate-200 text-lg shadow-sm transition-all duration-300 focus-visible:ring-slate-900/20"
             />
-            <p className="text-xs text-slate-500">Minimum amount: {formatVND(MINIMUM_TOPUP_AMOUNT)}.</p>
+            <p className="text-xs text-slate-500">{t('wallet.topup.minNote', { amount: formatVND(MINIMUM_TOPUP_AMOUNT) })}</p>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-700">Quick amounts</p>
+            <p className="text-sm font-medium text-slate-700">{t('wallet.topup.quickAmounts')}</p>
             <div className="flex flex-wrap gap-3">
               {QUICK_TOPUP_AMOUNTS.map((presetAmount) => {
                 const isActive = Number(amount) === presetAmount;
@@ -204,26 +208,26 @@ function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment 
         </div>
 
         <div className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.96))] p-5 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md">
-          <p className="text-sm font-medium text-slate-700">Payment summary</p>
+          <p className="text-sm font-medium text-slate-700">{t('wallet.topup.summary.title')}</p>
           <div className="mt-5 space-y-4 text-sm text-slate-600">
             <div className="flex items-center justify-between">
-              <span>Amount</span>
+              <span>{t('wallet.topup.summary.amount')}</span>
               <span className="font-semibold text-slate-950">{formatVND(Number(amount) || 0)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Method</span>
+              <span>{t('wallet.topup.summary.method')}</span>
               <span className="font-medium text-slate-950">Stripe</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Status</span>
-              <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">Ready</span>
+              <span>{t('wallet.topup.summary.status')}</span>
+              <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">{t('wallet.topup.summary.statusValue')}</span>
             </div>
           </div>
 
           <div className="mt-6 rounded-3xl border border-sky-100 bg-sky-50/80 p-4 text-sm text-sky-950">
-            <p className="font-medium">Secure redirect</p>
+            <p className="font-medium">{t('wallet.topup.summary.redirect.title')}</p>
             <p className="mt-1 leading-6 text-sky-900/80">
-              You'll be redirected to Stripe's secure payment page. After completing, you'll return here automatically.
+              {t('wallet.topup.summary.redirect.desc')}
             </p>
           </div>
         </div>
@@ -239,12 +243,12 @@ function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment 
           {isCreating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating order...
+              {t('wallet.topup.creating')}
             </>
           ) : (
             <>
               <ExternalLink className="mr-2 h-4 w-4" />
-              Pay with Stripe
+              {t('wallet.topup.payNow')}
             </>
           )}
         </Button>
@@ -254,6 +258,7 @@ function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment 
 }
 
 function TransactionRow({ transaction }: { transaction: Transaction }) {
+  const { t, i18n } = useTranslation('account');
   const isDeposit = transaction.transactionType === 'DEPOSIT';
   const statusTone =
     transaction.status === 'SUCCESS'
@@ -261,6 +266,8 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
       : transaction.status === 'FAILED'
         ? 'bg-rose-100 text-rose-700'
         : 'bg-amber-100 text-amber-700';
+
+  const localeForDate = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-GB';
 
   return (
     <div className="group flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-white/90 px-5 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md sm:flex-row sm:items-center sm:justify-between animate-in fade-in slide-in-from-bottom-2">
@@ -273,11 +280,11 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
           {isDeposit ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
         </div>
         <div>
-          <p className="font-medium text-slate-950">{transaction.description || (isDeposit ? 'Wallet top-up' : 'Course payment')}</p>
+          <p className="font-medium text-slate-950">{transaction.description || t(isDeposit ? 'wallet.transactions.walletTopup' : 'wallet.transactions.coursePayment')}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <span>{new Date(transaction.createdAt).toLocaleString('en-GB')}</span>
+            <span>{new Date(transaction.createdAt).toLocaleString(localeForDate)}</span>
             <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${statusTone}`}>
-              {transaction.status}
+              {t(`wallet.transactions.statuses.${transaction.status}`, { defaultValue: transaction.status })}
             </span>
           </div>
         </div>
@@ -288,7 +295,7 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
           {isDeposit ? '+' : '-'}{formatVND(Number(transaction.amount) || 0)}
         </p>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-          {isDeposit ? 'Deposit' : 'Payment'}
+          {t(isDeposit ? 'wallet.transactions.deposit' : 'wallet.transactions.payment')}
         </span>
       </div>
     </div>
@@ -337,25 +344,26 @@ function RecentTransactionsCard({
   onLoadMore,
   canLoadMore,
 }: RecentTransactionsCardProps) {
+  const { t } = useTranslation('account');
   return (
     <Card className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_26px_80px_-48px_rgba(15,23,42,0.28)] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
             <History className="h-4 w-4" />
-            Recent activity
+            {t('wallet.transactions.eyebrow')}
           </div>
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">Transaction history</h2>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">{t('wallet.transactions.title')}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Review deposits and payments in one place with cleaner filtering and quick scanning.
+            {t('wallet.transactions.subtitle')}
           </p>
         </div>
 
         <Tabs value={activeFilter} onValueChange={(value) => onFilterChange(value as 'ALL' | 'DEPOSIT' | 'PAYMENT')}>
           <TabsList className="h-auto rounded-full border border-slate-200 bg-slate-100/90 p-1">
-            <TabsTrigger value="ALL" className="rounded-full px-4 py-2 data-[state=active]:bg-white">All</TabsTrigger>
-            <TabsTrigger value="DEPOSIT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">Deposit</TabsTrigger>
-            <TabsTrigger value="PAYMENT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">Payment</TabsTrigger>
+            <TabsTrigger value="ALL" className="rounded-full px-4 py-2 data-[state=active]:bg-white">{t('wallet.transactions.filters.all')}</TabsTrigger>
+            <TabsTrigger value="DEPOSIT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">{t('wallet.transactions.filters.deposit')}</TabsTrigger>
+            <TabsTrigger value="PAYMENT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">{t('wallet.transactions.filters.payment')}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -365,7 +373,7 @@ function RecentTransactionsCard({
           <TransactionsSkeleton />
         ) : transactions.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center text-sm text-slate-500">
-            No transactions match this filter yet.
+            {t('wallet.transactions.empty')}
           </div>
         ) : (
           transactions.map((transaction) => <TransactionRow key={transaction.id} transaction={transaction} />)
@@ -380,7 +388,7 @@ function RecentTransactionsCard({
             onClick={onLoadMore}
             className="h-12 rounded-full border-slate-200 px-5 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
           >
-            View more
+            {t('wallet.transactions.viewMore')}
             <ChevronRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
@@ -390,6 +398,7 @@ function RecentTransactionsCard({
 }
 
 function LoginRequiredCard() {
+  const { t } = useTranslation('account');
   return (
     <Card className="rounded-[28px] border border-amber-200 bg-[linear-gradient(135deg,rgba(255,251,235,0.95),rgba(255,247,237,0.95))] p-6 shadow-[0_24px_60px_-42px_rgba(180,83,9,0.35)]">
       <div className="flex items-start gap-4 text-amber-950">
@@ -397,13 +406,12 @@ function LoginRequiredCard() {
           <AlertCircle className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Sign in to access your wallet</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t('wallet.loginRequired.title')}</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-amber-900/80">
-            Your wallet dashboard requires an active session to load balance details, transaction history, and payment requests.
-            Please sign in, then return here to continue.
+            {t('wallet.loginRequired.desc')}
           </p>
           <Button type="button" onClick={() => (window.location.href = '/login')} className="mt-6 h-12 rounded-full px-6">
-            Go to sign in
+            {t('wallet.loginRequired.signIn')}
           </Button>
         </div>
       </div>
@@ -412,6 +420,7 @@ function LoginRequiredCard() {
 }
 
 export default function WalletPage() {
+  const { t } = useTranslation('account');
   const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   const { user, isLoading: isLoadingProfile } = useProfile();
   const { data: wallet, isLoading: isLoadingWallet } = useWallet();
@@ -442,12 +451,12 @@ export default function WalletPage() {
     const realMoney = Number(amount);
 
     if (!accessToken) {
-      toast.error('Please sign in before starting a payment.');
+      toast.error(t('wallet.toasts.needLogin'));
       return;
     }
 
     if (Number.isNaN(realMoney) || realMoney < MINIMUM_TOPUP_AMOUNT) {
-      toast.error(`Please enter a valid amount of at least ${formatVND(MINIMUM_TOPUP_AMOUNT)}.`);
+      toast.error(t('wallet.toasts.invalidAmount', { amount: formatVND(MINIMUM_TOPUP_AMOUNT) }));
       return;
     }
 
@@ -456,10 +465,10 @@ export default function WalletPage() {
       const data = response.data;
 
       if (!data?.paymentUrl) {
-        throw new Error('Missing payment URL from the server response.');
+        throw new Error(t('wallet.toasts.missingPaymentUrl'));
       }
 
-      toast.success('Redirecting to Stripe...');
+      toast.success(t('wallet.toasts.redirecting'));
       window.location.href = data.paymentUrl;
     } catch (error) {
       const apiMessage =
@@ -467,7 +476,7 @@ export default function WalletPage() {
           ? (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.message ||
             (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.error
           : undefined;
-      const message = error instanceof Error ? apiMessage || error.message : apiMessage || 'Unable to create payment order.';
+      const message = error instanceof Error ? apiMessage || error.message : apiMessage || t('wallet.toasts.defaultError');
       toast.error(message);
     }
   };

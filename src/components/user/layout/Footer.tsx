@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { BookOpen, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 const Footer = () => {
+  const { t } = useTranslation('layout');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -17,7 +19,7 @@ const Footer = () => {
               <span className="text-2xl font-bold text-white font-display">SkillBoost</span>
             </Link>
             <p className="text-slate-400 leading-relaxed">
-              Nâng tầm kỹ năng tiếng Anh với các khóa học do chuyên gia giảng dạy và trải nghiệm học tập tương tác.
+              {t('footer.brandDescription')}
             </p>
             <div className="flex gap-3">
               <a href="#" className="w-10 h-10 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
@@ -37,26 +39,26 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 font-display">Liên kết nhanh</h3>
+            <h3 className="text-lg font-semibold mb-4 font-display">{t('footer.quickLinks')}</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/courses" className="text-slate-400 hover:text-white transition-colors">
-                  Xem khóa học
+                  {t('footer.viewCourses')}
                 </Link>
               </li>
               <li>
                 <Link to="/#about" className="text-slate-400 hover:text-white transition-colors">
-                  Giới thiệu
+                  {t('footer.about')}
                 </Link>
               </li>
               <li>
                 <Link to="/blog" className="text-slate-400 hover:text-white transition-colors">
-                  Blog
+                  {t('footer.blog')}
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="text-slate-400 hover:text-white transition-colors">
-                  Liên hệ
+                  {t('footer.contact')}
                 </Link>
               </li>
             </ul>
@@ -64,26 +66,26 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 font-display">Hỗ trợ</h3>
+            <h3 className="text-lg font-semibold mb-4 font-display">{t('footer.support')}</h3>
             <ul className="space-y-3">
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  Trung tâm trợ giúp
+                  {t('footer.helpCenter')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  Điều khoản dịch vụ
+                  {t('footer.terms')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  Chính sách bảo mật
+                  {t('footer.privacy')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  Câu hỏi thường gặp
+                  {t('footer.faq')}
                 </a>
               </li>
             </ul>
@@ -91,7 +93,7 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 font-display">Liên hệ</h3>
+            <h3 className="text-lg font-semibold mb-4 font-display">{t('footer.contact')}</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-slate-400">
                 <Mail className="w-5 h-5 mt-0.5 flex-shrink-0" />
@@ -110,7 +112,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-slate-700 mt-12 pt-8 text-center text-slate-500">
-          <p>© {currentYear} SkillBoost. Bảo lưu mọi quyền.</p>
+          <p>{t('footer.rights', { year: currentYear })}</p>
         </div>
       </div>
     </footer>

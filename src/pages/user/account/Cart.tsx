@@ -1,6 +1,7 @@
 // src/pages/user/account/Cart.tsx
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,6 +24,8 @@ import {
 } from '@/lib/api/services/admin/coupon-management/coupon.service';
 
 const CartPage = () => {
+  const { t } = useTranslation('account');
+
   // 1. Fetch Cart Data
   const { data: cart, isLoading } = useGetUserCart();
   const cartItems = cart?.cartItems || [];
@@ -38,13 +41,13 @@ const CartPage = () => {
 
   // Helper functions
   const isSelected = (id: string) => selectedIds.includes(id);
-  
+
   const toggleSelect = (id: string, checked: boolean) => {
     setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
   };
 
   const allSelected = cartItems.length > 0 && selectedIds.length === cartItems.length;
-  
+
   const toggleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? cartItems.map((i) => i.id) : []);
   };
@@ -54,7 +57,7 @@ const CartPage = () => {
     () => cartItems.filter((i) => selectedIds.includes(i.id)),
     [cartItems, selectedIds]
   );
-  
+
   const selectedTotal = useMemo(
     () => selectedItems.reduce((sum, i) => sum + i.priceAtTime, 0),
     [selectedItems]
@@ -77,11 +80,11 @@ const CartPage = () => {
   const handleApplyCoupon = async () => {
     const code = couponInput.trim();
     if (!code) {
-      toast.error('Vui lòng nhập mã giảm giá');
+      toast.error(t('cart.toasts.couponRequired'));
       return;
     }
     if (selectedIds.length === 0) {
-      toast.error('Hãy chọn khóa học trước khi áp mã');
+      toast.error(t('cart.toasts.selectBeforeApply'));
       return;
     }
     setValidating(true);
@@ -92,16 +95,16 @@ const CartPage = () => {
         // selected part of it, recompute against the selection: only honor the
         // coupon when minOrderAmount still holds for the selected total.
         if (res.data.subtotal !== selectedTotal) {
-          toast.error('Mã chỉ áp dụng cho toàn bộ giỏ hàng. Hãy chọn tất cả để dùng mã.');
+          toast.error(t('cart.toasts.couponFullCartOnly'));
         } else {
           setCoupon(res.data);
-          toast.success(`Đã áp dụng mã ${res.data.code}`);
+          toast.success(t('cart.toasts.couponApplied', { code: res.data.code }));
         }
       }
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        (err instanceof Error ? err.message : 'Không thể áp dụng mã');
+        (err instanceof Error ? err.message : t('cart.toasts.couponDefaultError'));
       toast.error(msg);
     } finally {
       setValidating(false);
@@ -157,8 +160,8 @@ const CartPage = () => {
       <main className="flex-1">
         <section className="bg-white border border-slate-200 rounded-3xl py-8 shadow-sm">
           <div className="container mx-auto px-4">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900">Giỏ hàng</h1>
-            <p className="text-slate-500">Xem và quản lý các khoá học đã thêm</p>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900">{t('cart.title')}</h1>
+            <p className="text-slate-500">{t('cart.subtitle')}</p>
           </div>
         </section>
 
@@ -168,10 +171,10 @@ const CartPage = () => {
               {cartItems.length === 0 ? (
                 <div className="flex flex-col items-center text-center py-12">
                     <ShoppingCart className="w-12 h-12 text-slate-300 mb-3" />
-                    <p className="text-slate-500">Giỏ hàng trống.</p>
-                    <p className="text-sm text-slate-500 mt-1">Hãy thêm khoá học từ danh sách khoá học.</p>
+                    <p className="text-slate-500">{t('cart.empty')}</p>
+                    <p className="text-sm text-slate-500 mt-1">{t('cart.emptyHint')}</p>
                     <Button asChild className="mt-4">
-                      <Link to="/courses">Khám phá khoá học</Link>
+                      <Link to="/courses">{t('cart.exploreCourses')}</Link>
                     </Button>
                 </div>
               ) : (
@@ -184,7 +187,7 @@ const CartPage = () => {
                           id="select-all"
                       />
                       <label htmlFor="select-all" className="text-sm cursor-pointer select-none">
-                          Chọn tất cả ({cartItems.length} khóa học)
+                          {t('cart.selectAll', { count: cartItems.length })}
                       </label>
                     </div>
                     <Button
@@ -203,10 +206,10 @@ const CartPage = () => {
                       ) : (
                         <Trash2 className="w-4 h-4 mr-2" />
                       )}
-                      Xoá tất cả
+                      {t('cart.removeAll')}
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-4">
                     {cartItems.map((item) => (
                         <div key={item.id} className="flex items-center justify-between border-b border-slate-200 pb-4 last:border-none last:pb-0">
@@ -214,7 +217,7 @@ const CartPage = () => {
                             <Checkbox
                             checked={isSelected(item.id)}
                             onCheckedChange={(v) => toggleSelect(item.id, Boolean(v))}
-                            aria-label={`Chọn ${item.course.title}`}
+                            aria-label={t('cart.selectItem', { title: item.course.title })}
                             />
                             <div>
                             <h3 className="font-semibold line-clamp-1">{item.course.title}</h3>
@@ -239,7 +242,7 @@ const CartPage = () => {
                             ) : (
                               <Trash2 className="w-4 h-4 mr-2" />
                             )}
-                            Xoá
+                            {t('cart.remove')}
                         </Button>
                         </div>
                     ))}
@@ -251,13 +254,13 @@ const CartPage = () => {
             <Card className="p-6 space-y-4 h-fit sticky top-24">
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Tạm tính ({selectedItems.length})</span>
+                  <span className="text-slate-500">{t('cart.subtotalCount', { count: selectedItems.length })}</span>
                   <span className="font-medium">{formatVND(selectedTotal)}</span>
                 </div>
                 {appliedDiscount > 0 && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-emerald-600 flex items-center gap-1">
-                      <Ticket className="h-3.5 w-3.5" /> Giảm giá
+                      <Ticket className="h-3.5 w-3.5" /> {t('cart.discount')}
                     </span>
                     <span className="font-medium text-emerald-600">
                       -{formatVND(appliedDiscount)}
@@ -265,7 +268,7 @@ const CartPage = () => {
                   </div>
                 )}
                 <div className="flex items-center justify-between border-t pt-2">
-                  <span className="text-slate-500">Tổng thanh toán</span>
+                  <span className="text-slate-500">{t('cart.grandTotal')}</span>
                   <span className="text-xl font-semibold text-primary">
                     {formatVND(finalTotal)}
                   </span>
@@ -275,7 +278,7 @@ const CartPage = () => {
               {/* Coupon input */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                  <Ticket className="h-3.5 w-3.5" /> Mã giảm giá
+                  <Ticket className="h-3.5 w-3.5" /> {t('cart.couponLabel')}
                 </label>
                 {coupon && couponMatchesSubtotal ? (
                   <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-50 px-3 py-2">
@@ -294,7 +297,7 @@ const CartPage = () => {
                       variant="ghost"
                       onClick={handleRemoveCoupon}
                       className="h-7 w-7 p-0"
-                      title="Bỏ mã"
+                      title={t('cart.removeCoupon')}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -302,7 +305,7 @@ const CartPage = () => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <Input
-                      placeholder="VD: WELCOME10"
+                      placeholder={t('cart.couponPlaceholder')}
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                       className="font-mono uppercase"
@@ -315,13 +318,13 @@ const CartPage = () => {
                       onClick={handleApplyCoupon}
                       disabled={validating || selectedIds.length === 0}
                     >
-                      {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Áp dụng'}
+                      {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : t('cart.applyCoupon')}
                     </Button>
                   </div>
                 )}
                 {!coupon && selectedIds.length === 0 && (
                   <p className="text-[11px] text-slate-400">
-                    Hãy chọn khóa học trước khi áp mã.
+                    {t('cart.selectBeforeApply')}
                   </p>
                 )}
               </div>
@@ -333,7 +336,7 @@ const CartPage = () => {
                   onClick={handleCheckoutClick}
                 >
                   {isProcessing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Thanh toán
+                  {t('cart.checkout')}
                 </Button>
               </div>
             </Card>
@@ -345,14 +348,14 @@ const CartPage = () => {
         open={payOpen}
         onOpenChange={setPayOpen}
         amount={finalTotal}
-        title="Xác nhận thanh toán"
+        title={t('cart.confirmTitle')}
         items={[
           ...selectedItems.map((i) => ({ title: i.course.title, price: i.priceAtTime })),
           ...(appliedDiscount > 0
-            ? [{ title: `Mã giảm giá ${coupon?.code ?? ''}`, price: -appliedDiscount }]
+            ? [{ title: t('cart.couponLineItem', { code: coupon?.code ?? '' }), price: -appliedDiscount }]
             : []),
         ]}
-        confirmLabel={isProcessing ? 'Đang xử lý...' : 'Xác nhận'}
+        confirmLabel={isProcessing ? t('cart.processing') : t('cart.confirm')}
         onConfirm={handleConfirmPayment}
       />
     </div>

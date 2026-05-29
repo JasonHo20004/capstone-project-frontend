@@ -1,21 +1,16 @@
 import { useEffect, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const STEPS = [
-  "Analyzing your CEFR level",
-  "Understanding your goal",
-  "Calculating your study workload",
-  "Prioritizing skills",
-  "Matching lessons and practice tests",
-  "Creating weekly milestones",
-];
+const STEP_IDS = [1, 2, 3, 4, 5, 6] as const;
 
 export default function GeneratingState() {
+  const { t } = useTranslation("exam");
   const [stepIdx, setStepIdx] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setStepIdx((idx) => Math.min(idx + 1, STEPS.length));
+      setStepIdx((idx) => Math.min(idx + 1, STEP_IDS.length));
     }, 550);
     return () => clearInterval(timer);
   }, []);
@@ -36,21 +31,22 @@ export default function GeneratingState() {
           </span>
           <div>
             <h2 className="text-xl font-bold text-slate-900">
-              Building your personalized roadmap…
+              {t("learningPath.generating.title")}
             </h2>
             <p className="text-sm text-slate-500">
-              SkillBoost AI is reasoning across your level, goal, schedule, and preferences.
+              {t("learningPath.generating.subtitle")}
             </p>
           </div>
         </div>
 
         <ol className="space-y-2">
-          {STEPS.map((label, idx) => {
+          {STEP_IDS.map((id, idx) => {
             const done = idx < stepIdx;
             const active = idx === stepIdx;
+            const label = t(`learningPath.generating.steps.${id}`);
             return (
               <li
-                key={label}
+                key={id}
                 className={[
                   "flex items-center gap-3 rounded-xl border px-4 py-3 transition-all",
                   done

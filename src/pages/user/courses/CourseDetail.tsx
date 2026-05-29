@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,8 @@ import { useUser } from '@/hooks/api/use-user';
 import { useCourseContext, useCourseRatings } from '@/hooks/api/use-student-learning';
 
 const CourseDetail = () => {
+  const { t, i18n } = useTranslation('courses');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const { id } = useParams();
   const { user } = useUser();
   const navigate = useNavigate();
@@ -114,7 +117,7 @@ const CourseDetail = () => {
       const src = course.user ?? course.courseSeller ?? {};
       return { fullName: name, ...(src as Record<string, unknown>) } as InstructorInfo;
     }
-    return { fullName: 'Giảng viên', email: '', profilePicture: null, phoneNumber: '', englishLevel: '' };
+    return { fullName: t('courseDetail.instructor'), email: '', profilePicture: null, phoneNumber: '', englishLevel: '' };
   }, [course]);
 
   const courseLessons: Lesson[] = useMemo(() => {
@@ -151,8 +154,8 @@ const CourseDetail = () => {
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleAddToCart = () => {
     if (!user) {
-      toast.warning('Bạn cần đăng nhập để thêm vào giỏ hàng', {
-        action: { label: 'Đăng nhập', onClick: () => navigate('/login') },
+      toast.warning(t('courseDetail.toasts.loginRequiredCart'), {
+        action: { label: t('courseDetail.toasts.loginAction'), onClick: () => navigate('/login') },
       });
       return;
     }
@@ -167,8 +170,8 @@ const CourseDetail = () => {
 
   const handleBuyNowClick = () => {
     if (!user) {
-      toast.warning('Bạn cần đăng nhập để mua khóa học', {
-        action: { label: 'Đăng nhập', onClick: () => navigate('/login') },
+      toast.warning(t('courseDetail.toasts.loginRequiredBuy'), {
+        action: { label: t('courseDetail.toasts.loginAction'), onClick: () => navigate('/login') },
       });
       return;
     }
@@ -226,7 +229,7 @@ const CourseDetail = () => {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-          <p className="text-slate-500 font-medium">Đang tải thông tin khóa học...</p>
+          <p className="text-slate-500 font-medium">{t('courseDetail.loading')}</p>
         </div>
         <Footer />
       </div>
@@ -242,12 +245,12 @@ const CourseDetail = () => {
           <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center mx-auto mb-6">
             <AlertTriangle className="w-9 h-9 text-red-400" />
           </div>
-          <h1 className="text-3xl font-bold mb-3 text-slate-900">Không tìm thấy khóa học</h1>
-          <p className="text-slate-500 mb-8">Khóa học này có thể đã bị xóa hoặc không tồn tại.</p>
+          <h1 className="text-3xl font-bold mb-3 text-slate-900">{t('courseDetail.notFoundTitle')}</h1>
+          <p className="text-slate-500 mb-8">{t('courseDetail.notFoundDesc')}</p>
           <Link to="/courses">
             <Button size="lg" className="rounded-xl px-8">
               <ChevronRight className="w-4 h-4 mr-2 rotate-180" />
-              Quay lại danh sách
+              {t('courseDetail.backToList')}
             </Button>
           </Link>
         </div>
@@ -281,7 +284,7 @@ const CourseDetail = () => {
               {/* Breadcrumb */}
               <nav className="flex items-center gap-2 text-sm mb-6">
                 <Link to="/courses" className="text-white/50 hover:text-white transition-colors">
-                  Khóa học
+                  {t('courseDetail.breadcrumbCourses')}
                 </Link>
                 <ChevronRight className="w-3.5 h-3.5 text-white/30" />
                 {course.category && (
@@ -308,7 +311,7 @@ const CourseDetail = () => {
                 {isPurchased && (
                   <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium">
                     <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Đã sở hữu
+                    {t('courseDetail.ownedBadge')}
                   </Badge>
                 )}
               </div>
@@ -327,11 +330,11 @@ const CourseDetail = () => {
                 <div className="flex items-center gap-2 bg-white/[0.07] backdrop-blur-sm rounded-lg px-3.5 py-2 border border-white/[0.08]">
                   <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <span className="font-bold text-sm">{averageRating}</span>
-                  <span className="text-white/50 text-sm">({totalRatings} đánh giá)</span>
+                  <span className="text-white/50 text-sm">{t('courseDetail.ratingsCount', { count: totalRatings })}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/[0.07] backdrop-blur-sm rounded-lg px-3.5 py-2 border border-white/[0.08]">
                   <PlayCircle className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">{course.lessonCount ?? courseLessons.length} bài học</span>
+                  <span className="text-sm font-medium">{t('courseDetail.lessonCount', { count: course.lessonCount ?? courseLessons.length })}</span>
                 </div>
               </div>
 
@@ -350,7 +353,7 @@ const CourseDetail = () => {
                 )}
                 <div>
                   <div className="text-xs text-white/40 font-medium uppercase tracking-wider">
-                    Giảng viên
+                    {t('courseDetail.instructor')}
                   </div>
                   <div className="font-semibold text-sm">{instructor?.fullName}</div>
                 </div>
@@ -371,19 +374,19 @@ const CourseDetail = () => {
                     value="overview"
                     className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold"
                   >
-                    Tổng quan
+                    {t('courseDetail.tabs.overview')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="instructor"
                     className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold"
                   >
-                    Giảng viên
+                    {t('courseDetail.tabs.instructor')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="content"
                     className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm py-2.5 text-sm font-semibold"
                   >
-                    Nội dung
+                    {t('courseDetail.tabs.content')}
                   </TabsTrigger>
                 </TabsList>
 
@@ -394,7 +397,7 @@ const CourseDetail = () => {
                     <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                       <h3 className="text-xl font-bold mb-4 text-slate-900 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-primary" />
-                        Mô tả khóa học
+                        {t('courseDetail.sections.description')}
                       </h3>
                       <p className="text-slate-600 leading-relaxed whitespace-pre-line">
                         {course.description}
@@ -404,13 +407,13 @@ const CourseDetail = () => {
 
                   {/* What you'll get */}
                   <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
-                    <h3 className="text-xl font-bold mb-5 text-slate-900">Bạn sẽ nhận được</h3>
+                    <h3 className="text-xl font-bold mb-5 text-slate-900">{t('courseDetail.sections.whatYouGet')}</h3>
                     <div className="grid sm:grid-cols-2 gap-4">
                       {[
-                        { icon: PlayCircle, text: `${course.lessonCount ?? courseLessons.length} bài học video`, color: 'text-blue-500 bg-blue-50' },
-                        { icon: Shield, text: 'Truy cập trọn đời', color: 'text-emerald-500 bg-emerald-50' },
-                        { icon: RefreshCw, text: 'Cập nhật miễn phí', color: 'text-orange-500 bg-orange-50' },
-                        { icon: Award, text: 'Chứng chỉ hoàn thành', color: 'text-purple-500 bg-purple-50' },
+                        { icon: PlayCircle, text: t('courseDetail.benefits.videoLessons', { count: course.lessonCount ?? courseLessons.length }), color: 'text-blue-500 bg-blue-50' },
+                        { icon: Shield, text: t('courseDetail.benefits.lifetime'), color: 'text-emerald-500 bg-emerald-50' },
+                        { icon: RefreshCw, text: t('courseDetail.benefits.freeUpdates'), color: 'text-orange-500 bg-orange-50' },
+                        { icon: Award, text: t('courseDetail.benefits.certificate'), color: 'text-purple-500 bg-purple-50' },
                       ].map((item) => (
                         <div
                           key={item.text}
@@ -430,7 +433,7 @@ const CourseDetail = () => {
                     <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                       <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
                         <ListChecks className="w-5 h-5 text-primary" />
-                        Yêu cầu
+                        {t('courseDetail.sections.requirements')}
                       </h3>
                       <ul className="space-y-3">
                         {course.requirements.map((req, i) => (
@@ -448,7 +451,7 @@ const CourseDetail = () => {
                     <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                       <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
                         <Users className="w-5 h-5 text-primary" />
-                        Khóa học này dành cho ai?
+                        {t('courseDetail.sections.audience')}
                       </h3>
                       <ul className="space-y-3">
                         {course.targetAudiences.map((audience, i) => (
@@ -465,14 +468,14 @@ const CourseDetail = () => {
                   {isPurchased && (
                     <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                       <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-xl font-bold text-slate-900">Báo cáo của bạn</h3>
+                        <h3 className="text-xl font-bold text-slate-900">{t('courseDetail.sections.myReports')}</h3>
                         <Button
                           size="sm"
                           onClick={() => setReportOpen(true)}
                           className="rounded-lg"
                         >
                           <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
-                          Viết báo cáo
+                          {t('courseDetail.reports.writeReport')}
                         </Button>
                       </div>
                       {myReports.length > 0 ? (
@@ -483,7 +486,7 @@ const CourseDetail = () => {
                               className="border border-slate-200 rounded-xl p-4 bg-slate-50/50"
                             >
                               <div className="text-xs text-slate-400 mb-1">
-                                {new Date(report.createdAt).toLocaleString('vi-VN')}
+                                {new Date(report.createdAt).toLocaleString(dateLocale)}
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline" className="text-xs">
@@ -496,7 +499,7 @@ const CourseDetail = () => {
                         </ul>
                       ) : (
                         <p className="text-slate-400 text-sm">
-                          Bạn chưa có báo cáo nào cho khóa học này.
+                          {t('courseDetail.reports.empty')}
                         </p>
                       )}
                     </div>
@@ -525,19 +528,19 @@ const CourseDetail = () => {
                         <div className="flex flex-col gap-2 mt-3">
                           {instructor?.email && (
                             <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <span className="font-medium text-slate-700">Email:</span>
+                              <span className="font-medium text-slate-700">{t('courseDetail.instructorTab.email')}</span>
                               {instructor.email}
                             </div>
                           )}
                           {instructor?.phoneNumber && (
                             <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <span className="font-medium text-slate-700">Điện thoại:</span>
+                              <span className="font-medium text-slate-700">{t('courseDetail.instructorTab.phone')}</span>
                               {instructor.phoneNumber}
                             </div>
                           )}
                           {instructor?.englishLevel && (
                             <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <span className="font-medium text-slate-700">Trình độ:</span>
+                              <span className="font-medium text-slate-700">{t('courseDetail.instructorTab.level')}</span>
                               <Badge variant="outline" className="text-xs">
                                 {instructor.englishLevel}
                               </Badge>
@@ -556,7 +559,7 @@ const CourseDetail = () => {
                     <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                       <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
                         <PlayCircle className="w-5 h-5 text-primary" />
-                        Bài học ({course.lessonCount ?? courseLessons.length})
+                        {t('courseDetail.sections.lessons', { count: course.lessonCount ?? courseLessons.length })}
                       </h3>
                       {courseLessons.length > 0 ? (
                         <ul className="space-y-3">
@@ -590,13 +593,13 @@ const CourseDetail = () => {
                                     <span className="flex items-center gap-1">
                                       <Clock className="w-3 h-3" />
                                       {lesson.durationInSeconds
-                                        ? `${Math.round(lesson.durationInSeconds / 60)} phút`
+                                        ? t('courseDetail.lessons.minutes', { count: Math.round(lesson.durationInSeconds / 60) })
                                         : '—'}
                                     </span>
                                     {(lesson.materials?.length ?? 0) > 0 && (
                                       <>
                                         <span>•</span>
-                                        <span>{lesson.materials!.length} tài liệu</span>
+                                        <span>{t('courseDetail.lessons.materials', { count: lesson.materials!.length })}</span>
                                       </>
                                     )}
                                   </div>
@@ -607,13 +610,13 @@ const CourseDetail = () => {
                         </ul>
                       ) : (
                         <p className="text-slate-400 text-center py-6 text-sm">
-                          Chưa có bài học nào.
+                          {t('courseDetail.lessons.empty')}
                         </p>
                       )}
                       {!isPurchased && courseLessons.length > 0 && (
                         <p className="mt-4 text-xs text-slate-400 text-center">
                           <Lock className="w-3 h-3 inline mr-1" />
-                          Mua khóa học để mở khóa toàn bộ nội dung
+                          {t('courseDetail.lessons.lockedNotice')}
                         </p>
                       )}
                     </div>
@@ -622,7 +625,7 @@ const CourseDetail = () => {
                       <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
                         <h3 className="text-xl font-bold mb-5 text-slate-900 flex items-center gap-2">
                           <FileText className="w-5 h-5 text-blue-500" />
-                          Bài kiểm tra
+                          {t('courseDetail.sections.tests')}
                         </h3>
                         {relatedTests.length > 0 ? (
                           <div className="space-y-4">
@@ -639,12 +642,11 @@ const CourseDetail = () => {
                                     </div>
                                     <div className="text-sm text-slate-500 mt-1 flex items-center gap-2">
                                       <Clock className="w-3.5 h-3.5" />
-                                      {test.durationInMinutes} phút • Điểm tối đa:{' '}
-                                      {test.totalScore}
+                                      {t('courseDetail.tests.minutesAndMax', { minutes: test.durationInMinutes, score: test.totalScore })}
                                     </div>
                                   </div>
                                   <Button variant="outline" size="sm" className="rounded-lg">
-                                    Làm bài
+                                    {t('courseDetail.tests.doTest')}
                                   </Button>
                                 </div>
                                 {test.sections && test.sections.length > 0 && (
@@ -658,7 +660,7 @@ const CourseDetail = () => {
                                           {section.title}
                                         </div>
                                         <div className="text-xs text-slate-400 mt-0.5">
-                                          {section.totalQuestions ?? 0} câu hỏi
+                                          {t('courseDetail.tests.questionCount', { count: section.totalQuestions ?? 0 })}
                                         </div>
                                       </li>
                                     ))}
@@ -669,7 +671,7 @@ const CourseDetail = () => {
                           </div>
                         ) : (
                           <p className="text-slate-400 text-center py-6 text-sm">
-                            Chưa có bài kiểm tra nào.
+                            {t('courseDetail.tests.empty')}
                           </p>
                         )}
                       </div>
@@ -679,10 +681,10 @@ const CourseDetail = () => {
                         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-7 border border-amber-200 shadow-sm">
                           <h3 className="text-xl font-bold mb-3 text-slate-900 flex items-center gap-2">
                             <Award className="w-5 h-5 text-amber-500" />
-                            Bài kiểm tra cuối khóa
+                            {t('courseDetail.sections.finalTest')}
                           </h3>
                           <p className="text-sm text-slate-600 mb-4">
-                            Hoàn thành bài kiểm tra này để xác nhận bạn đã nắm vững kiến thức.
+                            {t('courseDetail.finalTest.description')}
                           </p>
                           {(() => {
                             const totalLessons = courseLessons.length;
@@ -695,14 +697,14 @@ const CourseDetail = () => {
                                 <div className="flex items-center gap-3">
                                   <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                                   <span className="text-sm font-medium text-green-700">
-                                    Bạn đã hoàn thành tất cả bài học!
+                                    {t('courseDetail.finalTest.allComplete')}
                                   </span>
                                   <Button
                                     className="ml-auto rounded-xl shadow-lg shadow-amber-200/50"
                                     onClick={() => navigate(`/tests/${course.finalTestId}`)}
                                   >
                                     <FileText className="w-4 h-4 mr-1.5" />
-                                    Làm bài kiểm tra
+                                    {t('courseDetail.finalTest.doTestBtn')}
                                   </Button>
                                 </div>
                               );
@@ -712,10 +714,10 @@ const CourseDetail = () => {
                                 <Lock className="w-5 h-5 text-amber-500 flex-shrink-0" />
                                 <div>
                                   <p className="text-sm font-medium text-slate-700">
-                                    Hoàn thành tất cả bài học để mở khóa
+                                    {t('courseDetail.finalTest.lockedTitle')}
                                   </p>
                                   <p className="text-xs text-slate-500 mt-0.5">
-                                    Tiến độ: {completedLessons}/{totalLessons} bài học
+                                    {t('courseDetail.finalTest.progress', { completed: completedLessons, total: totalLessons })}
                                   </p>
                                 </div>
                                 <div className="ml-auto">
@@ -752,8 +754,12 @@ const CourseDetail = () => {
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="px-7 py-5 border-b border-slate-100">
                     <h2 className="text-xl font-bold text-slate-900">
-                      Thêm khóa học từ{' '}
-                      <span className="text-primary">{instructor.fullName}</span>
+                      <Trans
+                        i18nKey="courseDetail.sections.moreFromInstructor"
+                        ns="courses"
+                        values={{ name: instructor.fullName }}
+                        components={[<span key="0" className="text-primary" />]}
+                      />
                     </h2>
                   </div>
                   <div className="p-5 grid sm:grid-cols-3 gap-4">
@@ -843,7 +849,7 @@ const CourseDetail = () => {
                       <div className="space-y-3">
                         <div className="bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl text-center text-sm font-semibold border border-emerald-200 flex items-center justify-center gap-2">
                           <CheckCircle2 className="w-4 h-4" />
-                          Đã sở hữu khóa học
+                          {t('courseDetail.sidebar.ownedNotice')}
                         </div>
                         <Button
                           size="lg"
@@ -851,7 +857,7 @@ const CourseDetail = () => {
                           onClick={handleStartLearning}
                         >
                           <PlayCircle className="w-5 h-5 mr-2" />
-                          Vào học ngay
+                          {t('courseDetail.sidebar.startLearning')}
                         </Button>
                         <Button
                           size="lg"
@@ -860,7 +866,7 @@ const CourseDetail = () => {
                           onClick={() => setReportOpen(true)}
                         >
                           <AlertTriangle className="w-4 h-4 mr-2" />
-                          Báo cáo sự cố
+                          {t('courseDetail.reports.reportIncident')}
                         </Button>
                       </div>
                     ) : (
@@ -876,7 +882,7 @@ const CourseDetail = () => {
                           ) : (
                             <>
                               <Zap className="w-5 h-5 mr-2" />
-                              Mua ngay
+                              {t('courseDetail.sidebar.buyNow')}
                             </>
                           )}
                         </Button>
@@ -894,7 +900,7 @@ const CourseDetail = () => {
                           ) : (
                             <ShoppingCart className="w-5 h-5 mr-2" />
                           )}
-                          {isInCart ? 'Đã có trong giỏ — Xem giỏ hàng' : 'Thêm vào giỏ'}
+                          {isInCart ? t('courseDetail.sidebar.inCartCta') : t('courseDetail.sidebar.addToCart')}
                         </Button>
                       </div>
                     )}
@@ -902,9 +908,9 @@ const CourseDetail = () => {
                     {/* Trust signals */}
                     <div className="pt-4 border-t border-slate-100 space-y-2.5">
                       {[
-                        { icon: Shield, text: 'Truy cập trọn đời' },
-                        { icon: RefreshCw, text: 'Cập nhật miễn phí' },
-                        { icon: Award, text: 'Chứng chỉ hoàn thành' },
+                        { icon: Shield, text: t('courseDetail.sidebar.trust.lifetime') },
+                        { icon: RefreshCw, text: t('courseDetail.sidebar.trust.freeUpdates') },
+                        { icon: Award, text: t('courseDetail.sidebar.trust.certificate') },
                       ].map((item) => (
                         <div
                           key={item.text}
@@ -936,9 +942,9 @@ const CourseDetail = () => {
         open={buyOpen}
         onOpenChange={setBuyOpen}
         amount={Number(course.price) || 0}
-        title="Xác nhận thanh toán nhanh"
+        title={t('courseDetail.payment.dialogTitle')}
         items={[{ title: course.title, price: Number(course.price) || 0 }]}
-        confirmLabel={directBuyMutation.isPending ? 'Đang xử lý...' : 'Thanh toán ngay'}
+        confirmLabel={directBuyMutation.isPending ? t('courseDetail.payment.processing') : t('courseDetail.payment.confirm')}
         onConfirm={handleConfirmPayment}
       />
 

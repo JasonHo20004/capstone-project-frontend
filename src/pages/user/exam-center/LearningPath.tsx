@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/api/config";
 import { placementService } from "@/lib/api/services/user/placement/placement.service";
 
@@ -268,38 +269,7 @@ export default function LearningPath() {
 
   /* ── Error ─────────────────────────────────────────────────────── */
   if (view === "error") {
-    return (
-      <div className="max-w-[1280px] mx-auto px-2 py-2">
-        <PageHeader />
-        <div className="mx-auto max-w-xl rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center">
-          <h2 className="text-lg font-bold text-rose-900">
-            We couldn't generate your plan right now
-          </h2>
-          <p className="mt-1 text-sm text-rose-700">
-            Your inputs are saved. Try again, or edit them and retry.
-          </p>
-          <div className="mt-4 flex justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setView("wizard");
-                setStep(4);
-              }}
-              className="rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
-            >
-              Edit inputs
-            </button>
-            <button
-              type="button"
-              onClick={() => void generatePlan()}
-              className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700"
-            >
-              Try again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <ErrorView onEditInputs={() => { setView("wizard"); setStep(4); }} onRetry={() => void generatePlan()} />;
   }
 
   /* ── Wizard ────────────────────────────────────────────────────── */
@@ -348,6 +318,7 @@ export default function LearningPath() {
 }
 
 function PageHeader({ compact = false }: { compact?: boolean }) {
+  const { t } = useTranslation("exam");
   return (
     <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div>
@@ -358,17 +329,16 @@ function PageHeader({ compact = false }: { compact?: boolean }) {
               compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl",
             ].join(" ")}
           >
-            {compact ? "Your Learning Path" : "Create Your Personalized Learning Path"}
+            {compact ? t("learningPath.header.titleCompact") : t("learningPath.header.titleFull")}
           </h1>
           <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
             <span className="material-symbols-outlined text-[12px]">auto_awesome</span>
-            AI-powered
+            {t("learningPath.header.aiBadge")}
           </span>
         </div>
         {!compact && (
           <p className="mt-1 text-sm text-slate-500 max-w-2xl">
-            SkillBoost AI uses your placement level, goals and study habits to build a
-            roadmap that fits you — not a generic learner.
+            {t("learningPath.header.tagline")}
           </p>
         )}
       </div>
@@ -376,8 +346,41 @@ function PageHeader({ compact = false }: { compact?: boolean }) {
         to="/dashboard"
         className="text-sm font-medium text-cyan-700 hover:text-cyan-800"
       >
-        ← Back to dashboard
+        {t("learningPath.header.backToDashboard")}
       </Link>
     </header>
+  );
+}
+
+function ErrorView({ onEditInputs, onRetry }: { onEditInputs: () => void; onRetry: () => void }) {
+  const { t } = useTranslation("exam");
+  return (
+    <div className="max-w-[1280px] mx-auto px-2 py-2">
+      <PageHeader />
+      <div className="mx-auto max-w-xl rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center">
+        <h2 className="text-lg font-bold text-rose-900">
+          {t("learningPath.error.title")}
+        </h2>
+        <p className="mt-1 text-sm text-rose-700">
+          {t("learningPath.error.description")}
+        </p>
+        <div className="mt-4 flex justify-center gap-2">
+          <button
+            type="button"
+            onClick={onEditInputs}
+            className="rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+          >
+            {t("learningPath.error.editInputs")}
+          </button>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700"
+          >
+            {t("learningPath.error.tryAgain")}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,7 +1,9 @@
 import { Link, useLocation, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { PracticeGradingResult } from "@/lib/api/services/user/practice/practice.service";
 
 export default function PracticeResult() {
+  const { t } = useTranslation("exam");
   const { testId } = useParams<{ testId: string }>();
   const location = useLocation();
   const result = (location.state as { result?: PracticeGradingResult } | null)?.result;
@@ -10,10 +12,10 @@ export default function PracticeResult() {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="bg-white border border-slate-200 rounded-xl p-6 text-slate-700">
-          No result data found. Please re-submit the test.
+          {t("practiceResult.noData")}
           <div className="mt-4">
             <Link to={testId ? `/practice/${testId}` : "/practice"} className="text-indigo-600 font-bold">
-              Go back
+              {t("practiceResult.goBack")}
             </Link>
           </div>
         </div>
@@ -26,15 +28,15 @@ export default function PracticeResult() {
       <header className="bg-white border-b border-slate-200 h-16 flex items-center px-6 mb-8">
         <Link to="/practice" className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
           <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-sm font-medium">Back to Practice Tests</span>
+          <span className="text-sm font-medium">{t("practiceResult.backToList")}</span>
         </Link>
       </header>
 
       <div className="max-w-5xl mx-auto px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Practice Result</h1>
-            <p className="text-slate-500">Auto grading summary</p>
+            <h1 className="text-2xl font-bold text-slate-900">{t("practiceResult.title")}</h1>
+            <p className="text-slate-500">{t("practiceResult.subtitle")}</p>
           </div>
           {testId ? (
             <Link
@@ -42,7 +44,7 @@ export default function PracticeResult() {
               className="px-4 py-2 bg-indigo-600 rounded-lg text-sm font-bold text-white hover:bg-indigo-700 transition-colors flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[20px]">replay</span>
-              Retake
+              {t("practiceResult.retake")}
             </Link>
           ) : null}
         </div>
@@ -50,30 +52,30 @@ export default function PracticeResult() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Score</span>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">{t("practiceResult.score")}</span>
             <span className="text-5xl font-black text-indigo-600">{result.score}</span>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Correct</span>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">{t("practiceResult.correct")}</span>
             <span className="text-5xl font-black text-green-500">{result.correctAnswers}</span>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-blue-400"></div>
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Total</span>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">{t("practiceResult.total")}</span>
             <span className="text-5xl font-black text-blue-400">{result.totalQuestions}</span>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-orange-400"></div>
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Percentage</span>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">{t("practiceResult.percentage")}</span>
             <span className="text-5xl font-black text-orange-400">{Math.round(result.percentage)}%</span>
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-bold text-slate-800">Answer Review</h3>
-            <div className="text-xs text-slate-500">{result.details.length} items</div>
+            <h3 className="font-bold text-slate-800">{t("practiceResult.answerReview")}</h3>
+            <div className="text-xs text-slate-500">{t("practiceResult.itemsCount", { count: result.details.length })}</div>
           </div>
           <div className="divide-y divide-slate-100">
             {result.details.slice(0, 25).map((d, idx) => (
@@ -87,14 +89,14 @@ export default function PracticeResult() {
                 </div>
                 <div className="flex-1">
                   <div className="text-xs text-slate-500">
-                    Question ID: <span className="font-mono">{d.questionId}</span>
+                    {t("practiceResult.questionIdLabel")} <span className="font-mono">{d.questionId}</span>
                   </div>
                   <div className="mt-2 text-xs">
-                    <span className="text-slate-500">Your answer:</span>{" "}
+                    <span className="text-slate-500">{t("practiceResult.yourAnswer")}</span>{" "}
                     <span className="font-semibold text-slate-800">{String(d.userAnswer ?? "")}</span>
                   </div>
                   <div className="mt-1 text-xs">
-                    <span className="text-slate-500">Correct answer:</span>{" "}
+                    <span className="text-slate-500">{t("practiceResult.correctAnswer")}</span>{" "}
                     <span className="font-semibold text-slate-800">{String(d.correctAnswer ?? "")}</span>
                   </div>
                   {d.explanation ? (
@@ -106,7 +108,7 @@ export default function PracticeResult() {
           </div>
           {result.details.length > 25 ? (
             <div className="p-4 border-t border-slate-100 text-center text-xs text-slate-500">
-              Showing first 25 items.
+              {t("practiceResult.showingFirst25")}
             </div>
           ) : null}
         </div>
@@ -114,4 +116,3 @@ export default function PracticeResult() {
     </div>
   );
 }
-

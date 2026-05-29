@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -5,55 +6,57 @@ import { Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const About = () => {
+  const { t } = useTranslation('info');
+
   const stats = [
-    { value: '50,000+', label: 'Học viên đang hoạt động' },
-    { value: '200+', label: 'Khoá học chuyên sâu' },
-    { value: '98%', label: 'Tỷ lệ thành công' },
-    { value: '50+', label: 'Quốc gia' },
+    { value: '50,000+', label: t('about.stats.activeStudents') },
+    { value: '200+', label: t('about.stats.courses') },
+    { value: '98%', label: t('about.stats.successRate') },
+    { value: '50+', label: t('about.stats.countries') },
   ];
 
   const values = [
     {
       icon: Target,
-      title: 'Sứ mệnh của chúng tôi',
-      description: 'Mang giáo dục tiếng Anh chất lượng đến với mọi người, mọi nơi và trao quyền cho người học đạt được mục tiêu.',
+      title: t('about.values.items.mission.title'),
+      description: t('about.values.items.mission.description'),
     },
     {
       icon: Users,
-      title: 'Đội ngũ chuyên gia',
-      description: 'Giảng viên là các chuyên gia được chứng nhận, giàu kinh nghiệm và đam mê giảng dạy.',
+      title: t('about.values.items.experts.title'),
+      description: t('about.values.items.experts.description'),
     },
     {
       icon: Award,
-      title: 'Chất lượng là trên hết',
-      description: 'Duy trì tiêu chuẩn cao nhất trong nội dung khóa học, cách triển khai và hỗ trợ học viên.',
+      title: t('about.values.items.quality.title'),
+      description: t('about.values.items.quality.description'),
     },
     {
       icon: Heart,
-      title: 'Thành công của học viên',
-      description: 'Sự thành công của bạn là ưu tiên của chúng tôi. Luôn đồng hành và hỗ trợ trong suốt hành trình học tập.',
+      title: t('about.values.items.studentSuccess.title'),
+      description: t('about.values.items.studentSuccess.description'),
     },
   ];
 
   const team = [
     {
       name: 'Dr. Sarah Johnson',
-      role: 'Giảng viên trưởng',
+      role: t('about.team.members.sarah'),
       image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
     },
     {
       name: 'Michael Chen',
-      role: 'Chuyên gia tiếng Anh thương mại',
+      role: t('about.team.members.michael'),
       image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
     },
     {
       name: 'Emma Williams',
-      role: 'Chuyên gia IELTS',
+      role: t('about.team.members.emma'),
       image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
     },
     {
       name: 'David Martinez',
-      role: 'Huấn luyện viên Speaking',
+      role: t('about.team.members.david'),
       image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop',
     },
   ];
@@ -61,17 +64,17 @@ const About = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      
+
       <main className="pt-20">
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl md:text-6xl font-bold mb-6 font-display">
-                Về SkillBoost
+                {t('about.hero.title')}
               </h1>
               <p className="text-xl text-white/70">
-                Trao quyền cho người học trên toàn thế giới để làm chủ tiếng Anh và đạt được ước mơ
+                {t('about.hero.subtitle')}
               </p>
             </div>
           </div>
@@ -98,28 +101,17 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-4xl font-bold mb-6 font-display">Câu chuyện của chúng tôi</h2>
+                <h2 className="text-4xl font-bold mb-6 font-display">{t('about.story.title')}</h2>
                 <div className="space-y-4 text-slate-500 leading-relaxed">
-                  <p>
-                    Được thành lập năm 2020, SkillBoost ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: 
-                    mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.
-                  </p>
-                  <p>
-                    Bắt đầu từ một đội ngũ nhỏ đầy nhiệt huyết, chúng tôi đã phát triển thành nền tảng 
-                    toàn cầu phục vụ hàng nghìn học viên tại hơn 50 quốc gia. Cam kết về chất lượng và 
-                    thành công của học viên luôn được giữ vững.
-                  </p>
-                  <p>
-                    Ngày nay, chúng tôi tiếp tục đổi mới và cải tiến khóa học để 
-                    đảm bảo mỗi học viên nhận được trải nghiệm học tập tốt nhất. Hãy cùng chúng tôi 
-                    trên hành trình chinh phục tiếng Anh.
-                  </p>
+                  <p>{t('about.story.p1')}</p>
+                  <p>{t('about.story.p2')}</p>
+                  <p>{t('about.story.p3')}</p>
                 </div>
               </div>
               <div className="relative">
                 <img
                   src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=600&fit=crop"
-                  alt="Câu chuyện của chúng tôi"
+                  alt={t('about.story.imgAlt')}
                   className="rounded-2xl shadow-lg"
                 />
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
@@ -134,10 +126,10 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">
-                Giá trị cốt lõi
+                {t('about.values.title')}
               </h2>
               <p className="text-lg text-slate-500">
-                Những nguyên tắc định hướng mọi hoạt động của chúng tôi
+                {t('about.values.subtitle')}
               </p>
             </div>
 
@@ -163,10 +155,10 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-4 font-display">
-                Đội ngũ giảng viên
+                {t('about.team.title')}
               </h2>
               <p className="text-lg text-slate-500">
-                Học với các chuyên gia giàu kinh nghiệm, tận tâm với thành công của bạn
+                {t('about.team.subtitle')}
               </p>
             </div>
 
@@ -197,14 +189,14 @@ const About = () => {
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-3xl mx-auto space-y-6">
               <h2 className="text-4xl md:text-5xl font-bold text-white font-display">
-                Tham gia cộng đồng đang phát triển của chúng tôi
+                {t('about.cta.title')}
               </h2>
               <p className="text-xl text-white/70">
-                Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành và hỗ trợ từ các chuyên gia
+                {t('about.cta.subtitle')}
               </p>
               <Link to="/courses">
                 <Button size="lg" variant="secondary" className="shadow-lg shadow-primary/20 text-lg h-14 px-8">
-                  Khám phá khóa học
+                  {t('about.cta.exploreCourses')}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>

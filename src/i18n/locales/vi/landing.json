@@ -1,0 +1,152 @@
+{
+  "stats": {
+    "activeLearners": "Học viên đang hoạt động",
+    "deepCourses": "Khoá học chuyên sâu",
+    "successRate": "Tỷ lệ thành công",
+    "countries": "Quốc gia"
+  },
+  "hero": {
+    "trustBadge": "Được tin tưởng bởi 50.000+ học viên",
+    "titleLine1": "Thành thạo tiếng Anh",
+    "titleLine2": "theo tốc độ của bạn.",
+    "subtitle": "Tham gia cùng hàng nghìn người học trên toàn thế giới để nâng cao kỹ năng tiếng Anh với các khóa học do chuyên gia giảng dạy, bài học tương tác và lộ trình học cá nhân hóa.",
+    "bullets": {
+      "personalizedPath": "Lộ trình cá nhân hóa theo trình độ",
+      "instantFeedback": "Phản hồi tức thì từ AI & giảng viên",
+      "certificate": "Chứng chỉ hoàn thành được công nhận"
+    },
+    "exploreCourses": "Khám phá khóa học",
+    "watchDemo": "Xem demo",
+    "stats": {
+      "learners": "Học viên",
+      "courses": "Khoá học",
+      "success": "Thành công"
+    },
+    "imgAlt": "Học viên học cùng nhau",
+    "floatingCard": {
+      "count": "2,500+",
+      "label": "Học viên đăng ký trong tuần này"
+    }
+  },
+  "features": {
+    "eyebrow": "Tại sao chọn chúng tôi",
+    "title": "Vì sao chọn",
+    "titleAccent": "SkillBoost",
+    "subtitle": "Chúng tôi cung cấp mọi thứ bạn cần để thành thạo tiếng Anh và đạt được mục tiêu học tập",
+    "items": {
+      "expert": {
+        "title": "Khóa học do chuyên gia giảng dạy",
+        "description": "Học với giảng viên bản ngữ có nhiều năm kinh nghiệm giảng dạy"
+      },
+      "flexible": {
+        "title": "Lịch học linh hoạt",
+        "description": "Học theo tốc độ của bạn với quyền truy cập tài liệu 24/7"
+      },
+      "interactive": {
+        "title": "Học tập tương tác",
+        "description": "Tương tác với bạn học và giảng viên qua các buổi học trực tuyến và diễn đàn"
+      },
+      "global": {
+        "title": "Cộng đồng toàn cầu",
+        "description": "Kết nối với người học khắp thế giới và cùng luyện tập"
+      },
+      "certified": {
+        "title": "Chương trình được chứng nhận",
+        "description": "Nhận chứng chỉ được công nhận khi hoàn thành khóa học"
+      },
+      "proven": {
+        "title": "Hiệu quả đã được chứng minh",
+        "description": "98% học viên của chúng tôi ghi nhận sự tiến bộ rõ rệt"
+      }
+    }
+  },
+  "pricing": {
+    "eyebrow": "Gói học tập",
+    "title": "Chọn gói phù hợp với",
+    "titleAccent": "hành trình",
+    "titleTail": "của bạn",
+    "subtitle": "Mở khóa AI chấm Speaking, Writing, lộ trình học cá nhân và nhiều tính năng cao cấp khác.",
+    "currentPlan": "Gói hiện tại",
+    "mostPopular": "Phổ biến nhất",
+    "free": "Miễn phí",
+    "perMonth": "/tháng",
+    "inUse": "Đang sử dụng",
+    "goToDashboard": "Vào khu vực học",
+    "startFree": "Bắt đầu miễn phí",
+    "upgradeToPro": "Nâng cấp lên Pro",
+    "footnote": "Hủy bất cứ lúc nào · Hoàn tiền theo số ngày còn lại · Thanh toán an toàn qua ví SkillBoost",
+    "features": {
+      "course_access": "Truy cập khóa học",
+      "flashcards": "Flashcard học từ vựng",
+      "basic_tests": "Bài test cơ bản",
+      "ai_speaking": "AI chấm Speaking",
+      "ai_writing": "AI chấm Writing",
+      "dictation": "Luyện Dictation",
+      "learning_path": "Lộ trình học cá nhân",
+      "skill_tree": "Cây kỹ năng"
+    }
+  },
+  "story": {
+    "eyebrow": "Câu chuyện",
+    "title": "Sinh ra từ một tầm nhìn đơn giản",
+    "titleAccent": "nhưng mạnh mẽ",
+    "p1": "Được thành lập năm 2020, SkillBoost ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.",
+    "p2": "Bắt đầu từ một đội ngũ nhỏ đầy nhiệt huyết, chúng tôi đã phát triển thành nền tảng toàn cầu phục vụ hàng nghìn học viên tại hơn 50 quốc gia.",
+    "p3": "Ngày nay, chúng tôi tiếp tục đổi mới và cải tiến khoá học để đảm bảo mỗi học viên nhận được trải nghiệm học tập tốt nhất.",
+    "imgAlt": "Câu chuyện SkillBoost"
+  },
+  "values": {
+    "title": "Giá trị cốt lõi",
+    "subtitle": "Những nguyên tắc định hướng mọi hoạt động của chúng tôi",
+    "items": {
+      "mission": {
+        "title": "Sứ mệnh của chúng tôi",
+        "description": "Mang giáo dục tiếng Anh chất lượng đến với mọi người, mọi nơi và trao quyền cho người học đạt được mục tiêu."
+      },
+      "team": {
+        "title": "Đội ngũ chuyên gia",
+        "description": "Giảng viên là các chuyên gia được chứng nhận, giàu kinh nghiệm và đam mê giảng dạy."
+      },
+      "quality": {
+        "title": "Chất lượng là trên hết",
+        "description": "Duy trì tiêu chuẩn cao nhất trong nội dung khoá học, cách triển khai và hỗ trợ học viên."
+      },
+      "success": {
+        "title": "Thành công của học viên",
+        "description": "Sự thành công của bạn là ưu tiên của chúng tôi. Luôn đồng hành và hỗ trợ trong suốt hành trình học tập."
+      }
+    }
+  },
+  "catalog": {
+    "eyebrow": "Khám phá",
+    "title": "Khám phá khoá học",
+    "subtitle": "Duyệt danh sách khoá học, lọc theo trình độ và tìm nội dung phù hợp.",
+    "searchPlaceholder": "Tìm khoá học, kỹ năng hoặc giảng viên...",
+    "levelPlaceholder": "Trình độ",
+    "levelAll": "Tất cả",
+    "resultsCount": "{{count}} kết quả",
+    "myCourses": "Khoá học của bạn",
+    "viewAll": "Xem tất cả",
+    "exploreMore": "Khám phá thêm",
+    "allCourses": "Danh sách khoá học",
+    "empty": "Không tìm thấy khoá học nào phù hợp.",
+    "prev": "Trước",
+    "next": "Sau",
+    "page": "Trang {{current}} / {{total}}"
+  },
+  "team": {
+    "title": "Đội ngũ giảng viên",
+    "subtitle": "Học với các chuyên gia giàu kinh nghiệm",
+    "roles": {
+      "lead": "Giảng viên trưởng",
+      "business": "Chuyên gia tiếng Anh thương mại",
+      "ielts": "Chuyên gia IELTS",
+      "speaking": "Huấn luyện viên Speaking"
+    }
+  },
+  "cta": {
+    "title": "Tham gia cộng đồng đang phát triển của chúng tôi",
+    "subtitle": "Bắt đầu hành trình chinh phục tiếng Anh với sự đồng hành từ các chuyên gia",
+    "button": "Khám phá khoá học"
+  }
+}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -21,51 +22,31 @@ import {
 } from '@/components/user/layout/NotificationDropdown';
 import { useAIInsights, type AIInsight } from '@/hooks/use-ai-insights';
 
-const formatDate = (date: string) => {
-  try {
-    return new Date(date).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return date;
-  }
-};
-
-const TYPE_FILTER_OPTIONS: { key: string; label: string }[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'ai_insight', label: 'AI Insight' },
-  { key: 'course_comment', label: 'Bình luận' },
-  { key: 'comment_reply', label: 'Trả lời' },
-  { key: 'course_enrollment', label: 'Đăng ký' },
-  { key: 'course_update', label: 'Cập nhật' },
-  // Seller-specific events emitted by course-service / payment-service.
-  // Keys are uppercase to match what handlers write (see NotificationDropdown).
-  { key: 'COURSE_APPROVED', label: 'Khoá học duyệt' },
-  { key: 'COURSE_REJECTED', label: 'Khoá học bị từ chối' },
-  { key: 'COURSE_SUBMITTED', label: 'Khoá học chờ duyệt' },
-  { key: 'WITHDRAWAL_APPROVED', label: 'Rút tiền thành công' },
-  { key: 'WITHDRAWAL_REJECTED', label: 'Rút tiền bị từ chối' },
-];
-
 // Mute control persists across reloads via localStorage. Pure UX —
 // hides the unread highlight + bell pulse until the chosen deadline.
 const MUTE_STORAGE_KEY = 'notifications.mutedUntil';
-const MUTE_PRESETS: Array<{ label: string; hours: number }> = [
-  { label: '1 giờ', hours: 1 },
-  { label: '4 giờ', hours: 4 },
-  { label: 'Đến cuối ngày', hours: 12 },
-];
 
-const AI_ACTION_LABEL: Record<string, string> = {
-  SHOW_BANNER: 'AI Insight',
-  SUGGEST_COURSE: 'Course Recommendation',
-  UNLOCK_TIP: 'Study Tip',
-  SEND_REMINDER: 'Study Reminder',
-};
+const TYPE_FILTER_KEYS = [
+  'all',
+  'ai_insight',
+  'course_comment',
+  'comment_reply',
+  'course_enrollment',
+  'course_update',
+  // Seller-specific events emitted by course-service / payment-service.
+  // Keys are uppercase to match what handlers write (see NotificationDropdown).
+  'COURSE_APPROVED',
+  'COURSE_REJECTED',
+  'COURSE_SUBMITTED',
+  'WITHDRAWAL_APPROVED',
+  'WITHDRAWAL_REJECTED',
+] as const;
+
+const MUTE_PRESETS: Array<{ key: string; hours: number }> = [
+  { key: '1h', hours: 1 },
+  { key: '4h', hours: 4 },
+  { key: 'endOfDay', hours: 12 },
+];
 
 const AI_ACTION_COLOR: Record<string, { bg: string; text: string }> = {
   SHOW_BANNER: { bg: 'bg-blue-50', text: 'text-blue-600' },
@@ -78,6 +59,25 @@ export default function Notifications() {
   const { user } = useUser();
   const userId = user?.id;
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('account');
+  const dateLocale = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-GB';
+
+  const formatDate = (date: string) => {
+    try {
+      return new Date(date).toLocaleString(dateLocale, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return date;
+    }
+  };
+
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'unseen' | 'seen'>('all');
@@ -120,13 +120,13 @@ export default function Notifications() {
     if (hours == null) {
       localStorage.removeItem(MUTE_STORAGE_KEY);
       setMutedUntil(null);
-      toast.success('Đã bật lại thông báo');
+      toast.success(t('notifications.mute.toastUnmuted'));
       return;
     }
     const until = new Date(Date.now() + hours * 60 * 60 * 1000);
     localStorage.setItem(MUTE_STORAGE_KEY, until.toISOString());
     setMutedUntil(until);
-    toast.success(`Tạm ẩn thông báo đến ${until.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`);
+    toast.success(t('notifications.mute.toastMuted', { time: formatTime(until) }));
   };
 
   useNotificationRealtime(userId);
@@ -194,39 +194,43 @@ export default function Notifications() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">
-                Thông báo của bạn
+                {t('notifications.header.title')}
               </h1>
               <p className="text-slate-500 text-sm">
                 {unreadCount > 0
-                  ? `Có ${unreadCount} thông báo chưa đọc`
-                  : 'Tất cả thông báo đã được đọc'}
+                  ? t('notifications.header.unreadCount', { count: unreadCount })
+                  : t('notifications.header.allRead')}
               </p>
             </div>
           </div>
           <div className="flex gap-2 items-center">
             <Button variant="outline" onClick={() => navigate(-1)}>
-              Quay lại
+              {t('notifications.header.back')}
             </Button>
             {isMuted ? (
               <Button
                 variant="outline"
                 onClick={() => applyMute(null)}
-                title={`Đang tắt thông báo đến ${mutedUntil?.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`}
+                title={t('notifications.header.mutedTitle', {
+                  time: mutedUntil ? formatTime(mutedUntil) : '',
+                })}
               >
-                <BellOff className="w-4 h-4 mr-2" /> Bật lại
+                <BellOff className="w-4 h-4 mr-2" /> {t('notifications.header.unmute')}
               </Button>
             ) : (
               <div className="inline-flex rounded-md border bg-white">
-                <span className="px-2 py-1.5 text-xs text-slate-500 self-center">Tạm tắt:</span>
+                <span className="px-2 py-1.5 text-xs text-slate-500 self-center">
+                  {t('notifications.header.muteLabel')}
+                </span>
                 {MUTE_PRESETS.map((p) => (
                   <Button
-                    key={p.hours}
+                    key={p.key}
                     variant="ghost"
                     size="sm"
                     className="text-xs h-8 rounded-none border-l first:border-l-0"
                     onClick={() => applyMute(p.hours)}
                   >
-                    {p.label}
+                    {t(`notifications.mute.presets.${p.key}`)}
                   </Button>
                 ))}
               </div>
@@ -239,7 +243,7 @@ export default function Notifications() {
                   markAllAIRead();
                 }}
               >
-                <CheckCheck className="w-4 h-4 mr-2" /> Đọc tất cả
+                <CheckCheck className="w-4 h-4 mr-2" /> {t('notifications.header.markAllRead')}
               </Button>
             )}
           </div>
@@ -250,7 +254,7 @@ export default function Notifications() {
       <section className="container mx-auto px-0">
         <div
           role="tablist"
-          aria-label="Chế độ xem thông báo"
+          aria-label={t('notifications.view.ariaLabel')}
           className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm"
         >
           <button
@@ -264,7 +268,7 @@ export default function Notifications() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Inbox className="w-4 h-4" /> Hộp thư
+            <Inbox className="w-4 h-4" /> {t('notifications.view.inbox')}
           </button>
           <button
             type="button"
@@ -277,7 +281,7 @@ export default function Notifications() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <BookmarkCheck className="w-4 h-4" /> Đã lưu trữ
+            <BookmarkCheck className="w-4 h-4" /> {t('notifications.view.saved')}
           </button>
         </div>
       </section>
@@ -290,31 +294,25 @@ export default function Notifications() {
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-slate-400" />
               <span className="text-sm font-medium text-slate-700">
-                Bộ lọc
+                {t('notifications.filtersPanel.title')}
               </span>
             </div>
 
             {/* Status filter */}
             <div>
               <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                Trạng thái
+                {t('notifications.filtersPanel.status')}
               </label>
               <div className="flex gap-2 mt-2">
-                {[
-                  { key: 'all', label: 'Tất cả' },
-                  { key: 'unseen', label: 'Chưa đọc' },
-                  { key: 'seen', label: 'Đã đọc' },
-                ].map((opt) => (
+                {(['all', 'unseen', 'seen'] as const).map((key) => (
                   <Button
-                    key={opt.key}
-                    variant={statusFilter === opt.key ? 'default' : 'outline'}
+                    key={key}
+                    variant={statusFilter === key ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() =>
-                      setStatusFilter(opt.key as 'all' | 'unseen' | 'seen')
-                    }
+                    onClick={() => setStatusFilter(key)}
                     className="text-xs"
                   >
-                    {opt.label}
+                    {t(`notifications.status.${key}`)}
                   </Button>
                 ))}
               </div>
@@ -323,18 +321,18 @@ export default function Notifications() {
             {/* Type filter */}
             <div>
               <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                Loại thông báo
+                {t('notifications.filtersPanel.type')}
               </label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {TYPE_FILTER_OPTIONS.map((t) => (
+                {TYPE_FILTER_KEYS.map((key) => (
                   <Button
-                    key={t.key}
-                    variant={typeFilter === t.key ? 'default' : 'outline'}
+                    key={key}
+                    variant={typeFilter === key ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setTypeFilter(t.key)}
+                    onClick={() => setTypeFilter(key)}
                     className="text-xs"
                   >
-                    {t.label}
+                    {t(`notifications.types.${key}`)}
                   </Button>
                 ))}
               </div>
@@ -343,14 +341,14 @@ export default function Notifications() {
             {/* Search */}
             <div>
               <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                Tìm kiếm
+                {t('notifications.filtersPanel.search')}
               </label>
               <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Nhập từ khóa..."
+                  placeholder={t('notifications.filtersPanel.searchPlaceholder')}
                   className="pl-9"
                 />
               </div>
@@ -364,7 +362,9 @@ export default function Notifications() {
               {/* ── AI Insights section ── */}
               {filteredAIInsights.map((insight) => {
                 const colors = AI_ACTION_COLOR[insight.actionType] ?? AI_ACTION_COLOR.SHOW_BANNER;
-                const label = AI_ACTION_LABEL[insight.actionType] ?? 'AI Insight';
+                const label = t(`notifications.aiActions.${insight.actionType}`, {
+                  defaultValue: t('notifications.aiActions.default'),
+                });
                 return (
                   <div
                     key={insight.id}
@@ -405,7 +405,9 @@ export default function Notifications() {
               {filteredAIInsights.length > 0 && typeFilter === 'all' && computedNotifications.length > 0 && (
                 <div className="flex items-center gap-3 py-1">
                   <div className="flex-1 h-px bg-slate-100" />
-                  <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Thông báo hệ thống</span>
+                  <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">
+                    {t('notifications.systemDivider')}
+                  </span>
                   <div className="flex-1 h-px bg-slate-100" />
                 </div>
               )}
@@ -417,10 +419,10 @@ export default function Notifications() {
                     <Bell className="w-6 h-6 text-slate-300" />
                   </div>
                   <p className="text-slate-500 font-medium">
-                    Không có thông báo phù hợp
+                    {t('notifications.emptyRegular.title')}
                   </p>
                   <p className="text-slate-400 text-sm mt-1">
-                    Thử thay đổi bộ lọc để xem thêm
+                    {t('notifications.emptyRegular.hint')}
                   </p>
                 </div>
               )}
@@ -430,8 +432,8 @@ export default function Notifications() {
                   <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
                     <Sparkles className="w-6 h-6 text-blue-300" />
                   </div>
-                  <p className="text-slate-500 font-medium">Chưa có AI Insight nào</p>
-                  <p className="text-slate-400 text-sm mt-1">AI sẽ gửi gợi ý khi phân tích kết quả học tập của bạn</p>
+                  <p className="text-slate-500 font-medium">{t('notifications.emptyAi.title')}</p>
+                  <p className="text-slate-400 text-sm mt-1">{t('notifications.emptyAi.hint')}</p>
                 </div>
               )}
 
@@ -502,44 +504,44 @@ export default function Notifications() {
                             markReadMutation(n.id);
                           }}
                         >
-                          <Eye className="w-3.5 h-3.5 mr-1" /> Đã đọc
+                          <Eye className="w-3.5 h-3.5 mr-1" /> {t('notifications.actions.markRead')}
                         </Button>
                       )}
                       {view === 'inbox' ? (
                         <Button
                           variant="ghost"
                           size="sm"
-                          title="Lưu trữ (đánh dấu quan trọng)"
-                          aria-label="Lưu trữ thông báo"
+                          title={t('notifications.actions.archiveTitle')}
+                          aria-label={t('notifications.actions.archiveAria')}
                           className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-500 hover:text-primary"
                           disabled={isArchiving}
                           onClick={(e) => {
                             e.stopPropagation();
                             archiveMutation(n.id, {
-                              onSuccess: () => toast.success('Đã lưu vào mục Đã lưu trữ'),
-                              onError: () => toast.error('Không thể lưu thông báo'),
+                              onSuccess: () => toast.success(t('notifications.toasts.archiveSuccess')),
+                              onError: () => toast.error(t('notifications.toasts.archiveError')),
                             });
                           }}
                         >
-                          <Bookmark className="w-3.5 h-3.5 mr-1" /> Lưu
+                          <Bookmark className="w-3.5 h-3.5 mr-1" /> {t('notifications.actions.archive')}
                         </Button>
                       ) : (
                         <Button
                           variant="ghost"
                           size="sm"
-                          title="Đưa về hộp thư"
-                          aria-label="Bỏ lưu trữ"
+                          title={t('notifications.actions.unarchiveTitle')}
+                          aria-label={t('notifications.actions.unarchiveAria')}
                           className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-500 hover:text-primary"
                           disabled={isUnarchiving}
                           onClick={(e) => {
                             e.stopPropagation();
                             unarchiveMutation(n.id, {
-                              onSuccess: () => toast.success('Đã đưa về Hộp thư'),
-                              onError: () => toast.error('Không thể bỏ lưu trữ'),
+                              onSuccess: () => toast.success(t('notifications.toasts.unarchiveSuccess')),
+                              onError: () => toast.error(t('notifications.toasts.unarchiveError')),
                             });
                           }}
                         >
-                          <RotateCcw className="w-3.5 h-3.5 mr-1" /> Bỏ lưu
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" /> {t('notifications.actions.unarchive')}
                         </Button>
                       )}
                     </div>

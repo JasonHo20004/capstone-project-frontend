@@ -1,0 +1,56 @@
+{
+  "nav": {
+    "dashboard": "Tổng quan",
+    "myCourses": "Khoá học của tôi",
+    "flashcards": "Thẻ ghi nhớ",
+    "cart": "Giỏ hàng",
+    "wallet": "Ví",
+    "notifications": "Thông báo",
+    "examCenter": "Trung tâm thi",
+    "myProgress": "Tiến độ của tôi",
+    "skillTree": "Cây kỹ năng",
+    "dictation": "Luyện nghe chép",
+    "learningPath": "Lộ trình học",
+    "liveClassroom": "Lớp học trực tiếp",
+    "aiFeatures": "Tính năng AI"
+  },
+  "header": {
+    "pageDefault": "Khu vực học tập",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "learner": "Học viên"
+  },
+  "auth": {
+    "logout": "Đăng xuất"
+  },
+  "publicNav": {
+    "home": "Trang chủ",
+    "about": "Giới thiệu",
+    "courses": "Khoá học",
+    "pricing": "Bảng giá",
+    "workspace": "Khu vực học tập",
+    "flashcards": "Thẻ ghi nhớ",
+    "sectionHome": "Trang chủ",
+    "sectionSystem": "Hệ thống",
+    "wallet": "Ví",
+    "cart": "Giỏ hàng",
+    "profile": "Hồ sơ",
+    "notifications": "Thông báo",
+    "login": "Đăng nhập",
+    "getStarted": "Bắt đầu"
+  },
+  "footer": {
+    "rights": "© {{year}} SkillBoost. Bảo lưu mọi quyền.",
+    "brandDescription": "Nâng tầm kỹ năng tiếng Anh với các khóa học do chuyên gia giảng dạy và trải nghiệm học tập tương tác.",
+    "quickLinks": "Liên kết nhanh",
+    "viewCourses": "Xem khóa học",
+    "about": "Giới thiệu",
+    "blog": "Blog",
+    "contact": "Liên hệ",
+    "support": "Hỗ trợ",
+    "helpCenter": "Trung tâm trợ giúp",
+    "terms": "Điều khoản dịch vụ",
+    "privacy": "Chính sách bảo mật",
+    "faq": "Câu hỏi thường gặp"
+  }
+}

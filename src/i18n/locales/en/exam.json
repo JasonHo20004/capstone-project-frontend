@@ -1,0 +1,1206 @@
+{
+  "examCenter": {
+    "title": "IELTS Exam Center",
+    "subtitle": "Practice all 4 IELTS skills — Reading, Writing, Listening, Speaking.",
+    "officialNotice": "Tests are timed and follow official IELTS guidelines",
+    "historyMenu": {
+      "trigger": "History",
+      "readingListening": "Reading / Listening",
+      "writing": "Writing",
+      "speaking": "Speaking"
+    },
+    "tabs": {
+      "all": "All Skills",
+      "listening": "Listening",
+      "reading": "Reading",
+      "writing": "Writing",
+      "speaking": "Speaking",
+      "fullTest": "Full test"
+    },
+    "actions": {
+      "startTest": "Start Test",
+      "preview": "Preview",
+      "viewHistory": "View history"
+    },
+    "labels": {
+      "duration": "Duration",
+      "durationMins": "{{count}} mins",
+      "status": "Status",
+      "questions": "Questions",
+      "level": "Level",
+      "type": "Type",
+      "published": "Published"
+    },
+    "skills": {
+      "READING": "Reading",
+      "LISTENING": "Listening",
+      "WRITING": "Writing",
+      "SPEAKING": "Speaking"
+    },
+    "loading": "Loading tests...",
+    "empty": "No IELTS tests available for this skill yet."
+  },
+  "practiceTests": {
+    "title": "Practice tests",
+    "subtitle": "Find and start practice exercises for Reading / Listening / Writing / Speaking skills.",
+    "searchPlaceholder": "Search by name or type...",
+    "allTypes": "All types",
+    "loading": "Loading practice tests...",
+    "loadError": "Failed to load practice tests.",
+    "emptyFiltered": "No tests match your filters.",
+    "questionsCount": "{{count}} questions",
+    "minutes": "{{count}} mins",
+    "start": "Start"
+  },
+  "testHistory": {
+    "title": "Test history",
+    "attemptsCount_one": "{{count}} attempt",
+    "attemptsCount_other": "{{count}} attempts",
+    "stats": "Analytics",
+    "backToExamCenter": "← Exam Center",
+    "loginRequired": "Please log in to view your history",
+    "login": "Log in",
+    "totalLabel": "Total tests",
+    "avgLabel": "Average band",
+    "bestLabel": "Best band",
+    "filters": {
+      "all": "All",
+      "READING": "Reading",
+      "LISTENING": "Listening"
+    },
+    "empty": "No test history yet",
+    "startNow": "Take a test now →",
+    "defaultTitle": "Test",
+    "correctSummary": "{{correct}}/{{total}} correct · {{minutes}} mins",
+    "correctSummaryNoMinutes": "{{correct}}/{{total}} correct · — mins",
+    "bandLabel": "band"
+  },
+  "bandLabels": {
+    "Expert": "Expert",
+    "VeryGood": "Very Good",
+    "Competent": "Competent",
+    "Modest": "Modest",
+    "Limited": "Limited",
+    "Basic": "Basic"
+  },
+  "writingHistory": {
+    "header": {
+      "title": "Writing Assessment History",
+      "subtitle": "Submitted essays history"
+    },
+    "nav": {
+      "stats": "Analytics",
+      "readingListening": "Reading/Listening History"
+    },
+    "stats": {
+      "totalEssays": "Total essays",
+      "highestBand": "Highest band",
+      "averageBand": "Average band"
+    },
+    "loading": "Loading history...",
+    "loadError": "Could not load history. Please try again.",
+    "empty": {
+      "title": "No essays yet",
+      "hint": "Start practicing Writing to see history here.",
+      "cta": "Write now"
+    },
+    "status": {
+      "grading": "Grading",
+      "failed": "Grading failed. Please try again."
+    },
+    "wordsCount": "{{count}} words"
+  },
+  "speakingHistory": {
+    "header": {
+      "title": "Speaking History",
+      "subtitle": "Speaking session history"
+    },
+    "nav": {
+      "stats": "Analytics",
+      "readingListening": "Reading/Listening",
+      "writing": "Writing"
+    },
+    "stats": {
+      "totalSessions": "Total sessions",
+      "highestBand": "Highest band",
+      "averageBand": "Average band",
+      "recentTrend": "Recent trend",
+      "needTwoMore": "Need ≥2 sessions"
+    },
+    "chart": {
+      "title": "Band score progress",
+      "attemptsCount": "{{count}} attempts"
+    },
+    "loading": "Loading history...",
+    "loadError": "Could not load history.",
+    "empty": {
+      "title": "No sessions yet",
+      "hint": "Start practicing Speaking to see history here.",
+      "cta": "Practice Speaking now"
+    },
+    "statuses": {
+      "COMPLETED": "Completed",
+      "GRADING": "Grading",
+      "IN_PROGRESS": "In progress"
+    },
+    "gradingShort": "Grading",
+    "partLabel": "Part {{current}}/3",
+    "completedLabel": "Completed: {{date}}"
+  },
+  "toeicOverview": {
+    "title": "TOEIC® Listening and Reading Test",
+    "duration": "120 Mins",
+    "totalQuestions": "200 Questions",
+    "hero": {
+      "badge": "Business English",
+      "title": "Master Business Communication",
+      "description": "The TOEIC Listening and Reading test measures the everyday English skills of people working in an international environment. This practice exam simulates the actual test conditions to help you prepare effectively.",
+      "startFullExam": "Start Full Exam",
+      "downloadSyllabus": "Download Syllabus"
+    },
+    "tabs": {
+      "description": "Description",
+      "breakdown": "Exam Breakdown",
+      "studyPlan": "Study Plan",
+      "reviews": "Reviews"
+    },
+    "description": {
+      "heading": "About this Exam",
+      "intro": "The test is a two-hour multiple-choice assessment that consists of 200 questions divided into two sections: Listening and Reading.",
+      "listening": {
+        "title": "Section I: Listening",
+        "body": "Test takers listen to a variety of questions and short conversations recorded in English, then answer questions based on what they have heard (100 items total).",
+        "part1": "Part 1: Photographs",
+        "part2": "Part 2: Question-Response",
+        "part3": "Part 3: Conversations",
+        "part4": "Part 4: Talks"
+      },
+      "reading": {
+        "title": "Section II: Reading",
+        "body": "Test takers read a variety of materials and respond at their own pace (100 items total).",
+        "part5": "Part 5: Incomplete Sentences",
+        "part6": "Part 6: Text Completion",
+        "part7": "Part 7: Reading Comprehension"
+      },
+      "learn": {
+        "heading": "What you'll learn",
+        "item1": "Understand detailed explanations and instructions",
+        "item2": "Comprehend complex business documents",
+        "item3": "Follow extended conversations and talks",
+        "item4": "Connect information across multiple texts"
+      }
+    },
+    "info": {
+      "heading": "Exam Information",
+      "format": "Format",
+      "formatValue": "Multiple Choice",
+      "questions": "Questions",
+      "questionsValue": "200 Items",
+      "duration": "Duration",
+      "durationValue": "2 Hours",
+      "skillLevel": "Skill Level",
+      "skillLevelValue": "Intermediate - Advanced",
+      "language": "Language",
+      "languageValue": "English"
+    },
+    "provider": {
+      "heading": "Provided By",
+      "name": "ETS Official",
+      "subtitle": "Educational Testing Service",
+      "description": "The creator of the TOEIC tests, ETS is the world's largest private nonprofit educational testing and assessment organization.",
+      "viewProfile": "View Provider Profile"
+    },
+    "tags": {
+      "business": "Business",
+      "communication": "Communication",
+      "workplace": "Workplace",
+      "international": "International"
+    }
+  },
+  "dictation": {
+    "title": "Dictation Practice",
+    "subtitle": "Improve your listening — hear it, type it, check each sentence.",
+    "backToExamCenter": "Back to Exam Center",
+    "exercisesLabel": "exercises",
+    "categoriesLabel": "categories",
+    "categoryAll": "All",
+    "loading": "Loading exercises...",
+    "sentencesCount": "{{count}} sentences",
+    "practice": "Practice",
+    "empty": "No exercises yet",
+    "emptyHint": "Come back later for new exercises!",
+    "upgrade": {
+      "title": "PRO exercise",
+      "body": "This exercise is for Pro members. Upgrade to access all Dictation exercises.",
+      "close": "Close",
+      "upgradeBtn": "Upgrade to Pro"
+    }
+  },
+  "dictationPractice": {
+    "loading": "Loading exercise...",
+    "notFound": "Exercise not found.",
+    "backToList": "Back to exercises",
+    "backToListShort": "Back to list",
+    "progress": "Progress",
+    "tabs": {
+      "dictation": "Practice",
+      "transcript": "Transcript"
+    },
+    "complete": {
+      "title": "Excellent — all done!",
+      "body": "You completed all {{count}} sentences",
+      "chooseAnother": "Choose another"
+    },
+    "sentenceLabel": "Sentence {{n}}",
+    "replayTitle": "Replay",
+    "playing": "Playing...",
+    "keyboard": {
+      "replay": "Replay",
+      "check": "Check"
+    },
+    "placeholder": "Listen and type what you hear...",
+    "check": "Check",
+    "skip": "Skip",
+    "attemptsLabel": "Attempts: {{count}}",
+    "next": "Next sentence",
+    "hint": "Hint",
+    "attemptN": "Attempt {{n}}",
+    "revealedAnswer": "Answer",
+    "correct": "Correct!",
+    "firstTry": "First try!",
+    "attemptsTaken_one": "{{count}} attempt",
+    "attemptsTaken_other": "{{count}} attempts",
+    "transcriptTitle": "Full transcript",
+    "transcriptProgress": "{{completed}} / {{total}} completed"
+  },
+  "practiceResult": {
+    "noData": "No result data found. Please re-submit the test.",
+    "goBack": "Go back",
+    "backToList": "Back to Practice Tests",
+    "title": "Practice Result",
+    "subtitle": "Auto grading summary",
+    "retake": "Retake",
+    "score": "Score",
+    "correct": "Correct",
+    "total": "Total",
+    "percentage": "Percentage",
+    "answerReview": "Answer Review",
+    "itemsCount": "{{count}} items",
+    "questionIdLabel": "Question ID:",
+    "yourAnswer": "Your answer:",
+    "correctAnswer": "Correct answer:",
+    "showingFirst25": "Showing first 25 items."
+  },
+  "placementTest": {
+    "title": "English placement test",
+    "intro": {
+      "title": "Determine your English level",
+      "description": "Take a 50-question test in about 40 minutes to know your CEFR level (A1–C2) and get a tailored learning path.",
+      "duration": "~40 minutes",
+      "questions": "50 questions",
+      "levels": "A1 – C2",
+      "startBtn": "Start the test"
+    },
+    "questionLabel": "Question {{current}} / {{total}}",
+    "timeLeft": "Time left",
+    "nextBtn": "Next",
+    "previousBtn": "Previous",
+    "submitBtn": "Submit",
+    "confirmSubmit": "Are you sure you want to submit?",
+    "submitting": "Submitting...",
+    "errors": {
+      "profileLoad": "Could not load your profile. Please refresh and try again.",
+      "generate": "Failed to load test. Please try again."
+    },
+    "section": {
+      "label": "Section {{number}}: {{title}}",
+      "nextHeader": "Section {{number}} — {{title}}"
+    },
+    "analyzing": {
+      "title": "Analyzing your answers…",
+      "subtitle": "Calculating your level…"
+    },
+    "loading": "Loading…",
+    "backToHub": "Back to Learning Hub",
+    "readingHint": "Take a moment to read…",
+    "confirmOrder": "Confirm Order",
+    "nextArrow": "Next →",
+    "exitModal": {
+      "title": "Leave the placement test?",
+      "body": "If you exit now, <strong>your current session will be cancelled</strong> and your answers will <strong>not be saved</strong>. You'll need to start over from the beginning if you want to take the test again.",
+      "continue": "Continue test",
+      "confirm": "Exit & cancel session"
+    },
+    "result": {
+      "title": "Your result",
+      "yourLevel": "Your level",
+      "score": "Score",
+      "viewPath": "View learning path",
+      "retake": "Retake the test"
+    },
+    "progressBar": {
+      "questionShort": "Q"
+    },
+    "reorder": {
+      "openingParagraph": "Opening paragraph",
+      "fragmentAria": "Fragment {{key}}, position {{position}}",
+      "yourOrder": "Your order:"
+    },
+    "break": {
+      "title": "Take a break",
+      "startsIn": "Next section starts in",
+      "upNext": "Up next",
+      "meta": "{{questions}} questions · {{timePer}}s per question",
+      "confirm": "Are you sure? You still have {{time}} left.",
+      "skipYes": "Yes, skip",
+      "cancel": "Cancel",
+      "skipBtn": "Skip Break →"
+    },
+    "listening": {
+      "contextLabel": "Context:",
+      "playAriaLabel": "Play audio",
+      "preparing": "Preparing audio…",
+      "audioError": "Audio failed to load. Please refresh.",
+      "answerAny": "You can answer at any time.",
+      "pressPlay": "Press play to hear the question.",
+      "playsRemaining": "Plays remaining: {{remaining}} / {{total}}",
+      "transcript": "Transcript:"
+    },
+    "resultScreen": {
+      "yourLevel": "Your level",
+      "congrats": "Congratulations on completing the placement test!",
+      "totalScore": "Total score",
+      "sectionTitles": {
+        "1": "Section 1 — Grammar & Vocabulary",
+        "2": "Section 2 — Reading",
+        "3": "Section 3 — Listening"
+      },
+      "aboutLevel": "About your level",
+      "levelDescriptions": {
+        "Pre-A1": "You are just starting your English journey. You can recognize a few familiar words and simple phrases. Focus on building basic vocabulary and simple sentence patterns.",
+        "A1": "You can understand and use familiar everyday expressions and very basic phrases. You can introduce yourself and ask simple personal questions.",
+        "A2": "You can communicate in simple, routine tasks. You can describe your background, immediate environment, and matters of immediate need in simple terms.",
+        "B1": "You can deal with most situations likely to arise while travelling. You can produce simple connected text on familiar topics and briefly give reasons and explanations for opinions and plans.",
+        "B2": "You can interact with a degree of fluency and spontaneity with native speakers. You can produce clear, detailed text on a wide range of subjects and explain a viewpoint on a topical issue.",
+        "C1": "You can express yourself fluently and spontaneously without much obvious searching for expressions. You can use language flexibly and effectively for social, academic, and professional purposes.",
+        "C2": "You can understand with ease virtually everything heard or read. You can express yourself spontaneously, very fluently, and precisely, differentiating finer shades of meaning even in complex situations."
+      },
+      "comparisonHeaders": {
+        "cefr": "CEFR",
+        "description": "Description",
+        "ielts": "IELTS",
+        "toeic": "TOEIC"
+      },
+      "comparisonDescriptions": {
+        "Pre-A1": "Beginner",
+        "A1": "Elementary",
+        "A2": "Pre-Intermediate",
+        "B1": "Intermediate",
+        "B2": "Upper-Intermediate",
+        "C1": "Advanced",
+        "C2": "Proficiency"
+      },
+      "retake": "Retake Test",
+      "backToHub": "Back to Learning Hub"
+    },
+    "onboarding": {
+      "welcome": {
+        "title": "English Placement Test",
+        "meta": "50 questions · ~40 minutes · Discover your CEFR level",
+        "description": "This test evaluates your Grammar, Vocabulary, Reading, and Listening skills to determine your English proficiency level (CEFR A1–C2). You'll see your result and IELTS/TOEIC equivalents as soon as you finish.",
+        "stats": {
+          "questionsValue": "50",
+          "questionsLabel": "Questions",
+          "durationValue": "~40m",
+          "durationLabel": "Duration",
+          "levelsValue": "A1-C2",
+          "levelsLabel": "Levels"
+        },
+        "preparing": "Preparing exam…",
+        "startTest": "Start Test",
+        "notNow": "Not now, take me back to the Learning Hub"
+      },
+      "audioCheck": {
+        "title": "Audio check",
+        "subtitle": "Tap play. If you can hear the sample clearly, you're good to go.",
+        "playAria": "Play sample audio",
+        "sampleText": "Welcome to the English placement test. Please make sure you can hear this message clearly before proceeding.",
+        "ttsText": "Welcome to the English placement test. Please make sure you can hear this message clearly before proceeding.",
+        "problemHint": "Try: increase your volume, plug in headphones, or switch to a different browser.",
+        "canHear": "I can hear it",
+        "cantHear": "I can't hear it"
+      },
+      "brightnessCheck": {
+        "title": "Brightness check",
+        "subtitle": "Make sure your screen is bright enough to read the test comfortably.",
+        "faintText": "If you can see this text clearly, your screen brightness is set correctly for the test.",
+        "referenceLabel": "Reference",
+        "referenceText": "If you can see this text clearly, your screen brightness is set correctly for the test.",
+        "problemHint": "Try increasing your screen brightness in your OS or monitor settings.",
+        "canSee": "I can see it",
+        "cantSee": "I can't see it"
+      },
+      "rules": {
+        "title": "Test rules",
+        "subtitle": "Quick read before you begin — these matter.",
+        "items": {
+          "1": "50 questions across 3 sections.",
+          "2": "Section 1 — Grammar & Vocabulary: 27 questions, 30 seconds each.",
+          "3": "Section 2 — Reading: 11 questions, 1 minute 30 seconds each.",
+          "4": "Section 3 — Listening: 12 questions (longer time for harder clips).",
+          "5": "Each question auto-submits when time runs out.",
+          "6": "You cannot go back to previous questions.",
+          "7": "There's a break between sections (you can skip it).",
+          "8": "Your result shows your CEFR level with IELTS/TOEIC equivalents."
+        },
+        "warning": "Do not refresh the page or close the tab during the test — your progress will be lost and the session will be cancelled.",
+        "agree": "I have read and agree to the test rules",
+        "begin": "Begin Test"
+      },
+      "countdown": {
+        "go": "Go!",
+        "getReady": "Get ready…"
+      }
+    }
+  },
+  "learningPath": {
+    "title": "Personalized learning path",
+    "subtitle": "Tailored to your goals and current level",
+    "header": {
+      "titleFull": "Create Your Personalized Learning Path",
+      "titleCompact": "Your Learning Path",
+      "aiBadge": "AI-powered",
+      "tagline": "SkillBoost AI uses your placement level, goals and study habits to build a roadmap that fits you — not a generic learner.",
+      "backToDashboard": "← Back to dashboard"
+    },
+    "error": {
+      "title": "We couldn't generate your plan right now",
+      "description": "Your inputs are saved. Try again, or edit them and retry.",
+      "editInputs": "Edit inputs",
+      "tryAgain": "Try again"
+    },
+    "common": {
+      "back": "Back",
+      "continue": "Continue",
+      "dash": "—"
+    },
+    "stepper": {
+      "ariaLabel": "Learning path wizard steps",
+      "items": {
+        "1": {
+          "label": "Level",
+          "hint": "Placement baseline"
+        },
+        "2": {
+          "label": "Goal",
+          "hint": "Exam & deadline"
+        },
+        "3": {
+          "label": "Schedule",
+          "hint": "Weekly availability"
+        },
+        "4": {
+          "label": "Preferences",
+          "hint": "Personalization"
+        }
+      }
+    },
+    "generating": {
+      "title": "Building your personalized roadmap…",
+      "subtitle": "SkillBoost AI is reasoning across your level, goal, schedule, and preferences.",
+      "steps": {
+        "1": "Analyzing your CEFR level",
+        "2": "Understanding your goal",
+        "3": "Calculating your study workload",
+        "4": "Prioritizing skills",
+        "5": "Matching lessons and practice tests",
+        "6": "Creating weekly milestones"
+      }
+    },
+    "step1": {
+      "title": "Confirm your starting level",
+      "description": "Your placement test result is the baseline. You can override it if you've already improved.",
+      "badge": "Step 1 of 4",
+      "placement": {
+        "recent": "Most recent placement",
+        "takenOn": "Taken {{date}}",
+        "notAvailable": "Not available",
+        "recentBadge": "Recent placement result"
+      },
+      "noPlacement": {
+        "title": "No placement result on record",
+        "body": "Take a quick placement test so SkillBoost can pinpoint your CEFR level. You can still continue manually below — accuracy will be limited.",
+        "takeTest": "Take placement test"
+      },
+      "levelField": {
+        "labelOverride": "Override level (optional)",
+        "labelSelect": "Select your level",
+        "hint": "CEFR levels describe overall English ability — we'll personalize per skill later.",
+        "ariaLabel": "CEFR level"
+      },
+      "cefr": {
+        "A1": "Beginner — basic everyday phrases",
+        "A2": "Elementary — simple routine tasks",
+        "B1": "Intermediate — main ideas of familiar topics",
+        "B2": "Upper-intermediate — complex texts and arguments",
+        "C1": "Advanced — flexible & effective use of English",
+        "C2": "Proficient — near-native command"
+      },
+      "backDashboard": "← Back to dashboard",
+      "preview": {
+        "title": "Why CEFR matters",
+        "description": "CEFR is your baseline, but we'll combine it with your goal, schedule and learning style to truly personalize the plan.",
+        "bullet1Strong": "Baseline only.",
+        "bullet1Text": "Two B1 learners can have very different weak spots.",
+        "bullet2Strong": "Layered with skill data.",
+        "bullet2Text": "When skill breakdown becomes available, we'll prioritize automatically.",
+        "bullet3Strong": "Tracked over time.",
+        "bullet3Text": "Retake placement to keep your plan calibrated."
+      }
+    },
+    "step2": {
+      "title": "Set your target",
+      "description": "Tell SkillBoost what you're working toward. We'll check feasibility against your level and timeline.",
+      "badge": "Step 2 of 4",
+      "fields": {
+        "exam": "Exam type",
+        "examAria": "Exam type",
+        "target": "Target score",
+        "deadline": "Deadline",
+        "deadlineAria": "Deadline",
+        "deadlineCustomAria": "Custom deadline date",
+        "reason": "Why are you studying?"
+      },
+      "exams": {
+        "IELTS": {
+          "label": "IELTS",
+          "subtitle": "Academic / General"
+        },
+        "TOEIC": {
+          "label": "TOEIC",
+          "subtitle": "Workplace English"
+        },
+        "TOEFL": {
+          "label": "TOEFL",
+          "subtitle": "iBT / Essentials"
+        },
+        "CEFR": {
+          "label": "CEFR",
+          "subtitle": "Level-based goal"
+        },
+        "General": {
+          "label": "General",
+          "subtitle": "No exam, just improve"
+        }
+      },
+      "targetHints": {
+        "IELTS": "IELTS bands range from 1.0 to 9.0 (e.g. 6.5).",
+        "TOEIC": "TOEIC scores range from 10 to 990.",
+        "TOEFL": "TOEFL iBT scores range from 0 to 120.",
+        "CEFR": "Choose a CEFR target like B2 or C1.",
+        "General": "Describe the level you want to reach."
+      },
+      "targetPlaceholders": {
+        "IELTS": "e.g. 6.5",
+        "TOEIC": "e.g. 750",
+        "TOEFL": "e.g. 90",
+        "CEFR": "e.g. B2",
+        "General": "e.g. Confident at work meetings"
+      },
+      "validation": {
+        "IELTS": "Enter an IELTS band between 1.0 and 9.0.",
+        "TOEIC": "Enter a TOEIC score between 10 and 990.",
+        "TOEFL": "Enter a TOEFL iBT score between 0 and 120."
+      },
+      "deadlines": {
+        "1 month": {
+          "label": "1 month",
+          "hint": "Sprint"
+        },
+        "3 months": {
+          "label": "3 months",
+          "hint": "Focused"
+        },
+        "6 months": {
+          "label": "6 months",
+          "hint": "Balanced"
+        },
+        "12 months": {
+          "label": "12 months",
+          "hint": "Long game"
+        },
+        "Custom": {
+          "label": "Custom date",
+          "hint": "Pick a date"
+        }
+      },
+      "reasons": {
+        "Study abroad": "Study abroad",
+        "Work": "Work",
+        "Graduation requirement": "Graduation requirement",
+        "Immigration": "Immigration",
+        "Interview preparation": "Interview preparation",
+        "Daily communication": "Daily communication",
+        "General improvement": "General improvement"
+      },
+      "warning": {
+        "title": "Heads up — this goal may be challenging with your timeline",
+        "body": "You can still continue. We'll recommend a more intensive plan, or you can extend the deadline / lower the target slightly on the result screen."
+      },
+      "preview": {
+        "title": "Personalization preview",
+        "description": "As you add details, your plan accuracy improves.",
+        "cefr": "CEFR baseline",
+        "target": "Target",
+        "timeline": "Timeline",
+        "reason": "Reason"
+      }
+    },
+    "step3": {
+      "title": "Your study lifestyle",
+      "description": "We use weekly time more than the deadline itself when sizing your workload.",
+      "badge": "Step 3 of 4",
+      "fields": {
+        "hours": "Weekly study time",
+        "hoursAria": "Weekly study time",
+        "days": "Available days",
+        "daysHint": "Pick the days you can realistically study. We'll build your weekly schedule around them.",
+        "daysAria": "Available days",
+        "session": "Preferred session length",
+        "sessionAria": "Session length",
+        "intensity": "Study intensity",
+        "intensityAria": "Study intensity",
+        "reminders": "Reminders",
+        "remindersAria": "Reminder preference"
+      },
+      "hours": {
+        "2-3": {
+          "label": "2–3 hours",
+          "description": "Casual learner"
+        },
+        "4-5": {
+          "label": "4–5 hours",
+          "description": "Steady pace"
+        },
+        "6-8": {
+          "label": "6–8 hours",
+          "description": "Committed"
+        },
+        "10+": {
+          "label": "10+ hours",
+          "description": "All in"
+        }
+      },
+      "days": {
+        "Monday": "Monday",
+        "Tuesday": "Tuesday",
+        "Wednesday": "Wednesday",
+        "Thursday": "Thursday",
+        "Friday": "Friday",
+        "Saturday": "Saturday",
+        "Sunday": "Sunday"
+      },
+      "daysShort": {
+        "Monday": "Mon",
+        "Tuesday": "Tue",
+        "Wednesday": "Wed",
+        "Thursday": "Thu",
+        "Friday": "Fri",
+        "Saturday": "Sat",
+        "Sunday": "Sun"
+      },
+      "toggleDay": "Toggle {{day}}",
+      "selected": "Selected:",
+      "daysCount_one": "{{count}} day per week",
+      "daysCount_other": "{{count}} days per week",
+      "sessions": {
+        "15": "15 min",
+        "30": "30 min",
+        "45": "45 min",
+        "60": "60 min",
+        "90": "90 min"
+      },
+      "intensity": {
+        "Light": {
+          "label": "Light",
+          "description": "Steady, low-pressure"
+        },
+        "Standard": {
+          "label": "Standard",
+          "description": "Balanced workload"
+        },
+        "Intensive": {
+          "label": "Intensive",
+          "description": "Faster progress, more practice"
+        }
+      },
+      "reminders": {
+        "None": {
+          "label": "No reminders",
+          "description": "I'll check in on my own"
+        },
+        "Daily": {
+          "label": "Daily reminder",
+          "description": "Nudge once a day"
+        },
+        "Weekly": {
+          "label": "Weekly check-in",
+          "description": "Review my week"
+        },
+        "Before session": {
+          "label": "Before each session",
+          "description": "Notify before scheduled time"
+        }
+      },
+      "preview": {
+        "title": "What we'll do with this",
+        "description": "Your schedule shapes the weekly plan. Light intensity drops mock tests; intensive packs in extra practice.",
+        "hoursLine1": "<0>{{hours}}</0> hours / week with <1>{{session}}-minute</1> sessions.",
+        "hoursLineFallback": "—",
+        "daysLine": "We'll fit lessons on <0>{{days}}</0>.",
+        "noDaysYet": "no days yet",
+        "intensityLine": "Intensity: <0>{{intensity}}</0> — affects mock test cadence and review depth."
+      }
+    },
+    "step4": {
+      "title": "Fine-tune for you",
+      "description": "A few last details so the plan feels like it was built for you, not a generic learner.",
+      "badge": "Step 4 of 4",
+      "fields": {
+        "weakest": "Which skill feels weakest right now?",
+        "preferences": "How do you prefer to learn?",
+        "preferencesHint": "Pick one or more — we'll weight your roadmap accordingly.",
+        "preferencesAria": "Learning preferences",
+        "experience": "Previous exam experience",
+        "experienceAria": "Previous exam experience",
+        "confidence": "How confident are you in your English right now?",
+        "confidenceAria": "Confidence",
+        "prevScore": "Most recent score (optional)",
+        "prevScorePlaceholder": "e.g. IELTS 5.5"
+      },
+      "weakSkills": {
+        "Listening": "Listening",
+        "Reading": "Reading",
+        "Writing": "Writing",
+        "Speaking": "Speaking",
+        "Vocabulary": "Vocabulary",
+        "Grammar": "Grammar",
+        "Not sure": "Not sure"
+      },
+      "notSureCallout": {
+        "title": "We'll build a balanced plan",
+        "body": "Since you're not sure, we'll keep all skills in rotation and suggest a short diagnostic later to refine the plan."
+      },
+      "preferences": {
+        "Video lessons": "Video lessons",
+        "Flashcards": "Flashcards",
+        "Practice exercises": "Practice exercises",
+        "Mock tests": "Mock tests",
+        "Reading materials": "Reading materials",
+        "Mixed": "Mixed"
+      },
+      "experiences": {
+        "Never": {
+          "label": "Never taken",
+          "description": "Brand new to this exam"
+        },
+        "Once": {
+          "label": "Took it once",
+          "description": "I have a previous score"
+        },
+        "Multiple": {
+          "label": "Multiple times",
+          "description": "Repeat test taker"
+        },
+        "MockOnly": {
+          "label": "Mock tests only",
+          "description": "Practiced but never sat the real exam"
+        }
+      },
+      "confidence": {
+        "Low": {
+          "label": "Low",
+          "description": "Hesitant in most situations"
+        },
+        "Medium": {
+          "label": "Medium",
+          "description": "Comfortable with familiar topics"
+        },
+        "High": {
+          "label": "High",
+          "description": "Confident in most contexts"
+        }
+      },
+      "generate": "Generate Personalized Learning Path",
+      "preview": {
+        "title": "Ready to generate",
+        "description": "SkillBoost AI will combine everything you've told us into a roadmap with weekly milestones and recommended lessons.",
+        "listHeading": "What you'll get:",
+        "list1": "Goal-gap analysis and feasibility check",
+        "list2": "Skill priority ranking with reasons",
+        "list3": "Phased roadmap (Foundation → Skill building → Simulation)",
+        "list4": "Weekly schedule mapped to your free days",
+        "list5": "Real lessons, flashcards, and practice tests inside SkillBoost"
+      }
+    },
+    "result": {
+      "badge": "Your personalized plan",
+      "headline": "{{exam}} {{score}} roadmap",
+      "editInputs": "Edit inputs",
+      "regenerate": "Regenerate",
+      "save": {
+        "idle": "Save plan",
+        "saving": "Saving…",
+        "saved": "Saved ✓",
+        "error": "Retry save"
+      },
+      "summary": {
+        "current": "Current",
+        "target": "Target",
+        "deadline": "Deadline",
+        "weekly": "Weekly",
+        "weeklyValue": "{{hours}}h"
+      },
+      "personalization": {
+        "title": "Personalization level",
+        "ariaLabel": "Personalization level",
+        "Basic": "Basic",
+        "Good": "Good",
+        "High": "High"
+      },
+      "gap": {
+        "heading": "Goal-gap analysis",
+        "from": "From",
+        "to": "To",
+        "estimatedGap": "Estimated gap",
+        "warningTitle": "Feasibility note"
+      },
+      "feasibility": {
+        "Achievable": "Achievable",
+        "Challenging": "Challenging",
+        "Very challenging": "Very challenging"
+      },
+      "gapSize": {
+        "Low": "Low",
+        "Medium": "Medium",
+        "Medium-high": "Medium-high",
+        "High": "High"
+      },
+      "priorities": {
+        "heading": "Skill priority ranking",
+        "subtitle": "Your roadmap allocates time based on this ranking.",
+        "rank": "#{{rank}}",
+        "priorityLabel": "{{intensity}} priority"
+      },
+      "intensity": {
+        "High": "High",
+        "Medium": "Medium",
+        "Low": "Low"
+      },
+      "phases": {
+        "heading": "Roadmap phases",
+        "subtitle": "Three phases shape your milestone progression."
+      },
+      "weekly": {
+        "heading": "Weekly schedule",
+        "subtitle": "We dropped sessions onto the days you marked free.",
+        "duration": "{{minutes}}m",
+        "start": "Start"
+      },
+      "why": {
+        "heading": "Why this plan?"
+      },
+      "sections": {
+        "lessons": {
+          "title": "Lessons & courses",
+          "description": "Start here to build the skills your plan prioritizes."
+        },
+        "flashcards": {
+          "title": "Flashcards to drill",
+          "description": "Short, focused decks to keep recall sharp."
+        },
+        "quizzes": {
+          "title": "Quizzes & practice tests",
+          "description": "Measure progress with real SkillBoost assessments."
+        }
+      },
+      "types": {
+        "Course": "Course",
+        "Lesson": "Lesson",
+        "Flashcard": "Flashcard",
+        "Quiz": "Quiz",
+        "Practice Test": "Practice Test"
+      },
+      "difficulty": {
+        "Beginner": "Beginner",
+        "Intermediate": "Intermediate",
+        "Advanced": "Advanced"
+      },
+      "skillsList": {
+        "Listening": "Listening",
+        "Reading": "Reading",
+        "Writing": "Writing",
+        "Speaking": "Speaking",
+        "Vocabulary": "Vocabulary",
+        "Grammar": "Grammar"
+      },
+      "cta": {
+        "Start": "Start",
+        "Add to plan": "Add to plan",
+        "Practice": "Practice"
+      },
+      "taskTypes": {
+        "Vocabulary": "Vocabulary",
+        "Listening": "Listening",
+        "Reading": "Reading",
+        "Writing": "Writing",
+        "Speaking": "Speaking",
+        "Mock test": "Mock test",
+        "Review": "Review"
+      },
+      "itemMeta": {
+        "minutes": "{{minutes}}m"
+      },
+      "actionBar": {
+        "ariaLabel": "Plan actions",
+        "note": "You can adjust your plan any time — your inputs are saved.",
+        "retake": "Retake placement"
+      }
+    }
+  },
+  "testDetail": {
+    "examCenter": "Exam Center",
+    "historyLink": "History",
+    "loadingResult": "Loading result...",
+    "loadingOverview": "Loading test info...",
+    "errorTitle": "Error",
+    "errorNotFound": "Test not found",
+    "backToExamCenter": "← Exam Center",
+    "defaultTestTitle": "Test",
+    "completedTitle": "Test completed!",
+    "ringBandLabel": "Band",
+    "stats": {
+      "correct": "Correct",
+      "bandScore": "Band Score",
+      "accuracy": "Accuracy",
+      "incorrect": "Incorrect",
+      "time": "Time"
+    },
+    "review": {
+      "title": "Answer details",
+      "subtitle": "Compare your answers with the correct answers",
+      "headers": {
+        "questionNum": "Q#",
+        "question": "Question",
+        "type": "Type",
+        "yourAnswer": "Your answer",
+        "correctAnswer": "Correct answer",
+        "result": "Result"
+      },
+      "noAnswer": "(no answer)",
+      "defaultQuestion": "Question {{n}}",
+      "types": {
+        "MCQ": "MCQ",
+        "MCQMulti": "MCQ (Multi)",
+        "TFNG": "T/F/NG",
+        "YNNG": "Y/N/NG",
+        "Fill": "Fill",
+        "ShortAns": "Short Ans"
+      }
+    },
+    "banner": {
+      "practiceCount_one": "{{count}} attempt",
+      "practiceCount_other": "{{count}} attempts"
+    },
+    "overviewStats": {
+      "minutes": "minutes",
+      "questions": "questions",
+      "parts": "sections"
+    },
+    "structure": {
+      "title": "Test structure",
+      "sectionQuestions_one": "{{count}} question",
+      "sectionQuestions_other": "{{count}} questions"
+    },
+    "startButton": "Start the test",
+    "timerNote": "Timer starts counting down when you enter the test",
+    "discussion": {
+      "title": "Discussion",
+      "subtitle": "Share experiences and ask questions about this test"
+    },
+    "historyButton": "Test history"
+  },
+  "progressAnalytics": {
+    "loading": "Loading analytics...",
+    "loginRequired": "Please log in",
+    "loginCta": "Log in",
+    "testsCount_one": "{{count}} test",
+    "testsCount_other": "{{count}} tests",
+    "skills": {
+      "reading": "Reading",
+      "listening": "Listening",
+      "writing": "Writing",
+      "speaking": "Speaking"
+    },
+    "stats": {
+      "avg": "Avg",
+      "max": "Max",
+      "latest": "Latest"
+    },
+    "lineChart": {
+      "title": "Band Score Progress",
+      "subtitle": "Score trend over time"
+    },
+    "radarChart": {
+      "title": "Skill Profile",
+      "subtitle": "Last 5 tests per skill",
+      "seriesName": "Band"
+    },
+    "tabs": {
+      "all": "All",
+      "reading": "Reading",
+      "listening": "Listening",
+      "writing": "Writing",
+      "speaking": "Speaking"
+    },
+    "empty": {
+      "generic": "No results yet",
+      "withSkill": "No results yet for {{skill}}",
+      "cta": "Take a test"
+    },
+    "itemStatus": {
+      "grading": "Grading",
+      "processing": "Processing",
+      "failed": "Error"
+    },
+    "itemSubtitle": "{{correct}}/{{total}} correct · {{minutes}} min",
+    "speakingDefaultLabel": "Speaking Session",
+    "writingDefaultLabel": "Writing Assessment"
+  },
+  "writingTest": {
+    "result": {
+      "header": "Writing Assessment Results",
+      "backToTests": "← Back to Tests",
+      "evaluatingTitle": "AI is grading your essay...",
+      "evaluatingSubtitle": "Usually takes 15-30 seconds. Please wait.",
+      "failedTitle": "Grading failed",
+      "failedBody": "Something went wrong. Please try again.",
+      "retry": "Try again",
+      "estimatedBand": "Estimated Band",
+      "disclaimer": "AI evaluation may vary ±0.5 band from official IELTS scoring",
+      "criteria": {
+        "taskAchievement": "Task Achievement",
+        "coherence": "Coherence & Cohesion",
+        "lexical": "Lexical Resource",
+        "grammar": "Grammar Range & Accuracy"
+      },
+      "improvementsTitle": "How to improve",
+      "keyCorrections": "Key Corrections",
+      "backToPractice": "Back to Practice"
+    },
+    "editor": {
+      "header": "IELTS Writing Assessment",
+      "taskLabel": "Task 2: Essay",
+      "assistantReading": "AI is reading...",
+      "submit": "Submit Essay",
+      "submitting": "Submitting...",
+      "taskPromptLabel": "Task Prompt",
+      "promptTitle": "The Impact of Remote Work",
+      "promptQuote": "Some people believe that remote work has improved work-life balance, while others argue it has blurred the lines between professional and personal life. Discuss both views and give your own opinion.",
+      "promptHint1": "Give reasons for your answer and include any relevant examples from your own knowledge or experience.",
+      "promptHint2": "Write at least 250 words.",
+      "assistantTitle": "AI Writing Assistant",
+      "tipsTitle": "Tips",
+      "tips": {
+        "plan": "Plan your essay structure before writing.",
+        "mix": "Use a mix of complex and simple sentences.",
+        "check": "Check for spelling and grammar errors.",
+        "address": "Ensure you address all parts of the prompt."
+      },
+      "wordCountLabel": "Word Count:",
+      "wordCountMin": "/ 250 min",
+      "placeholder": "Start typing your essay here..."
+    }
+  },
+  "speakingComponents": {
+    "countdown": {
+      "prepare": "Get ready...",
+      "go": "Start speaking!"
+    },
+    "timer": {
+      "overtime": "Over time! You should wrap up.",
+      "warning": "{{remaining}}s left — start wrapping up",
+      "speaking": "Speaking..."
+    }
+  },
+  "practiceRunner": {
+    "writing": {
+      "task1Title": "Task 1 — Chart",
+      "task2Title": "Task 2 — Essay",
+      "fallbackPrompt": "Write your essay here.",
+      "resultHeader": "Writing Grading Results",
+      "backLink": "← Back",
+      "aiGrading": "AI is grading your essay...",
+      "aiGradingHint": "Usually takes 15-30 seconds. Please wait.",
+      "gradingFailed": "Grading failed",
+      "errorOccurred": "An error occurred. Please try again.",
+      "retry": "Retry",
+      "overallBand": "Overall Band Score",
+      "criteria": {
+        "taskAchievement": "Task Achievement",
+        "coherence": "Coherence & Cohesion",
+        "lexical": "Lexical Resource",
+        "grammar": "Grammar Range & Accuracy"
+      },
+      "errorsDetected": "Errors detected ({{count}})",
+      "backToPractice": "Back to Practice",
+      "brand": "IELTS Writing",
+      "aiChecking": "AI is checking...",
+      "submitting": "Submitting...",
+      "submit": "Submit",
+      "wordsMin": "{{count}}+ words",
+      "chartLabel": "Chart / Diagram",
+      "promptLabel": "Prompt",
+      "task1Instruction": "Summarise the information by selecting and reporting the main features, and make comparisons where relevant. Write at least {{count}} words.",
+      "task2Instruction": "Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least {{count}} words.",
+      "assistantTitle": "AI Writing Assistant",
+      "tipsTitle": "Writing Tips",
+      "task1Tips": {
+        "paraphrase": "Start with a paraphrase of the prompt.",
+        "overview": "State an overview before going into details.",
+        "compare": "Compare key figures; don't list everything.",
+        "vocabulary": "Use precise trend vocabulary."
+      },
+      "task2Tips": {
+        "plan": "Plan first: Intro → Body → Conclusion.",
+        "views": "Present both views, then give your opinion.",
+        "linking": "Use linking words: However, Furthermore, In contrast...",
+        "proofread": "Proofread for spelling and grammar before submitting."
+      },
+      "yourEssay": "Your essay",
+      "wordCountLabel": "Words:",
+      "wordCountMinSuffix": "min",
+      "wordsEnough": "Enough words",
+      "placeholderTask1": "The chart/diagram illustrates...",
+      "placeholderTask2": "In today's society, the issue of..."
+    },
+    "shell": {
+      "loading": "Loading test...",
+      "loadError": "Failed to load test.",
+      "groupOption": "Group {{n}}",
+      "audio": "Audio",
+      "image": "Image",
+      "noPassage": "No passage for this question group.",
+      "context": "Context",
+      "questions": "Questions",
+      "itemsCount": "{{count}} items",
+      "answerPlaceholder": "Type your answer...",
+      "exitConfirm": {
+        "title": "Exit the test?",
+        "description": "You will leave the test screen. Current progress may be lost. Are you sure?",
+        "confirm": "Exit",
+        "cancel": "Stay"
+      }
+    }
+  }
+}

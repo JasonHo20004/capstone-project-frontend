@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useUserWritingEvaluations } from "@/hooks/api/use-ai-evaluation";
 
 function getUserId(): string | undefined {
@@ -12,10 +13,10 @@ function getUserId(): string | undefined {
   return undefined;
 }
 
-function getBandLabel(band: number | null): string {
-  if (!band) return "—";
+function getBandLabelKey(band: number | null): string | null {
+  if (!band) return null;
   if (band >= 8.5) return "Expert";
-  if (band >= 7.5) return "Very Good";
+  if (band >= 7.5) return "VeryGood";
   if (band >= 6.5) return "Competent";
   if (band >= 5.5) return "Modest";
   if (band >= 4.5) return "Limited";
@@ -40,9 +41,9 @@ function getBandBg(band: number | null): string {
   return "bg-red-50 border-red-200";
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string): string {
   const d = new Date(dateStr);
-  return d.toLocaleDateString("vi-VN", {
+  return d.toLocaleDateString(locale, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -57,8 +58,15 @@ function truncate(text: string, max: number): string {
 }
 
 export default function WritingHistory() {
+  const { t, i18n } = useTranslation("exam");
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-GB";
   const userId = getUserId();
   const { data: evaluations, isLoading, error } = useUserWritingEvaluations(userId);
+
+  const renderBandLabel = (band: number | null) => {
+    const key = getBandLabelKey(band);
+    return key ? t(`bandLabels.${key}`) : "—";
+  };
 
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
@@ -72,18 +80,18 @@ export default function WritingHistory() {
             <span className="material-symbols-outlined text-[18px]">edit_note</span>
           </div>
           <div>
-            <h1 className="font-bold text-slate-800 text-sm leading-tight">Writing Assessment History</h1>
-            <span className="text-[11px] text-slate-500">Lịch sử bài viết đã nộp</span>
+            <h1 className="font-bold text-slate-800 text-sm leading-tight">{t("writingHistory.header.title")}</h1>
+            <span className="text-[11px] text-slate-500">{t("writingHistory.header.subtitle")}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Link to="/my-progress" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition">
             <span className="material-symbols-outlined text-[16px]">analytics</span>
-            Thống kê
+            {t("writingHistory.nav.stats")}
           </Link>
           <Link to="/exam/history" className="text-sm text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition">
             <span className="material-symbols-outlined text-[16px]">menu_book</span>
-            Reading/Listening History
+            {t("writingHistory.nav.readingListening")}
           </Link>
         </div>
       </header>
@@ -94,7 +102,7 @@ export default function WritingHistory() {
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
               <p className="text-2xl font-black text-indigo-600">{evaluations.length}</p>
-              <p className="text-xs text-slate-500 font-medium">Tổng bài viết</p>
+              <p className="text-xs text-slate-500 font-medium">{t("writingHistory.stats.totalEssays")}</p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
               <p className={`text-2xl font-black ${getBandColor(
@@ -106,7 +114,7 @@ export default function WritingHistory() {
                   ? Math.max(...evaluations.filter(e => e.overallBand).map(e => e.overallBand!))
                   : "—"}
               </p>
-              <p className="text-xs text-slate-500 font-medium">Band cao nhất</p>
+              <p className="text-xs text-slate-500 font-medium">{t("writingHistory.stats.highestBand")}</p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
               <p className={`text-2xl font-black ${getBandColor(
@@ -118,7 +126,7 @@ export default function WritingHistory() {
                   ? (evaluations.filter(e => e.overallBand).reduce((s, e) => s + e.overallBand!, 0) / evaluations.filter(e => e.overallBand).length).toFixed(1)
                   : "—"}
               </p>
-              <p className="text-xs text-slate-500 font-medium">Band trung bình</p>
+              <p className="text-xs text-slate-500 font-medium">{t("writingHistory.stats.averageBand")}</p>
             </div>
           </div>
         )}
@@ -128,7 +136,7 @@ export default function WritingHistory() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4 mx-auto" />
-              <p className="text-slate-500 text-sm">Đang tải lịch sử...</p>
+              <p className="text-slate-500 text-sm">{t("writingHistory.loading")}</p>
             </div>
           </div>
         )}
@@ -137,7 +145,7 @@ export default function WritingHistory() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
             <span className="material-symbols-outlined text-red-500 text-3xl mb-2 block">error</span>
-            <p className="text-sm text-red-600">Không thể tải lịch sử. Vui lòng thử lại.</p>
+            <p className="text-sm text-red-600">{t("writingHistory.loadError")}</p>
           </div>
         )}
 
@@ -145,11 +153,11 @@ export default function WritingHistory() {
         {!isLoading && evaluations && evaluations.length === 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
             <span className="material-symbols-outlined text-slate-300 text-6xl mb-4 block">edit_note</span>
-            <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa có bài viết nào</h3>
-            <p className="text-slate-500 text-sm mb-6">Bắt đầu luyện Writing để xem lịch sử ở đây.</p>
+            <h3 className="text-lg font-bold text-slate-700 mb-2">{t("writingHistory.empty.title")}</h3>
+            <p className="text-slate-500 text-sm mb-6">{t("writingHistory.empty.hint")}</p>
             <Link to="/exam" className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors">
               <span className="material-symbols-outlined text-[18px]">edit</span>
-              Viết bài ngay
+              {t("writingHistory.empty.cta")}
             </Link>
           </div>
         )}
@@ -171,12 +179,12 @@ export default function WritingHistory() {
                       {isCompleted && band ? (
                         <>
                           <span className={`text-3xl font-black ${getBandColor(band)}`}>{band}</span>
-                          <span className={`text-[10px] font-bold ${getBandColor(band)} mt-1`}>{getBandLabel(band)}</span>
+                          <span className={`text-[10px] font-bold ${getBandColor(band)} mt-1`}>{renderBandLabel(band)}</span>
                         </>
                       ) : isPending ? (
                         <div className="text-center">
                           <div className="w-8 h-8 border-3 border-amber-200 border-t-amber-500 rounded-full animate-spin mb-2 mx-auto" />
-                          <span className="text-[10px] font-bold text-amber-600">Đang chấm</span>
+                          <span className="text-[10px] font-bold text-amber-600">{t("writingHistory.status.grading")}</span>
                         </div>
                       ) : (
                         <span className="text-sm text-slate-400">—</span>
@@ -188,7 +196,7 @@ export default function WritingHistory() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            {formatDate(ev.createdAt)}
+                            {formatDate(ev.createdAt, dateLocale)}
                           </span>
                           <p className="text-sm text-slate-700 mt-1 leading-relaxed">
                             {truncate(ev.essayText, 200)}
@@ -212,7 +220,7 @@ export default function WritingHistory() {
                           ))}
                           <div className="ml-auto">
                             <span className="text-[10px] text-slate-400">
-                              {ev.essayText.trim().split(/\s+/).filter(Boolean).length} words
+                              {t("writingHistory.wordsCount", { count: ev.essayText.trim().split(/\s+/).filter(Boolean).length })}
                             </span>
                           </div>
                         </div>
@@ -222,7 +230,7 @@ export default function WritingHistory() {
                       {ev.status === "FAILED" && (
                         <div className="mt-2 text-xs text-red-500 flex items-center gap-1">
                           <span className="material-symbols-outlined text-[14px]">error</span>
-                          Chấm thất bại. Vui lòng thử lại.
+                          {t("writingHistory.status.failed")}
                         </div>
                       )}
                     </div>

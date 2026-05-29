@@ -1,12 +1,8 @@
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { WizardStep } from "./types";
 
-const STEPS: Array<{ id: WizardStep; label: string; hint: string }> = [
-  { id: 1, label: "Level", hint: "Placement baseline" },
-  { id: 2, label: "Goal", hint: "Exam & deadline" },
-  { id: 3, label: "Schedule", hint: "Weekly availability" },
-  { id: 4, label: "Preferences", hint: "Personalization" },
-];
+const STEP_IDS: WizardStep[] = [1, 2, 3, 4];
 
 interface StepperProps {
   current: WizardStep;
@@ -14,23 +10,26 @@ interface StepperProps {
 }
 
 export default function Stepper({ current, onJump }: StepperProps) {
+  const { t } = useTranslation("exam");
   return (
     <nav
-      aria-label="Learning path wizard steps"
+      aria-label={t("learningPath.stepper.ariaLabel")}
       className="w-full rounded-2xl border border-slate-200 bg-white/80 backdrop-blur px-4 py-3 sm:px-6 sm:py-4"
     >
       <ol className="flex flex-wrap items-center gap-y-3 gap-x-2 sm:gap-x-4">
-        {STEPS.map((step, idx) => {
-          const isDone = step.id < current;
-          const isActive = step.id === current;
-          const reachable = step.id <= current;
+        {STEP_IDS.map((id, idx) => {
+          const isDone = id < current;
+          const isActive = id === current;
+          const reachable = id <= current;
+          const label = t(`learningPath.stepper.items.${id}.label`);
+          const hint = t(`learningPath.stepper.items.${id}.hint`);
 
           return (
-            <li key={step.id} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-[140px]">
+            <li key={id} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-[140px]">
               <button
                 type="button"
                 disabled={!onJump || !reachable}
-                onClick={() => onJump && reachable && onJump(step.id)}
+                onClick={() => onJump && reachable && onJump(id)}
                 aria-current={isActive ? "step" : undefined}
                 className={[
                   "flex items-center gap-3 rounded-xl px-3 py-2 text-left transition-all w-full",
@@ -52,7 +51,7 @@ export default function Stepper({ current, onJump }: StepperProps) {
                       : "bg-slate-100 text-slate-500",
                   ].join(" ")}
                 >
-                  {isDone ? <Check size={16} aria-hidden /> : step.id}
+                  {isDone ? <Check size={16} aria-hidden /> : id}
                 </span>
                 <span className="flex flex-col">
                   <span
@@ -61,19 +60,19 @@ export default function Stepper({ current, onJump }: StepperProps) {
                       isActive ? "text-cyan-800" : "text-slate-800",
                     ].join(" ")}
                   >
-                    {step.label}
+                    {label}
                   </span>
                   <span className="text-[11px] text-slate-500 leading-tight">
-                    {step.hint}
+                    {hint}
                   </span>
                 </span>
               </button>
-              {idx < STEPS.length - 1 && (
+              {idx < STEP_IDS.length - 1 && (
                 <span
                   aria-hidden
                   className={[
                     "hidden sm:block h-px flex-1",
-                    step.id < current ? "bg-emerald-300" : "bg-slate-200",
+                    id < current ? "bg-emerald-300" : "bg-slate-200",
                   ].join(" ")}
                 />
               )}

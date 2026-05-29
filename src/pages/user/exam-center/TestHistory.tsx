@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import apiClient from "@/lib/api/config";
 import { BarChart2, BookOpen, Headphones } from "lucide-react";
 
@@ -13,16 +15,16 @@ function getUserId(): string | null {
   } catch { return null; }
 }
 
-function relativeTime(d: Date): string {
+function relativeTime(d: Date, t: TFunction, dateLocale: string): string {
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Vừa xong";
-  if (mins < 60) return `${mins} phút trước`;
+  if (mins < 1) return t("relativeTime.justNow");
+  if (mins < 60) return t("relativeTime.minutesAgo", { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} giờ trước`;
+  if (hours < 24) return t("relativeTime.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} ngày trước`;
-  return d.toLocaleDateString("vi-VN");
+  if (days < 7) return t("relativeTime.daysAgo", { count: days });
+  return d.toLocaleDateString(dateLocale);
 }
 
 function bandColor(band: number): string {
@@ -48,6 +50,10 @@ function bandBarColor(band: number): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function TestHistory() {
+  const { t, i18n } = useTranslation(["exam", "common"]);
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-GB";
+  const commonT = i18n.getFixedT(null, "common");
+
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "READING" | "LISTENING">("all");
@@ -94,9 +100,9 @@ export default function TestHistory() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center space-y-3">
           <span className="material-symbols-outlined text-5xl text-slate-300">lock</span>
-          <p className="text-slate-500">Vui lòng đăng nhập để xem lịch sử</p>
+          <p className="text-slate-500">{t("testHistory.loginRequired")}</p>
           <Link to="/login" className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-            Đăng nhập
+            {t("testHistory.login")}
           </Link>
         </div>
       </div>
@@ -113,17 +119,17 @@ export default function TestHistory() {
               <span className="material-symbols-outlined">arrow_back</span>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><BarChart2 size={20} /> Lịch sử làm bài</h1>
-              <p className="text-xs text-slate-500 mt-0.5">{stats.total} lần làm bài</p>
+              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><BarChart2 size={20} /> {t("testHistory.title")}</h1>
+              <p className="text-xs text-slate-500 mt-0.5">{t("testHistory.attemptsCount", { count: stats.total })}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/my-progress" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition flex items-center gap-1">
               <span className="material-symbols-outlined text-[16px]">analytics</span>
-              Thống kê
+              {t("testHistory.stats")}
             </Link>
             <Link to="/exam" className="text-sm text-slate-500 hover:text-slate-700 font-medium transition">
-              ← Exam Center
+              {t("testHistory.backToExamCenter")}
             </Link>
           </div>
         </div>
@@ -134,15 +140,15 @@ export default function TestHistory() {
         {history.length > 0 && (
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Tổng bài thi</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t("testHistory.totalLabel")}</p>
               <p className="text-3xl font-bold text-indigo-600 mt-1">{stats.total}</p>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Band trung bình</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t("testHistory.avgLabel")}</p>
               <p className={`text-3xl font-bold mt-1 ${bandColor(stats.avg)}`}>{stats.avg}</p>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Band cao nhất</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t("testHistory.bestLabel")}</p>
               <p className={`text-3xl font-bold mt-1 ${bandColor(stats.best)}`}>{stats.best}</p>
             </div>
           </div>
@@ -159,7 +165,13 @@ export default function TestHistory() {
                   : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
               }`}
             >
-              {f === "all" ? "Tất cả" : f === "READING" ? <><BookOpen size={14} className="inline mr-1" />Reading</> : <><Headphones size={14} className="inline mr-1" />Listening</>}
+              {f === "all" ? (
+                t("testHistory.filters.all")
+              ) : f === "READING" ? (
+                <><BookOpen size={14} className="inline mr-1" />{t("testHistory.filters.READING")}</>
+              ) : (
+                <><Headphones size={14} className="inline mr-1" />{t("testHistory.filters.LISTENING")}</>
+              )}
             </button>
           ))}
         </div>
@@ -168,9 +180,9 @@ export default function TestHistory() {
         {filtered.length === 0 ? (
           <div className="text-center py-16 space-y-3">
             <span className="material-symbols-outlined text-6xl text-slate-200">quiz</span>
-            <p className="text-slate-400 text-lg">Chưa có lịch sử làm bài</p>
+            <p className="text-slate-400 text-lg">{t("testHistory.empty")}</p>
             <Link to="/exam" className="inline-block mt-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-medium">
-              Làm bài ngay →
+              {t("testHistory.startNow")}
             </Link>
           </div>
         ) : (
@@ -179,6 +191,10 @@ export default function TestHistory() {
               const raw = h.rawScoresBySkill || {};
               const band = raw.bandScore ?? h.overallScaledScore ?? 0;
               const skill = h.test?.testSkills?.[0]?.skill || "READING";
+              const minutes = h.test?.durationInMinutes;
+              const summary = minutes != null
+                ? t("testHistory.correctSummary", { correct: raw.correct ?? 0, total: raw.total ?? 0, minutes })
+                : t("testHistory.correctSummaryNoMinutes", { correct: raw.correct ?? 0, total: raw.total ?? 0 });
               return (
                 <Link key={h.id}
                   to={`/exam/result/${h.id}`}
@@ -194,18 +210,18 @@ export default function TestHistory() {
                         }`}>
                           {skill}
                         </span>
-                        <span className="text-xs text-slate-400">{relativeTime(new Date(h.createdAt))}</span>
+                        <span className="text-xs text-slate-400">{relativeTime(new Date(h.createdAt), commonT, dateLocale)}</span>
                       </div>
                       <p className="font-semibold text-slate-800 truncate group-hover:text-indigo-700 transition">
-                        {h.test?.title || "Bài thi"}
+                        {h.test?.title || t("testHistory.defaultTitle")}
                       </p>
                       <p className="text-xs text-slate-500 mt-1">
-                        {raw.correct ?? 0}/{raw.total ?? 0} câu đúng · {h.test?.durationInMinutes || "—"} phút
+                        {summary}
                       </p>
                     </div>
                     <div className="text-right pl-4">
                       <p className={`text-3xl font-bold ${bandColor(band)}`}>{band.toFixed ? band.toFixed(1) : band}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">band</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{t("testHistory.bandLabel")}</p>
                     </div>
                   </div>
                   {/* Mini bar */}

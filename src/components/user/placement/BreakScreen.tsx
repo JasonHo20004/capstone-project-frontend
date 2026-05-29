@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface BreakScreenProps {
   durationSeconds: number;
@@ -15,58 +16,61 @@ export function BreakScreen({
   nextSectionTimePer,
   onComplete,
 }: BreakScreenProps) {
+  const { t } = useTranslation("exam");
   const [remaining, setRemaining] = useState(durationSeconds);
   const [confirmingSkip, setConfirmingSkip] = useState(false);
 
   useEffect(() => {
-    const t = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       setRemaining((r) => {
         if (r <= 1) {
-          window.clearInterval(t);
+          window.clearInterval(timer);
           onComplete();
           return 0;
         }
         return r - 1;
       });
     }, 1000);
-    return () => window.clearInterval(t);
+    return () => window.clearInterval(timer);
   }, [onComplete]);
 
   const mm = Math.floor(remaining / 60).toString().padStart(2, "0");
   const ss = (remaining % 60).toString().padStart(2, "0");
+  const timeStr = `${mm}:${ss}`;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-6 py-12 text-center">
-      <h2 className="text-3xl font-bold text-slate-900">Take a break</h2>
-      <p className="text-slate-600">Next section starts in</p>
-      <div className="font-mono text-7xl font-bold text-teal-600">
-        {mm}:{ss}
-      </div>
+      <h2 className="text-3xl font-bold text-slate-900">{t("placementTest.break.title")}</h2>
+      <p className="text-slate-600">{t("placementTest.break.startsIn")}</p>
+      <div className="font-mono text-7xl font-bold text-teal-600">{timeStr}</div>
       <div className="rounded-2xl bg-slate-50 p-6 text-left">
-        <h3 className="mb-2 font-semibold text-slate-900">Up next</h3>
+        <h3 className="mb-2 font-semibold text-slate-900">{t("placementTest.break.upNext")}</h3>
         <p className="text-slate-700">{nextSectionTitle}</p>
         <p className="text-sm text-slate-500">
-          {nextSectionQuestions} questions · {nextSectionTimePer}s per question
+          {t("placementTest.break.meta", {
+            questions: nextSectionQuestions,
+            timePer: nextSectionTimePer,
+          })}
         </p>
       </div>
 
       {confirmingSkip ? (
         <div className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50 p-4">
           <p className="text-amber-900">
-            Are you sure? You still have {mm}:{ss} left.
+            {t("placementTest.break.confirm", { time: timeStr })}
           </p>
           <div className="flex gap-3">
             <button
               className="flex-1 rounded-full bg-teal-500 py-2 font-medium text-white"
               onClick={onComplete}
             >
-              Yes, skip
+              {t("placementTest.break.skipYes")}
             </button>
             <button
               className="rounded-full border border-slate-300 px-4 py-2"
               onClick={() => setConfirmingSkip(false)}
             >
-              Cancel
+              {t("placementTest.break.cancel")}
             </button>
           </div>
         </div>
@@ -75,7 +79,7 @@ export function BreakScreen({
           onClick={() => setConfirmingSkip(true)}
           className="rounded-full bg-slate-900 px-8 py-3 font-semibold text-white"
         >
-          Skip Break →
+          {t("placementTest.break.skipBtn")}
         </button>
       )}
     </div>

@@ -1,22 +1,24 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Play, Star, Users, BookOpen, TrendingUp, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-
-const STATS = [
-  { value: "50K+", label: "Học viên" },
-  { value: "200+", label: "Khoá học" },
-  { value: "98%", label: "Thành công" },
-];
-
-const BULLETS = [
-  "Lộ trình cá nhân hóa theo trình độ",
-  "Phản hồi tức thì từ AI & giảng viên",
-  "Chứng chỉ hoàn thành được công nhận",
-];
 
 const Hero = () => {
   const reduce = useReducedMotion();
+  const { t } = useTranslation("landing");
+
+  const stats = [
+    { value: "50K+", label: t("hero.stats.learners") },
+    { value: "200+", label: t("hero.stats.courses") },
+    { value: "98%", label: t("hero.stats.success") },
+  ];
+
+  const bullets = [
+    t("hero.bullets.personalizedPath"),
+    t("hero.bullets.instantFeedback"),
+    t("hero.bullets.certificate"),
+  ];
 
   return (
     <section className="relative isolate overflow-hidden bg-hero-gradient text-white">
@@ -50,23 +52,23 @@ const Hero = () => {
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
             </span>
             <Star className="h-3.5 w-3.5 fill-secondary text-secondary" />
-            <span className="text-white/90">Được tin tưởng bởi 50.000+ học viên</span>
+            <span className="text-white/90">{t("hero.trustBadge")}</span>
           </div>
 
           <h1 className="font-display text-[clamp(2.75rem,1.5rem+5vw,5.5rem)] font-extrabold leading-[1.02] tracking-tight">
-            Thành thạo tiếng Anh
+            {t("hero.titleLine1")}
             <span className="mt-2 block bg-gradient-to-r from-white via-secondary-light to-secondary bg-clip-text text-transparent">
-              theo tốc độ của bạn.
+              {t("hero.titleLine2")}
             </span>
           </h1>
 
           <p className="max-w-xl text-lg leading-relaxed text-white/80 md:text-xl">
-            Tham gia cùng hàng nghìn người học trên toàn thế giới để nâng cao kỹ năng tiếng Anh với các khóa học do chuyên gia giảng dạy, bài học tương tác và lộ trình học cá nhân hóa.
+            {t("hero.subtitle")}
           </p>
 
           {/* Social proof bullets */}
           <ul className="space-y-2">
-            {BULLETS.map((item) => (
+            {bullets.map((item) => (
               <li key={item} className="flex items-center gap-2 text-sm text-white/75">
                 <CheckCircle className="h-4 w-4 shrink-0 text-emerald-400" />
                 {item}
@@ -79,18 +81,18 @@ const Hero = () => {
             <Link to="/#courses">
               <Button variant="default" size="xl">
                 <BookOpen className="mr-1 h-5 w-5" />
-                Khám phá khóa học
+                {t("hero.exploreCourses")}
               </Button>
             </Link>
             <Button variant="glass" size="xl" className="text-white hover:text-foreground">
               <Play className="mr-1 h-5 w-5 fill-current" />
-              Xem demo
+              {t("hero.watchDemo")}
             </Button>
           </div>
 
           {/* Stats row — inline, divided */}
           <div className="flex items-center border-t border-white/10 pt-4">
-            {STATS.map((stat, i) => (
+            {stats.map((stat, i) => (
               <motion.div
                 key={stat.value}
                 initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
@@ -102,7 +104,7 @@ const Hero = () => {
                   <div className="font-display text-2xl font-bold text-white md:text-3xl">{stat.value}</div>
                   <div className="text-xs uppercase tracking-wider text-white/55">{stat.label}</div>
                 </div>
-                {i < STATS.length - 1 && <div className="h-8 w-px bg-white/15" />}
+                {i < stats.length - 1 && <div className="h-8 w-px bg-white/15" />}
               </motion.div>
             ))}
           </div>
@@ -121,7 +123,7 @@ const Hero = () => {
           <div className="relative overflow-hidden rounded-[2rem] shadow-[0_32px_80px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
             <img
               src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop"
-              alt="Học viên học cùng nhau"
+              alt={t("hero.imgAlt")}
               className="h-full w-full object-cover"
               loading="eager"
             />
@@ -134,8 +136,8 @@ const Hero = () => {
                   <Users className="h-5 w-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="font-display text-xl font-bold text-foreground">2,500+</div>
-                  <div className="text-xs text-muted-foreground">Học viên đăng ký trong tuần này</div>
+                  <div className="font-display text-xl font-bold text-foreground">{t("hero.floatingCard.count")}</div>
+                  <div className="text-xs text-muted-foreground">{t("hero.floatingCard.label")}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 rounded-lg bg-emerald-500/15 px-3 py-1.5 text-emerald-600">
                   <TrendingUp className="h-3.5 w-3.5" />

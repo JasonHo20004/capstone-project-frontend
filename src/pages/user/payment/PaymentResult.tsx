@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, Wallet } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatVND } from '@/lib/utils';
@@ -10,6 +11,7 @@ export default function PaymentResultPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation('account');
 
   const status = searchParams.get('status'); // 'success' | 'failed'
   const txnRef = searchParams.get('txnRef') ?? '';
@@ -60,43 +62,43 @@ export default function PaymentResultPage() {
 
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-                {isSuccess ? 'Payment successful' : 'Payment failed'}
+                {isSuccess ? t('paymentResult.successTitle') : t('paymentResult.failedTitle')}
               </h1>
               <p className={`text-sm leading-6 ${isSuccess ? 'text-emerald-800' : 'text-rose-800'}`}>
                 {isSuccess
-                  ? 'Your wallet has been topped up. The balance will reflect shortly.'
-                  : 'Your payment could not be completed. No funds were deducted.'}
+                  ? t('paymentResult.successDesc')
+                  : t('paymentResult.failedDesc')}
               </p>
               <p className="text-xs text-slate-500">
-                Returning to your wallet in {countdown}s…
+                {t('paymentResult.redirect', { count: countdown })}
               </p>
             </div>
 
             <div className="w-full rounded-[20px] border border-slate-200 bg-white/80 p-5 space-y-3 text-sm text-slate-600">
               {amount !== null && amount > 0 && (
                 <div className="flex items-center justify-between">
-                  <span>Amount</span>
+                  <span>{t('paymentResult.amount')}</span>
                   <span className="font-semibold text-slate-950">{formatVND(amount)}</span>
                 </div>
               )}
               {txnRef && (
                 <div className="flex items-center justify-between">
-                  <span>Reference</span>
+                  <span>{t('paymentResult.reference')}</span>
                   <span className="font-medium text-slate-950 truncate max-w-[200px]">{txnRef}</span>
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span>Gateway</span>
+                <span>{t('paymentResult.gateway')}</span>
                 <span className="font-medium text-slate-950">Stripe</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Status</span>
+                <span>{t('paymentResult.status')}</span>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
                     isSuccess ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                   }`}
                 >
-                  {isSuccess ? 'Success' : 'Failed'}
+                  {isSuccess ? t('paymentResult.statusSuccess') : t('paymentResult.statusFailed')}
                 </span>
               </div>
             </div>
@@ -110,7 +112,7 @@ export default function PaymentResultPage() {
             className="flex-1 h-12 rounded-full bg-slate-950 px-6 text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800"
           >
             <Wallet className="mr-2 h-4 w-4" />
-            Go to wallet
+            {t('paymentResult.goToWallet')}
           </Button>
           <Button
             type="button"
@@ -119,7 +121,7 @@ export default function PaymentResultPage() {
             className="flex-1 h-12 rounded-full border-slate-200 px-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Dashboard
+            {t('paymentResult.dashboard')}
           </Button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface BaseScreenProps {
   onContinue: () => void;
@@ -10,6 +11,7 @@ interface BaseScreenProps {
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 function BackToHubButton({ onBack }: { onBack?: () => void }) {
+  const { t } = useTranslation("exam");
   if (!onBack) return null;
   return (
     <button
@@ -20,7 +22,7 @@ function BackToHubButton({ onBack }: { onBack?: () => void }) {
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      Back to Learning Hub
+      {t("placementTest.backToHub")}
     </button>
   );
 }
@@ -63,6 +65,13 @@ export function WelcomeScreen({
   isLoading: boolean;
   error: string | null;
 }) {
+  const { t } = useTranslation("exam");
+  const statItems = [
+    { v: t("placementTest.onboarding.welcome.stats.questionsValue"), l: t("placementTest.onboarding.welcome.stats.questionsLabel") },
+    { v: t("placementTest.onboarding.welcome.stats.durationValue"), l: t("placementTest.onboarding.welcome.stats.durationLabel") },
+    { v: t("placementTest.onboarding.welcome.stats.levelsValue"), l: t("placementTest.onboarding.welcome.stats.levelsLabel") },
+  ];
+
   return (
     <ScreenShell onBack={onBack}>
       <motion.div
@@ -84,25 +93,19 @@ export function WelcomeScreen({
 
         <motion.div variants={itemRise} className="space-y-3">
           <h1 className="text-5xl font-bold tracking-tight text-slate-900">
-            English Placement Test
+            {t("placementTest.onboarding.welcome.title")}
           </h1>
           <p className="text-base font-medium text-teal-600">
-            50 questions · ~40 minutes · Discover your CEFR level
+            {t("placementTest.onboarding.welcome.meta")}
           </p>
         </motion.div>
 
         <motion.p variants={itemRise} className="max-w-xl text-base leading-relaxed text-slate-600">
-          This test evaluates your Grammar, Vocabulary, Reading, and Listening skills to determine
-          your English proficiency level (CEFR A1–C2). You'll see your result and IELTS/TOEIC
-          equivalents as soon as you finish.
+          {t("placementTest.onboarding.welcome.description")}
         </motion.p>
 
         <motion.div variants={itemRise} className="grid w-full max-w-md grid-cols-3 gap-3 pt-2">
-          {[
-            { v: "50", l: "Questions" },
-            { v: "~40m", l: "Duration" },
-            { v: "A1-C2", l: "Levels" },
-          ].map((s) => (
+          {statItems.map((s) => (
             <div key={s.l} className="rounded-2xl bg-slate-50 px-3 py-4 text-center">
               <div className="text-2xl font-bold text-slate-900">{s.v}</div>
               <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{s.l}</div>
@@ -135,10 +138,10 @@ export function WelcomeScreen({
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Preparing exam…
+                {t("placementTest.onboarding.welcome.preparing")}
               </span>
             ) : (
-              "Start Test"
+              t("placementTest.onboarding.welcome.startTest")
             )}
           </motion.button>
           {onBack && (
@@ -147,7 +150,7 @@ export function WelcomeScreen({
               onClick={onBack}
               className="text-sm font-medium text-slate-500 hover:text-slate-700"
             >
-              Not now, take me back to the Learning Hub
+              {t("placementTest.onboarding.welcome.notNow")}
             </button>
           )}
         </motion.div>
@@ -157,13 +160,14 @@ export function WelcomeScreen({
 }
 
 export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
+  const { t } = useTranslation("exam");
   const [tried, setTried] = useState(false);
   const [problem, setProblem] = useState(false);
 
   const playSample = () => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       const u = new SpeechSynthesisUtterance(
-        "Welcome to the English placement test. Please make sure you can hear this message clearly before proceeding."
+        t("placementTest.onboarding.audioCheck.ttsText")
       );
       u.lang = "en-US";
       window.speechSynthesis.speak(u);
@@ -182,9 +186,9 @@ export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
         className="mx-auto max-w-2xl space-y-6"
       >
         <motion.div variants={itemRise}>
-          <h2 className="text-3xl font-bold text-slate-900">Audio check</h2>
+          <h2 className="text-3xl font-bold text-slate-900">{t("placementTest.onboarding.audioCheck.title")}</h2>
           <p className="mt-1 text-slate-600">
-            Tap play. If you can hear the sample clearly, you're good to go.
+            {t("placementTest.onboarding.audioCheck.subtitle")}
           </p>
         </motion.div>
 
@@ -198,7 +202,7 @@ export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
             whileTap={{ scale: 0.94 }}
             whileHover={{ scale: 1.06 }}
             className="flex h-20 w-20 items-center justify-center rounded-full bg-teal-500 text-white shadow-lg hover:bg-teal-600"
-            aria-label="Play sample audio"
+            aria-label={t("placementTest.onboarding.audioCheck.playAria")}
           >
             <svg className="h-9 w-9" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5v14l11-7z" />
@@ -222,8 +226,7 @@ export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
           </div>
 
           <p className="rounded-xl bg-white px-4 py-3 text-center text-sm text-slate-700 shadow-sm">
-            "Welcome to the English placement test. Please make sure you can hear this message
-            clearly before proceeding."
+            "{t("placementTest.onboarding.audioCheck.sampleText")}"
           </p>
         </motion.div>
 
@@ -235,7 +238,7 @@ export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
             >
-              Try: increase your volume, plug in headphones, or switch to a different browser.
+              {t("placementTest.onboarding.audioCheck.problemHint")}
             </motion.div>
           )}
         </AnimatePresence>
@@ -248,13 +251,13 @@ export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
             whileHover={tried ? { scale: 1.02 } : {}}
             className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            I can hear it <Check size={14} className="inline" />
+            {t("placementTest.onboarding.audioCheck.canHear")} <Check size={14} className="inline" />
           </motion.button>
           <button
             onClick={() => setProblem(true)}
             className="rounded-full border-2 border-slate-300 px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
           >
-            I can't hear it
+            {t("placementTest.onboarding.audioCheck.cantHear")}
           </button>
         </motion.div>
       </motion.div>
@@ -263,6 +266,7 @@ export function AudioCheckScreen({ onContinue, onBack }: BaseScreenProps) {
 }
 
 export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
+  const { t } = useTranslation("exam");
   const [problem, setProblem] = useState(false);
   return (
     <ScreenShell onBack={onBack}>
@@ -273,9 +277,9 @@ export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
         className="mx-auto max-w-2xl space-y-6"
       >
         <motion.div variants={itemRise}>
-          <h2 className="text-3xl font-bold text-slate-900">Brightness check</h2>
+          <h2 className="text-3xl font-bold text-slate-900">{t("placementTest.onboarding.brightnessCheck.title")}</h2>
           <p className="mt-1 text-slate-600">
-            Make sure your screen is bright enough to read the test comfortably.
+            {t("placementTest.onboarding.brightnessCheck.subtitle")}
           </p>
         </motion.div>
 
@@ -285,16 +289,16 @@ export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
           style={{ background: "#f3f3f3" }}
         >
           <p className="text-center text-xl" style={{ color: "#e6e6e6" }}>
-            If you can see this text clearly, your screen brightness is set correctly for the test.
+            {t("placementTest.onboarding.brightnessCheck.faintText")}
           </p>
         </motion.div>
 
         <motion.div variants={itemRise} className="rounded-2xl bg-slate-50 p-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Reference
+            {t("placementTest.onboarding.brightnessCheck.referenceLabel")}
           </span>
           <p className="text-base text-slate-800">
-            If you can see this text clearly, your screen brightness is set correctly for the test.
+            {t("placementTest.onboarding.brightnessCheck.referenceText")}
           </p>
         </motion.div>
 
@@ -306,7 +310,7 @@ export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
             >
-              Try increasing your screen brightness in your OS or monitor settings.
+              {t("placementTest.onboarding.brightnessCheck.problemHint")}
             </motion.div>
           )}
         </AnimatePresence>
@@ -318,13 +322,13 @@ export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
             whileHover={{ scale: 1.02 }}
             className="flex-1 rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600"
           >
-            I can see it <Check size={14} className="inline" />
+            {t("placementTest.onboarding.brightnessCheck.canSee")} <Check size={14} className="inline" />
           </motion.button>
           <button
             onClick={() => setProblem(true)}
             className="rounded-full border-2 border-slate-300 px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
           >
-            I can't see it
+            {t("placementTest.onboarding.brightnessCheck.cantSee")}
           </button>
         </motion.div>
       </motion.div>
@@ -332,18 +336,10 @@ export function BrightnessCheckScreen({ onContinue, onBack }: BaseScreenProps) {
   );
 }
 
-const RULES = [
-  "50 questions across 3 sections.",
-  "Section 1 — Grammar & Vocabulary: 27 questions, 30 seconds each.",
-  "Section 2 — Reading: 11 questions, 1 minute 30 seconds each.",
-  "Section 3 — Listening: 12 questions (longer time for harder clips).",
-  "Each question auto-submits when time runs out.",
-  "You cannot go back to previous questions.",
-  "There's a break between sections (you can skip it).",
-  "Your result shows your CEFR level with IELTS/TOEIC equivalents.",
-];
+const RULE_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8"] as const;
 
 export function RulesScreen({ onContinue, onBack }: BaseScreenProps) {
+  const { t } = useTranslation("exam");
   const [agreed, setAgreed] = useState(false);
   return (
     <ScreenShell onBack={onBack}>
@@ -354,21 +350,21 @@ export function RulesScreen({ onContinue, onBack }: BaseScreenProps) {
         className="mx-auto max-w-2xl space-y-6"
       >
         <motion.div variants={itemRise}>
-          <h2 className="text-3xl font-bold text-slate-900">Test rules</h2>
-          <p className="mt-1 text-slate-600">Quick read before you begin — these matter.</p>
+          <h2 className="text-3xl font-bold text-slate-900">{t("placementTest.onboarding.rules.title")}</h2>
+          <p className="mt-1 text-slate-600">{t("placementTest.onboarding.rules.subtitle")}</p>
         </motion.div>
 
         <motion.ol variants={itemRise} className="space-y-2 rounded-3xl bg-slate-50 p-6">
-          {RULES.map((r, i) => (
+          {RULE_KEYS.map((key, i) => (
             <motion.li
-              key={i}
+              key={key}
               variants={itemRise}
               className="flex items-start gap-3 text-slate-700"
             >
               <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">
                 {i + 1}
               </span>
-              <span className="leading-relaxed">{r}</span>
+              <span className="leading-relaxed">{t(`placementTest.onboarding.rules.items.${key}`)}</span>
             </motion.li>
           ))}
         </motion.ol>
@@ -380,10 +376,7 @@ export function RulesScreen({ onContinue, onBack }: BaseScreenProps) {
           <svg className="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span>
-            Do not refresh the page or close the tab during the test — your progress will be lost
-            and the session will be cancelled.
-          </span>
+          <span>{t("placementTest.onboarding.rules.warning")}</span>
         </motion.div>
 
         <motion.label
@@ -396,7 +389,7 @@ export function RulesScreen({ onContinue, onBack }: BaseScreenProps) {
             onChange={(e) => setAgreed(e.target.checked)}
             className="h-5 w-5 rounded accent-teal-500"
           />
-          <span className="text-slate-700">I have read and agree to the test rules</span>
+          <span className="text-slate-700">{t("placementTest.onboarding.rules.agree")}</span>
         </motion.label>
 
         <motion.button
@@ -407,7 +400,7 @@ export function RulesScreen({ onContinue, onBack }: BaseScreenProps) {
           whileHover={agreed ? { scale: 1.01 } : {}}
           className="w-full rounded-full bg-teal-500 py-3 font-semibold text-white shadow transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          Begin Test
+          {t("placementTest.onboarding.rules.begin")}
         </motion.button>
       </motion.div>
     </ScreenShell>
@@ -415,13 +408,14 @@ export function RulesScreen({ onContinue, onBack }: BaseScreenProps) {
 }
 
 export function CountdownScreen({ onComplete }: { onComplete: () => void }) {
+  const { t } = useTranslation("exam");
   const [count, setCount] = useState(3);
 
   useEffect(() => {
-    const t = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       setCount((c) => c - 1);
     }, 1000);
-    return () => window.clearInterval(t);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -439,10 +433,10 @@ export function CountdownScreen({ onComplete }: { onComplete: () => void }) {
           transition={{ duration: 0.5, ease: EASE }}
           className="bg-gradient-to-br from-teal-500 to-blue-500 bg-clip-text text-9xl font-black text-transparent"
         >
-          {count > 0 ? count : "Go!"}
+          {count > 0 ? count : t("placementTest.onboarding.countdown.go")}
         </motion.div>
       </AnimatePresence>
-      <p className="mt-6 text-slate-500">Get ready…</p>
+      <p className="mt-6 text-slate-500">{t("placementTest.onboarding.countdown.getReady")}</p>
     </div>
   );
 }
