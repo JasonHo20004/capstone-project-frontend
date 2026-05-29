@@ -134,8 +134,17 @@ export default function TestDetailPage() {
         const options = contentData?.options || [];
         const indices = answerData?.correctIndices || [];
         correctAnswer = indices.map((i: number) => String.fromCharCode(65 + i) + '. ' + options[i]).join(', ');
-      } else if (q.questionType === "GAP_FILL" || q.questionType === "MATCHING" || q.questionType === "SHORT_ANSWER") {
-        correctAnswer = answerData?.text?.[0] || answerData?.correctAnswer || "";
+      } else if (q.questionType === "GAP_FILL") {
+        const isMultiGap = answerData && typeof answerData === "object" && !Array.isArray(answerData)
+          && !Array.isArray(answerData.text)
+          && Object.values(answerData).some((v: any) => Array.isArray(v));
+        correctAnswer = isMultiGap
+          ? Object.keys(answerData)
+              .map((g) => `${g}: ${(Array.isArray(answerData[g]) ? answerData[g] : []).join(" / ")}`)
+              .join("  •  ")
+          : (answerData?.text?.[0] || answerData?.correctAnswer || "");
+      } else if (q.questionType === "MATCHING" || q.questionType === "SHORT_ANSWER") {
+        correctAnswer = answerData?.correctOption || answerData?.text?.[0] || answerData?.correctAnswer || "";
       } else if (q.questionType === "TRUE_FALSE_NOT_GIVEN" || q.questionType === "YES_NO_NOT_GIVEN") {
         correctAnswer = answerData?.correctAnswer || "";
       }

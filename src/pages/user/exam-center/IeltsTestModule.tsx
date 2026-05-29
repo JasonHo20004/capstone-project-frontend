@@ -91,7 +91,50 @@ export default function IeltsTestModule() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [gradingResult, setGradingResult] = useState<any>(null);
 
+  // Submit confirmation + time-warning + layout controls
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [timeWarning, setTimeWarning] = useState<string | null>(null);
+  const firedTimeWarnings = useRef<Set<number>>(new Set());
+  const [mobilePane, setMobilePane] = useState<'passage' | 'questions'>('questions');
+  const [isDesktop, setIsDesktop] = useState(true);
+  const [leftWidth, setLeftWidth] = useState(50); // % width of passage panel (desktop)
+  const [passageFontScale, setPassageFontScale] = useState(1); // 0.85 – 1.4
+  const isResizing = useRef(false);
+
+  // Track desktop vs mobile (≥1024px = lg). Drives split-screen vs tabbed panes.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  // Drag-to-resize the passage/questions divider (desktop only)
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const pct = (e.clientX / window.innerWidth) * 100;
+      setLeftWidth(Math.min(72, Math.max(28, pct)));
+    };
+    const onUp = () => {
+      if (isResizing.current) {
+        isResizing.current = false;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+      }
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, []);
+
   const autoSaveKey = testId ? `ielts_draft_${testId}` : null;
+  const highlightKey = testId ? `ielts_hl_${testId}` : null;
 
   // Restore draft answers on mount (F5/tab close protection)
   useEffect(() => {
@@ -165,6 +208,33 @@ export default function IeltsTestModule() {
   const [highlightPopover, setHighlightPopover] = useState<{ x: number; y: number; range: Range } | null>(null);
   const [highlightMode, setHighlightMode] = useState(false);
   const [savedHighlights, setSavedHighlights] = useState<Record<string, string>>({});
+
+  // Restore highlight snapshots on mount (F5 protection — parallels answers draft)
+  useEffect(() => {
+    if (!highlightKey) return;
+    try {
+      const raw = localStorage.getItem(highlightKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') setSavedHighlights(parsed);
+      }
+    } catch { /* ignore parse errors */ }
+  }, [highlightKey]);
+
+  // Persist highlight snapshots with debounce
+  useEffect(() => {
+    if (!highlightKey || submitted) return;
+    const t = setTimeout(() => {
+      try {
+        if (Object.keys(savedHighlights).length > 0) {
+          localStorage.setItem(highlightKey, JSON.stringify(savedHighlights));
+        } else {
+          localStorage.removeItem(highlightKey);
+        }
+      } catch { /* quota or private mode — ignore */ }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [savedHighlights, highlightKey, submitted]);
 
   // ─── Question Navigator State ──────────────────────────────────────────────
   const [showNavigator, setShowNavigator] = useState(true);
@@ -278,6 +348,20 @@ export default function IeltsTestModule() {
     return () => clearInterval(timer);
   }, [testData, timeLeft, submitted]);
 
+  // ─── Time-remaining warnings (5 min / 1 min) ────────────────────────────────
+  useEffect(() => {
+    if (!testData || submitted || timeLeft <= 0) return;
+    const fire = (mark: number, msg: string) => {
+      if (timeLeft <= mark && !firedTimeWarnings.current.has(mark)) {
+        firedTimeWarnings.current.add(mark);
+        setTimeWarning(msg);
+        setTimeout(() => setTimeWarning(curr => (curr === msg ? null : curr)), 6000);
+      }
+    };
+    fire(300, 'Còn 5 phút — hãy kiểm tra các câu chưa làm.');
+    fire(60, 'Còn 1 phút! Bài sẽ tự nộp khi hết giờ.');
+  }, [timeLeft, testData, submitted]);
+
   // ─── Writing assistant (debounced) ──────────────────────────────────────────
   useEffect(() => {
     if (!isWritingTest || currentWritingEssay.length <= 30) return;
@@ -300,6 +384,21 @@ export default function IeltsTestModule() {
     setAnswers(prev => ({ ...prev, [qId]: value }));
   }, []);
 
+  // Gap numbers for a multi-gap Summary Completion question (empty for others).
+  const gapNumsFor = useCallback((q: QuestionData): string[] => {
+    const summary = (q.content as any)?.summaryText as string | undefined;
+    if (q.questionType !== 'GAP_FILL' || !summary) return [];
+    return Array.from(summary.matchAll(/\{\{(\d+)\}\}/g)).map((m) => m[1]);
+  }, []);
+
+  // Answered = a normal question with a value, or a multi-gap question with
+  // at least one gap filled.
+  const questionAnswered = useCallback((q: QuestionData): boolean => {
+    const gaps = gapNumsFor(q);
+    if (gaps.length > 0) return gaps.some((n) => answers[`${q.id}::${n}`]?.trim());
+    return !!answers[q.id]?.trim();
+  }, [answers, gapNumsFor]);
+
   // ─── Submit ─────────────────────────────────────────────────────────────────
   const navigate = useNavigate();
   const handleSubmit = useCallback(async () => {
@@ -316,10 +415,40 @@ export default function IeltsTestModule() {
           userId = payload.sub || payload.userId || payload.id;
         }
       } catch {}
-      const resp = await apiClient.post(`/tests/${testData.id}/submit`, { submissions: answers, userId });
+      // Assemble submissions. Multi-gap GAP_FILL questions hold per-gap values
+      // under composite keys `${q.id}::${gapNum}`; collapse those into a single
+      // JSON object keyed by gap number. All other keys pass through unchanged.
+      const submissions: Record<string, string> = {};
+      const gapByQuestion: Record<string, string[]> = {};
+      for (const sec of (testData.sections || [])) {
+        for (const q of (sec.questions || [])) {
+          const summary = (q as any).content?.summaryText as string | undefined;
+          if (q.questionType === 'GAP_FILL' && summary) {
+            const nums = Array.from(summary.matchAll(/\{\{(\d+)\}\}/g)).map((m) => m[1]);
+            if (nums.length > 0) gapByQuestion[q.id] = nums;
+          }
+        }
+      }
+      for (const [k, v] of Object.entries(answers)) {
+        if (k.includes('::')) continue; // composite gap keys handled below
+        submissions[k] = v;
+      }
+      for (const [qId, nums] of Object.entries(gapByQuestion)) {
+        const obj: Record<string, string> = {};
+        for (const n of nums) {
+          const val = answers[`${qId}::${n}`];
+          if (val != null && val.trim() !== '') obj[n] = val.trim();
+        }
+        if (Object.keys(obj).length > 0) submissions[qId] = JSON.stringify(obj);
+        else delete submissions[qId];
+      }
+      const resp = await apiClient.post(`/tests/${testData.id}/submit`, { submissions, userId });
       const sessionId = resp.data?.data?.sessionId;
       if (autoSaveKey) {
         try { localStorage.removeItem(autoSaveKey); } catch {}
+      }
+      if (highlightKey) {
+        try { localStorage.removeItem(highlightKey); } catch {}
       }
       if (sessionId) {
         navigate(`/practice/${testData.id}/result/${sessionId}`);
@@ -334,7 +463,7 @@ export default function IeltsTestModule() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [testData, answers, navigate, isSubmitting, submitted, autoSaveKey]);
+  }, [testData, answers, navigate, isSubmitting, submitted, autoSaveKey, highlightKey]);
 
   // ─── Highlight Handlers (must be before any early returns!) ──────────────
   const attachMarkRemovalHandler = useCallback((mark: HTMLElement) => {
@@ -376,6 +505,27 @@ export default function IeltsTestModule() {
   const goPrev = () => {
     if (currentSectionIdx > 0) navigateToSection(prev => prev - 1);
   };
+
+  // ─── Keyboard shortcuts: [ / ] move between sections, h toggles highlight ────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      // Ignore while typing in a field
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === ']') {
+        if (currentSectionIdx < sections.length - 1) navigateToSection(prev => prev + 1);
+      } else if (e.key === '[') {
+        if (currentSectionIdx > 0) navigateToSection(prev => prev - 1);
+      } else if (e.key === 'h' || e.key === 'H') {
+        setHighlightMode(m => !m);
+        setHighlightPopover(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [currentSectionIdx, sections.length, navigateToSection]);
 
   const handleTextSelect = useCallback(() => {
     if (!highlightMode) return;
@@ -496,8 +646,8 @@ export default function IeltsTestModule() {
 
   // ─── Stats ──────────────────────────────────────────────────────────────────
   const currentQuestions = currentSection?.questions || [];
-  const answeredCount = currentQuestions.filter(q => answers[q.id]?.trim()).length;
-  const totalAnswered = allQuestions.filter(q => answers[q.id]?.trim()).length;
+  const answeredCount = currentQuestions.filter(q => questionAnswered(q)).length;
+  const totalAnswered = allQuestions.filter(q => questionAnswered(q)).length;
 
   // ─── Result Screen ─────────────────────────────────────────────────────────
   // Fallback inline result (when sessionId not available)
@@ -827,59 +977,87 @@ export default function IeltsTestModule() {
   return (
     <div className="h-screen flex flex-col bg-[#f8fafc] font-sans text-slate-900 overflow-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-600">{isListeningTest ? "headphones" : "menu_book"}</span>
-          <h1 className="font-bold text-slate-800 text-sm">{testData?.title}</h1>
-          <span className="text-slate-300">|</span>
-          <span className="text-xs text-slate-500">{currentSection.title}</span>
-          <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase ${isListeningTest ? "bg-teal-100 text-teal-700" : "bg-indigo-100 text-indigo-700"}`}>
-            {testSkillLabel}
-          </span>
-          <span className="text-xs text-slate-400 ml-2">Đã trả lời {answeredCount}/{currentQuestions.length}</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-slate-500">
-            Phần {currentSectionIdx + 1} / {sections.length}
-          </span>
-          <span className="text-xs text-slate-400">
-            Tổng: {totalAnswered}/{allQuestions.length}
-          </span>
-          <div className={`px-3 py-1 rounded-md font-mono font-bold text-sm ${timeLeft < 60 ? "bg-red-100 text-red-700 animate-pulse" : timeLeft < 120 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
-            {formatTime(timeLeft)}
+      <header className="bg-white border-b border-slate-200 shrink-0 relative">
+        <div className="h-14 flex items-center justify-between px-3 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="material-symbols-outlined text-indigo-600 shrink-0">{isListeningTest ? "headphones" : "menu_book"}</span>
+            <h1 className="font-bold text-slate-800 text-sm truncate max-w-[120px] sm:max-w-none">{testData?.title}</h1>
+            <span className="text-slate-300 hidden md:inline">|</span>
+            <span className="text-xs text-slate-500 hidden md:inline truncate">{currentSection.title}</span>
+            <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase shrink-0 ${isListeningTest ? "bg-teal-100 text-teal-700" : "bg-indigo-100 text-indigo-700"}`}>
+              {testSkillLabel}
+            </span>
+            <span className="text-xs text-slate-400 ml-1 hidden lg:inline">Đã trả lời {answeredCount}/{currentQuestions.length}</span>
           </div>
-          {currentSectionIdx > 0 && (
-            <button onClick={goPrev} className="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300 cursor-pointer">
-              ← Phần trước
-            </button>
-          )}
-          {currentSectionIdx < sections.length - 1 ? (
-            <button onClick={goNext} className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-700 cursor-pointer">
-              Phần tiếp →
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting || submitted}
-              className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {isSubmitting ? 'Đang nộp...' : submitted ? 'Đã nộp' : 'Nộp bài'}
-            </button>
-          )}
-          {submitError && (
-            <div className="absolute top-14 right-6 bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded-md text-xs shadow-lg max-w-sm z-50">
-              <strong className="block mb-0.5">Nộp bài thất bại</strong>
-              <span>{submitError}</span>
-              <button onClick={() => setSubmitError(null)} className="ml-2 text-red-500 hover:text-red-700 font-bold">×</button>
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <span className="text-xs text-slate-500 hidden sm:inline">
+              Phần {currentSectionIdx + 1} / {sections.length}
+            </span>
+            <span className="text-xs text-slate-400 hidden lg:inline">
+              Tổng: {totalAnswered}/{allQuestions.length}
+            </span>
+            <div className={`px-2.5 sm:px-3 py-1 rounded-md font-mono font-bold text-sm ${timeLeft < 60 ? "bg-red-100 text-red-700 animate-pulse" : timeLeft < 120 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
+              {formatTime(timeLeft)}
             </div>
-          )}
+            {currentSectionIdx > 0 && (
+              <button onClick={goPrev} className="bg-slate-200 text-slate-700 px-2 sm:px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300 cursor-pointer" title="Phần trước ( [ )">
+                <span className="hidden sm:inline">← Phần trước</span><span className="sm:hidden">←</span>
+              </button>
+            )}
+            {currentSectionIdx < sections.length - 1 ? (
+              <button onClick={goNext} className="bg-indigo-600 text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-700 cursor-pointer" title="Phần tiếp ( ] )">
+                <span className="hidden sm:inline">Phần tiếp →</span><span className="sm:hidden">→</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowSubmitConfirm(true)}
+                disabled={isSubmitting || submitted}
+                className="bg-green-600 text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSubmitting ? 'Đang nộp...' : submitted ? 'Đã nộp' : 'Nộp bài'}
+              </button>
+            )}
+          </div>
         </div>
+        {/* Progress bar */}
+        <div className="h-1 w-full bg-slate-100">
+          <div
+            className="h-full bg-indigo-500 transition-all duration-300"
+            style={{ width: `${allQuestions.length ? (totalAnswered / allQuestions.length) * 100 : 0}%` }}
+          />
+        </div>
+        {submitError && (
+          <div className="absolute top-16 right-3 sm:right-6 bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded-md text-xs shadow-lg max-w-sm z-50">
+            <strong className="block mb-0.5">Nộp bài thất bại</strong>
+            <span>{submitError}</span>
+            <button onClick={() => setSubmitError(null)} className="ml-2 text-red-500 hover:text-red-700 font-bold">×</button>
+          </div>
+        )}
       </header>
 
+      {/* Mobile pane toggle (passage ↔ questions) */}
+      <div className="lg:hidden flex shrink-0 border-b border-slate-200 bg-white">
+        <button
+          onClick={() => setMobilePane('passage')}
+          className={`flex-1 py-2 text-xs font-bold transition-colors ${mobilePane === 'passage' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400'}`}
+        >
+          {isListeningTest ? 'Audio / Ngữ cảnh' : 'Bài đọc'}
+        </button>
+        <button
+          onClick={() => setMobilePane('questions')}
+          className={`flex-1 py-2 text-xs font-bold transition-colors ${mobilePane === 'questions' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400'}`}
+        >
+          Câu hỏi ({totalAnswered}/{allQuestions.length})
+        </button>
+      </div>
+
       {/* Split Screen */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Left Panel: Passage / Audio */}
-        <div className="w-1/2 bg-white border-r border-slate-200 p-6 overflow-y-auto relative">
+        <div
+          className={`${mobilePane === 'passage' ? 'block' : 'hidden'} lg:block w-full max-lg:flex-1 min-h-0 bg-white border-r border-slate-200 overflow-y-auto relative p-6`}
+          style={isDesktop ? { width: `${leftWidth}%` } : undefined}
+        >
           {/* Audio Player for Listening */}
           {currentSection.mediaUrl && (() => {
             const sid = currentSection.id;
@@ -958,6 +1136,27 @@ export default function IeltsTestModule() {
               {isListeningTest ? "Questions Context" : "Reading Passage"}
             </h3>
             <div className="flex items-center gap-2">
+              {/* Font size controls */}
+              <div className="flex items-center rounded-lg bg-slate-100 border border-transparent">
+                <button
+                  onClick={() => setPassageFontScale(s => Math.max(0.85, +(s - 0.1).toFixed(2)))}
+                  disabled={passageFontScale <= 0.85}
+                  className="px-2 py-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-l-lg"
+                  title="Giảm cỡ chữ"
+                  aria-label="Giảm cỡ chữ bài đọc"
+                >
+                  <span className="material-symbols-outlined text-[16px]">text_decrease</span>
+                </button>
+                <button
+                  onClick={() => setPassageFontScale(s => Math.min(1.4, +(s + 0.1).toFixed(2)))}
+                  disabled={passageFontScale >= 1.4}
+                  className="px-2 py-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-r-lg"
+                  title="Tăng cỡ chữ"
+                  aria-label="Tăng cỡ chữ bài đọc"
+                >
+                  <span className="material-symbols-outlined text-[16px]">text_increase</span>
+                </button>
+              </div>
               <button
                 onClick={() => { setHighlightMode(!highlightMode); setHighlightPopover(null); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -965,7 +1164,8 @@ export default function IeltsTestModule() {
                     ? 'bg-amber-100 text-amber-700 border border-amber-300 shadow-sm'
                     : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent'
                 }`}
-                title={highlightMode ? 'Tắt highlight' : 'Bật highlight'}
+                title={highlightMode ? 'Tắt highlight (phím h)' : 'Bật highlight (phím h)'}
+                aria-pressed={highlightMode}
               >
                 <span className="material-symbols-outlined text-[16px]">ink_highlighter</span>
                 {highlightMode ? 'ON' : 'Highlight'}
@@ -998,15 +1198,19 @@ export default function IeltsTestModule() {
 
           <div ref={passageRef} onMouseUp={handleTextSelect}
             className={highlightMode ? 'cursor-text select-text' : ''}
-            style={highlightMode ? { userSelect: 'text' } : undefined}
+            style={{ fontSize: `${(0.875 * passageFontScale).toFixed(3)}rem`, ...(highlightMode ? { userSelect: 'text' as const } : {}) }}
           >
             {(() => {
               if (!passageContent) return <p className="text-slate-400 italic text-sm">No passage content available.</p>;
               const paragraphs = passageContent.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
               // If only 1 paragraph or very short, render as-is
               if (paragraphs.length < 2) {
-                return <p className="text-slate-700 text-sm leading-[1.9] whitespace-pre-line">{passageContent}</p>;
+                return <p className="passage-text text-slate-700 leading-[1.9] whitespace-pre-line">{passageContent}</p>;
               }
+              // Label body paragraphs A, B, C… via a dedicated counter so a
+              // leading heading doesn't shift letters and the first body
+              // paragraph always starts at "A" (never "@").
+              let labelIdx = 0;
               return (
                 <div className="space-y-4">
                   {paragraphs.map((para, i) => {
@@ -1019,12 +1223,14 @@ export default function IeltsTestModule() {
                         </div>
                       );
                     }
+                    const label = String.fromCharCode(65 + labelIdx);
+                    labelIdx++;
                     return (
                       <div key={i} className="flex gap-3">
                         <span className="font-bold text-slate-400 text-sm w-5 shrink-0 pt-[3px] select-none">
-                          {String.fromCharCode(64 + i)} {/* A=65, but skip title so offset by -1 if title exists */}
+                          {label}
                         </span>
-                        <p className="text-slate-700 text-sm leading-[1.9] flex-1">{para}</p>
+                        <p className="passage-text text-slate-700 leading-[1.9] flex-1">{para}</p>
                       </div>
                     );
                   })}
@@ -1067,8 +1273,24 @@ export default function IeltsTestModule() {
           )}
         </div>
 
+        {/* Drag-to-resize divider (desktop only) */}
+        <div
+          onMouseDown={() => {
+            isResizing.current = true;
+            document.body.style.userSelect = 'none';
+            document.body.style.cursor = 'col-resize';
+          }}
+          onDoubleClick={() => setLeftWidth(50)}
+          className="hidden lg:flex items-center justify-center w-1.5 shrink-0 bg-slate-100 hover:bg-indigo-200 cursor-col-resize transition-colors group"
+          title="Kéo để chỉnh độ rộng • Nhấp đúp để đặt lại 50/50"
+          role="separator"
+          aria-orientation="vertical"
+        >
+          <span className="w-0.5 h-8 bg-slate-300 group-hover:bg-indigo-400 rounded-full" />
+        </div>
+
         {/* Right Panel: Questions + Navigator */}
-        <div className="w-1/2 flex flex-col overflow-hidden">
+        <div className={`${mobilePane === 'questions' ? 'flex' : 'hidden'} lg:flex flex-col w-full flex-1 min-h-0 overflow-hidden`}>
           <div ref={questionsRef} onMouseUp={handleTextSelect} className="flex-1 bg-slate-50 p-6 overflow-y-auto">
           <div className="space-y-5">
             {(() => {
@@ -1113,7 +1335,7 @@ export default function IeltsTestModule() {
                 <div key={q.id} id={`question-${q.id}`} className={`bg-white rounded-xl border p-5 transition-colors relative ${
                   flaggedQuestions.has(q.id)
                     ? 'border-amber-400 ring-1 ring-amber-200'
-                    : answers[q.id] ? 'border-indigo-300 shadow-sm' : 'border-slate-200'
+                    : questionAnswered(q) ? 'border-indigo-300 shadow-sm' : 'border-slate-200'
                 }`}>
                   {/* Instruction banner (for Summary Completion, Matching, etc.) */}
                   {qInstruction && (
@@ -1161,9 +1383,13 @@ export default function IeltsTestModule() {
                               <span className="text-[10px] font-bold text-indigo-600 mr-0.5">{gapNum}</span>
                               <input
                                 type="text"
-                                value={answers[q.id + '_gap_' + gapNum] || answers[q.id] || ''}
-                                onChange={(e) => setAnswer(q.id, e.target.value)}
+                                // Each gap is stored under a composite key `${q.id}::${gapNum}`.
+                                // handleSubmit() assembles these into a JSON object keyed by
+                                // gap number so the backend can grade each gap independently.
+                                value={answers[`${q.id}::${gapNum}`] || ''}
+                                onChange={(e) => setAnswer(`${q.id}::${gapNum}`, e.target.value)}
                                 className="w-28 border-b-2 border-indigo-300 bg-white px-1.5 py-0.5 text-sm outline-none focus:border-indigo-500 rounded-sm"
+                                aria-label={`Gap ${gapNum}`}
                                 placeholder="..........."
                               />
                             </span>
@@ -1222,9 +1448,10 @@ export default function IeltsTestModule() {
                   )}
 
                   {(qType === "TRUE_FALSE_NOT_GIVEN" || qType === "YES_NO_NOT_GIVEN") && (
-                    <div className="flex gap-3">
+                    <div className="flex gap-3" role="radiogroup" aria-label={`Câu ${q.questionOrder}`}>
                       {(qType === "TRUE_FALSE_NOT_GIVEN" ? ["TRUE", "FALSE", "NOT GIVEN"] : ["YES", "NO", "NOT GIVEN"]).map(opt => (
                         <button key={opt} onClick={() => setAnswer(q.id, opt)}
+                          role="radio" aria-checked={answers[q.id] === opt}
                           className={`flex-1 py-2 rounded-lg text-sm font-bold border-2 transition-all cursor-pointer ${
                             answers[q.id] === opt ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
                           }`}>
@@ -1306,7 +1533,7 @@ export default function IeltsTestModule() {
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {sec.questions.map((q) => {
-                        const isAnswered = !!answers[q.id]?.trim();
+                        const isAnswered = questionAnswered(q);
                         const isFlagged = flaggedQuestions.has(q.id);
                         const isCurrent = secIdx === currentSectionIdx;
                         return (
@@ -1347,6 +1574,68 @@ export default function IeltsTestModule() {
           </div>
         </div>
       </div>
+
+      {/* Time-remaining warning toast */}
+      {timeWarning && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-bold">
+            <span className="material-symbols-outlined text-[18px]">schedule</span>
+            {timeWarning}
+            <button onClick={() => setTimeWarning(null)} className="ml-2 text-white/80 hover:text-white" aria-label="Đóng cảnh báo">×</button>
+          </div>
+        </div>
+      )}
+
+      {/* Submit confirmation modal */}
+      {showSubmitConfirm && (() => {
+        const unanswered = allQuestions.length - totalAnswered;
+        return (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/40 p-4 animate-in fade-in duration-150"
+            onClick={() => setShowSubmitConfirm(false)}>
+            <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-green-600">task_alt</span>
+                </div>
+                <h2 className="text-lg font-bold text-slate-800">Nộp bài thi?</h2>
+              </div>
+              <div className="space-y-2 text-sm text-slate-600 mb-5">
+                <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <span>Đã trả lời</span>
+                  <span className="font-bold text-emerald-600">{totalAnswered}/{allQuestions.length}</span>
+                </div>
+                {unanswered > 0 ? (
+                  <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-700">
+                    <span className="material-symbols-outlined text-[18px]">warning</span>
+                    <span>Còn <strong>{unanswered}</strong> câu chưa trả lời. Vẫn nộp?</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-emerald-700">
+                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                    <span>Bạn đã hoàn thành tất cả câu hỏi.</span>
+                  </div>
+                )}
+                <p className="text-xs text-slate-400 pt-1">Sau khi nộp, bạn không thể chỉnh sửa đáp án.</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSubmitConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Tiếp tục làm bài
+                </button>
+                <button
+                  onClick={() => { setShowSubmitConfirm(false); handleSubmit(); }}
+                  disabled={isSubmitting}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-slate-400 transition-colors"
+                >
+                  {isSubmitting ? 'Đang nộp...' : 'Nộp bài'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
