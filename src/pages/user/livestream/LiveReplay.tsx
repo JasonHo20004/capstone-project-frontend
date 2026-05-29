@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Play, Pause, RotateCcw, Volume2 } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_RAG_SERVICE_URL ?? "http://localhost:8000";
+// Routes through the api-gateway (proxies /api/livestream/* to rag-service).
+const API_BASE = import.meta.env.VITE_GATEWAY_URL ?? "http://localhost:3000";
 
 interface ReplaySection {
   index: number;
@@ -167,6 +168,21 @@ export default function LiveReplay() {
     playSection(index, recording);
   }
 
+  // Click-to-seek on the progress bar: map the click position to the section
+  // whose cumulative duration contains that point, then jump there.
+  function seekToFraction(fraction: number) {
+    if (!recording) return;
+    const total = recording.sections.reduce((a, s) => a + s.duration, 0);
+    if (total <= 0) return;
+    const target = Math.max(0, Math.min(1, fraction)) * total;
+    let acc = 0;
+    for (let i = 0; i < recording.sections.length; i++) {
+      acc += recording.sections[i].duration;
+      if (target <= acc) { jumpToSection(i); return; }
+    }
+    jumpToSection(recording.sections.length - 1);
+  }
+
   function playQAAnswer(qa: ReplayQA) {
     qaAudioRef.current?.pause();
     const audio = new Audio(qa.audio_url);
@@ -256,9 +272,16 @@ export default function LiveReplay() {
               <span className="text-xs text-gray-400 w-12 text-right">
                 {formatDuration(elapsed)}
               </span>
-              <div className="flex-1 bg-gray-700 rounded-full h-1.5 cursor-pointer">
+              <div
+                className="flex-1 bg-gray-700 rounded-full h-1.5 cursor-pointer"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  seekToFraction((e.clientX - rect.left) / rect.width);
+                }}
+                title="Nhấn để tua tới đoạn"
+              >
                 <div
-                  className="bg-indigo-500 h-1.5 rounded-full transition-all"
+                  className="bg-indigo-500 h-1.5 rounded-full transition-all pointer-events-none"
                   style={{ width: `${progress}%` }}
                 />
               </div>

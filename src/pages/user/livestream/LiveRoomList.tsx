@@ -25,7 +25,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AIAvatarAnime } from '@/components/user/livestream/AIAvatarAnime';
 import { Users, Radio, Plus, LogIn, Clock, PlayCircle, BookOpen } from 'lucide-react';
 
-const RAG_BASE = import.meta.env.VITE_RAG_SERVICE_URL ?? 'http://localhost:8000';
+// Routes through the api-gateway (proxies /api/livestream/* to rag-service).
+const RAG_BASE = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:3000';
 
 interface Room {
   id: string;
@@ -85,6 +86,7 @@ export default function LiveRoomList() {
   const [level, setLevel] = useState('intermediate');
   const [language, setLanguage] = useState('en');
   const [tab, setTab] = useState<'live' | 'recordings'>('live');
+  const [createError, setCreateError] = useState('');
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['livestream-rooms'],
@@ -107,9 +109,13 @@ export default function LiveRoomList() {
 
   const createRoom = useMutation({
     mutationFn: async () => {
+      const token = localStorage.getItem('accessToken') ?? '';
       const res = await fetch(`${RAG_BASE}/api/livestream/rooms`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           topic: topic.trim(),
           lesson_prompt: lessonPrompt.trim(),
@@ -119,14 +125,24 @@ export default function LiveRoomList() {
           host_name: user?.fullName ?? 'Teacher',
         }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(
+          (data as { detail?: string; message?: string }).detail ||
+          (data as { message?: string }).message ||
+          'Không tạo được phòng. Vui lòng đăng nhập lại rồi thử lại.',
+        );
+      }
       return res.json() as Promise<{ room_id: string }>;
     },
     onSuccess: ({ room_id }) => {
       setOpen(false);
       setTopic('');
       setLessonPrompt('');
+      setCreateError('');
       navigate(`/live/${room_id}`);
     },
+    onError: (e: Error) => setCreateError(e.message),
   });
 
   const rooms = data?.rooms ?? [];
@@ -220,6 +236,12 @@ export default function LiveRoomList() {
                   </p>
                 )}
               </div>
+
+              {createError && (
+                <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-md px-3 py-2">
+                  {createError}
+                </p>
+              )}
 
               <Button
                 className="w-full bg-indigo-600 hover:bg-indigo-700"

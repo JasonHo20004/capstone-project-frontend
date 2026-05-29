@@ -19,11 +19,14 @@ import {
   Mic2, Star, CheckCircle, Check,
 } from 'lucide-react';
 
-const RAG_BASE = import.meta.env.VITE_RAG_SERVICE_URL ?? 'http://localhost:8000';
+// Livestream traffic (HTTP + WebSocket) routes through the api-gateway, which
+// proxies /api/livestream/* to the rag-service. Point at the gateway origin.
+const RAG_BASE = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:3000';
 const WS_BASE = RAG_BASE.replace(/^http/, 'ws');
 const MAX_RECONNECT_DELAY = 16000;
 const MAX_QUESTION_LENGTH = 200;
-const QUESTIONS_PER_MIN = 3;
+const QUESTIONS_PER_MIN = 6;
+const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5] as const;
 
 // Quick-reply chips shown above input
 const QUICK_CHIPS = [
@@ -96,26 +99,46 @@ class AudioQueue {
   private playing = false;
   private current: HTMLAudioElement | null = null;
   private _muted = false;
+  private _rate = 1;
+  private _blocked = false;
   onPlay?: () => void;
   onStop?: () => void;
+  /** Fired when the browser blocked autoplay — the UI should prompt a tap. */
+  onBlocked?: () => void;
 
   push(url: string) {
     if (!url) return;
     this.queue.push(url);
-    if (!this.playing) this._next();
+    if (!this.playing && !this._blocked) this._next();
   }
 
   private _next() {
     if (!this.queue.length) { this.playing = false; this.onStop?.(); return; }
     this.playing = true;
-    this.onPlay?.();
-    const url = this.queue.shift()!;
+    const url = this.queue[0]; // peek — only drop the item once it actually plays/ends
     const audio = new Audio(url);
     audio.muted = this._muted;
+    audio.playbackRate = this._rate;
     this.current = audio;
-    audio.onended = () => this._next();
-    audio.onerror = () => this._next();
-    audio.play().catch(() => this._next());
+    // onPlay fires on the real `play` event, so the avatar only "speaks" when
+    // audio is genuinely audible (not when playback was silently blocked).
+    audio.onplay   = () => { this._blocked = false; this.onPlay?.(); };
+    audio.onended  = () => { this.queue.shift(); this.current = null; this._next(); };
+    audio.onerror  = () => { this.queue.shift(); this.current = null; this._next(); };
+    audio.play().catch(() => {
+      // Autoplay blocked (no user gesture yet). Keep the item queued and wait
+      // for unlock() instead of silently draining the whole lesson.
+      this.playing = false;
+      this._blocked = true;
+      this.onStop?.();
+      this.onBlocked?.();
+    });
+  }
+
+  /** Resume playback after a user gesture has granted audio permission. */
+  unlock() {
+    this._blocked = false;
+    if (!this.playing && this.queue.length) this._next();
   }
 
   setMuted(muted: boolean) {
@@ -123,9 +146,15 @@ class AudioQueue {
     if (this.current) this.current.muted = muted;
   }
 
+  setRate(rate: number) {
+    this._rate = rate;
+    if (this.current) this.current.playbackRate = rate;
+  }
+
   clear() {
     this.queue = [];
     this.playing = false;
+    this._blocked = false;
     this.current?.pause();
     this.current = null;
     this.onStop?.();
@@ -188,18 +217,33 @@ export default function LiveRoom() {
   const [reactions, setReactions]           = useState<FloatingReaction[]>([]);
   const [handRaised, setHandRaised]         = useState(false);
   const [showParticipants, setShowParticipants] = useState(true);
+  const [audioBlocked, setAudioBlocked]     = useState(false);
+  const [playbackRate, setPlaybackRate]     = useState(1);
+  const [mobileTab, setMobileTab]           = useState<'stage' | 'chat'>('stage');
+  const [isSpotlight, setIsSpotlight]       = useState(false);   // I was invited to speak
+  const [speaking, setSpeaking]             = useState(false);   // my mic is live
+  const [spotlight, setSpotlight]           = useState<{ user_name: string; text: string } | null>(null); // live caption for the room
   const reactionIdRef = useRef(0);
   const currentUserIdRef = useRef<string>('');
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const speakRecRef = useRef<ISpeechRecognition | null>(null);
+  const speakTextRef = useRef('');
 
-  // Sync mute state to audio queue
+  // Sync mute + playback rate to audio queue
   useEffect(() => { audioQueueRef.current.setMuted(muted); }, [muted]);
+  useEffect(() => { audioQueueRef.current.setRate(playbackRate); }, [playbackRate]);
 
   useEffect(() => {
     const aq = audioQueueRef.current;
-    aq.onPlay = () => setIsSpeaking(true);
+    aq.onPlay = () => { setIsSpeaking(true); setAudioBlocked(false); };
     aq.onStop = () => setIsSpeaking(false);
+    aq.onBlocked = () => setAudioBlocked(true);
     return () => { unmounted.current = true; };
+  }, []);
+
+  const enableAudio = useCallback(() => {
+    audioQueueRef.current.unlock();
+    setAudioBlocked(false);
   }, []);
 
   // Auto-scroll chat
@@ -245,7 +289,11 @@ export default function LiveRoom() {
         setStatus(r.status);
         setIsHost(!!msg.is_host);
         setParticipantCount(msg.participant_count as number);
-        setTranscript(r.transcript ?? []);
+        const tr = r.transcript ?? [];
+        setTranscript(tr);
+        // On reconnect mid-lesson, restore the active slide so the stage isn't
+        // blank until the next chunk arrives.
+        if (r.status === 'live' && tr.length > 0) setCurrentChunkIndex(tr.length - 1);
         break;
       }
       case 'participant_join':
@@ -275,7 +323,21 @@ export default function LiveRoom() {
         const name = msg.target_user_name as string;
         const isMe = msg.target_user_id === currentUserIdRef.current;
         setChat(p => [...p, { type: 'system', text: isMe ? `Giảng viên mời bạn phát biểu!` : `Giảng viên mời ${name} phát biểu` }]);
-        if (isMe) setHandRaised(false);
+        if (isMe) { setHandRaised(false); setIsSpotlight(true); }
+        break;
+      }
+      case 'speaker_transcript': {
+        if (msg.final) setSpotlight(null);
+        else setSpotlight({ user_name: msg.user_name as string, text: (msg.text as string) || '' });
+        break;
+      }
+      case 'speaker_ended': {
+        setSpotlight(null);
+        if (msg.user_id === currentUserIdRef.current) {
+          setIsSpotlight(false);
+          speakRecRef.current?.abort();
+          setSpeaking(false);
+        }
         break;
       }
       case 'practice_result': {
@@ -283,7 +345,7 @@ export default function LiveRoom() {
         const score = msg.score as number;
         if (!isMe) {
           const name = msg.user_name as string;
-          const scoreLabel = score >= 80 ? '[*]' : score >= 50 ? '[+1]' : '+1';
+          const scoreLabel = score >= 80 ? '🌟' : score >= 50 ? '👍' : '💪';
           setChat(p => [...p, { type: 'system', text: `${scoreLabel} ${name} luyện nói: "${msg.phrase}" (${score}/100)` }]);
         }
         break;
@@ -295,6 +357,11 @@ export default function LiveRoom() {
       case 'lesson_generating':
         setIsThinking(true);
         setChat(p => [...p, { type: 'system', text: 'AI đang chuẩn bị bài học…' }]);
+        break;
+      case 'lesson_info':
+        if (msg.fallback) {
+          setChat(p => [...p, { type: 'system', text: 'AI chưa tạo được bài tuỳ chỉnh — đang dùng nội dung mẫu. Bạn vẫn có thể đặt câu hỏi để được giải đáp chi tiết.' }]);
+        }
         break;
       case 'lesson_chunk': {
         setIsThinking(false);
@@ -308,7 +375,12 @@ export default function LiveRoom() {
           image_url: (msg.image_url as string) || '',
         };
         const idx = msg.index as number;
-        setTranscript(p => [...p, chunk]);
+        // Replace-at-index (not blind append) so a chunk re-sent after a
+        // reconnect doesn't create a duplicate slide.
+        setTranscript(p => {
+          if (idx < p.length) { const c = [...p]; c[idx] = chunk; return c; }
+          return [...p, chunk];
+        });
         setCurrentChunkIndex(idx);
         setProgress({ current: idx + 1, total: msg.total as number });
         if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string);
@@ -419,8 +491,46 @@ export default function LiveRoom() {
     setIsListening(true);
   }, [isListening]);
 
-  // Stop mic if user navigates away
-  useEffect(() => () => { recognitionRef.current?.abort(); }, []);
+  // Stop mics if user navigates away
+  useEffect(() => () => { recognitionRef.current?.abort(); speakRecRef.current?.abort(); }, []);
+
+  // ── Spotlight speaking (option B: live speech-to-text, no WebRTC) ──
+  const startSpeaking = useCallback(() => {
+    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!SR || wsRef.current?.readyState !== WebSocket.OPEN) return;
+    const rec = new SR();
+    rec.lang = room?.language === 'en' ? 'en-US' : 'vi-VN';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (e: ISpeechRecognitionEvent) => {
+      const text = Array.from(e.results).map(r => r[0].transcript).join('').slice(0, 300);
+      speakTextRef.current = text;
+      wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text, final: false }));
+    };
+    rec.onend = () => {
+      setSpeaking(false);
+      const finalText = speakTextRef.current.trim();
+      wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text: finalText, final: true }));
+      speakTextRef.current = '';
+      setIsSpotlight(false);
+    };
+    rec.onerror = () => setSpeaking(false);
+    rec.start();
+    speakRecRef.current = rec;
+    setSpeaking(true);
+  }, [room?.language]);
+
+  const stopSpeaking = useCallback(() => {
+    speakRecRef.current?.stop(); // triggers onend → sends the final transcript
+  }, []);
+
+  const cancelSpeaking = useCallback(() => {
+    speakRecRef.current?.abort();
+    setSpeaking(false);
+    setIsSpotlight(false);
+    speakTextRef.current = '';
+    wsRef.current?.send(JSON.stringify({ type: 'end_speaking' }));
+  }, []);
 
   const sendChip = useCallback((text: string) => {
     if (wsRef.current?.readyState !== WebSocket.OPEN || questionsLeft === 0) return;
@@ -573,6 +683,19 @@ export default function LiveRoom() {
             {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
 
+          {/* Playback speed (cycles through presets) */}
+          <button
+            onClick={() => setPlaybackRate(r => {
+              const i = PLAYBACK_RATES.indexOf(r as typeof PLAYBACK_RATES[number]);
+              return PLAYBACK_RATES[(i + 1) % PLAYBACK_RATES.length];
+            })}
+            className="px-1.5 py-1 rounded-md text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors tabular-nums"
+            title="Tốc độ đọc của AI"
+            aria-label="Tốc độ đọc của AI"
+          >
+            {playbackRate}×
+          </button>
+
           {reconnecting ? (
             <span className="flex items-center gap-1 text-xs text-amber-500">
               <WifiOff className="w-3 h-3" /> Đang kết nối lại…
@@ -593,13 +716,55 @@ export default function LiveRoom() {
         </div>
       </div>
 
+      {/* ── Mobile tab switcher (below lg only) ── */}
+      <div className="lg:hidden flex shrink-0 border-b border-slate-200 bg-white">
+        <button
+          onClick={() => setMobileTab('stage')}
+          className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors',
+            mobileTab === 'stage' ? 'text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-400')}
+        >
+          <BookOpen className="w-3.5 h-3.5" /> Bài giảng
+        </button>
+        <button
+          onClick={() => setMobileTab('chat')}
+          className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors',
+            mobileTab === 'chat' ? 'text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-400')}
+        >
+          <MessageSquare className="w-3.5 h-3.5" /> Hỏi & Đáp
+        </button>
+      </div>
+
       {/* ── Body ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Audio unlock gate — shown only when the browser blocked autoplay */}
+        {audioBlocked && !muted && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+            <button
+              onClick={enableAudio}
+              className="flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white font-semibold shadow-xl hover:bg-indigo-700 active:scale-95 transition-all"
+            >
+              <Volume2 className="w-5 h-5" /> Nhấn để bật tiếng AI
+            </button>
+          </div>
+        )}
+
         {/* Left: stage (slide + avatar) + transcript — single scrollable column */}
-        <div className="flex flex-col flex-1 min-w-0 border-r border-slate-200 overflow-y-auto overflow-x-hidden">
+        <div className={cn(
+          'flex-col flex-1 min-w-0 lg:border-r border-slate-200 overflow-y-auto overflow-x-hidden',
+          mobileTab === 'stage' ? 'flex' : 'hidden', 'lg:flex',
+        )}>
           {/* ── Stage ── */}
           <div className="relative shrink-0 bg-gradient-to-b from-indigo-50 to-white">
             <ReactionLayer reactions={reactions} onExpire={expireReaction} />
+
+            {/* Live spotlight caption — what the invited student is saying, shown to everyone */}
+            {spotlight && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-[90%] flex items-center gap-2 bg-indigo-600/95 text-white px-3 py-1.5 rounded-full shadow-lg">
+                <Mic2 className="w-3.5 h-3.5 shrink-0 animate-pulse" />
+                <span className="text-xs font-semibold shrink-0">{spotlight.user_name}:</span>
+                <span className="text-xs truncate">{spotlight.text || '…'}</span>
+              </div>
+            )}
 
             {hasActiveSlide && activeChunk ? (
               /* Slide-first layout: big slide on top with avatar PIP top-right */
@@ -695,6 +860,40 @@ export default function LiveRoom() {
                   >
                     <RotateCcw className="w-3.5 h-3.5" /> Phòng khác
                   </Button>
+                </div>
+              )}
+
+              {/* Invited to speak: spotlight speaking panel */}
+              {isSpotlight && !isEnded && (
+                <div className="w-full max-w-md flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-indigo-300 bg-indigo-50">
+                  <p className="text-sm font-semibold text-indigo-700 flex items-center gap-1.5">
+                    <Mic2 className="w-4 h-4" /> Bạn được mời phát biểu
+                  </p>
+                  {voiceSupported ? (
+                    <>
+                      <p className="text-xs text-slate-500 text-center">
+                        Nhấn micro và nói — cả lớp sẽ thấy lời bạn, AI phản hồi khi bạn nói xong.
+                      </p>
+                      <div className="flex gap-2">
+                        {!speaking ? (
+                          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={startSpeaking}>
+                            <Mic className="w-4 h-4" /> Bắt đầu nói
+                          </Button>
+                        ) : (
+                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1.5" onClick={stopSpeaking}>
+                            <CheckCircle className="w-4 h-4" /> Xong, gửi
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" className="gap-1.5 text-slate-500" onClick={cancelSpeaking}>
+                          Thôi
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-amber-600 text-center">
+                      Trình duyệt không hỗ trợ nói. Bạn có thể gõ câu hỏi ở khung Hỏi & Đáp.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -849,7 +1048,10 @@ export default function LiveRoom() {
         </div>
 
         {/* Right: Q&A chat */}
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className={cn(
+          'flex-col flex-1 min-w-0 overflow-hidden',
+          mobileTab === 'chat' ? 'flex' : 'hidden', 'lg:flex',
+        )}>
           <div className="flex items-center gap-1.5 px-4 py-2 border-b border-slate-100 bg-white shrink-0">
             <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
             <span className="text-xs font-medium text-slate-500">Hỏi & Đáp</span>
@@ -946,7 +1148,7 @@ export default function LiveRoom() {
                       : 'border border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500',
                     (!connected || questionsLeft === 0) && 'opacity-40 cursor-not-allowed',
                   )}
-                  title={isListening ? 'Dừng ghi âm' : 'Nói câu hỏi (tiếng Việt)'}
+                  title={isListening ? 'Dừng ghi âm' : (room?.language === 'en' ? 'Nói câu hỏi (tiếng Anh)' : 'Nói câu hỏi (tiếng Việt)')}
                   aria-label={isListening ? 'Dừng ghi âm' : 'Ghi âm câu hỏi'}
                 >
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -993,15 +1195,21 @@ export default function LiveRoom() {
           </div>
         </div>
 
-        {/* Far-right: participant sidebar */}
+        {/* Far-right: participant sidebar (static on lg, slide-over drawer on mobile) */}
         {showParticipants && (
-          <ParticipantPanel
-            className="w-56 shrink-0"
-            participants={participants}
-            currentUserId={currentUserIdRef.current}
-            isHost={isHost}
-            onInvite={inviteSpeaker}
-          />
+          <>
+            <div
+              className="lg:hidden absolute inset-0 z-30 bg-slate-900/30"
+              onClick={() => setShowParticipants(false)}
+            />
+            <ParticipantPanel
+              className="w-56 shrink-0 absolute right-0 top-0 bottom-0 z-30 shadow-xl lg:static lg:shadow-none"
+              participants={participants}
+              currentUserId={currentUserIdRef.current}
+              isHost={isHost}
+              onInvite={inviteSpeaker}
+            />
+          </>
         )}
       </div>
 
