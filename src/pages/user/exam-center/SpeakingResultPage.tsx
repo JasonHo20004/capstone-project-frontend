@@ -101,6 +101,11 @@ function normalizeEvaluation(e: any): NormalizedResult {
   };
 }
 
+// Stop auto-polling after this many attempts (~2 min at 3s) so a grading job
+// that never finishes can't poll the API forever. The user keeps a manual
+// "reload" button to check again.
+const MAX_GRADING_POLLS = 40;
+
 // Try to load either entity. Prefer session (History route uses session IDs).
 function useNormalizedResult(id: string | null) {
   return useQuery<NormalizedResult | null>({
@@ -108,8 +113,9 @@ function useNormalizedResult(id: string | null) {
     enabled: Boolean(id),
     refetchInterval: (q) => {
       const d = q.state.data;
-      if (d?.isProcessing) return 3000;
-      return false;
+      if (!d?.isProcessing) return false;
+      if (q.state.dataUpdateCount >= MAX_GRADING_POLLS) return false; // give up auto-poll
+      return 3000;
     },
     queryFn: async () => {
       if (!id) return null;
@@ -136,7 +142,7 @@ function useNormalizedResult(id: string | null) {
 export default function SpeakingResultPage() {
   const { t } = useTranslation("exam");
   const { evaluationId } = useParams();
-  const { data: result, isLoading } = useNormalizedResult(evaluationId || null);
+  const { data: result, isLoading, refetch, isFetching } = useNormalizedResult(evaluationId || null);
 
   const userId = getUserId();
   const { data: allSessions } = useUserSpeakingSessions(userId);
@@ -221,6 +227,26 @@ export default function SpeakingResultPage() {
           <h2 className="text-xl font-black text-slate-900 mb-2">{t("speakingResultPage.grading.title")}</h2>
           <p className="text-sm text-slate-500">{t("speakingResultPage.grading.subtitle")}</p>
           <p className="text-xs text-slate-400 mt-1">{t("speakingResultPage.grading.hint")}</p>
+          {/* Escape hatch: if grading drags on (or auto-poll has stopped), let
+              the user re-check or leave instead of staring at the spinner. */}
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-[16px]">refresh</span>
+              {isFetching
+                ? t("speakingResultPage.grading.checking", "Đang kiểm tra…")
+                : t("speakingResultPage.grading.reload", "Tải lại")}
+            </button>
+            <Link
+              to="/exam/speaking-history"
+              className="px-4 py-2 text-sm font-semibold text-slate-500 rounded-lg hover:bg-slate-100 transition"
+            >
+              {t("speakingResultPage.grading.backLater", "Quay lại sau")}
+            </Link>
+          </div>
         </div>
       </div>
     );

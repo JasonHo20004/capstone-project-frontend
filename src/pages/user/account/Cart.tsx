@@ -9,6 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { formatVND } from '@/lib/utils';
 import PaymentDialog from '@/components/user/payment/PaymentDialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import { Trash2, Loader2, ShoppingCart, Ticket, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -70,6 +80,16 @@ const CartPage = () => {
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<ValidateCouponResult | null>(null);
   const [validating, setValidating] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
+  const handleClearCart = () => {
+    clearMutation.mutate(undefined, {
+      onSuccess: () => {
+        setSelectedIds([]);
+        setClearConfirmOpen(false);
+      },
+    });
+  };
 
   // Reset coupon if the selected subtotal changes — server may now reject it
   // (minOrderAmount unmet) and we don't want to send a stale discount.
@@ -89,17 +109,13 @@ const CartPage = () => {
     }
     setValidating(true);
     try {
-      const res = await couponService.validate(code);
+      // Validate against the SELECTED items only — the server recomputes the
+      // subtotal from those items' trusted prices, so minOrderAmount and the
+      // discount match what checkoutPartial will apply.
+      const res = await couponService.validate(code, selectedIds);
       if (res.data) {
-        // Server returns discount based on FULL cart subtotal. If user only
-        // selected part of it, recompute against the selection: only honor the
-        // coupon when minOrderAmount still holds for the selected total.
-        if (res.data.subtotal !== selectedTotal) {
-          toast.error(t('cart.toasts.couponFullCartOnly'));
-        } else {
-          setCoupon(res.data);
-          toast.success(t('cart.toasts.couponApplied', { code: res.data.code }));
-        }
+        setCoupon(res.data);
+        toast.success(t('cart.toasts.couponApplied', { code: res.data.code }));
       }
     } catch (err: unknown) {
       const msg =
@@ -195,11 +211,7 @@ const CartPage = () => {
                       size="sm"
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       disabled={clearMutation.isPending}
-                      onClick={() => {
-                        clearMutation.mutate(undefined, {
-                          onSuccess: () => setSelectedIds([]),
-                        });
-                      }}
+                      onClick={() => setClearConfirmOpen(true)}
                     >
                       {clearMutation.isPending ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -358,6 +370,29 @@ const CartPage = () => {
         confirmLabel={isProcessing ? t('cart.processing') : t('cart.confirm')}
         onConfirm={handleConfirmPayment}
       />
+
+      <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('cart.clearConfirm.title', 'Xoá toàn bộ giỏ hàng?')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('cart.clearConfirm.description', 'Tất cả khoá học trong giỏ sẽ bị xoá. Hành động này không thể hoàn tác.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cart.clearConfirm.cancel', 'Huỷ')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleClearCart(); }}
+              disabled={clearMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {clearMutation.isPending
+                ? t('cart.clearConfirm.clearing', 'Đang xoá…')
+                : t('cart.clearConfirm.confirm', 'Xoá tất cả')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

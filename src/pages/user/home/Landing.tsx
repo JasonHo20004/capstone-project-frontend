@@ -9,8 +9,9 @@ import Hero from '@/components/user/home/Hero';
 import Features from '@/components/user/home/Features';
 import Pricing from '@/components/user/home/Pricing';
 import CourseCard from '@/components/user/course/CourseCard';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, ChevronLeft, ChevronRight, Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Target, Users, Award, Heart, ArrowRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useGetCourses, useEnrolledCourses } from '@/hooks/api/use-courses';
@@ -196,7 +197,22 @@ export default function Landing() {
             </div>
 
             {isLoading ? (
-              <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl ring-1 ring-border/10 overflow-hidden">
+                    <Skeleton className="h-40 w-full rounded-none" />
+                    <div className="space-y-3 p-4">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-2/3" />
+                      <div className="flex items-center justify-between pt-2">
+                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-8 w-24 rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <>
                 {user && myCourses.length > 0 && (
@@ -232,6 +248,15 @@ export default function Landing() {
                   ) : (
                     <div className="rounded-2xl bg-surface-low py-20 text-center ring-1 ring-border/10">
                       <p className="text-muted-foreground">{t('catalog.empty')}</p>
+                      {(searchQuery.trim() !== '' || selectedLevel !== 'all') && (
+                        <Button
+                          variant="outline"
+                          className="mt-4"
+                          onClick={() => { setSearchQuery(''); setSelectedLevel('all'); setPage(1); }}
+                        >
+                          {t('catalog.clearFilters', 'Xoá bộ lọc')}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

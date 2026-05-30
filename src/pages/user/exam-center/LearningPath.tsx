@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import apiClient from "@/lib/api/config";
 import { placementService } from "@/lib/api/services/user/placement/placement.service";
 
@@ -95,6 +96,9 @@ export default function LearningPath() {
     placementTakenAt: baseline.takenAt,
   }));
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
+  // True when the shown plan is the offline sample (AI generation failed),
+  // so we can tell the user instead of passing it off as a real AI plan.
+  const [usedFallback, setUsedFallback] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // Hydrate existing saved plan on mount — skip wizard if user already has one.
@@ -171,6 +175,7 @@ export default function LearningPath() {
 
   const generatePlan = useCallback(async () => {
     setView("generating");
+    setUsedFallback(false);
     const startedAt = Date.now();
     const mock = buildMockPlan(profile);
 
@@ -184,17 +189,31 @@ export default function LearningPath() {
         (resp.data?.data?.plan as GeneratedPlan) ??
         (resp.data?.data as GeneratedPlan) ??
         null;
-      setSaveStatus("saved"); // /generate already upserted on the backend
+      // A null apiPlan means the response shape was unexpected — treat it as a
+      // fallback, not a saved AI plan.
+      const isFallback = !apiPlan;
+      setSaveStatus(isFallback ? "idle" : "saved"); // /generate already upserted on the backend
+      if (isFallback) {
+        toast.warning("Đang hiển thị lộ trình mẫu", {
+          description: "Hệ thống chưa tạo được lộ trình cá nhân hoá. Bạn có thể bấm Tạo lại để thử lần nữa.",
+        });
+      }
       const elapsed = Date.now() - startedAt;
       const wait = Math.max(0, 3300 - elapsed);
       window.setTimeout(() => {
+        setUsedFallback(isFallback);
         setPlan(apiPlan ?? mock);
         setView("result");
       }, wait);
     } catch {
+      setSaveStatus("idle");
+      toast.warning("Không tạo được lộ trình từ AI", {
+        description: "Đang hiển thị lộ trình mẫu offline. Vui lòng thử Tạo lại sau.",
+      });
       const elapsed = Date.now() - startedAt;
       const wait = Math.max(0, 3300 - elapsed);
       window.setTimeout(() => {
+        setUsedFallback(true);
         setPlan(mock);
         setView("result");
       }, wait);
@@ -256,6 +275,12 @@ export default function LearningPath() {
     return (
       <div className="max-w-[1280px] mx-auto px-2 py-2">
         <PageHeader compact />
+        {usedFallback && (
+          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            Đây là <strong>lộ trình mẫu</strong> — hệ thống AI chưa tạo được lộ trình cá
+            nhân hoá cho bạn. Hãy bấm <strong>Tạo lại</strong> để thử lần nữa.
+          </div>
+        )}
         <PlanResult
           plan={plan}
           onRegenerate={handleRegenerate}

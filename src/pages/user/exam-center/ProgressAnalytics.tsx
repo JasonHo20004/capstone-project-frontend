@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -102,19 +102,24 @@ export default function ProgressAnalytics() {
   const dateLocale = i18nInstance.language === "vi" ? "vi-VN" : "en-GB";
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const userId = getUserId();
 
   // ─── Fetch all data sources ──────────────────────────────────────────────
-  useEffect(() => {
+  // Each source is fetched independently so one failing endpoint doesn't wipe
+  // out the others. A blocking error is only shown when every source fails.
+  const fetchAll = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
+    setLoading(true);
+    setError(false);
 
-    const fetchAll = async () => {
-      const items: HistoryItem[] = [];
+    const items: HistoryItem[] = [];
+    let failures = 0;
 
-      try {
-        // 1. Reading/Listening from test history
+    // 1. Reading/Listening from test history
+    try {
         const historyRes = await apiClient.get(`/tests/history/${userId}`);
         const history = historyRes.data?.data || [];
         for (const h of history) {
@@ -144,8 +149,13 @@ export default function ProgressAnalytics() {
             raw: h,
           });
         }
+    } catch (err) {
+        failures++;
+        console.error("Failed to fetch test history:", err);
+    }
 
-        // 2. Writing evaluations
+    // 2. Writing evaluations
+    try {
         const writingRes = await aiEvaluationService.getUserWritingEvaluations(userId);
         const writings = (writingRes.data || []) as any[];
         for (const w of writings) {
@@ -169,8 +179,13 @@ export default function ProgressAnalytics() {
             raw: w,
           });
         }
+    } catch (err) {
+        failures++;
+        console.error("Failed to fetch writing evaluations:", err);
+    }
 
-        // 3. Speaking sessions
+    // 3. Speaking sessions
+    try {
         const speakingRes = await aiEvaluationService.listSpeakingSessions(userId);
         const sessions = (speakingRes.data || []) as any[];
         for (const s of sessions) {
@@ -185,17 +200,22 @@ export default function ProgressAnalytics() {
             raw: s,
           });
         }
-      } catch (err) {
-        console.error("Failed to fetch progress data:", err);
-      }
+    } catch (err) {
+        failures++;
+        console.error("Failed to fetch speaking sessions:", err);
+    }
 
-      items.sort((a, b) => b.date.getTime() - a.date.getTime());
-      setHistoryItems(items);
-      setLoading(false);
-    };
-
-    fetchAll();
+    items.sort((a, b) => b.date.getTime() - a.date.getTime());
+    setHistoryItems(items);
+    // Only block with an error screen when every source failed and there's
+    // nothing to show; partial data is rendered as-is.
+    setError(failures === 3 && items.length === 0);
+    setLoading(false);
   }, [userId, t]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   // ─── Compute per-skill stats ─────────────────────────────────────────────
   const skillStats = useMemo(() => {
@@ -286,6 +306,25 @@ export default function ProgressAnalytics() {
           <span className="material-symbols-outlined text-5xl text-slate-300">lock</span>
           <p className="text-slate-500">{t("progressAnalytics.loginRequired")}</p>
           <Link to="/login" className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">{t("progressAnalytics.loginCta")}</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center space-y-3">
+          <span className="material-symbols-outlined text-5xl text-slate-300">cloud_off</span>
+          <p className="text-slate-500">
+            {t("progressAnalytics.loadError", "Không tải được dữ liệu tiến độ. Vui lòng thử lại.")}
+          </p>
+          <button
+            onClick={() => void fetchAll()}
+            className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          >
+            {t("progressAnalytics.retry", "Thử lại")}
+          </button>
         </div>
       </div>
     );

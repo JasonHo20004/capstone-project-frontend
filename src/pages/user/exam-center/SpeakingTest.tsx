@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation, Trans } from "react-i18next";
+import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import {
   useStartSpeakingSession,
@@ -32,6 +33,23 @@ import {
 } from "./SpeakingComponents";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { useNavigate } from "react-router-dom";
+
+// Surface a clear, actionable toast when microphone access fails — otherwise
+// the user just sees nothing happen after granting/denying the prompt.
+function notifyMicError(err: unknown) {
+  const denied =
+    err instanceof DOMException &&
+    (err.name === "NotAllowedError" || err.name === "SecurityError");
+  if (denied) {
+    toast.error("Không có quyền dùng micro", {
+      description: "Hãy cho phép quyền micro cho trang này trong trình duyệt rồi thử lại.",
+    });
+  } else {
+    toast.error("Không truy cập được micro", {
+      description: "Kiểm tra thiết bị thu âm hoặc thử lại với trình duyệt khác.",
+    });
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -190,6 +208,7 @@ function SpeakingTestContent() {
       setMicCheckStream(stream);
     } catch (err) {
       console.error("Mic access error:", err);
+      notifyMicError(err);
     }
   }, []);
 
@@ -240,6 +259,7 @@ function SpeakingTestContent() {
       setIsPaused(false);
     } catch (err) {
       console.error("Mic access error:", err);
+      notifyMicError(err);
     }
   }, []);
 
@@ -281,11 +301,17 @@ function SpeakingTestContent() {
       const uploadRes = await aiEvaluationService.getSpeakingUploadUrl();
       const { uploadUrl, publicUrl } = (uploadRes.data as any);
 
-      await fetch(uploadUrl, {
+      // fetch() only rejects on network failure — an HTTP 4xx/5xx (expired
+      // presigned URL, storage rejection) still resolves. Check res.ok so we
+      // never report a failed upload as a successful answer.
+      const putRes = await fetch(uploadUrl, {
         method: "PUT",
         body: pendingBlob,
         headers: { "Content-Type": "audio/webm" },
       });
+      if (!putRes.ok) {
+        throw new Error(`Audio upload failed (HTTP ${putRes.status})`);
+      }
 
       setTurns(prev => [...prev, {
         role: "candidate" as const,
@@ -337,6 +363,13 @@ function SpeakingTestContent() {
       }
     } catch (err) {
       console.error("Send audio error:", err);
+      // Surface the failure — the answer was NOT delivered. Clear the pending
+      // recording so the user can record again instead of silently losing it.
+      toast.error("Gửi câu trả lời thất bại", {
+        description: "Mạng không ổn định hoặc tải âm thanh lỗi. Vui lòng thu âm lại.",
+      });
+      setPendingBlob(null);
+      setPendingAudioUrl(null);
     } finally {
       setIsProcessing(false);
     }

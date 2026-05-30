@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { cn } from '@/lib/utils';
+import apiClient from '@/lib/api/config';
 import {
   Users, Send, PlayCircle, StopCircle, ArrowLeft,
   MessageSquare, BookOpen, Volume2, VolumeX, WifiOff,
@@ -189,6 +190,9 @@ export default function LiveRoom() {
   const activeChunkRef  = useRef<HTMLDivElement>(null);
   const reconnectTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectDelay  = useRef(1000);
+  // Guards against an infinite refresh→reconnect loop when the token can't be
+  // renewed. Reset on every successful (re)connect.
+  const authRetried     = useRef(false);
   const unmounted       = useRef(false);
   const rateLimitRef    = useRef<{ count: number; resetAt: number }>({ count: 0, resetAt: 0 });
 
@@ -428,6 +432,7 @@ export default function LiveRoom() {
     ws.onopen = () => {
       if (unmounted.current) { ws.close(); return; }
       reconnectDelay.current = 1000;
+      authRetried.current = false;
       setConnected(true);
       setReconnecting(false);
       const uid = user?.id ?? 'guest-' + Math.random().toString(36).slice(2);
@@ -443,7 +448,31 @@ export default function LiveRoom() {
 
     ws.onclose = ev => {
       setConnected(false);
-      if (unmounted.current || ev.code === 4004 || ev.code === 4001 || ev.code === 4003) return;
+      if (unmounted.current) return;
+
+      // 4001 = invalid/expired token. The 15-min access token likely expired
+      // mid-session — refresh it once and reconnect with the fresh token
+      // instead of silently dropping the user. (4003 = room full, 4004 = room
+      // not found: reconnecting won't help, so give up.)
+      if (ev.code === 4001 && !authRetried.current) {
+        authRetried.current = true;
+        setReconnecting(true);
+        apiClient.post('/auth/refresh')
+          .then((res) => {
+            const accessToken =
+              res.data?.data?.accessToken ?? res.data?.accessToken;
+            if (accessToken) localStorage.setItem('accessToken', accessToken);
+            if (!unmounted.current) connect();
+          })
+          .catch(() => {
+            // Refresh failed (refresh token expired/revoked) — the apiClient
+            // interceptor handles logout + redirect to /login.
+            setReconnecting(false);
+          });
+        return;
+      }
+      if (ev.code === 4001 || ev.code === 4003 || ev.code === 4004) return;
+
       setReconnecting(true);
       reconnectTimer.current = setTimeout(() => {
         reconnectDelay.current = Math.min(reconnectDelay.current * 2, MAX_RECONNECT_DELAY);

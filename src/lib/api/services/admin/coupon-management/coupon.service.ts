@@ -104,10 +104,13 @@ export interface ValidateCouponResult {
 }
 
 class CouponService {
-  async validate(code: string): Promise<ApiResponse<ValidateCouponResult>> {
+  async validate(
+    code: string,
+    cartItemIds?: string[]
+  ): Promise<ApiResponse<ValidateCouponResult>> {
     const response = await apiClient.post<ApiResponse<ValidateCouponResult>>(
       "/coupons/validate",
-      { code }
+      { code, cartItemIds }
     );
     return response.data;
   }

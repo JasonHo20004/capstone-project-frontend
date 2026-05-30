@@ -4,6 +4,7 @@ import { useTranslation, Trans } from "react-i18next";
 import { BarChart2, Lightbulb, Lock } from 'lucide-react';
 import apiClient from "@/lib/api/config";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
+import { useBeforeUnload } from "@/hooks/use-before-unload";
 import SpeakingTestLayout from "./SpeakingTestLayout";
 
 // ─── Section-level instructions (Cambridge IELTS format) ─────────────────────
@@ -87,6 +88,11 @@ export default function IeltsTestModule() {
 
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Writing essays keyed by writing-task index. Declared here (rather than in
+  // the Writing section further down) so the draft auto-save effect can depend
+  // on them without a temporal-dead-zone error.
+  const [activeWritingTab, setActiveWritingTab] = useState(0);
+  const [writingEssays, setWritingEssays] = useState<Record<number, string>>({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,20 +154,34 @@ export default function IeltsTestModule() {
         if (parsed?.answers && typeof parsed.answers === 'object') {
           setAnswers(parsed.answers);
         }
+        // Writing essays are the most painful thing to lose on an accidental
+        // refresh, so restore them alongside the MCQ/gap answers.
+        if (parsed?.writingEssays && typeof parsed.writingEssays === 'object') {
+          setWritingEssays(parsed.writingEssays);
+        }
       }
     } catch { /* ignore parse errors */ }
   }, [autoSaveKey]);
 
-  // Auto-save answers with debounce
+  // Auto-save answers + writing essays with debounce
   useEffect(() => {
     if (!autoSaveKey || submitted) return;
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(autoSaveKey, JSON.stringify({ answers, savedAt: new Date().toISOString() }));
+        localStorage.setItem(
+          autoSaveKey,
+          JSON.stringify({ answers, writingEssays, savedAt: new Date().toISOString() }),
+        );
       } catch { /* quota or private mode — ignore */ }
     }, 1500);
     return () => clearTimeout(t);
-  }, [answers, autoSaveKey, submitted]);
+  }, [answers, writingEssays, autoSaveKey, submitted]);
+
+  // Warn before an accidental refresh / tab close while the test is in progress.
+  useBeforeUnload(
+    !!testData && !submitted && !loading,
+    "Bài thi đang làm dở sẽ không được nộp nếu bạn rời trang.",
+  );
 
   // Audio refs for listening sections
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -307,8 +327,8 @@ export default function IeltsTestModule() {
   }, [testId]);
 
   // ─── Writing state ─────────────────────────────────────────────────────────
-  const [activeWritingTab, setActiveWritingTab] = useState(0);
-  const [writingEssays, setWritingEssays] = useState<Record<number, string>>({});
+  // (activeWritingTab + writingEssays are declared with the core test state
+  // above so the draft auto-save effect can list them as dependencies.)
   const [writingEvalId, setWritingEvalId] = useState<string | null>(null);
   const [showWritingResult, setShowWritingResult] = useState(false);
   const [writingSubmitting, setWritingSubmitting] = useState(false);
