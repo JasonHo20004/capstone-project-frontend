@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useTranslation, Trans } from "react-i18next";
 import apiClient from "@/lib/api/config";
 import DiscussionSection from "@/components/DiscussionSection";
 import AiTutorPanel from "@/components/AiTutorPanel";
@@ -98,16 +99,6 @@ interface ReviewSection {
   questions: ReviewQuestion[];
 }
 
-const QUESTION_TYPE_LABEL: Record<string, string> = {
-  MULTIPLE_CHOICE: "MCQ",
-  MULTIPLE_CHOICE_MULTI_ANSWER: "MCQ (Multi)",
-  TRUE_FALSE_NOT_GIVEN: "T/F/NG",
-  YES_NO_NOT_GIVEN: "Y/N/NG",
-  GAP_FILL: "Fill",
-  SHORT_ANSWER: "Short",
-  MATCHING: "Matching",
-};
-
 const QUESTION_TYPE_BADGE: Record<string, string> = {
   MULTIPLE_CHOICE: "bg-blue-100 text-blue-700",
   MULTIPLE_CHOICE_MULTI_ANSWER: "bg-blue-100 text-blue-700",
@@ -186,6 +177,7 @@ function HighlightedPassage({
   passage: string;
   activeTerms: string[];
 }) {
+  const { t } = useTranslation("exam");
   const paragraphs = useMemo(() => {
     if (!passage) return [] as string[];
     return passage.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
@@ -221,7 +213,7 @@ function HighlightedPassage({
   };
 
   if (!passage) {
-    return <p className="text-slate-400 italic text-sm">Không có nội dung passage.</p>;
+    return <p className="text-slate-400 italic text-sm">{t("testResultPage.noPassage")}</p>;
   }
 
   if (paragraphs.length < 2) {
@@ -283,6 +275,8 @@ interface ResultPayload {
 }
 
 export default function TestResultPage() {
+  const { t, i18n } = useTranslation("exam");
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-GB";
   const { sessionId } = useParams<{ sessionId: string }>();
   const [result, setResult] = useState<ResultPayload | null>(null);
   const [test, setTest] = useState<RawTest | null>(null);
@@ -403,7 +397,7 @@ export default function TestResultPage() {
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto" />
-          <p className="text-slate-500">Đang tải kết quả...</p>
+          <p className="text-slate-500">{t("testResultPage.loading")}</p>
         </div>
       </div>
     );
@@ -414,12 +408,12 @@ export default function TestResultPage() {
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="text-center space-y-3">
           <span className="material-symbols-outlined text-5xl text-slate-300">error_outline</span>
-          <p className="text-slate-500 text-lg">Không tìm thấy kết quả</p>
+          <p className="text-slate-500 text-lg">{t("testResultPage.notFound")}</p>
           <Link
             to="/exam"
             className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
           >
-            ← Exam Center
+            ← {t("testResultPage.examCenter")}
           </Link>
         </div>
       </div>
@@ -432,7 +426,7 @@ export default function TestResultPage() {
   const pct = rawScore.percentage ?? (total > 0 ? Math.round((correctCount / total) * 100) : 0);
   const bandScore = rawScore.bandScore ?? result.overallScaledScore ?? null;
   const band = bandScore != null ? bandScore.toFixed(1) : "—";
-  const testTitle = result.test?.title || "Bài thi";
+  const testTitle = result.test?.title || t("testResultPage.defaultTestTitle");
   const skills: string[] = result.test?.testSkills?.map(s => s.skill) || [];
   const isListeningTest = skills.includes("LISTENING");
 
@@ -464,7 +458,7 @@ export default function TestResultPage() {
   const handleExplainClick = (q: ReviewQuestion) => {
     setSelectedQuestion({
       questionId: q.questionId,
-      questionText: q.questionText || `Question ${q.questionOrder}`,
+      questionText: q.questionText || t("testResultPage.questionAlt", { n: q.questionOrder }),
       questionType: q.questionType,
       options: q.options,
       correctAnswer: q.correctAnswer,
@@ -520,12 +514,12 @@ export default function TestResultPage() {
               </span>
               <span className="text-sm text-slate-700 flex-1 leading-relaxed">{opt}</span>
               {isCorrect && (
-                <span className="material-symbols-outlined text-green-600 text-[18px]" title="Correct">
+                <span className="material-symbols-outlined text-green-600 text-[18px]" title={t("testResultPage.correct")}>
                   check_circle
                 </span>
               )}
               {isUserPick && !isCorrect && (
-                <span className="material-symbols-outlined text-red-600 text-[18px]" title="Your answer">
+                <span className="material-symbols-outlined text-red-600 text-[18px]" title={t("testResultPage.yourAnswer")}>
                   cancel
                 </span>
               )}
@@ -596,7 +590,7 @@ export default function TestResultPage() {
                 QUESTION_TYPE_BADGE[q.questionType] || "bg-slate-100 text-slate-600"
               }`}
             >
-              {QUESTION_TYPE_LABEL[q.questionType] || q.questionType}
+              {t(`testResultPage.questionTypes.${q.questionType}`, { defaultValue: q.questionType })}
             </span>
           </div>
           <span
@@ -607,7 +601,7 @@ export default function TestResultPage() {
             <span className="material-symbols-outlined text-[18px]">
               {q.isCorrect ? "check_circle" : "cancel"}
             </span>
-            {q.isCorrect ? "Correct" : "Incorrect"}
+            {q.isCorrect ? t("testResultPage.correct") : t("testResultPage.incorrect")}
           </span>
         </div>
 
@@ -618,7 +612,7 @@ export default function TestResultPage() {
         {q.imageUrl && (
           <img
             src={q.imageUrl}
-            alt={`Question ${q.questionOrder}`}
+            alt={t("testResultPage.questionAlt", { n: q.questionOrder })}
             className="mb-3 max-w-full rounded-lg border border-slate-200"
           />
         )}
@@ -635,11 +629,11 @@ export default function TestResultPage() {
           q.questionType === "MATCHING") && (
           <div className="mb-3 grid grid-cols-2 gap-2">
             <AnswerPill
-              label="Your answer"
-              value={q.userAnswer || "(no answer)"}
+              label={t("testResultPage.yourAnswer")}
+              value={q.userAnswer || t("testResultPage.noAnswer")}
               tone={q.isCorrect ? "correct" : "user"}
             />
-            <AnswerPill label="Correct answer" value={q.correctAnswer} tone="correct" />
+            <AnswerPill label={t("testResultPage.correctAnswer")} value={q.correctAnswer} tone="correct" />
           </div>
         )}
 
@@ -656,7 +650,7 @@ export default function TestResultPage() {
                 <span className="material-symbols-outlined text-[16px]">
                   {explExpanded ? "expand_less" : "lightbulb"}
                 </span>
-                {explExpanded ? "Ẩn lời giải" : "Lời giải"}
+                {explExpanded ? t("testResultPage.hideExplanation") : t("testResultPage.showExplanation")}
               </button>
             )}
           </div>
@@ -669,7 +663,7 @@ export default function TestResultPage() {
               className="inline-flex items-center gap-1 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 px-3 py-1.5 rounded-lg shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">psychology</span>
-              AI Tutor
+              {t("testResultPage.aiTutor")}
             </button>
           )}
         </div>
@@ -698,7 +692,7 @@ export default function TestResultPage() {
           className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-          Exam Center
+          {t("testResultPage.examCenter")}
         </Link>
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-slate-700">{testTitle}</span>
@@ -718,7 +712,7 @@ export default function TestResultPage() {
           className="text-sm text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[18px]">history</span>
-          Lịch sử
+          {t("testResultPage.history")}
         </Link>
       </header>
 
@@ -744,35 +738,35 @@ export default function TestResultPage() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className={`text-xl font-black ${scoreColor}`}>{band}</span>
-                <span className="text-[9px] text-slate-500 font-bold uppercase">Band</span>
+                <span className="text-[9px] text-slate-500 font-bold uppercase">{t("testResultPage.band")}</span>
               </div>
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-800">Test Completed</h2>
+              <h2 className="text-base font-bold text-slate-800">{t("testResultPage.testCompleted")}</h2>
               <p className="text-xs text-slate-500">
-                {result.completedAt ? new Date(result.completedAt).toLocaleString("vi-VN") : "—"}
+                {result.completedAt ? new Date(result.completedAt).toLocaleString(dateLocale) : "—"}
               </p>
             </div>
           </div>
 
           <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Correct</p>
+              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{t("testResultPage.stats.correct")}</p>
               <p className="text-lg font-black text-slate-800">
                 {correctCount}
                 <span className="text-sm text-slate-400 font-medium">/{total}</span>
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Wrong</p>
+              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{t("testResultPage.stats.wrong")}</p>
               <p className="text-lg font-black text-red-600">{total - correctCount}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Accuracy</p>
+              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{t("testResultPage.stats.accuracy")}</p>
               <p className="text-lg font-black text-slate-800">{pct}%</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Band Score</p>
+              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{t("testResultPage.stats.bandScore")}</p>
               <p className={`text-lg font-black ${scoreColor}`}>{band}</p>
             </div>
           </div>
@@ -819,7 +813,7 @@ export default function TestResultPage() {
               <div className="bg-white p-6 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:sticky lg:top-[7.5rem]">
                 <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    {isListeningTest ? "Audio Transcript" : "Reading Passage"}
+                    {isListeningTest ? t("testResultPage.audioTranscript") : t("testResultPage.readingPassage")}
                   </h3>
                   {focusedQuestionId && (
                     <button
@@ -827,7 +821,7 @@ export default function TestResultPage() {
                       className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
                     >
                       <span className="material-symbols-outlined text-[14px]">close</span>
-                      Clear highlight
+                      {t("testResultPage.clearHighlight")}
                     </button>
                   )}
                 </div>
@@ -835,7 +829,12 @@ export default function TestResultPage() {
                 {focusedQuestion && activeTerms.length > 0 && (
                   <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-500 text-[14px]">ink_highlighter</span>
-                    Highlighting evidence for <strong>Q{focusedQuestion.questionOrder}</strong>
+                    <Trans
+                      i18nKey="testResultPage.highlightingEvidence"
+                      ns="exam"
+                      values={{ order: focusedQuestion.questionOrder }}
+                      components={{ strong: <strong /> }}
+                    />
                   </div>
                 )}
 
@@ -854,7 +853,7 @@ export default function TestResultPage() {
                         >
                           <span className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-teal-600">headphones</span>
-                            Audio replay
+                            {t("testResultPage.audioReplay")}
                           </span>
                           <span className="material-symbols-outlined">
                             {showAudioReplay[activeSection.id] ? "expand_less" : "expand_more"}
@@ -873,10 +872,10 @@ export default function TestResultPage() {
 
                 {activeSection.imageUrl && (
                   <div className="mt-6">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Diagram</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("testResultPage.diagram")}</h4>
                     <img
                       src={activeSection.imageUrl}
-                      alt="Section diagram"
+                      alt={t("testResultPage.sectionDiagramAlt")}
                       className="w-full rounded-lg border border-slate-200"
                     />
                   </div>
@@ -888,17 +887,17 @@ export default function TestResultPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                     <span className="material-symbols-outlined text-indigo-600 text-[18px]">fact_check</span>
-                    Answer Review · {activeSection.questions.length} questions
+                    {t("testResultPage.answerReviewCount", { count: activeSection.questions.length })}
                   </h3>
                   <p className="text-[11px] text-slate-400 hidden md:block">
-                    Click a question to highlight evidence
+                    {t("testResultPage.clickToHighlight")}
                   </p>
                 </div>
                 <div className="space-y-4">
                   {activeSection.questions.map(q => renderQuestionCard(q, { interactive: true }))}
                   {activeSection.questions.length === 0 && (
                     <p className="text-sm text-slate-400 italic text-center py-6">
-                      Section này không có câu hỏi nào.
+                      {t("testResultPage.noQuestions")}
                     </p>
                   )}
                 </div>
@@ -911,7 +910,7 @@ export default function TestResultPage() {
                 {activeSection.questions.map(q => renderQuestionCard(q, { interactive: false }))}
                 {activeSection.questions.length === 0 && (
                   <p className="text-sm text-slate-400 italic text-center py-6">
-                    Section này không có câu hỏi nào.
+                    {t("testResultPage.noQuestions")}
                   </p>
                 )}
               </div>
@@ -926,8 +925,8 @@ export default function TestResultPage() {
           <DiscussionSection
             fetchComments={fetchResultComments}
             postComment={postResultComment}
-            title="Thảo luận"
-            subtitle="Chia sẻ kinh nghiệm, hỏi đáp về bài thi này"
+            title={t("testResultPage.discussionTitle")}
+            subtitle={t("testResultPage.discussionSubtitle")}
           />
         )}
 
@@ -936,13 +935,13 @@ export default function TestResultPage() {
             to="/exam"
             className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
           >
-            ← Exam Center
+            ← {t("testResultPage.examCenter")}
           </Link>
           <Link
             to="/exam/history"
             className="px-8 py-3 bg-white text-indigo-600 rounded-xl font-bold border-2 border-indigo-200 hover:bg-indigo-50 transition-colors"
           >
-            Lịch sử làm bài
+            {t("testResultPage.historyFull")}
           </Link>
         </div>
       </div>
@@ -957,7 +956,7 @@ export default function TestResultPage() {
           className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-sky-600 text-white rounded-2xl font-bold shadow-2xl shadow-indigo-300 hover:shadow-xl hover:scale-105 transition-all duration-200 group"
         >
           <span className="material-symbols-outlined text-[22px] group-hover:animate-pulse">psychology</span>
-          <span className="text-sm">AI Tutor</span>
+          <span className="text-sm">{t("testResultPage.aiTutor")}</span>
           <span className="w-5 h-5 rounded-full bg-white/20 text-[11px] font-bold flex items-center justify-center">
             {wrongCountTotal}
           </span>

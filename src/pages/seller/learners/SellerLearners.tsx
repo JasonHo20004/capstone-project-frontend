@@ -35,6 +35,8 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import type { Course } from '@/domain';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 type SortKey = 'date-desc' | 'date-asc' | 'course-asc' | 'course-desc';
 
@@ -47,19 +49,19 @@ function getInitials(name: string) {
   return parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 }
 
-function timeAgo(dateStr: string) {
+function timeAgo(dateStr: string, t: TFunction) {
   const diff = Date.now() - new Date(dateStr).getTime();
-  if (diff < 60_000) return 'Vừa xong';
+  if (diff < 60_000) return t('learners.timeAgo.justNow');
   const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins} phút trước`;
+  if (mins < 60) return t('learners.timeAgo.minutes', { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} giờ trước`;
+  if (hours < 24) return t('learners.timeAgo.hours', { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} ngày trước`;
+  if (days < 30) return t('learners.timeAgo.days', { count: days });
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months} tháng trước`;
+  if (months < 12) return t('learners.timeAgo.months', { count: months });
   const years = Math.floor(months / 12);
-  return `${years} năm trước`;
+  return t('learners.timeAgo.years', { count: years });
 }
 
 function parseSortKey(k: SortKey): { sortBy: 'date' | 'course'; sortOrder: 'asc' | 'desc' } {
@@ -81,6 +83,8 @@ function escapeCsv(value: string): string {
 }
 
 export default function SellerLearners() {
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [courseId, setCourseId] = useState<string>('ALL');
@@ -91,11 +95,11 @@ export default function SellerLearners() {
 
   // Debounce the search input so we don't hit the API on every keystroke.
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setSearch(searchInput.trim());
       setPage(1);
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [searchInput]);
 
   const { sortBy, sortOrder } = parseSortKey(sortKey);
@@ -140,14 +144,14 @@ export default function SellerLearners() {
 
   const copyEmail = async (email: string) => {
     if (!email) {
-      toast.error('Người học chưa có email');
+      toast.error(t('learners.toasts.noEmail'));
       return;
     }
     try {
       await navigator.clipboard.writeText(email);
-      toast.success('Đã sao chép email');
+      toast.success(t('learners.toasts.copied'));
     } catch {
-      toast.error('Không thể sao chép');
+      toast.error(t('learners.toasts.copyFailed'));
     }
   };
 
@@ -169,10 +173,15 @@ export default function SellerLearners() {
       });
       const rows = resp.data?.learners ?? [];
       if (rows.length === 0) {
-        toast.info('Không có dữ liệu để xuất');
+        toast.info(t('learners.toasts.noData'));
         return;
       }
-      const header = ['Tên người học', 'Email', 'Khoá học', 'Ngày đăng ký'];
+      const header = [
+        t('learners.csv.name'),
+        t('learners.csv.email'),
+        t('learners.csv.course'),
+        t('learners.csv.enrolledDate'),
+      ];
       const csv = [
         header.join(','),
         ...rows.map((r) =>
@@ -188,15 +197,15 @@ export default function SellerLearners() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `nguoi-hoc-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `learners-${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success(`Đã xuất ${rows.length} người học`);
+      toast.success(t('learners.toasts.exported', { count: rows.length }));
     } catch (e) {
       console.error(e);
-      toast.error('Xuất CSV thất bại');
+      toast.error(t('learners.toasts.exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -210,10 +219,10 @@ export default function SellerLearners() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-display flex items-center gap-2">
           <Users className="h-7 w-7 text-primary" />
-          Quản lý người học
+          {t('learners.title')}
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Theo dõi và quản lý người học trên các khóa học của bạn
+          {t('learners.subtitle')}
         </p>
       </div>
 
@@ -221,40 +230,40 @@ export default function SellerLearners() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Tổng lượt đăng ký</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('learners.stats.totalEnrollments')}</CardTitle>
             <div className="rounded-lg bg-primary/15 p-2">
               <UserCheck className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-display">
-              {isLoading ? '—' : totalLearners.toLocaleString('vi-VN')}
+              {isLoading ? '—' : totalLearners.toLocaleString(dateLocale)}
             </div>
           </CardContent>
         </Card>
         <Card className="border-emerald-500/20 bg-emerald-500/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Khoá học có người học</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('learners.stats.coursesWithLearners')}</CardTitle>
             <div className="rounded-lg bg-emerald-500/15 p-2">
               <BookOpen className="h-4 w-4 text-emerald-600" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-display">
-              {isLoading ? '—' : uniqueCoursesCount.toLocaleString('vi-VN')}
+              {isLoading ? '—' : uniqueCoursesCount.toLocaleString(dateLocale)}
             </div>
           </CardContent>
         </Card>
         <Card className="border-amber-500/20 bg-amber-500/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Đăng ký 7 ngày qua</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('learners.stats.newThisWeek')}</CardTitle>
             <div className="rounded-lg bg-amber-500/15 p-2">
               <TrendingUp className="h-4 w-4 text-amber-600" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-display">
-              {isLoading ? '—' : newThisWeekCount.toLocaleString('vi-VN')}
+              {isLoading ? '—' : newThisWeekCount.toLocaleString(dateLocale)}
             </div>
           </CardContent>
         </Card>
@@ -266,7 +275,7 @@ export default function SellerLearners() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo tên hoặc email người học..."
+              placeholder={t('learners.searchPlaceholder')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="pl-9"
@@ -274,10 +283,10 @@ export default function SellerLearners() {
           </div>
           <Select value={courseId} onValueChange={handleCourseFilter}>
             <SelectTrigger className="w-full sm:w-[240px]">
-              <SelectValue placeholder="Lọc theo khoá học" />
+              <SelectValue placeholder={t('learners.courseFilterPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Tất cả khoá học</SelectItem>
+              <SelectItem value="ALL">{t('learners.allCourses')}</SelectItem>
               {myCourses.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.title}
@@ -291,13 +300,13 @@ export default function SellerLearners() {
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
               <SelectTrigger className="w-full sm:w-[220px]">
-                <SelectValue placeholder="Sắp xếp" />
+                <SelectValue placeholder={t('learners.sortPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date-desc">Ngày đăng ký: mới nhất</SelectItem>
-                <SelectItem value="date-asc">Ngày đăng ký: cũ nhất</SelectItem>
-                <SelectItem value="course-asc">Khoá học: A → Z</SelectItem>
-                <SelectItem value="course-desc">Khoá học: Z → A</SelectItem>
+                <SelectItem value="date-desc">{t('learners.sort.dateDesc')}</SelectItem>
+                <SelectItem value="date-asc">{t('learners.sort.dateAsc')}</SelectItem>
+                <SelectItem value="course-asc">{t('learners.sort.courseAsc')}</SelectItem>
+                <SelectItem value="course-desc">{t('learners.sort.courseDesc')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -308,7 +317,7 @@ export default function SellerLearners() {
             <SelectContent>
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <SelectItem key={n} value={n.toString()}>
-                  {n} / trang
+                  {t('learners.perPage', { count: n })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -322,7 +331,7 @@ export default function SellerLearners() {
               className="w-full sm:w-auto"
             >
               <Download className="h-4 w-4 mr-2" />
-              {exporting ? 'Đang xuất...' : 'Xuất CSV'}
+              {exporting ? t('learners.exporting') : t('learners.exportCsv')}
             </Button>
           </div>
         </div>
@@ -331,7 +340,7 @@ export default function SellerLearners() {
       {/* Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Danh sách người học</CardTitle>
+          <CardTitle className="text-base">{t('learners.tableTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -350,26 +359,26 @@ export default function SellerLearners() {
             </div>
           ) : error ? (
             <div className="px-6 py-12 text-center text-destructive">
-              <p className="font-medium">Không thể tải danh sách người học</p>
-              <p className="text-sm mt-1">Vui lòng thử lại sau.</p>
+              <p className="font-medium">{t('learners.error.title')}</p>
+              <p className="text-sm mt-1">{t('learners.error.hint')}</p>
             </div>
           ) : learners.length === 0 ? (
             <div className="px-6 py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground/40" />
               <p className="mt-3 font-medium text-muted-foreground">
-                {hasActiveFilter ? 'Không tìm thấy kết quả' : 'Chưa có người học nào'}
+                {hasActiveFilter ? t('learners.empty.filtered') : t('learners.empty.none')}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {hasActiveFilter
-                  ? 'Thử thay đổi từ khoá tìm kiếm hoặc bỏ lọc khoá học'
-                  : 'Người học sẽ xuất hiện ở đây khi họ đăng ký khoá học của bạn'}
+                  ? t('learners.empty.filteredHint')
+                  : t('learners.empty.noneHint')}
               </p>
               {!hasActiveFilter && (
                 <div className="mt-4">
                   <Button asChild size="sm">
                     <Link to="/seller/courses">
                       <BookOpen className="h-4 w-4 mr-2" />
-                      Quản lý khoá học
+                      {t('learners.empty.manageCourses')}
                     </Link>
                   </Button>
                 </div>
@@ -379,9 +388,9 @@ export default function SellerLearners() {
             <>
               {/* Desktop Table Header */}
               <div className="hidden sm:grid grid-cols-[2fr_2fr_1fr_auto] gap-4 px-6 py-3 border-b bg-muted/30 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
-                <span>Người học</span>
-                <span>Khoá học</span>
-                <span className="text-right">Ngày đăng ký</span>
+                <span>{t('learners.headers.learner')}</span>
+                <span>{t('learners.headers.course')}</span>
+                <span className="text-right">{t('learners.headers.enrolledOn')}</span>
                 <span className="w-9" />
               </div>
 
@@ -451,12 +460,12 @@ export default function SellerLearners() {
                     <div className="text-right shrink-0">
                       <p
                         className="text-xs text-muted-foreground"
-                        title={new Date(l.purchasedAt).toLocaleString('vi-VN')}
+                        title={new Date(l.purchasedAt).toLocaleString(dateLocale)}
                       >
-                        {timeAgo(l.purchasedAt)}
+                        {timeAgo(l.purchasedAt, t)}
                       </p>
                       <p className="text-[10px] text-muted-foreground/60 hidden sm:block">
-                        {new Date(l.purchasedAt).toLocaleDateString('vi-VN')}
+                        {new Date(l.purchasedAt).toLocaleDateString(dateLocale)}
                       </p>
                     </div>
 
@@ -468,7 +477,7 @@ export default function SellerLearners() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 opacity-60 group-hover:opacity-100"
-                            aria-label="Tác vụ"
+                            aria-label={t('learners.actionsAria')}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
@@ -476,13 +485,13 @@ export default function SellerLearners() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => copyEmail(l.email)} disabled={!l.email}>
                             <Copy className="h-4 w-4 mr-2" />
-                            Sao chép email
+                            {t('learners.copyEmail')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
                             <Link to={`/seller/courses/${l.courseId}`}>
                               <ExternalLink className="h-4 w-4 mr-2" />
-                              Xem khoá học
+                              {t('learners.viewCourse')}
                             </Link>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -500,14 +509,14 @@ export default function SellerLearners() {
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Trang {page} / {totalPages} · {totalLearners.toLocaleString('vi-VN')} kết quả
+            {t('learners.pagination.summary', { page, total: totalPages, count: totalLearners.toLocaleString(dateLocale) })}
           </p>
           <div className="flex items-center gap-1">
             <button
               className="inline-flex items-center justify-center w-9 h-9 rounded-lg border text-sm hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              aria-label="Trang trước"
+              aria-label={t('learners.pagination.prevAria')}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -540,7 +549,7 @@ export default function SellerLearners() {
               className="inline-flex items-center justify-center w-9 h-9 rounded-lg border text-sm hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              aria-label="Trang sau"
+              aria-label={t('learners.pagination.nextAria')}
             >
               <ChevronRight className="h-4 w-4" />
             </button>

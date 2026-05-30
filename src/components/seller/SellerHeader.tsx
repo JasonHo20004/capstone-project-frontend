@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bell, Home, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 export default function SellerHeader() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('seller');
   const { user } = useUser();
   const userId = user?.id;
 
@@ -46,7 +48,7 @@ export default function SellerHeader() {
         <div className="relative w-64 sm:w-80 md:w-96">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm kiếm khoá học, người học..."
+            placeholder={t('header.searchPlaceholder')}
             className="pl-10 bg-muted/50 border-transparent focus-visible:ring-primary/20"
           />
         </div>
@@ -59,7 +61,7 @@ export default function SellerHeader() {
           onClick={() => navigate('/')}
         >
           <Home className="mr-2 h-4 w-4" />
-          Về trang chủ
+          {t('header.backHome')}
         </Button>
         <ThemeToggle />
         <DropdownMenu>
@@ -68,7 +70,7 @@ export default function SellerHeader() {
               variant="ghost"
               size="icon"
               className="relative"
-              aria-label="Thông báo"
+              aria-label={t('header.notifications')}
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -79,11 +81,11 @@ export default function SellerHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('header.notifications')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {latestNotifications.length === 0 ? (
               <div className="px-3 py-6 text-sm text-muted-foreground text-center">
-                Không có thông báo nào
+                {t('header.noNotifications')}
               </div>
             ) : (
               <div className="max-h-80 overflow-y-auto">
@@ -97,7 +99,9 @@ export default function SellerHeader() {
                       {n.content}
                     </div>
                     <div className="mt-1 text-[10px] text-muted-foreground">
-                      {new Date(n.createdAt).toLocaleString('vi-VN')}
+                      {new Date(n.createdAt).toLocaleString(
+                        i18n.language === 'vi' ? 'vi-VN' : 'en-GB',
+                      )}
                     </div>
                   </div>
                 ))}
@@ -106,7 +110,7 @@ export default function SellerHeader() {
             <DropdownMenuSeparator />
             <div className="px-3 py-2 text-xs text-right">
               <Link to="/notifications" className="text-primary hover:underline">
-                Xem tất cả
+                {t('header.viewAll')}
               </Link>
             </div>
           </DropdownMenuContent>

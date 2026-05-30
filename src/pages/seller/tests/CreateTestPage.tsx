@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,7 @@ const emptySection = (): SectionDraft => ({
 
 export default function CreateTestPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('seller');
   const { id: editId } = useParams<{ id?: string }>();
   const [searchParams] = useSearchParams();
   const linkAsFinalCourseId = searchParams.get('linkAsFinalCourseId');
@@ -96,7 +98,7 @@ export default function CreateTestPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const test = res.data as any;
         if (!test) {
-          toast.error('Không tìm thấy bài kiểm tra');
+          toast.error(t('createTest.toasts.notFound'));
           navigate('/seller/tests');
           return;
         }
@@ -130,9 +132,9 @@ export default function CreateTestPage() {
         setSections([{ instruction: '', questions: mapped.length > 0 ? mapped : [emptyQuestion()] }]);
         setExpanded({ si: 0, qi: 0 });
       })
-      .catch(() => toast.error('Không thể tải bài kiểm tra'))
+      .catch(() => toast.error(t('createTest.toasts.loadError')))
       .finally(() => setLoading(false));
-  }, [editId, navigate]);
+  }, [editId, navigate, t]);
 
   const addQuestionToSection = (si: number) => {
     setSections((prev) => {
@@ -146,7 +148,7 @@ export default function CreateTestPage() {
     setSections((prev) => {
       const section = prev[si];
       if (section.questions.length === 1) {
-        if (prev.length === 1) { toast.error('Phải có ít nhất 1 câu hỏi'); return prev; }
+        if (prev.length === 1) { toast.error(t('createTest.toasts.minQuestion')); return prev; }
         const next = prev.filter((_, i) => i !== si);
         setExpanded(null);
         return next;
@@ -189,7 +191,7 @@ export default function CreateTestPage() {
   };
 
   const removeSection = (si: number) => {
-    if (sections.length === 1) { toast.error('Phải có ít nhất 1 phần'); return; }
+    if (sections.length === 1) { toast.error(t('createTest.toasts.minSection')); return; }
     setSections((prev) => prev.filter((_, i) => i !== si));
     setExpanded(null);
   };
@@ -242,13 +244,13 @@ export default function CreateTestPage() {
   };
 
   const validate = (): boolean => {
-    if (!title.trim()) { toast.error('Vui lòng nhập tiêu đề bài kiểm tra'); return false; }
+    if (!title.trim()) { toast.error(t('createTest.toasts.titleRequired')); return false; }
     let globalIdx = 0;
     for (const s of sections) {
       for (const q of s.questions) {
         globalIdx++;
-        if (!q.questionText.trim()) { toast.error(`Câu ${globalIdx}: chưa có nội dung câu hỏi`); return false; }
-        if (q.options.some((o) => !o.trim())) { toast.error(`Câu ${globalIdx}: điền đầy đủ 4 đáp án`); return false; }
+        if (!q.questionText.trim()) { toast.error(t('createTest.toasts.questionEmpty', { n: globalIdx })); return false; }
+        if (q.options.some((o) => !o.trim())) { toast.error(t('createTest.toasts.optionsRequired', { n: globalIdx })); return false; }
       }
     }
     return true;
@@ -259,7 +261,7 @@ export default function CreateTestPage() {
     setSaving(true);
     try {
       const testTypeId = testTypes[0]?.id;
-      if (!testTypeId) { toast.error('Không tìm thấy loại bài kiểm tra'); return; }
+      if (!testTypeId) { toast.error(t('createTest.toasts.noTestType')); return; }
       const totalQuestions = sections.reduce((sum, s) => sum + s.questions.length, 0);
       const totalScore = totalQuestions * 10;
       let order = 0;
@@ -285,7 +287,7 @@ export default function CreateTestPage() {
           status: 'PUBLISHED',
           questions: payloadQuestions,
         });
-        toast.success('Đã cập nhật bài kiểm tra!');
+        toast.success(t('createTest.toasts.updated'));
         navigate(`/seller/tests/${editId}`);
         return;
       }
@@ -303,14 +305,14 @@ export default function CreateTestPage() {
         questions: payloadQuestions,
       });
       const newTestId = res.data?.id;
-      if (!newTestId) { toast.error('Tạo bài kiểm tra thất bại'); return; }
+      if (!newTestId) { toast.error(t('createTest.toasts.createFailed')); return; }
 
       // Auto-link: if seller arrived from a course's Final Test tab, link now.
       // Rollback orphan if link fails.
       if (linkAsFinalCourseId) {
         try {
           await courseService.setFinalTest(linkAsFinalCourseId, newTestId);
-          toast.success('Đã tạo và liên kết làm bài kiểm tra cuối khoá!');
+          toast.success(t('createTest.toasts.createdLinked'));
           navigate(`/seller/courses/${linkAsFinalCourseId}`);
           return;
         } catch (linkErr) {
@@ -323,7 +325,7 @@ export default function CreateTestPage() {
         }
       }
 
-      toast.success('Đã tạo bài kiểm tra thành công!');
+      toast.success(t('createTest.toasts.created'));
       navigate(`/seller/tests/${newTestId}`);
     } catch (err) {
       console.error('Failed to save test:', err);
@@ -345,7 +347,7 @@ export default function CreateTestPage() {
 
       const msg = apiErr?.response?.data?.message
         ?? apiErr?.response?.data?.error
-        ?? 'Lỗi khi lưu bài kiểm tra';
+        ?? t('createTest.toasts.saveError');
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -356,29 +358,29 @@ export default function CreateTestPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Đang tải bài kiểm tra…</span>
+        <span className="ml-2 text-muted-foreground">{t('createTest.loading')}</span>
       </div>
     );
   }
 
   const headerTitle = isEditMode
-    ? 'Chỉnh sửa bài kiểm tra'
+    ? t('createTest.header.titleEdit')
     : linkAsFinalCourseId
-    ? 'Tạo bài kiểm tra cuối khoá'
-    : 'Tạo bài kiểm tra mới';
+    ? t('createTest.header.titleFinal')
+    : t('createTest.header.titleNew');
   const headerDescription = isEditMode
-    ? 'Cập nhật nội dung. Câu trả lời cũ của học viên không bị ảnh hưởng.'
+    ? t('createTest.header.descEdit')
     : linkAsFinalCourseId
-    ? 'Tạo xong sẽ tự liên kết làm bài kiểm tra cuối khoá của khoá học đang chọn.'
-    : 'Bài kiểm tra này có thể dùng làm bài kiểm tra giữa module hoặc cuối khoá. Gắn vào khoá học sau khi tạo xong.';
+    ? t('createTest.header.descFinal')
+    : t('createTest.header.descNew');
   const saveLabel = isEditMode
-    ? 'Lưu thay đổi'
+    ? t('createTest.save.edit')
     : linkAsFinalCourseId
-    ? 'Tạo và liên kết'
-    : 'Tạo bài kiểm tra';
+    ? t('createTest.save.link')
+    : t('createTest.save.create');
   const backLabel = linkAsFinalCourseId
-    ? 'Quay lại khoá học'
-    : 'Quay lại danh sách';
+    ? t('createTest.backToCourse')
+    : t('createTest.backToList');
   const backTarget = linkAsFinalCourseId
     ? `/seller/courses/${linkAsFinalCourseId}`
     : '/seller/tests';
@@ -402,38 +404,41 @@ export default function CreateTestPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2 md:col-span-3">
-              <label className="text-sm font-medium">Tiêu đề bài kiểm tra</label>
+              <label className="text-sm font-medium">{t('createTest.fields.title')}</label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="VD: Bài kiểm tra Module 1 - Vocabulary"
+                placeholder={t('createTest.fields.titlePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Thời gian (phút)</label>
+              <label className="text-sm font-medium">{t('createTest.fields.duration')}</label>
               <Input type="number" min={1} max={180} value={duration} onChange={(e) => setDuration(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Điểm đạt (%)</label>
+              <label className="text-sm font-medium">{t('createTest.fields.passingScore')}</label>
               <Input type="number" min={0} max={100} value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tổng điểm</label>
+              <label className="text-sm font-medium">{t('createTest.fields.totalScore')}</label>
               <div className="h-10 flex items-center text-sm font-semibold px-3 bg-muted rounded-md">
-                {sections.reduce((sum, s) => sum + s.questions.length, 0)} câu × 10 = {sections.reduce((sum, s) => sum + s.questions.length, 0) * 10} điểm
+                {t('createTest.fields.totalScoreValue', {
+                  count: sections.reduce((sum, s) => sum + s.questions.length, 0),
+                  score: sections.reduce((sum, s) => sum + s.questions.length, 0) * 10,
+                })}
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="font-semibold">Danh sách câu hỏi</h3>
+              <h3 className="font-semibold">{t('createTest.questionsHeading')}</h3>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                  <Upload className="h-4 w-4 mr-1" /> Import từ file
+                  <Upload className="h-4 w-4 mr-1" /> {t('createTest.importFromFile')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={addSection}>
-                  <Plus className="h-4 w-4 mr-1" /> Thêm phần mới
+                  <Plus className="h-4 w-4 mr-1" /> {t('createTest.addSection')}
                 </Button>
               </div>
             </div>
@@ -444,18 +449,18 @@ export default function CreateTestPage() {
                 <div key={si} className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                   <div className="bg-slate-50 border-b px-4 py-2 flex items-start gap-3">
                     <div className="flex items-center gap-2 shrink-0 mt-1">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Phần {si + 1}</span>
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t('createTest.sectionLabel', { n: si + 1 })}</span>
                     </div>
                     <Textarea
                       rows={2}
                       value={section.instruction}
                       onChange={(e) => updateSectionInstruction(si, e.target.value)}
-                      placeholder="Instruction cho phần này (có thể để trống)..."
+                      placeholder={t('createTest.sectionInstructionPlaceholder')}
                       className="flex-1 text-sm bg-white resize-none min-h-[2.5rem]"
                     />
                     <button
                       type="button"
-                      title="Xóa phần này"
+                      title={t('createTest.removeSectionTitle')}
                       disabled={sections.length === 1}
                       onClick={() => removeSection(si)}
                       className="shrink-0 mt-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-30"
@@ -483,10 +488,10 @@ export default function CreateTestPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium truncate">
-                                  {q.questionText.trim() || <span className="italic text-muted-foreground">(chưa có nội dung)</span>}
+                                  {q.questionText.trim() || <span className="italic text-muted-foreground">{t('createTest.noContent')}</span>}
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-0.5">
-                                  {filledOpts}/4 đáp án • Đúng: {String.fromCharCode(65 + q.correctAnswerIndex)}
+                                  {t('createTest.optionSummary', { filled: filledOpts, letter: String.fromCharCode(65 + q.correctAnswerIndex) })}
                                 </div>
                               </div>
                             </button>
@@ -503,8 +508,8 @@ export default function CreateTestPage() {
                           {isOpen && (
                             <div className="p-4 pt-2 space-y-3 border-t bg-slate-50/40">
                               <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Nội dung câu hỏi</label>
-                                <Textarea rows={2} value={q.questionText} onChange={(e) => updateQuestion(si, qi, 'questionText', e.target.value)} placeholder="Nhập nội dung câu hỏi..." />
+                                <label className="text-xs font-medium text-muted-foreground">{t('createTest.questionContentLabel')}</label>
+                                <Textarea rows={2} value={q.questionText} onChange={(e) => updateQuestion(si, qi, 'questionText', e.target.value)} placeholder={t('createTest.questionContentPlaceholder')} />
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 {q.options.map((opt, oi) => (
@@ -520,13 +525,13 @@ export default function CreateTestPage() {
                                     >
                                       {String.fromCharCode(65 + oi)}
                                     </button>
-                                    <Input value={opt} onChange={(e) => updateOption(si, qi, oi, e.target.value)} placeholder={`Đáp án ${String.fromCharCode(65 + oi)}`} className="flex-1" />
+                                    <Input value={opt} onChange={(e) => updateOption(si, qi, oi, e.target.value)} placeholder={t('createTest.optionPlaceholder', { letter: String.fromCharCode(65 + oi) })} className="flex-1" />
                                   </div>
                                 ))}
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Giải thích (tùy chọn)</label>
-                                <Input value={q.explanation} onChange={(e) => updateQuestion(si, qi, 'explanation', e.target.value)} placeholder="Giải thích tại sao đáp án đúng..." />
+                                <label className="text-xs font-medium text-muted-foreground">{t('createTest.explanationLabel')}</label>
+                                <Input value={q.explanation} onChange={(e) => updateQuestion(si, qi, 'explanation', e.target.value)} placeholder={t('createTest.explanationPlaceholder')} />
                               </div>
                             </div>
                           )}
@@ -541,7 +546,7 @@ export default function CreateTestPage() {
                       onClick={() => addQuestionToSection(si)}
                       className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
                     >
-                      <Plus className="h-3.5 w-3.5" /> Thêm câu hỏi vào phần này
+                      <Plus className="h-3.5 w-3.5" /> {t('createTest.addQuestion')}
                     </button>
                   </div>
                 </div>
@@ -552,9 +557,9 @@ export default function CreateTestPage() {
           <div className="flex gap-2 pt-4 border-t">
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-              {saving ? 'Đang lưu...' : saveLabel}
+              {saving ? t('createTest.save.saving') : saveLabel}
             </Button>
-            <Button variant="ghost" onClick={() => navigate(backTarget)} className="ml-auto">Hủy</Button>
+            <Button variant="ghost" onClick={() => navigate(backTarget)} className="ml-auto">{t('createTest.cancel')}</Button>
           </div>
         </CardContent>
       </Card>
@@ -572,22 +577,21 @@ export default function CreateTestPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Khoá học đã có đề tốt nghiệp</AlertDialogTitle>
+            <AlertDialogTitle>{t('createTest.existingFinalDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Mỗi khoá học chỉ có một đề tốt nghiệp. Bạn muốn chỉnh sửa đề hiện có?
-              Học viên đã làm bài trên đề cũ vẫn được giữ kết quả.
+              {t('createTest.existingFinalDialog.body')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => navigate(`/seller/courses/${linkAsFinalCourseId}`)}>
-              Quay lại khoá học
+              {t('createTest.existingFinalDialog.back')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (existingFinalTest) navigate(`/seller/tests/${existingFinalTest.id}/edit`);
               }}
             >
-              Chỉnh sửa đề hiện có
+              {t('createTest.existingFinalDialog.edit')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

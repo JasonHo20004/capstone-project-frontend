@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation, Trans } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
   useStartSpeakingSession,
@@ -37,6 +38,8 @@ import { useNavigate } from "react-router-dom";
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SpeakingTestContent() {
+  const { t } = useTranslation("exam");
+
   // ─── Screen State ─────────────────────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>("topic");
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -370,16 +373,16 @@ function SpeakingTestContent() {
               <span className="material-symbols-outlined">mic</span>
             </div>
             <div>
-              <h1 className="font-bold text-lg tracking-tight text-slate-900">IELTS Speaking Workshop</h1>
-              <p className="text-xs text-slate-500">Interactive AI Examiner</p>
+              <h1 className="font-bold text-lg tracking-tight text-slate-900">{t("speakingTest.workshopTitle")}</h1>
+              <p className="text-xs text-slate-500">{t("speakingTest.workshopSubtitle")}</p>
             </div>
           </Link>
         </header>
 
         <div className="max-w-4xl mx-auto px-6 py-10">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-black text-slate-900 mb-3">Chọn chủ đề Speaking</h2>
-            <p className="text-slate-500 max-w-lg mx-auto">AI Examiner sẽ hỏi bạn theo format IELTS Speaking thật: Part 1 → Part 2 → Part 3</p>
+            <h2 className="text-3xl font-black text-slate-900 mb-3">{t("speakingTest.topic.heading")}</h2>
+            <p className="text-slate-500 max-w-lg mx-auto">{t("speakingTest.topic.subtitle")}</p>
           </div>
 
           <div className="text-center mb-8">
@@ -389,11 +392,11 @@ function SpeakingTestContent() {
               className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-amber-500/20 hover:scale-105 transition-all disabled:opacity-50 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[22px]">shuffle</span>
-              {startSession.isPending ? "Đang khởi tạo..." : "Chủ đề ngẫu nhiên"}
+              {startSession.isPending ? t("speakingTest.topic.starting") : t("speakingTest.topic.randomTopic")}
             </button>
           </div>
 
-          <div className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">hoặc chọn một chủ đề</div>
+          <div className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">{t("speakingTest.topic.orChoose")}</div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {displayTopics.map((t) => (
@@ -422,7 +425,7 @@ function SpeakingTestContent() {
                   </span>
                 )}
                 {!t.isPremium && t.fromDb && (
-                  <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" title="Admin-created" />
+                  <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" title={t("speakingTest.topic.adminCreated")} />
                 )}
               </button>
             ))}
@@ -435,20 +438,20 @@ function SpeakingTestContent() {
                 <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200/50">
                   <span className="material-symbols-outlined text-white text-[28px]">diamond</span>
                 </div>
-                <h3 className="text-xl font-black text-slate-900 mb-2">Chủ đề PRO</h3>
-                <p className="text-sm text-slate-500 mb-6">Chủ đề này dành cho gói Pro. Nâng cấp để truy cập tất cả chủ đề Speaking.</p>
+                <h3 className="text-xl font-black text-slate-900 mb-2">{t("speakingTest.topic.upgrade.title")}</h3>
+                <p className="text-sm text-slate-500 mb-6">{t("speakingTest.topic.upgrade.body")}</p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowUpgradeDialog(false)}
                     className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
                   >
-                    Đóng
+                    {t("speakingTest.topic.upgrade.close")}
                   </button>
                   <button
                     onClick={() => navigate("/#pricing")}
                     className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-200/30 hover:scale-105 transition-all cursor-pointer"
                   >
-                    Nâng cấp Pro
+                    {t("speakingTest.topic.upgrade.upgradeBtn")}
                   </button>
                 </div>
               </div>
@@ -475,7 +478,7 @@ function SpeakingTestContent() {
                 setScreen("topic");
               }}
               className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-500 cursor-pointer"
-              title="Quay lại"
+              title={t("speakingTest.micCheck.back")}
             >
               <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             </button>
@@ -483,8 +486,8 @@ function SpeakingTestContent() {
               <span className="material-symbols-outlined">mic</span>
             </div>
             <div>
-              <h1 className="font-bold text-base sm:text-lg tracking-tight text-slate-900">Kiểm tra mic & Chuẩn bị</h1>
-              <p className="text-xs text-slate-500">Chủ đề: {topic}</p>
+              <h1 className="font-bold text-base sm:text-lg tracking-tight text-slate-900">{t("speakingTest.micCheck.title")}</h1>
+              <p className="text-xs text-slate-500">{t("speakingTest.micCheck.topicLabel", { topic })}</p>
             </div>
           </div>
         </header>
@@ -495,22 +498,22 @@ function SpeakingTestContent() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-amber-500">graphic_eq</span>
-                Test microphone
+                {t("speakingTest.micCheck.testMic")}
               </h2>
               <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
                 micCheckStream ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500"
               }`}>
-                {micCheckStream ? "Mic OK" : "Đang chờ quyền..."}
+                {micCheckStream ? t("speakingTest.micCheck.micOk") : t("speakingTest.micCheck.micWaiting")}
               </span>
             </div>
-            <p className="text-sm text-slate-500 mb-4">Hãy nói thử vài câu — nếu thanh dưới chuyển sang xanh/cam là mic đang hoạt động tốt.</p>
+            <p className="text-sm text-slate-500 mb-4">{t("speakingTest.micCheck.testHint")}</p>
             <VolumeMeter stream={micCheckStream} />
             {!micCheckStream && (
               <button
                 onClick={initMicCheck}
                 className="mt-4 text-sm font-bold text-indigo-600 hover:text-indigo-700 underline cursor-pointer"
               >
-                Cấp quyền microphone
+                {t("speakingTest.micCheck.grantMic")}
               </button>
             )}
           </div>
@@ -520,13 +523,13 @@ function SpeakingTestContent() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-amber-500">lightbulb</span>
-                Từ vựng band 7+ cho chủ đề này
+                {t("speakingTest.micCheck.vocabTitle")}
               </h2>
               {vocabLoading && (
                 <div className="w-5 h-5 border-2 border-amber-200 border-t-amber-500 rounded-full animate-spin" />
               )}
             </div>
-            <p className="text-sm text-slate-500 mb-4">Cố gắng dùng những từ này khi nói — AI Examiner sẽ cộng điểm Lexical Resource.</p>
+            <p className="text-sm text-slate-500 mb-4">{t("speakingTest.micCheck.vocabHint")}</p>
             {vocabLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[1, 2, 3, 4].map(i => (
@@ -539,7 +542,7 @@ function SpeakingTestContent() {
                   <div key={i} className="border border-amber-200 bg-amber-50/50 rounded-xl p-4">
                     <div className="flex items-baseline justify-between gap-2 mb-1">
                       <span className="font-black text-amber-700 text-sm">{v.word}</span>
-                      <span className="text-[10px] text-amber-600 font-bold">B7+</span>
+                      <span className="text-[10px] text-amber-600 font-bold">{t("speakingTest.micCheck.vocabBadge")}</span>
                     </div>
                     <p className="text-xs text-slate-600 mb-2">{v.meaning}</p>
                     <p className="text-xs italic text-slate-500 leading-relaxed">"{v.example}"</p>
@@ -547,7 +550,7 @@ function SpeakingTestContent() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 italic">Chưa có gợi ý — bạn vẫn có thể bắt đầu bài thi.</p>
+              <p className="text-sm text-slate-400 italic">{t("speakingTest.micCheck.vocabEmpty")}</p>
             )}
           </div>
 
@@ -555,13 +558,13 @@ function SpeakingTestContent() {
           <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
             <h3 className="text-sm font-black text-indigo-900 mb-2 flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">info</span>
-              Hướng dẫn nhanh
+              {t("speakingTest.micCheck.instructionsTitle")}
             </h3>
             <ul className="text-xs text-indigo-900/80 space-y-1.5 leading-relaxed">
-              <li>• <b>Part 1</b>: 4-5 câu hỏi cá nhân, mỗi câu trả lời ~30 giây</li>
-              <li>• <b>Part 2</b>: 1 cue card — bạn có <b>1 phút chuẩn bị</b>, sau đó nói liên tục <b>1-2 phút</b></li>
-              <li>• <b>Part 3</b>: Câu hỏi mở thảo luận, mỗi câu trả lời 45-60 giây</li>
-              <li>• Bạn có thể <b>tạm dừng</b> hoặc <b>kết thúc sớm</b> bất cứ lúc nào</li>
+              <li>• <Trans i18nKey="speakingTest.micCheck.instructions.part1" ns="exam" components={{ b: <b /> }} /></li>
+              <li>• <Trans i18nKey="speakingTest.micCheck.instructions.part2" ns="exam" components={{ b: <b /> }} /></li>
+              <li>• <Trans i18nKey="speakingTest.micCheck.instructions.part3" ns="exam" components={{ b: <b /> }} /></li>
+              <li>• <Trans i18nKey="speakingTest.micCheck.instructions.controls" ns="exam" components={{ b: <b /> }} /></li>
             </ul>
           </div>
 
@@ -571,7 +574,7 @@ function SpeakingTestContent() {
             className="w-full px-6 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-amber-500/20 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100 cursor-pointer flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined">play_arrow</span>
-            Bắt đầu thi Speaking
+            {t("speakingTest.micCheck.start")}
           </button>
         </div>
       </div>
@@ -584,9 +587,9 @@ function SpeakingTestContent() {
 
   if (screen === "conversation") {
     const partLabels: Record<number, string> = {
-      1: "Part 1 — Introduction & Interview",
-      2: "Part 2 — Individual Long Turn",
-      3: "Part 3 — Two-way Discussion",
+      1: t("speakingTest.conversation.partLabels.1"),
+      2: t("speakingTest.conversation.partLabels.2"),
+      3: t("speakingTest.conversation.partLabels.3"),
     };
 
     return (
@@ -598,7 +601,7 @@ function SpeakingTestContent() {
             </div>
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-black text-slate-800 tracking-tight truncate">{topic}</p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">{partLabels[currentPart] || `Part ${currentPart}`}</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">{partLabels[currentPart] || t("speakingTest.conversation.partFallback", { num: currentPart })}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -606,7 +609,7 @@ function SpeakingTestContent() {
               {[1, 2, 3].map(p => (
                 <div key={p} className={`w-10 h-2 rounded-full transition-all duration-500 ${
                   p < currentPart ? "bg-emerald-500 shadow-sm" : p === currentPart ? "bg-amber-500 shadow-sm" : "bg-slate-200"
-                }`} title={`Part ${p}`} />
+                }`} title={t("speakingTest.conversation.partFallback", { num: p })} />
               ))}
             </div>
             {vocabSuggestions.length > 0 && (
@@ -619,7 +622,7 @@ function SpeakingTestContent() {
                 }`}
               >
                 <span className="material-symbols-outlined text-[14px]">lightbulb</span>
-                Mẹo từ vựng
+                {t("speakingTest.conversation.vocabTip")}
               </button>
             )}
             <button
@@ -630,14 +633,14 @@ function SpeakingTestContent() {
                   : "text-indigo-600 hover:bg-indigo-50 border-indigo-200"
               }`}
             >
-              <span className="hidden sm:inline">{showHistory ? "Ẩn" : "Xem"} Transcript</span>
+              <span className="hidden sm:inline">{showHistory ? t("speakingTest.conversation.hide") : t("speakingTest.conversation.show")} {t("speakingTest.conversation.transcript")}</span>
               <span className="sm:hidden material-symbols-outlined text-[16px]">history</span>
             </button>
             <button
               onClick={handleFinishEarly}
               className="text-xs font-bold text-red-500 hover:text-white px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-500 transition-all cursor-pointer shadow-sm"
             >
-              <span className="hidden sm:inline">Kết thúc sớm</span>
+              <span className="hidden sm:inline">{t("speakingTest.conversation.finishEarly")}</span>
               <span className="sm:hidden material-symbols-outlined text-[16px]">stop_circle</span>
             </button>
           </div>
@@ -651,7 +654,7 @@ function SpeakingTestContent() {
               <div className="flex justify-between items-center mb-4 border-b border-amber-200 pb-3">
                 <h3 className="font-black text-slate-800 flex items-center gap-2">
                   <span className="material-symbols-outlined text-amber-500">lightbulb</span>
-                  Từ vựng band 7+
+                  {t("speakingTest.conversation.vocabPanelTitle")}
                 </h3>
                 <button onClick={() => setShowVocabPanel(false)} className="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center cursor-pointer">
                   <span className="material-symbols-outlined text-[20px]">close</span>
@@ -674,7 +677,7 @@ function SpeakingTestContent() {
               <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-4">
                 <h3 className="font-black text-slate-800 flex items-center gap-2">
                   <span className="material-symbols-outlined text-indigo-500">history</span>
-                  Lịch sử hội thoại & Bóc băng (Transcripts)
+                  {t("speakingTest.conversation.historyTitle")}
                 </h3>
                 <button onClick={() => setShowHistory(false)} className="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center cursor-pointer">
                   <span className="material-symbols-outlined text-[20px]">close</span>
@@ -691,7 +694,7 @@ function SpeakingTestContent() {
                       <p className={`text-[10px] font-black uppercase tracking-wider mb-2 ${
                         turn.role === "examiner" ? "text-slate-400" : "text-indigo-600"
                       }`}>
-                        {turn.role === "examiner" ? "Examiner" : "You (Detected Speech)"}
+                        {turn.role === "examiner" ? t("speakingTest.conversation.examiner") : t("speakingTest.conversation.you")}
                       </p>
                       <p className="text-sm leading-relaxed text-slate-700">{turn.content}</p>
                       {turn.audioUrl && (
@@ -700,7 +703,7 @@ function SpeakingTestContent() {
                     </div>
                   </div>
                 ))}
-                {turns.length === 0 && <p className="text-slate-400 text-sm font-medium text-center py-4">Chưa có đoạn hội thoại nào.</p>}
+                {turns.length === 0 && <p className="text-slate-400 text-sm font-medium text-center py-4">{t("speakingTest.conversation.noConversation")}</p>}
               </div>
             </div>
           )}
@@ -716,8 +719,8 @@ function SpeakingTestContent() {
                     <span className="w-3 h-3 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 </div>
-                <h3 className="text-xl font-black text-slate-800 mb-2">Examiner đang phân tích...</h3>
-                <p className="text-sm font-medium text-slate-500">Chuẩn bị câu hỏi tiếp theo</p>
+                <h3 className="text-xl font-black text-slate-800 mb-2">{t("speakingTest.conversation.analyzing")}</h3>
+                <p className="text-sm font-medium text-slate-500">{t("speakingTest.conversation.preparingNext")}</p>
               </div>
             ) : (
               <div className="w-full max-w-3xl mx-auto text-center">
@@ -726,11 +729,11 @@ function SpeakingTestContent() {
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 to-orange-500" />
 
                     <div className="flex items-center justify-between mb-5 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-100 gap-2 flex-wrap">
-                      <span className="bg-amber-100 text-amber-700 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl">Part 2 — Cue Card</span>
+                      <span className="bg-amber-100 text-amber-700 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl">{t("speakingTest.conversation.cueCardBadge")}</span>
                       {prepTimer !== null && prepTimer > 0 && (
                         <span className="flex items-center gap-2 text-sm font-mono font-black text-red-600 bg-red-50 border border-red-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl animate-pulse">
                           <span className="material-symbols-outlined text-[18px]">timer</span>
-                          Prep 00:{prepTimer.toString().padStart(2, '0')}
+                          {t("speakingTest.conversation.prep")} 00:{prepTimer.toString().padStart(2, '0')}
                         </span>
                       )}
                     </div>
@@ -738,7 +741,7 @@ function SpeakingTestContent() {
                     <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-6 sm:mb-10 leading-tight text-left">{cueCard.topic}</h3>
 
                     <div className="text-left space-y-4 sm:space-y-6 bg-slate-50 p-4 sm:p-6 rounded-2xl border border-slate-100">
-                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">You should say:</p>
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t("speakingTest.conversation.youShouldSay")}</p>
                       <ul className="space-y-3 sm:space-y-5">
                         {cueCard.bulletPoints.map((bp, i) => (
                           <li key={i} className="text-base sm:text-lg text-slate-700 flex items-start gap-3 sm:gap-4">
@@ -778,15 +781,15 @@ function SpeakingTestContent() {
                       className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors mb-3 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[20px]">{showNotes ? "visibility_off" : "notes"}</span>
-                      {showNotes ? "Ẩn ghi chú" : "Ghi chú thêm..."}
+                      {showNotes ? t("speakingTest.conversation.hideNotes") : t("speakingTest.conversation.addNotes")}
                     </button>
-                    
+
                     {showNotes && (
                       <div className="w-full animate-in slide-in-from-top-2 duration-300">
                         <textarea
                           value={userNotes}
                           onChange={(e) => setUserNotes(e.target.value)}
-                          placeholder="Gõ nháp / script của bạn vào đây..."
+                          placeholder={t("speakingTest.conversation.notesPlaceholder")}
                           className="w-full min-h-[120px] bg-white border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl p-4 text-slate-700 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] resize-y outline-none transition-all placeholder:text-slate-400"
                         />
                       </div>
@@ -814,7 +817,7 @@ function SpeakingTestContent() {
                       ? "text-slate-500 bg-slate-50 border-slate-200"
                       : "text-red-600 bg-red-50 border-red-100 animate-pulse"
                   }`}>
-                    {isPaused ? "PAUSED" : formatTime(recordingTime)}
+                    {isPaused ? t("speakingTest.conversation.paused") : formatTime(recordingTime)}
                   </span>
                 )}
 
@@ -831,7 +834,7 @@ function SpeakingTestContent() {
                   <button
                     onClick={togglePause}
                     className="w-14 h-14 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-700 shadow transition-all hover:scale-105 cursor-pointer border-2 border-white"
-                    title={isPaused ? "Tiếp tục" : "Tạm dừng"}
+                    title={isPaused ? t("speakingTest.conversation.resume") : t("speakingTest.conversation.pause")}
                   >
                     <span className="material-symbols-outlined text-[26px]">
                       {isPaused ? "play_arrow" : "pause"}
@@ -845,7 +848,7 @@ function SpeakingTestContent() {
                   </button>
                 </div>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest text-center">
-                  {isPaused ? "Đang tạm dừng" : "Nhấn STOP để kết thúc"}
+                  {isPaused ? t("speakingTest.conversation.pausedHint") : t("speakingTest.conversation.stopHint")}
                 </p>
               </div>
             ) : (
@@ -858,7 +861,7 @@ function SpeakingTestContent() {
                   <span className="material-symbols-outlined text-[36px]">mic</span>
                 </button>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-5">
-                  {isProcessing ? "Vui lòng đợi..." : "Nhấn để bắt đầu trả lời"}
+                  {isProcessing ? t("speakingTest.conversation.wait") : t("speakingTest.conversation.startAnswering")}
                 </p>
               </div>
             )}
@@ -881,9 +884,9 @@ function SpeakingTestContent() {
           <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-amber-500/20 animate-pulse">
             <span className="material-symbols-outlined text-[28px]">grading</span>
           </div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">Đang chấm điểm...</h2>
-          <p className="text-sm text-slate-500">AI đang phân tích bài nói của bạn</p>
-          <p className="text-xs text-slate-400 mt-1">Quá trình này có thể mất 30-60 giây</p>
+          <h2 className="text-xl font-black text-slate-900 mb-2">{t("speakingTest.grading.title")}</h2>
+          <p className="text-sm text-slate-500">{t("speakingTest.grading.subtitle")}</p>
+          <p className="text-xs text-slate-400 mt-1">{t("speakingTest.grading.hint")}</p>
         </div>
       </div>
     );
@@ -904,39 +907,39 @@ function SpeakingTestContent() {
             <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center text-white">
               <span className="material-symbols-outlined text-[18px]">mic</span>
             </div>
-            <p className="font-bold text-slate-800">Speaking Result</p>
+            <p className="font-bold text-slate-800">{t("speakingTest.result.title")}</p>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/exam/speaking-history" className="text-xs font-bold text-slate-500 hover:text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition">
-              Lịch sử
+              {t("speakingTest.result.history")}
             </Link>
             <Link to="/exam" className="text-xs font-bold text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition">
-              Quay lại
+              {t("speakingTest.result.back")}
             </Link>
           </div>
         </header>
 
         <div className="max-w-3xl mx-auto px-6 py-8">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center mb-6 shadow-sm">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Overall Band Score</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{t("speakingTest.result.overallBand")}</p>
             <p className={`text-5xl font-black ${getBandColor(scores.overall)}`}>
-              {scores.overall?.toFixed(1) || "N/A"}
+              {scores.overall?.toFixed(1) || t("speakingTest.result.na")}
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {[
-              { key: "fluency", label: "Fluency & Coherence", icon: "waves" },
-              { key: "lexical", label: "Lexical Resource", icon: "dictionary" },
-              { key: "grammar", label: "Grammar Range", icon: "spellcheck" },
-              { key: "pronunciation", label: "Pronunciation", icon: "record_voice_over" },
-            ].map(({ key, label, icon }) => (
+              { key: "fluency", icon: "waves" },
+              { key: "lexical", icon: "dictionary" },
+              { key: "grammar", icon: "spellcheck" },
+              { key: "pronunciation", icon: "record_voice_over" },
+            ].map(({ key, icon }) => (
               <div key={key} className="bg-white rounded-xl border border-slate-200 p-4 text-center">
                 <span className="material-symbols-outlined text-slate-400 text-[20px] mb-1 block">{icon}</span>
                 <p className={`text-2xl font-black ${getBandColor(scores[key])}`}>
                   {scores[key]?.toFixed(1) || "—"}
                 </p>
-                <p className="text-[10px] font-bold text-slate-500 mt-1">{label}</p>
+                <p className="text-[10px] font-bold text-slate-500 mt-1">{t(`speakingResultPage.criteria.${key}`)}</p>
               </div>
             ))}
           </div>
@@ -945,7 +948,7 @@ function SpeakingTestContent() {
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="text-sm font-black text-slate-800 mb-3 flex items-center gap-2">
                 <span className="material-symbols-outlined text-amber-500 text-[18px]">lightbulb</span>
-                Nhận xét chi tiết
+                {t("speakingTest.result.feedbackTitle")}
               </h3>
               <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{r.feedback}</p>
             </div>
@@ -955,14 +958,14 @@ function SpeakingTestContent() {
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mt-6">
               <h3 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-indigo-500 text-[18px]">history</span>
-                Bản dịch băng ghi âm (Transcript)
+                {t("speakingTest.result.transcriptTitle")}
               </h3>
               <div className="space-y-4">
                 {turns.map((turn, idx) => (
                   <div key={idx} className={`p-4 rounded-xl ${turn.role === 'examiner' ? 'bg-slate-50 border border-slate-100' : 'bg-indigo-50 border border-indigo-100'}`}>
                     <div className="flex items-center justify-between mb-2">
                       <span className={`text-[10px] font-black uppercase tracking-wider ${turn.role === 'examiner' ? 'text-slate-500' : 'text-indigo-600'}`}>
-                        {turn.role === 'examiner' ? 'Examiner' : 'You (Detected Speech)'}
+                        {turn.role === 'examiner' ? t("speakingTest.result.examiner") : t("speakingTest.result.you")}
                       </span>
                     </div>
                     <p className="text-sm text-slate-700 leading-relaxed">{turn.content}</p>
@@ -991,7 +994,7 @@ function SpeakingTestContent() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:scale-105 transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">replay</span>
-              Luyện tiếp
+              {t("speakingTest.result.practiceMore")}
             </button>
           </div>
         </div>

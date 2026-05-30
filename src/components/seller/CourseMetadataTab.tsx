@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ export function CourseMetadataTab({
   thumbnailFile,
   setThumbnailFile,
 }: Props) {
+  const { t } = useTranslation('seller');
   const merged = { ...course, ...draft };
   const st = statusConfig[merged.status] ?? statusConfig.DRAFT;
   const isDirty = Object.keys(draft).length > 0 || !!thumbnailFile;
@@ -77,11 +79,11 @@ export function CourseMetadataTab({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ảnh thumbnail không được vượt quá 5MB.');
+      toast.error(t('metadataTab.toasts.imageTooLarge'));
       return;
     }
     if (!/^image\/(jpe?g|png|webp)$/.test(file.type)) {
-      toast.error('Chỉ chấp nhận JPG, PNG, WebP.');
+      toast.error(t('metadataTab.toasts.imageType'));
       return;
     }
     setThumbnailFile(file);
@@ -99,15 +101,15 @@ export function CourseMetadataTab({
     <>
       <div className="space-y-5">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Cập nhật khóa học</h2>
-          <p className="text-sm text-slate-500">Chỉnh sửa thông tin và trạng thái khóa học</p>
+          <h2 className="text-lg font-bold text-slate-900">{t('metadataTab.title')}</h2>
+          <p className="text-sm text-slate-500">{t('metadataTab.subtitle')}</p>
         </div>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6 space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Tiêu đề</label>
+                <label className="text-sm font-semibold text-slate-700">{t('metadataTab.fields.title')}</label>
                 <Input
                   className="rounded-xl h-11"
                   value={draft.title ?? merged.title ?? ''}
@@ -122,7 +124,7 @@ export function CourseMetadataTab({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Giá (VNĐ)</label>
+                <label className="text-sm font-semibold text-slate-700">{t('metadataTab.fields.price')}</label>
                 <Input
                   className="rounded-xl h-11"
                   type="number"
@@ -133,20 +135,20 @@ export function CourseMetadataTab({
                   <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
                     <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span>
-                      Thay đổi giá chỉ áp dụng cho học viên <strong>mua sau khi lưu</strong>. Học viên đã mua không được hoàn lại / phụ thu chênh lệch.
+                      <Trans i18nKey="metadataTab.priceWarning" ns="seller" components={{ strong: <strong /> }} />
                     </span>
                   </div>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Level</label>
+                <label className="text-sm font-semibold text-slate-700">{t('metadataTab.fields.level')}</label>
                 <Select
                   value={draft.courseLevel ?? merged.courseLevel ?? ''}
                   onValueChange={(v) => setDraft((d) => ({ ...d, courseLevel: v as CourseLevel }))}
                 >
                   <SelectTrigger className="rounded-xl h-11">
-                    <SelectValue placeholder="Chọn level" />
+                    <SelectValue placeholder={t('metadataTab.fields.levelPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map((lv) => (
@@ -157,7 +159,7 @@ export function CourseMetadataTab({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Trạng thái</label>
+                <label className="text-sm font-semibold text-slate-700">{t('metadataTab.fields.status')}</label>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${st.bg} ${st.text}`}>
                     {st.emoji} {st.label}
@@ -169,10 +171,10 @@ export function CourseMetadataTab({
                       className="text-xs rounded-lg"
                       onClick={() => {
                         setDraft((d) => ({ ...d, status: 'PENDING' as CourseStatus }));
-                        toast.info('Nhấn "Lưu" để gửi duyệt.');
+                        toast.info(t('metadataTab.statusActions.submitToast'));
                       }}
                     >
-                      <SendHorizontal size={14} className="mr-1" /> Gửi duyệt
+                      <SendHorizontal size={14} className="mr-1" /> {t('metadataTab.statusActions.submit')}
                     </Button>
                   )}
                   {merged.status === 'ACTIVE' && (
@@ -182,29 +184,29 @@ export function CourseMetadataTab({
                       className="text-xs rounded-lg text-orange-600 border-orange-300 hover:bg-orange-50"
                       onClick={() => {
                         setDraft((d) => ({ ...d, status: 'INACTIVE' as CourseStatus }));
-                        toast.info('Nhấn "Lưu" để tạm ngưng.');
+                        toast.info(t('metadataTab.statusActions.suspendToast'));
                       }}
                     >
-                      <PauseCircle size={14} className="mr-1" /> Tạm ngưng
+                      <PauseCircle size={14} className="mr-1" /> {t('metadataTab.statusActions.suspend')}
                     </Button>
                   )}
                 </div>
                 {merged.status === 'PENDING' && (
-                  <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1"><Clock size={12} /> Đang chờ admin duyệt.</p>
+                  <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1"><Clock size={12} /> {t('metadataTab.statusHints.pending')}</p>
                 )}
                 {merged.status === 'REFUSE' && (
-                  <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg flex items-center gap-1"><XCircle size={12} /> Bị từ chối. Hãy sửa rồi gửi lại.</p>
+                  <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg flex items-center gap-1"><XCircle size={12} /> {t('metadataTab.statusHints.refuse')}</p>
                 )}
                 {draft.status && draft.status !== merged.status && (
                   <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
-                    <Zap size={12} className="inline mr-1" /> Sẽ chuyển sang <strong>{draft.status === 'PENDING' ? 'Chờ duyệt' : 'Tạm ngưng'}</strong> khi bạn lưu.
+                    <Zap size={12} className="inline mr-1" /> <Trans i18nKey="metadataTab.statusChange" ns="seller" values={{ status: draft.status === 'PENDING' ? t('metadataTab.pendingLabel') : t('metadataTab.inactiveLabel') }} components={{ strong: <strong /> }} />
                   </p>
                 )}
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Mô tả</label>
+              <label className="text-sm font-semibold text-slate-700">{t('metadataTab.fields.description')}</label>
               <Textarea
                 className="rounded-xl"
                 rows={5}
@@ -214,7 +216,7 @@ export function CourseMetadataTab({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Ảnh thumbnail</label>
+              <label className="text-sm font-semibold text-slate-700">{t('metadataTab.fields.thumbnail')}</label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -225,15 +227,15 @@ export function CourseMetadataTab({
               <div className="flex items-start gap-4 flex-wrap">
                 <div className="h-28 w-44 rounded-xl overflow-hidden border bg-muted flex items-center justify-center relative shrink-0">
                   {thumbnailPreview ? (
-                    <img src={thumbnailPreview} alt="Thumbnail mới" className="w-full h-full object-cover" />
+                    <img src={thumbnailPreview} alt={t('metadataTab.thumbnail.newAlt')} className="w-full h-full object-cover" />
                   ) : merged.thumbnailUrl ? (
-                    <img src={merged.thumbnailUrl} alt="Thumbnail hiện tại" className="w-full h-full object-cover" />
+                    <img src={merged.thumbnailUrl} alt={t('metadataTab.thumbnail.currentAlt')} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-xs text-muted-foreground">Chưa có ảnh</span>
+                    <span className="text-xs text-muted-foreground">{t('metadataTab.thumbnail.empty')}</span>
                   )}
                   {thumbnailPreview && (
                     <span className="absolute top-1 left-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
-                      Mới
+                      {t('metadataTab.thumbnail.newBadge')}
                     </span>
                   )}
                 </div>
@@ -246,7 +248,7 @@ export function CourseMetadataTab({
                     disabled={isSaving}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    {merged.thumbnailUrl || thumbnailPreview ? 'Đổi ảnh thumbnail' : 'Tải lên thumbnail'}
+                    {merged.thumbnailUrl || thumbnailPreview ? t('metadataTab.thumbnail.change') : t('metadataTab.thumbnail.upload')}
                   </Button>
                   {thumbnailFile && (
                     <Button
@@ -258,10 +260,10 @@ export function CourseMetadataTab({
                       className="text-destructive"
                     >
                       <X className="w-4 h-4 mr-2" />
-                      Huỷ ảnh mới
+                      {t('metadataTab.thumbnail.cancelNew')}
                     </Button>
                   )}
-                  <p className="text-xs text-muted-foreground">JPG, PNG, WebP, tối đa 5MB.</p>
+                  <p className="text-xs text-muted-foreground">{t('metadataTab.thumbnail.formats')}</p>
                 </div>
               </div>
             </div>
@@ -269,10 +271,10 @@ export function CourseMetadataTab({
             <div className="flex items-center gap-3 pt-2">
               <Button className="rounded-xl px-6 shadow-sm" onClick={onSave} disabled={isSaving}>
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Đang lưu...' : 'Lưu & cập nhật'}
+                {isSaving ? t('metadataTab.save.saving') : t('metadataTab.save.save')}
               </Button>
               <Button variant="outline" className="rounded-xl" onClick={onClearDraft}>
-                <RotateCcw className="w-4 h-4 mr-2" /> Xoá bản nháp
+                <RotateCcw className="w-4 h-4 mr-2" /> {t('metadataTab.clearDraft')}
               </Button>
             </div>
           </CardContent>

@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   useUserSpeakingSessions,
 } from "@/hooks/api/use-ai-evaluation";
@@ -49,11 +51,11 @@ function extractFeedback(detailed: any): string | null {
   if (detailed.overall_feedback) return detailed.overall_feedback;
   const parts: string[] = [];
   if (detailed.strengths?.length)
-    parts.push("Điểm mạnh:\n- " + detailed.strengths.join("\n- "));
+    parts.push(i18n.t("speakingResultPage.feedbackParts.strengths", { ns: "exam" }) + detailed.strengths.join("\n- "));
   if (detailed.areas_to_improve?.length)
-    parts.push("\nCần cải thiện:\n- " + detailed.areas_to_improve.join("\n- "));
+    parts.push(i18n.t("speakingResultPage.feedbackParts.areasToImprove", { ns: "exam" }) + detailed.areas_to_improve.join("\n- "));
   if (detailed.estimated_preparation_tips?.length)
-    parts.push("\nGợi ý luyện tập:\n- " + detailed.estimated_preparation_tips.join("\n- "));
+    parts.push(i18n.t("speakingResultPage.feedbackParts.tips", { ns: "exam" }) + detailed.estimated_preparation_tips.join("\n- "));
   return parts.length > 0 ? parts.join("\n") : null;
 }
 
@@ -82,7 +84,7 @@ function normalizeEvaluation(e: any): NormalizedResult {
   return {
     kind: "evaluation",
     id: e.id,
-    topic: "Speaking Evaluation",
+    topic: i18n.t("speakingResultPage.evaluationTopic", { ns: "exam" }),
     overallBand: e.overallBand ?? null,
     scores: {
       fluency: e.fluencyScore ?? null,
@@ -132,6 +134,7 @@ function useNormalizedResult(id: string | null) {
 }
 
 export default function SpeakingResultPage() {
+  const { t } = useTranslation("exam");
   const { evaluationId } = useParams();
   const { data: result, isLoading } = useNormalizedResult(evaluationId || null);
 
@@ -153,9 +156,9 @@ export default function SpeakingResultPage() {
     const last = completed[0];
     return {
       value: result.overallBand - last.overallBand,
-      vs: last.topic || "lần trước",
+      vs: last.topic || t("speakingResultPage.delta.previous"),
     };
-  }, [result, allSessions]);
+  }, [result, allSessions, t]);
 
   // Combined transcript text — for error analysis & model answer.
   // For session: concatenated candidate turns. For evaluation: single transcript.
@@ -215,9 +218,9 @@ export default function SpeakingResultPage() {
           <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-amber-500/20 animate-pulse">
             <span className="material-symbols-outlined text-[28px]">grading</span>
           </div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">Đang chấm điểm...</h2>
-          <p className="text-sm text-slate-500">AI đang phân tích bài nói của bạn</p>
-          <p className="text-xs text-slate-400 mt-1">Quá trình này có thể mất 30-60 giây</p>
+          <h2 className="text-xl font-black text-slate-900 mb-2">{t("speakingResultPage.grading.title")}</h2>
+          <p className="text-sm text-slate-500">{t("speakingResultPage.grading.subtitle")}</p>
+          <p className="text-xs text-slate-400 mt-1">{t("speakingResultPage.grading.hint")}</p>
         </div>
       </div>
     );
@@ -228,10 +231,10 @@ export default function SpeakingResultPage() {
       <div className="bg-slate-50 min-h-screen flex items-center justify-center font-sans">
         <div className="text-center p-8 bg-white rounded-2xl border border-slate-200">
           <span className="material-symbols-outlined text-red-500 text-5xl mb-4 block">error</span>
-          <h2 className="text-lg font-bold text-slate-800 mb-2">Không thể tải kết quả</h2>
-          <p className="text-sm text-slate-500 mb-6">Kết quả không tồn tại hoặc đã có lỗi xảy ra.</p>
+          <h2 className="text-lg font-bold text-slate-800 mb-2">{t("speakingResultPage.error.title")}</h2>
+          <p className="text-sm text-slate-500 mb-6">{t("speakingResultPage.error.body")}</p>
           <Link to="/exam" className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">
-            Quay lại Exam Center
+            {t("speakingResultPage.error.backToExamCenter")}
           </Link>
         </div>
       </div>
@@ -251,7 +254,7 @@ export default function SpeakingResultPage() {
             <span className="material-symbols-outlined text-[18px]">mic</span>
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-slate-800 text-sm sm:text-base truncate">Speaking Result</p>
+            <p className="font-bold text-slate-800 text-sm sm:text-base truncate">{t("speakingResultPage.header.title")}</p>
             {result.topic && (
               <p className="text-[10px] sm:text-xs text-slate-500 font-medium truncate">{result.topic}</p>
             )}
@@ -259,17 +262,17 @@ export default function SpeakingResultPage() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link to="/exam/speaking-history" className="text-xs font-bold text-slate-500 hover:text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition">
-            Lịch sử
+            {t("speakingResultPage.header.history")}
           </Link>
           <Link to="/exam" className="text-xs font-bold text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition">
-            Quay lại
+            {t("speakingResultPage.header.back")}
           </Link>
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className={`rounded-2xl border p-6 text-center mb-6 shadow-sm ${getBandBg(result.overallBand)}`}>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Overall Band Score</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{t("speakingResultPage.overallBandScore")}</p>
           <p className={`text-6xl font-black ${getBandColor(result.overallBand)}`}>
             {result.overallBand !== null ? result.overallBand.toFixed(1) : "N/A"}
           </p>
@@ -278,32 +281,32 @@ export default function SpeakingResultPage() {
               {delta.value > 0 && (
                 <>
                   <span className="material-symbols-outlined text-emerald-600 text-[18px]">trending_up</span>
-                  <span className="text-emerald-700">+{delta.value.toFixed(1)} band</span>
+                  <span className="text-emerald-700">+{delta.value.toFixed(1)} {t("speakingResultPage.delta.bandSuffix")}</span>
                 </>
               )}
               {delta.value < 0 && (
                 <>
                   <span className="material-symbols-outlined text-red-500 text-[18px]">trending_down</span>
-                  <span className="text-red-600">{delta.value.toFixed(1)} band</span>
+                  <span className="text-red-600">{delta.value.toFixed(1)} {t("speakingResultPage.delta.bandSuffix")}</span>
                 </>
               )}
               {delta.value === 0 && (
                 <>
                   <span className="material-symbols-outlined text-slate-500 text-[18px]">trending_flat</span>
-                  <span className="text-slate-600">Bằng lần trước</span>
+                  <span className="text-slate-600">{t("speakingResultPage.delta.same")}</span>
                 </>
               )}
-              <span className="text-slate-500 text-xs font-medium">so với "{delta.vs}"</span>
+              <span className="text-slate-500 text-xs font-medium">{t("speakingResultPage.delta.vs", { topic: delta.vs })}</span>
             </div>
           )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { key: "fluency", label: "Fluency & Coherence", icon: "waves" },
-            { key: "lexical", label: "Lexical Resource", icon: "dictionary" },
-            { key: "grammar", label: "Grammar Range", icon: "spellcheck" },
-            { key: "pronunciation", label: "Pronunciation", icon: "record_voice_over" },
+            { key: "fluency", label: t("speakingResultPage.criteria.fluency"), icon: "waves" },
+            { key: "lexical", label: t("speakingResultPage.criteria.lexical"), icon: "dictionary" },
+            { key: "grammar", label: t("speakingResultPage.criteria.grammar"), icon: "spellcheck" },
+            { key: "pronunciation", label: t("speakingResultPage.criteria.pronunciation"), icon: "record_voice_over" },
           ].map(({ key, label, icon }) => {
             const score = (result.scores as any)[key];
             return (
@@ -322,7 +325,7 @@ export default function SpeakingResultPage() {
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6">
             <h3 className="text-sm font-black text-slate-800 mb-3 flex items-center gap-2">
               <span className="material-symbols-outlined text-amber-500 text-[18px]">lightbulb</span>
-              Nhận xét chi tiết
+              {t("speakingResultPage.feedbackTitle")}
             </h3>
             <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{result.feedback}</p>
           </div>
@@ -334,7 +337,7 @@ export default function SpeakingResultPage() {
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-indigo-500 text-[18px]">history</span>
-                Bản dịch & ghi âm theo từng câu
+                {t("speakingResultPage.conversation.title")}
               </h3>
               <button
                 onClick={handleAnalyzeErrors}
@@ -344,17 +347,17 @@ export default function SpeakingResultPage() {
                 {loadingErrors ? (
                   <>
                     <div className="w-3 h-3 border border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-                    Đang phân tích...
+                    {t("speakingResultPage.analyze.analyzing")}
                   </>
                 ) : errorAnalysis.length > 0 ? (
                   <>
                     <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                    Đã phân tích {errorAnalysis.length} lỗi
+                    {t("speakingResultPage.analyze.analyzed", { count: errorAnalysis.length })}
                   </>
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[14px]">highlight</span>
-                    Tìm lỗi grammar/vocab
+                    {t("speakingResultPage.analyze.find")}
                   </>
                 )}
               </button>
@@ -377,7 +380,7 @@ export default function SpeakingResultPage() {
                       <span className={`text-[10px] font-black uppercase tracking-wider ${
                         isExaminer ? "text-slate-500" : "text-indigo-600"
                       }`}>
-                        {isExaminer ? "Examiner" : "Bạn (transcribed by Whisper)"}
+                        {isExaminer ? t("speakingResultPage.roles.examiner") : t("speakingResultPage.roles.you")}
                       </span>
                       {!isExaminer && turn.audioUrl && (
                         <button
@@ -387,7 +390,7 @@ export default function SpeakingResultPage() {
                           <span className="material-symbols-outlined text-[14px]">
                             {expandedTurnIdx === idx ? "expand_less" : "play_circle"}
                           </span>
-                          {expandedTurnIdx === idx ? "Ẩn audio" : "Nghe lại"}
+                          {expandedTurnIdx === idx ? t("speakingResultPage.hideAudio") : t("speakingResultPage.replay")}
                         </button>
                       )}
                     </div>
@@ -415,7 +418,7 @@ export default function SpeakingResultPage() {
                               <span key={i}>{seg.text}</span>
                             )
                           )
-                        : turn.content || <span className="italic text-slate-400">(không có nội dung)</span>}
+                        : turn.content || <span className="italic text-slate-400">{t("speakingResultPage.noContent")}</span>}
                     </p>
                     {!isExaminer && turn.audioUrl && (expandedTurnIdx === idx || result.turns.length <= 4) && (
                       <audio
@@ -432,7 +435,7 @@ export default function SpeakingResultPage() {
 
             {errorAnalysis.length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-100">
-                <p className="text-xs font-bold text-slate-500 mb-2">Chi tiết các lỗi:</p>
+                <p className="text-xs font-bold text-slate-500 mb-2">{t("speakingResultPage.errorDetails")}</p>
                 <ul className="space-y-1.5">
                   {errorAnalysis.map((e, i) => (
                     <li key={i} className="text-xs flex items-start gap-2 flex-wrap">
@@ -458,7 +461,7 @@ export default function SpeakingResultPage() {
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                 <span className="material-symbols-outlined text-indigo-500 text-[18px]">history</span>
-                Bản dịch băng ghi âm
+                {t("speakingResultPage.singleTranscript.title")}
               </h3>
               <button
                 onClick={handleAnalyzeErrors}
@@ -468,17 +471,17 @@ export default function SpeakingResultPage() {
                 {loadingErrors ? (
                   <>
                     <div className="w-3 h-3 border border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-                    Đang phân tích...
+                    {t("speakingResultPage.analyze.analyzing")}
                   </>
                 ) : errorAnalysis.length > 0 ? (
                   <>
                     <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                    Đã phân tích {errorAnalysis.length} lỗi
+                    {t("speakingResultPage.analyze.analyzed", { count: errorAnalysis.length })}
                   </>
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[14px]">highlight</span>
-                    Tìm lỗi grammar/vocab
+                    {t("speakingResultPage.analyze.find")}
                   </>
                 )}
               </button>
@@ -515,7 +518,7 @@ export default function SpeakingResultPage() {
 
             {errorAnalysis.length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-100">
-                <p className="text-xs font-bold text-slate-500 mb-2">Chi tiết các lỗi:</p>
+                <p className="text-xs font-bold text-slate-500 mb-2">{t("speakingResultPage.errorDetails")}</p>
                 <ul className="space-y-1.5">
                   {errorAnalysis.map((e, i) => (
                     <li key={i} className="text-xs flex items-start gap-2 flex-wrap">
@@ -535,7 +538,7 @@ export default function SpeakingResultPage() {
 
             {result.singleAudioUrl && (
               <div className="mt-4 border-t border-slate-100 pt-4">
-                <p className="text-xs font-bold text-slate-500 mb-2">Bản ghi âm hoàn chỉnh:</p>
+                <p className="text-xs font-bold text-slate-500 mb-2">{t("speakingResultPage.fullRecording")}</p>
                 <audio src={result.singleAudioUrl} controls className="h-10 w-full opacity-80" />
               </div>
             )}
@@ -547,7 +550,7 @@ export default function SpeakingResultPage() {
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
               <span className="material-symbols-outlined text-emerald-500 text-[18px]">workspace_premium</span>
-              Đáp án mẫu Band 8
+              {t("speakingResultPage.modelAnswer.title")}
             </h3>
             {!modelAnswer && (
               <button
@@ -558,12 +561,12 @@ export default function SpeakingResultPage() {
                 {loadingModel ? (
                   <>
                     <div className="w-3 h-3 border border-emerald-300 border-t-emerald-600 rounded-full animate-spin" />
-                    Đang sinh...
+                    {t("speakingResultPage.modelAnswer.generating")}
                   </>
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                    Xem đáp án mẫu
+                    {t("speakingResultPage.modelAnswer.view")}
                   </>
                 )}
               </button>
@@ -571,7 +574,7 @@ export default function SpeakingResultPage() {
           </div>
 
           {!modelAnswer && !loadingModel && (
-            <p className="text-sm text-slate-500 italic">Xem cách AI Examiner trả lời ở band 8 để học theo.</p>
+            <p className="text-sm text-slate-500 italic">{t("speakingResultPage.modelAnswer.placeholder")}</p>
           )}
 
           {modelAnswer && (
@@ -582,7 +585,7 @@ export default function SpeakingResultPage() {
 
               {modelAnswer.keyVocab && modelAnswer.keyVocab.length > 0 && (
                 <div>
-                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Từ/cụm nổi bật trong đáp án mẫu</p>
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">{t("speakingResultPage.modelAnswer.keyVocab")}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {modelAnswer.keyVocab.map((v, i) => (
                       <div key={i} className="border border-amber-200 bg-amber-50/50 rounded-lg p-3">
@@ -597,7 +600,7 @@ export default function SpeakingResultPage() {
 
               {modelAnswer.improvement && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                  <p className="text-xs font-black text-indigo-700 uppercase tracking-widest mb-1">Lời khuyên</p>
+                  <p className="text-xs font-black text-indigo-700 uppercase tracking-widest mb-1">{t("speakingResultPage.modelAnswer.advice")}</p>
                   <p className="text-sm text-indigo-900">{modelAnswer.improvement}</p>
                 </div>
               )}
@@ -611,7 +614,7 @@ export default function SpeakingResultPage() {
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:scale-105 transition-all cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">replay</span>
-            Luyện tiếp
+            {t("speakingResultPage.practiceMore")}
           </Link>
         </div>
       </div>

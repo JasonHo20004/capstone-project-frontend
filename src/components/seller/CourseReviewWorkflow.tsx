@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -59,6 +62,8 @@ const STATUS_REQUIRES_RESUBMIT = (s: string) => s === 'DRAFT' || s === 'REFUSE';
  * Centralising it here keeps SellerCourseDetail.tsx focused on layout.
  */
 export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit }: Props) {
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Only fetch the timeline when there's actually something to show — saves
@@ -93,17 +98,17 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
         <Card className="border-red-200 bg-red-50/50 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-red-700">
-              <ShieldAlert className="w-4 h-4" /> Khóa học bị từ chối duyệt
+              <ShieldAlert className="w-4 h-4" /> {t('reviewWorkflow.rejection.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="rounded-lg bg-white border border-red-100 p-3 text-sm text-slate-700 whitespace-pre-wrap">
-              <span className="block text-xs font-semibold text-red-700 mb-1">Lý do từ admin:</span>
+              <span className="block text-xs font-semibold text-red-700 mb-1">{t('reviewWorkflow.rejection.reasonLabel')}</span>
               {course.rejectionReason}
             </div>
             {course.rejectedAt && (
               <p className="text-xs text-slate-500">
-                Bị từ chối lúc {new Date(course.rejectedAt).toLocaleString('vi-VN')}
+                {t('reviewWorkflow.rejection.rejectedAt', { date: new Date(course.rejectedAt).toLocaleString(dateLocale) })}
               </p>
             )}
             <div className="flex flex-wrap gap-2 pt-1">
@@ -114,11 +119,11 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 <RefreshCw className="w-4 h-4 mr-1.5" />
-                {allChecksDone ? 'Sửa & gửi lại' : 'Sửa nội dung khoá học'}
+                {allChecksDone ? t('reviewWorkflow.rejection.resubmit') : t('reviewWorkflow.rejection.fixContent')}
               </Button>
               {!allChecksDone && (
                 <span className="text-xs text-slate-500 self-center">
-                  Hoàn thành các mục bên dưới rồi gửi lại
+                  {t('reviewWorkflow.rejection.completeBelow')}
                 </span>
               )}
             </div>
@@ -130,19 +135,18 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
         <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-amber-800">
-              <Clock3 className="w-4 h-4" /> Đang chờ admin duyệt
+              <Clock3 className="w-4 h-4" /> {t('reviewWorkflow.pending.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p className="text-slate-700">
-              Khóa học đang trong hàng đợi duyệt. Thông thường mất <strong>1–3 ngày</strong> làm việc.
-              Bạn sẽ nhận thông báo ngay khi có kết quả.
+              <Trans i18nKey="reviewWorkflow.pending.body" ns="seller" components={{ strong: <strong /> }} />
             </p>
             {course.submittedAt && (
               <p className="text-xs text-slate-500">
-                Đã gửi lúc {new Date(course.submittedAt).toLocaleString('vi-VN')}
+                {t('reviewWorkflow.pending.submittedAt', { date: new Date(course.submittedAt).toLocaleString(dateLocale) })}
                 {submittedDaysAgo !== null && submittedDaysAgo > 0 && (
-                  <> • {submittedDaysAgo} ngày trước</>
+                  <> • {t('reviewWorkflow.pending.daysAgo', { count: submittedDaysAgo })}</>
                 )}
               </p>
             )}
@@ -150,13 +154,12 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
               <div className="flex items-start gap-2 rounded-md bg-amber-100/60 p-2 text-xs text-amber-900">
                 <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                 <span>
-                  Đã quá hạn thường lệ. Nếu cần gấp, có thể liên hệ admin qua trang hỗ trợ.
+                  {t('reviewWorkflow.pending.delayed')}
                 </span>
               </div>
             )}
             <p className="text-xs text-slate-500 pt-2 border-t">
-              Trong khi chờ, bạn có thể huỷ gửi và tiếp tục chỉnh sửa ở tab “Cập nhật”
-              (đổi trạng thái về Bản nháp).
+              {t('reviewWorkflow.pending.cancelHint')}
             </p>
           </CardContent>
         </Card>
@@ -171,7 +174,7 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Rocket className={`w-4 h-4 ${allChecksDone ? 'text-emerald-600' : 'text-amber-600'}`} />
-              Sẵn sàng gửi duyệt?
+              {t('reviewWorkflow.checklist.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -179,8 +182,8 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
             <div className="flex items-center justify-between pt-2 border-t">
               <p className="text-xs text-slate-500">
                 {allChecksDone
-                  ? 'Đã đủ điều kiện. Bấm "Gửi duyệt" để admin xét duyệt khoá học.'
-                  : `Còn ${failedChecks.length} mục cần hoàn thành.`}
+                  ? t('reviewWorkflow.checklist.ready')
+                  : t('reviewWorkflow.checklist.remaining', { count: failedChecks.length })}
               </p>
               <Button
                 size="sm"
@@ -188,7 +191,7 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
                 disabled={!allChecksDone || isSubmitting}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                {isSubmitting ? 'Đang gửi…' : 'Gửi duyệt'}
+                {isSubmitting ? t('reviewWorkflow.checklist.submitting') : t('reviewWorkflow.checklist.submit')}
               </Button>
             </div>
           </CardContent>
@@ -199,7 +202,7 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
         <Card className="border-amber-100 bg-amber-50/20 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-slate-700 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Kiểm tra trước khi gửi lại
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> {t('reviewWorkflow.recheckTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -212,14 +215,14 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <History className="w-4 h-4 text-slate-500" /> Lịch sử duyệt
+              <History className="w-4 h-4 text-slate-500" /> {t('reviewWorkflow.history.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {historyLoading ? (
-              <p className="text-sm text-slate-500">Đang tải…</p>
+              <p className="text-sm text-slate-500">{t('reviewWorkflow.history.loading')}</p>
             ) : history.length === 0 ? (
-              <p className="text-sm text-slate-500">Chưa có sự kiện nào.</p>
+              <p className="text-sm text-slate-500">{t('reviewWorkflow.history.empty')}</p>
             ) : (
               <ol className="relative border-s border-slate-200 ms-2 space-y-4">
                 {history.map((h) => (
@@ -234,31 +237,31 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Xác nhận gửi duyệt</DialogTitle>
+            <DialogTitle>{t('reviewWorkflow.confirm.title')}</DialogTitle>
             <DialogDescription>
-              Sau khi gửi, admin sẽ xét duyệt. Bạn vẫn có thể huỷ gửi và quay về Bản nháp nếu cần.
+              {t('reviewWorkflow.confirm.description')}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[40vh] -mr-2 pr-2">
             <div className="space-y-3 text-sm">
-              <Row label="Tiêu đề" value={course.title} />
-              <Row label="Trình độ" value={course.courseLevel || '—'} />
-              <Row label="Giá" value={course.price != null ? formatVND(course.price) : '—'} />
+              <Row label={t('reviewWorkflow.confirm.titleLabel')} value={course.title} />
+              <Row label={t('reviewWorkflow.confirm.levelLabel')} value={course.courseLevel || '—'} />
+              <Row label={t('reviewWorkflow.confirm.priceLabel')} value={course.price != null ? formatVND(course.price) : '—'} />
               <div>
-                <div className="text-xs text-slate-500 mb-1">Mô tả</div>
+                <div className="text-xs text-slate-500 mb-1">{t('reviewWorkflow.confirm.descriptionLabel')}</div>
                 <div className="text-slate-700 whitespace-pre-wrap text-sm border rounded-md p-2 bg-slate-50 max-h-32 overflow-auto">
-                  {course.description || <em className="text-slate-400">Chưa có</em>}
+                  {course.description || <em className="text-slate-400">{t('reviewWorkflow.confirm.descriptionEmpty')}</em>}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-slate-500 mb-1">Checklist</div>
+                <div className="text-xs text-slate-500 mb-1">{t('reviewWorkflow.confirm.checklistLabel')}</div>
                 <Checklist items={checklist} compact />
               </div>
             </div>
           </ScrollArea>
           <DialogFooter className="gap-2">
             <DialogClose asChild>
-              <Button variant="outline" disabled={isSubmitting}>Huỷ</Button>
+              <Button variant="outline" disabled={isSubmitting}>{t('reviewWorkflow.confirm.cancel')}</Button>
             </DialogClose>
             <Button
               onClick={() => {
@@ -268,7 +271,7 @@ export function CourseReviewWorkflow({ course, checklist, isSubmitting, onSubmit
               disabled={isSubmitting || !checklist.every((c) => c.done)}
               className="bg-emerald-600 hover:bg-emerald-700"
             >
-              {isSubmitting ? 'Đang gửi…' : 'Xác nhận gửi'}
+              {isSubmitting ? t('reviewWorkflow.confirm.submitting') : t('reviewWorkflow.confirm.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -318,14 +321,16 @@ interface HistoryEntry {
 }
 
 function TimelineRow({ entry }: { entry: HistoryEntry }) {
-  const meta = describeTransition(entry);
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
+  const meta = describeTransition(entry, t);
   return (
     <li className="ms-4">
       <span
         className={`absolute -start-1.5 mt-1.5 flex h-3 w-3 items-center justify-center rounded-full ${meta.dot}`}
       />
       <div className="text-xs text-slate-500">
-        {new Date(entry.createdAt).toLocaleString('vi-VN')}
+        {new Date(entry.createdAt).toLocaleString(dateLocale)}
       </div>
       <div className={`text-sm font-medium ${meta.tone}`}>{meta.label}</div>
       {entry.reason && (
@@ -337,24 +342,24 @@ function TimelineRow({ entry }: { entry: HistoryEntry }) {
   );
 }
 
-function describeTransition(e: HistoryEntry): { label: string; dot: string; tone: string } {
+function describeTransition(e: HistoryEntry, t: TFunction): { label: string; dot: string; tone: string } {
   if (e.toStatus === 'PENDING' && e.actorRole === 'seller') {
-    return { label: 'Seller gửi duyệt', dot: 'bg-amber-500', tone: 'text-amber-700' };
+    return { label: t('reviewWorkflow.transition.sellerSubmit'), dot: 'bg-amber-500', tone: 'text-amber-700' };
   }
   if (e.toStatus === 'ACTIVE') {
-    return { label: 'Admin đã duyệt', dot: 'bg-emerald-500', tone: 'text-emerald-700' };
+    return { label: t('reviewWorkflow.transition.adminApprove'), dot: 'bg-emerald-500', tone: 'text-emerald-700' };
   }
   if (e.toStatus === 'REFUSE') {
-    return { label: 'Admin từ chối', dot: 'bg-red-500', tone: 'text-red-700' };
+    return { label: t('reviewWorkflow.transition.adminReject'), dot: 'bg-red-500', tone: 'text-red-700' };
   }
   if (e.toStatus === 'DRAFT' && e.fromStatus === 'PENDING') {
-    return { label: 'Seller huỷ gửi', dot: 'bg-slate-400', tone: 'text-slate-700' };
+    return { label: t('reviewWorkflow.transition.sellerCancel'), dot: 'bg-slate-400', tone: 'text-slate-700' };
   }
   if (e.toStatus === 'INACTIVE') {
-    return { label: 'Tạm ngưng khoá học', dot: 'bg-slate-400', tone: 'text-slate-700' };
+    return { label: t('reviewWorkflow.transition.inactive'), dot: 'bg-slate-400', tone: 'text-slate-700' };
   }
   return {
-    label: `Đổi trạng thái: ${e.fromStatus} → ${e.toStatus}`,
+    label: t('reviewWorkflow.transition.statusChange', { from: e.fromStatus, to: e.toStatus }),
     dot: 'bg-slate-300',
     tone: 'text-slate-700',
   };

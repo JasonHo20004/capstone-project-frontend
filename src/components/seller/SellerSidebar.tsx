@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,18 +15,19 @@ import {
 } from 'lucide-react';
 
 const sidebarItems = [
-  { title: 'Tổng quan', href: '/seller', icon: LayoutDashboard },
-  { title: 'Khoá học của tôi', href: '/seller/courses', icon: BookOpen },
-  { title: 'Bài kiểm tra', href: '/seller/tests', icon: ClipboardList },
-  { title: 'Doanh thu', href: '/seller/earnings', icon: DollarSign },
-  { title: 'Báo cáo tháng', href: '/seller/monthly-report', icon: FileText },
-  { title: 'Người học', href: '/seller/learners', icon: Users },
-  { title: 'Bình luận', href: '/seller/comments', icon: MessageSquare },
-  { title: 'Hồ sơ', href: '/seller/profile', icon: User },
+  { labelKey: 'sidebar.nav.dashboard', href: '/seller', icon: LayoutDashboard },
+  { labelKey: 'sidebar.nav.courses', href: '/seller/courses', icon: BookOpen },
+  { labelKey: 'sidebar.nav.tests', href: '/seller/tests', icon: ClipboardList },
+  { labelKey: 'sidebar.nav.earnings', href: '/seller/earnings', icon: DollarSign },
+  { labelKey: 'sidebar.nav.monthlyReport', href: '/seller/monthly-report', icon: FileText },
+  { labelKey: 'sidebar.nav.learners', href: '/seller/learners', icon: Users },
+  { labelKey: 'sidebar.nav.comments', href: '/seller/comments', icon: MessageSquare },
+  { labelKey: 'sidebar.nav.profile', href: '/seller/profile', icon: User },
 ] as const;
 
 export default function SellerSidebar() {
   const location = useLocation();
+  const { t } = useTranslation('seller');
   const queryClient = useQueryClient();
 
   const handleNavClick = () => {
@@ -45,20 +47,21 @@ export default function SellerSidebar() {
           <GraduationCap className="h-5 w-5 text-primary" />
         </div>
         <div className="overflow-hidden whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-          <h2 className="font-semibold font-display tracking-tight leading-tight">Giảng viên</h2>
-          <p className="text-[10px] text-muted-foreground leading-tight">Quản lý khoá học</p>
+          <h2 className="font-semibold font-display tracking-tight leading-tight">{t('sidebar.brand.title')}</h2>
+          <p className="text-[10px] text-muted-foreground leading-tight">{t('sidebar.brand.subtitle')}</p>
         </div>
       </div>
 
       <nav className="flex-1 space-y-1 p-3 overflow-y-auto overflow-x-hidden">
         {sidebarItems.map((item) => {
           const isActive = location.pathname === item.href;
+          const label = t(item.labelKey);
           return (
             <Link
               key={item.href}
               to={item.href}
               onClick={handleNavClick}
-              title={item.title}
+              title={label}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200',
                 isActive
@@ -73,7 +76,7 @@ export default function SellerSidebar() {
                 )}
               />
               <span className="whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                {item.title}
+                {label}
               </span>
             </Link>
           );

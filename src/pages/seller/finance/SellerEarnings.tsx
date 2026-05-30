@@ -27,6 +27,8 @@ import {
   TrendingUp, TrendingDown, FileSpreadsheet,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 const MIN_WITHDRAW = 50_000;
 
@@ -64,6 +66,8 @@ function remainingDaysLabel(availableAt: string): { days: number; ready: boolean
 type EarningStatusFilter = 'ALL' | 'PENDING' | 'AVAILABLE' | 'RELEASED' | 'REFUNDED';
 
 export default function SellerEarnings() {
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const [earningPage, setEarningPage] = useState(1);
   const [withdrawalPage, setWithdrawalPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<EarningStatusFilter>('ALL');
@@ -141,7 +145,7 @@ export default function SellerEarnings() {
     );
   }
   if (earningsError && !earningsData) {
-    return <ErrorMessage message="Không thể tải dữ liệu doanh thu. Vui lòng thử lại sau." />;
+    return <ErrorMessage message={t('earningsPage.loadError')} />;
   }
 
   const summary = earningsData?.summary ?? {
@@ -176,37 +180,39 @@ export default function SellerEarnings() {
 
   const statCards = [
     {
-      label: 'Khả dụng (Có thể rút)',
+      label: t('earningsPage.stats.available'),
       value: formatVND(availableBalance),
       description: hasPendingWithdrawal
-        ? `Đang khoá ${pendingWithdrawals.length} lệnh chờ duyệt`
+        ? t('earningsPage.stats.availablePending', { count: pendingWithdrawals.length })
         : belowMinimum
-        ? `Cần tối thiểu ${formatVND(MIN_WITHDRAW)} để rút`
-        : 'Đã trừ tiền đang chờ rút',
+        ? t('earningsPage.stats.availableBelowMin', { amount: formatVND(MIN_WITHDRAW) })
+        : t('earningsPage.stats.availableDefault'),
       icon: Wallet,
       color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
       iconBg: 'bg-emerald-500/15',
     },
     {
-      label: `Đang chờ mở khoá (${clearanceDays} ngày)`,
+      label: t('earningsPage.stats.pending', { days: clearanceDays }),
       value: formatVND(pendingBalance || summary.totalPending),
-      description: 'Tiền sẽ tự mở khoá sau khi qua thời gian giữ',
+      description: t('earningsPage.stats.pendingDesc'),
       icon: Clock,
       color: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
       iconBg: 'bg-amber-500/15',
     },
     {
-      label: 'Đã bán (tổng tiền học viên trả)',
+      label: t('earningsPage.stats.sold'),
       value: formatVND(summary.totalRevenue),
-      description: `Phí cổng đã trừ: ${formatVND(summary.totalGatewayFee)}`,
+      description: t('earningsPage.stats.soldDesc', { amount: formatVND(summary.totalGatewayFee) }),
       icon: Receipt,
       color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
       iconBg: 'bg-blue-500/15',
     },
     {
-      label: 'Tỷ lệ chia với platform',
+      label: t('earningsPage.stats.split'),
       value: sellerPercent != null ? `${sellerPercent}%` : '—',
-      description: platformPercent != null ? `Platform giữ ${platformPercent}%` : 'Đang tải…',
+      description: platformPercent != null
+        ? t('earningsPage.stats.splitDesc', { percent: platformPercent })
+        : t('earningsPage.stats.splitLoading'),
       icon: Percent,
       color: 'bg-primary/10 text-primary border-primary/20',
       iconBg: 'bg-primary/15',
@@ -216,27 +222,27 @@ export default function SellerEarnings() {
 
   const handleExportEarnings = () => {
     const rows = (earningsData?.data ?? []).map((r) => ({
-      'Ngay': new Date(r.createdAt).toLocaleDateString('vi-VN'),
-      'Khoa hoc': courseTitle(r.courseId),
-      'Gross (VND)': r.totalAmount,
-      'Phi cong (VND)': r.gatewayFee,
-      'Platform fee (VND)': r.commissionAmount,
-      'Ban nhan (VND)': r.sellerAmount,
-      'Trang thai': r.status,
-      'Mo khoa': new Date(r.availableAt).toLocaleDateString('vi-VN'),
+      [t('earningsPage.csv.date')]: new Date(r.createdAt).toLocaleDateString(dateLocale),
+      [t('earningsPage.csv.course')]: courseTitle(r.courseId),
+      [t('earningsPage.csv.gross')]: r.totalAmount,
+      [t('earningsPage.csv.gatewayFee')]: r.gatewayFee,
+      [t('earningsPage.csv.platformFee')]: r.commissionAmount,
+      [t('earningsPage.csv.sellerReceives')]: r.sellerAmount,
+      [t('earningsPage.csv.status')]: r.status,
+      [t('earningsPage.csv.unlockDate')]: new Date(r.availableAt).toLocaleDateString(dateLocale),
     }));
     downloadCsv(`earnings-page${earningPage}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
   };
 
   const handleExportWithdrawals = () => {
     const rows = (withdrawalsData?.data ?? []).map((r) => ({
-      'Ngay': new Date(r.createdAt).toLocaleDateString('vi-VN'),
-      'So tien (VND)': r.amount,
-      'Ngan hang': r.bankName,
-      'Chu tai khoan': r.accountName,
-      'So tai khoan': r.accountNumber,
-      'Trang thai': r.status,
-      'Ghi chu admin': r.adminNote ?? '',
+      [t('earningsPage.csv.date')]: new Date(r.createdAt).toLocaleDateString(dateLocale),
+      [t('earningsPage.csv.amount')]: r.amount,
+      [t('earningsPage.csv.bank')]: r.bankName,
+      [t('earningsPage.csv.accountName')]: r.accountName,
+      [t('earningsPage.csv.accountNumber')]: r.accountNumber,
+      [t('earningsPage.csv.status')]: r.status,
+      [t('earningsPage.csv.adminNote')]: r.adminNote ?? '',
     }));
     downloadCsv(`withdrawals-page${withdrawalPage}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
   };
@@ -254,11 +260,11 @@ export default function SellerEarnings() {
                 </Link>
               </Button>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-display">
-                Tài chính & Rút tiền
+                {t('earningsPage.header.title')}
               </h1>
             </div>
             <p className="text-muted-foreground ml-12">
-              Theo dõi thu nhập, phí thanh toán và quản lý rút tiền
+              {t('earningsPage.header.subtitle')}
             </p>
           </div>
           <Tooltip>
@@ -270,15 +276,15 @@ export default function SellerEarnings() {
                   disabled={withdrawDisabled}
                 >
                   <ArrowUpRight className="h-4 w-4" />
-                  Rút tiền về Ngân hàng
+                  {t('earningsPage.withdraw')}
                 </Button>
               </span>
             </TooltipTrigger>
             {withdrawDisabled && (
               <TooltipContent>
                 {hasPendingWithdrawal
-                  ? 'Bạn đang có lệnh rút chờ duyệt — chờ admin xử lý trước'
-                  : `Số dư khả dụng phải ≥ ${formatVND(MIN_WITHDRAW)}`}
+                  ? t('earningsPage.withdrawDisabled.pending')
+                  : t('earningsPage.withdrawDisabled.belowMin', { amount: formatVND(MIN_WITHDRAW) })}
               </TooltipContent>
             )}
           </Tooltip>
@@ -295,25 +301,27 @@ export default function SellerEarnings() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Landmark className="h-4 w-4 text-primary" />
-              Cách tính thu nhập trên 1 đơn hàng
+              {t('earningsPage.example.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-sm">
-              <ExampleStep label="Giá khoá học" value={formatVND(examplePrice)} tone="neutral" />
+              <ExampleStep label={t('earningsPage.example.coursePrice')} value={formatVND(examplePrice)} tone="neutral" />
               <ExampleStep
-                label={`Phí cổng (${Math.round(gatewayFeeRate * 100)}% + ${formatVND(gatewayFeeFixed)})`}
+                label={t('earningsPage.example.gatewayFee', { percent: Math.round(gatewayFeeRate * 100), fixed: formatVND(gatewayFeeFixed) })}
                 value={`- ${formatVND(exampleGateway)}`}
                 tone="red"
               />
-              <ExampleStep label="Net Revenue" value={formatVND(exampleNet)} tone="blue" />
+              <ExampleStep label={t('earningsPage.example.netRevenue')} value={formatVND(exampleNet)} tone="blue" />
               <ExampleStep
-                label={`Platform fee ${platformPercent != null ? `(${platformPercent}%)` : ''}`}
+                label={platformPercent != null
+                  ? t('earningsPage.example.platformFeeWithPercent', { percent: platformPercent })
+                  : t('earningsPage.example.platformFee')}
                 value={examplePlatform != null ? `- ${formatVND(examplePlatform)}` : '—'}
                 tone="amber"
               />
               <ExampleStep
-                label="Bạn nhận"
+                label={t('earningsPage.example.youReceive')}
                 value={exampleSeller != null ? formatVND(exampleSeller) : '—'}
                 tone="emerald"
                 bold
@@ -322,8 +330,12 @@ export default function SellerEarnings() {
             <div className="flex items-start gap-2 mt-3 text-xs text-muted-foreground">
               <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
               <span>
-                Sau khi học viên trả, tiền vào trạng thái <strong>Đang khoá {clearanceDays} ngày</strong> để xử lý hoàn tiền/khiếu nại,
-                sau đó chuyển sang <strong>Sẵn sàng rút</strong>.
+                <Trans
+                  i18nKey="earningsPage.example.note"
+                  ns="seller"
+                  values={{ days: clearanceDays }}
+                  components={{ strong: <strong /> }}
+                />
               </span>
             </div>
           </CardContent>
@@ -357,7 +369,7 @@ export default function SellerEarnings() {
                 ) : (
                   <TrendingDown className="h-4 w-4 text-red-600" />
                 )}
-                Tăng trưởng tháng này vs tháng trước
+                {t('earningsPage.growth.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -368,12 +380,16 @@ export default function SellerEarnings() {
                     {growth.pct.toFixed(1)}%
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Tháng này: <strong>{formatVND(growth.thisMonth)}</strong> • Tháng trước:{' '}
-                    {formatVND(growth.lastMonth)}
+                    <Trans
+                      i18nKey="earningsPage.growth.detail"
+                      ns="seller"
+                      values={{ amount: formatVND(growth.thisMonth), last: formatVND(growth.lastMonth) }}
+                      components={{ strong: <strong /> }}
+                    />
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Cần ít nhất 2 tháng dữ liệu.</p>
+                <p className="text-sm text-muted-foreground">{t('earningsPage.growth.needData')}</p>
               )}
             </CardContent>
           </Card>
@@ -381,7 +397,7 @@ export default function SellerEarnings() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <FileSpreadsheet className="h-4 w-4 text-blue-600" />
-                Tổng thu nhập YTD (cho khai thuế)
+                {t('earningsPage.ytd.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -391,12 +407,11 @@ export default function SellerEarnings() {
                     {formatVND(yearToDate.netReceived)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Năm {yearToDate.year} — đã trừ phí cổng & platform fee. Dùng "Xuất CSV" để có
-                    chi tiết từng đơn cho hồ sơ thuế.
+                    {t('earningsPage.ytd.note', { year: yearToDate.year })}
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Chưa có dữ liệu năm nay.</p>
+                <p className="text-sm text-muted-foreground">{t('earningsPage.ytd.empty')}</p>
               )}
             </CardContent>
           </Card>
@@ -406,20 +421,20 @@ export default function SellerEarnings() {
         <Tabs defaultValue="earnings" className="space-y-6">
           <TabsList>
             <TabsTrigger value="earnings" className="gap-2">
-              <DollarSign className="w-4 h-4" /> Lịch sử Doanh thu
+              <DollarSign className="w-4 h-4" /> {t('earningsPage.tabs.earnings')}
             </TabsTrigger>
             <TabsTrigger value="by-course" className="gap-2">
-              <BookOpen className="w-4 h-4" /> Theo khoá học
+              <BookOpen className="w-4 h-4" /> {t('earningsPage.tabs.byCourse')}
             </TabsTrigger>
             <TabsTrigger value="withdrawals" className="gap-2">
-              <Wallet className="w-4 h-4" /> Lịch sử Rút tiền
+              <Wallet className="w-4 h-4" /> {t('earningsPage.tabs.withdrawals')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="earnings" className="space-y-6">
             <ChartCard
-              title="Thu nhập theo tháng (12 tháng gần nhất)"
-              description="Thu nhập ròng sau phí cổng + platform fee — đã loại đơn hoàn tiền"
+              title={t('earningsPage.chart.title')}
+              description={t('earningsPage.chart.description')}
             >
               <div className="h-[280px] w-full">
                 {chartData.length > 0 ? (
@@ -443,8 +458,8 @@ export default function SellerEarnings() {
                       <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                       <RechartsTooltip
                         contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
-                        formatter={(value: number) => [formatVND(value), 'Thu nhập']}
-                        labelFormatter={(label) => `Tháng ${label}`}
+                        formatter={(value: number) => [formatVND(value), t('earningsPage.chart.tooltipLabel')]}
+                        labelFormatter={(label) => t('earningsPage.chart.tooltipMonth', { label })}
                       />
                       <Area
                         type="monotone"
@@ -456,7 +471,7 @@ export default function SellerEarnings() {
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <EmptyState icon={DollarSign} title="Chưa có doanh thu" hint="Khi học viên mua khoá, biểu đồ sẽ hiện ở đây." />
+                  <EmptyState icon={DollarSign} title={t('earningsPage.chart.emptyTitle')} hint={t('earningsPage.chart.emptyHint')} />
                 )}
               </div>
             </ChartCard>
@@ -468,60 +483,60 @@ export default function SellerEarnings() {
                 onChange={(e) => setStatusFilter(e.target.value as EarningStatusFilter)}
                 className="h-9 rounded-md border bg-background px-3 text-sm"
               >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="PENDING">Đang khoá</option>
-                <option value="AVAILABLE">Sẵn sàng rút</option>
-                <option value="RELEASED">Đã rút</option>
-                <option value="REFUNDED">Đã hoàn</option>
+                <option value="ALL">{t('earningsPage.filters.allStatuses')}</option>
+                <option value="PENDING">{t('earningsPage.filters.pending')}</option>
+                <option value="AVAILABLE">{t('earningsPage.filters.available')}</option>
+                <option value="RELEASED">{t('earningsPage.filters.released')}</option>
+                <option value="REFUNDED">{t('earningsPage.filters.refunded')}</option>
               </select>
               <select
                 value={courseFilter}
                 onChange={(e) => setCourseFilter(e.target.value)}
                 className="h-9 rounded-md border bg-background px-3 text-sm max-w-xs"
               >
-                <option value="ALL">Tất cả khoá học</option>
+                <option value="ALL">{t('earningsPage.filters.allCourses')}</option>
                 {Array.from(courseTitleById.entries()).map(([id, title]) => (
                   <option key={id} value={id}>{title}</option>
                 ))}
               </select>
               <Button variant="outline" size="sm" onClick={handleExportEarnings} className="ml-auto">
-                <Download className="w-4 h-4 mr-1.5" /> Xuất CSV
+                <Download className="w-4 h-4 mr-1.5" /> {t('earningsPage.filters.exportCsv')}
               </Button>
             </div>
 
             <DataTable
-              title="Chi tiết bán hàng"
-              description="Lịch sử doanh thu từ mỗi giao dịch mua khoá học"
+              title={t('earningsPage.table.title')}
+              description={t('earningsPage.table.description')}
               data={filteredEarnings}
               columns={[
                 {
                   key: 'createdAt',
-                  header: 'Ngày',
-                  render: (r) => new Date(r.createdAt).toLocaleDateString('vi-VN'),
+                  header: t('earningsPage.table.date'),
+                  render: (r) => new Date(r.createdAt).toLocaleDateString(dateLocale),
                 },
                 {
                   key: 'courseId',
-                  header: 'Khoá học',
+                  header: t('earningsPage.table.course'),
                   render: (r) => <span className="text-sm font-medium">{courseTitle(r.courseId)}</span>,
                 },
                 {
                   key: 'totalAmount',
-                  header: 'Học viên trả',
+                  header: t('earningsPage.table.learnerPaid'),
                   render: (r) => formatVND(r.totalAmount),
                 },
                 {
                   key: 'gatewayFee',
-                  header: 'Phí cổng',
+                  header: t('earningsPage.table.gatewayFee'),
                   render: (r) => <span className="text-red-500 text-xs">-{formatVND(r.gatewayFee)}</span>,
                 },
                 {
                   key: 'commissionAmount',
-                  header: 'Platform fee',
+                  header: t('earningsPage.table.platformFee'),
                   render: (r) => <span className="text-muted-foreground text-xs">-{formatVND(r.commissionAmount)}</span>,
                 },
                 {
                   key: 'sellerAmount',
-                  header: 'Bạn nhận',
+                  header: t('earningsPage.table.youReceive'),
                   render: (r) => (
                     <span className={`font-semibold ${r.status === 'REFUNDED' ? 'text-red-600 line-through' : 'text-emerald-600 dark:text-emerald-400'}`}>
                       {r.status === 'REFUNDED' ? '' : '+'}{formatVND(r.sellerAmount)}
@@ -530,8 +545,8 @@ export default function SellerEarnings() {
                 },
                 {
                   key: 'status',
-                  header: 'Trạng thái',
-                  render: (r) => <StatusBadge status={r.status} availableAt={r.availableAt} />,
+                  header: t('earningsPage.table.status'),
+                  render: (r) => <StatusBadge status={r.status} availableAt={r.availableAt} t={t} />,
                 },
               ]}
             />
@@ -541,10 +556,10 @@ export default function SellerEarnings() {
                 <CardContent className="py-12">
                   <EmptyState
                     icon={DollarSign}
-                    title="Không có giao dịch"
+                    title={t('earningsPage.emptyTx.title')}
                     hint={statusFilter !== 'ALL' || courseFilter !== 'ALL'
-                      ? 'Không tìm thấy giao dịch khớp bộ lọc.'
-                      : 'Khi học viên mua khoá học, giao dịch sẽ hiện ở đây.'}
+                      ? t('earningsPage.emptyTx.hintFiltered')
+                      : t('earningsPage.emptyTx.hintDefault')}
                   />
                 </CardContent>
               </Card>
@@ -555,6 +570,7 @@ export default function SellerEarnings() {
                 page={earningPage}
                 totalPages={earningsData.totalPages}
                 onChange={setEarningPage}
+                t={t}
               />
             )}
           </TabsContent>
@@ -562,14 +578,14 @@ export default function SellerEarnings() {
           <TabsContent value="by-course" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Doanh thu theo khoá học</CardTitle>
+                <CardTitle className="text-base">{t('earningsPage.byCourse.title')}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Tổng tiền bạn đã nhận theo từng khoá (loại đơn hoàn). Sắp xếp giảm dần.
+                  {t('earningsPage.byCourse.description')}
                 </p>
               </CardHeader>
               <CardContent>
                 {(byCourse?.length ?? 0) === 0 ? (
-                  <EmptyState icon={BookOpen} title="Chưa có doanh thu theo khoá" hint="Tạo và xuất bản khoá để bắt đầu." />
+                  <EmptyState icon={BookOpen} title={t('earningsPage.byCourse.emptyTitle')} hint={t('earningsPage.byCourse.emptyHint')} />
                 ) : (
                   <div className="space-y-2">
                     {byCourse!.map((c) => {
@@ -592,7 +608,7 @@ export default function SellerEarnings() {
                                 />
                               </div>
                               <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                {c.salesCount} lượt • Gross: {formatVND(c.totalAmount)}
+                                {t('earningsPage.byCourse.salesGross', { count: c.salesCount, amount: formatVND(c.totalAmount) })}
                               </div>
                             </div>
                           </div>
@@ -641,40 +657,40 @@ function ExampleStep({
   );
 }
 
-function StatusBadge({ status, availableAt }: { status: string; availableAt: string }) {
+function StatusBadge({ status, availableAt, t }: { status: string; availableAt: string; t: TFunction }) {
   if (status === 'PENDING') {
     const { days, ready } = remainingDaysLabel(availableAt);
     if (ready) {
       return (
         <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/30 text-xs">
-          <Clock className="mr-1 h-3 w-3" /> Sắp mở
+          <Clock className="mr-1 h-3 w-3" /> {t('earningsPage.statusBadge.almostReady')}
         </Badge>
       );
     }
     return (
       <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/30 text-xs">
-        <Clock className="mr-1 h-3 w-3" /> Khoá ({days}d)
+        <Clock className="mr-1 h-3 w-3" /> {t('earningsPage.statusBadge.locked', { days })}
       </Badge>
     );
   }
   if (status === 'AVAILABLE') {
     return (
       <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30 text-xs">
-        <CheckCircle2 className="mr-1 h-3 w-3" /> Sẵn sàng rút
+        <CheckCircle2 className="mr-1 h-3 w-3" /> {t('earningsPage.statusBadge.available')}
       </Badge>
     );
   }
   if (status === 'RELEASED') {
     return (
       <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/30 text-xs">
-        Đã rút
+        {t('earningsPage.statusBadge.released')}
       </Badge>
     );
   }
   if (status === 'REFUNDED') {
     return (
       <Badge variant="outline" className="bg-red-500/10 text-red-700 border-red-500/30 text-xs">
-        <AlertCircle className="mr-1 h-3 w-3" /> Đã hoàn
+        <AlertCircle className="mr-1 h-3 w-3" /> {t('earningsPage.statusBadge.refunded')}
       </Badge>
     );
   }
@@ -693,15 +709,15 @@ function EmptyState({ icon: Icon, title, hint }: { icon: typeof DollarSign; titl
   );
 }
 
-function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
+function Pagination({ page, totalPages, onChange, t }: { page: number; totalPages: number; onChange: (p: number) => void; t: TFunction }) {
   return (
     <div className="flex items-center justify-center gap-2">
       <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onChange(Math.max(1, page - 1))}>
-        Trước
+        {t('earningsPage.pagination.prev')}
       </Button>
-      <span className="text-sm text-muted-foreground">Trang {page} / {totalPages}</span>
+      <span className="text-sm text-muted-foreground">{t('earningsPage.pagination.page', { page, total: totalPages })}</span>
       <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onChange(page + 1)}>
-        Tiếp
+        {t('earningsPage.pagination.next')}
       </Button>
     </div>
   );

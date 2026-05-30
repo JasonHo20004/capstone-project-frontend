@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -52,12 +53,13 @@ const CATEGORIES = [
 ];
 
 const STEPS = [
-  { label: 'Thông tin cơ bản', icon: BookOpen },
-  { label: 'Mô tả & danh mục', icon: GraduationCap },
-  { label: 'Hình ảnh & Xác nhận', icon: ImageIcon },
+  { labelKey: 'basic', icon: BookOpen },
+  { labelKey: 'description', icon: GraduationCap },
+  { labelKey: 'media', icon: ImageIcon },
 ];
 
 export default function SellerCreateCourse() {
+  const { t, i18n } = useTranslation('seller');
   const navigate = useNavigate();
   const createCourseMutation = useCreateCourse();
   const queryClient = useQueryClient();
@@ -87,10 +89,10 @@ export default function SellerCreateCourse() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-      toast.error('Chỉ chấp nhận JPEG, PNG, WEBP, GIF'); return;
+      toast.error(t('createCourse.toasts.imageType')); return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File không được vượt quá 5MB'); return;
+      toast.error(t('createCourse.toasts.imageTooLarge')); return;
     }
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -107,10 +109,10 @@ export default function SellerCreateCourse() {
   const validateStep = (s: number): boolean => {
     const errs: Record<string, string> = {};
     if (s === 0) {
-      if (!formData.title.trim()) errs.title = 'Tiêu đề là bắt buộc';
-      else if (formData.title.length > 100) errs.title = 'Tối đa 100 ký tự';
-      if (!formData.price) errs.price = 'Giá là bắt buộc';
-      else if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) < 0) errs.price = 'Giá không hợp lệ';
+      if (!formData.title.trim()) errs.title = t('createCourse.errors.titleRequired');
+      else if (formData.title.length > 100) errs.title = t('createCourse.errors.titleTooLong');
+      if (!formData.price) errs.price = t('createCourse.errors.priceRequired');
+      else if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) < 0) errs.price = t('createCourse.errors.priceInvalid');
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -164,9 +166,9 @@ export default function SellerCreateCourse() {
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors rounded-xl h-9 px-3 -ml-3"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Quay lại</span>
+            <span className="hidden sm:inline">{t('createCourse.backToList')}</span>
           </Button>
-          <h1 className="text-base font-bold text-slate-900">Tạo khóa học mới</h1>
+          <h1 className="text-base font-bold text-slate-900">{t('createCourse.topTitle')}</h1>
           <div className="w-20" /> {/* spacer */}
         </div>
       </div>
@@ -209,14 +211,14 @@ export default function SellerCreateCourse() {
                         active ? 'text-primary' : done || past ? 'text-emerald-600' : 'text-slate-400'
                       }`}
                     >
-                      Bước {i + 1}
+                      {t('createCourse.stepLabel', { n: i + 1 })}
                     </div>
                     <div
                       className={`text-[11px] leading-tight mt-0.5 max-w-[90px] transition-colors ${
                         active ? 'text-slate-700' : 'text-slate-400'
                       }`}
                     >
-                      {s.label}
+                      {t(`createCourse.steps.${s.labelKey}`)}
                     </div>
                   </div>
                 </button>
@@ -247,17 +249,17 @@ export default function SellerCreateCourse() {
           {step === 0 && (
             <div className="p-6 sm:p-8 space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Thông tin cơ bản</h2>
-                <p className="text-sm text-slate-500 mt-1">Điền tiêu đề và giá cho khóa học của bạn</p>
+                <h2 className="text-xl font-bold text-slate-900">{t('createCourse.step1.title')}</h2>
+                <p className="text-sm text-slate-500 mt-1">{t('createCourse.step1.subtitle')}</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-semibold">
-                  Tiêu đề khóa học <span className="text-red-500">*</span>
+                  {t('createCourse.step1.titleLabel')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="title"
-                  placeholder="VD: IELTS Speaking Masterclass — Band 7.0+"
+                  placeholder={t('createCourse.step1.titlePlaceholder')}
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   disabled={createCourseMutation.isPending}
@@ -274,13 +276,13 @@ export default function SellerCreateCourse() {
                 <div className="space-y-2">
                   <Label htmlFor="price" className="text-sm font-semibold">
                     <span className="flex items-center gap-1.5">
-                      <DollarSign className="w-3.5 h-3.5" /> Giá (VNĐ) <span className="text-red-500">*</span>
+                      <DollarSign className="w-3.5 h-3.5" /> {t('createCourse.step1.priceLabel')} <span className="text-red-500">*</span>
                     </span>
                   </Label>
                   <Input
                     id="price"
                     type="number"
-                    placeholder="500000"
+                    placeholder={t('createCourse.step1.pricePlaceholder')}
                     value={formData.price}
                     onChange={(e) => handleChange('price', e.target.value)}
                     disabled={createCourseMutation.isPending}
@@ -294,7 +296,7 @@ export default function SellerCreateCourse() {
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">
                     <span className="flex items-center gap-1.5">
-                      <GraduationCap className="w-3.5 h-3.5" /> Trình độ
+                      <GraduationCap className="w-3.5 h-3.5" /> {t('createCourse.step1.levelLabel')}
                     </span>
                   </Label>
                   <Select
@@ -303,7 +305,7 @@ export default function SellerCreateCourse() {
                     disabled={createCourseMutation.isPending}
                   >
                     <SelectTrigger className="h-12 rounded-xl">
-                      <SelectValue placeholder="Chọn trình độ" />
+                      <SelectValue placeholder={t('createCourse.step1.levelPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {COURSE_LEVELS.map((lv) => (
@@ -316,7 +318,7 @@ export default function SellerCreateCourse() {
                   </Select>
                   {formData.courseLevel && (
                     <Button type="button" variant="ghost" size="sm" onClick={() => handleChange('courseLevel', undefined)} className="h-7 text-xs">
-                      Xóa level
+                      {t('createCourse.step1.clearLevel')}
                     </Button>
                   )}
                 </div>
@@ -328,32 +330,32 @@ export default function SellerCreateCourse() {
           {step === 1 && (
             <div className="p-6 sm:p-8 space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Mô tả & Danh mục</h2>
-                <p className="text-sm text-slate-500 mt-1">Giúp học viên hiểu khóa học của bạn</p>
+                <h2 className="text-xl font-bold text-slate-900">{t('createCourse.step2.title')}</h2>
+                <p className="text-sm text-slate-500 mt-1">{t('createCourse.step2.subtitle')}</p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Mô tả khóa học</Label>
+                <Label className="text-sm font-semibold">{t('createCourse.step2.descLabel')}</Label>
                 <Textarea
-                  placeholder="Mô tả chi tiết: đối tượng, nội dung chính, kết quả đạt được..."
+                  placeholder={t('createCourse.step2.descPlaceholder')}
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   disabled={createCourseMutation.isPending}
                   rows={7}
                   className="rounded-xl resize-none text-base leading-relaxed"
                 />
-                <p className="text-xs text-slate-400">Mô tả hấp dẫn giúp tăng tỉ lệ đăng ký</p>
+                <p className="text-xs text-slate-400">{t('createCourse.step2.descHint')}</p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Danh mục</Label>
+                <Label className="text-sm font-semibold">{t('createCourse.step2.categoryLabel')}</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(v) => handleChange('category', v)}
                   disabled={createCourseMutation.isPending}
                 >
                   <SelectTrigger className="h-12 rounded-xl">
-                    <SelectValue placeholder="Chọn danh mục" />
+                    <SelectValue placeholder={t('createCourse.step2.categoryPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map((c) => (
@@ -361,9 +363,9 @@ export default function SellerCreateCourse() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-slate-400 mt-1.5">Hoặc nhập danh mục tùy chỉnh:</p>
+                <p className="text-xs text-slate-400 mt-1.5">{t('createCourse.step2.customCategoryHint')}</p>
                 <Input
-                  placeholder="VD: PTE, Cambridge..."
+                  placeholder={t('createCourse.step2.customCategoryPlaceholder')}
                   value={CATEGORIES.includes(formData.category) ? '' : formData.category}
                   onChange={(e) => handleChange('category', e.target.value)}
                   disabled={createCourseMutation.isPending}
@@ -377,13 +379,13 @@ export default function SellerCreateCourse() {
           {step === 2 && (
             <div className="p-6 sm:p-8 space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Hình ảnh & Xác nhận</h2>
-                <p className="text-sm text-slate-500 mt-1">Thêm thumbnail và kiểm tra lại thông tin</p>
+                <h2 className="text-xl font-bold text-slate-900">{t('createCourse.step3.title')}</h2>
+                <p className="text-sm text-slate-500 mt-1">{t('createCourse.step3.subtitle')}</p>
               </div>
 
               {/* Upload area */}
               <div>
-                <Label className="text-sm font-semibold mb-3 block">Ảnh đại diện khóa học</Label>
+                <Label className="text-sm font-semibold mb-3 block">{t('createCourse.step3.thumbnailLabel')}</Label>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -395,14 +397,14 @@ export default function SellerCreateCourse() {
                 {formData.thumbnailPreview ? (
                   <div className="relative group">
                     <div className="aspect-video w-full overflow-hidden rounded-xl border-2 border-slate-200">
-                      <img src={formData.thumbnailPreview} alt="Thumbnail" className="h-full w-full object-cover" />
+                      <img src={formData.thumbnailPreview} alt={t('createCourse.step3.thumbnailAlt')} className="h-full w-full object-cover" />
                     </div>
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-3">
                       <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} className="rounded-lg">
-                        <Upload className="w-4 h-4 mr-1" /> Đổi ảnh
+                        <Upload className="w-4 h-4 mr-1" /> {t('createCourse.step3.changeImage')}
                       </Button>
                       <Button type="button" variant="destructive" size="sm" onClick={removeThumbnail} className="rounded-lg">
-                        <X className="w-4 h-4 mr-1" /> Xóa
+                        <X className="w-4 h-4 mr-1" /> {t('createCourse.step3.remove')}
                       </Button>
                     </div>
                   </div>
@@ -416,8 +418,8 @@ export default function SellerCreateCourse() {
                       <Upload className="w-6 h-6 text-slate-400 group-hover:text-primary transition-colors" />
                     </div>
                     <div className="text-center">
-                      <p className="text-sm font-medium text-slate-600">Nhấn để tải ảnh lên</p>
-                      <p className="text-xs text-slate-400 mt-1">JPEG, PNG, WEBP, GIF • Tối đa 5MB</p>
+                      <p className="text-sm font-medium text-slate-600">{t('createCourse.step3.uploadHint')}</p>
+                      <p className="text-xs text-slate-400 mt-1">{t('createCourse.step3.uploadFormats')}</p>
                     </div>
                   </button>
                 )}
@@ -427,38 +429,38 @@ export default function SellerCreateCourse() {
               <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 space-y-3">
                 <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  Tóm tắt khóa học
+                  {t('createCourse.step3.summaryTitle')}
                 </h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-slate-400">Tiêu đề</span>
-                    <p className="font-medium text-slate-800 mt-0.5 truncate">{formData.title || '—'}</p>
+                    <span className="text-slate-400">{t('createCourse.step3.summaryTitleLabel')}</span>
+                    <p className="font-medium text-slate-800 mt-0.5 truncate">{formData.title || t('createCourse.step3.empty')}</p>
                   </div>
                   <div>
-                    <span className="text-slate-400">Giá</span>
+                    <span className="text-slate-400">{t('createCourse.step3.summaryPrice')}</span>
                     <p className="font-medium text-slate-800 mt-0.5">
-                      {formData.price ? `${Number(formData.price).toLocaleString('vi-VN')} đ` : '—'}
+                      {formData.price ? t('createCourse.step3.priceUnit', { amount: Number(formData.price).toLocaleString(i18n.language === 'vi' ? 'vi-VN' : 'en-GB') }) : t('createCourse.step3.empty')}
                     </p>
                   </div>
                   <div>
-                    <span className="text-slate-400">Danh mục</span>
-                    <p className="font-medium text-slate-800 mt-0.5">{formData.category || '—'}</p>
+                    <span className="text-slate-400">{t('createCourse.step3.summaryCategory')}</span>
+                    <p className="font-medium text-slate-800 mt-0.5">{formData.category || t('createCourse.step3.empty')}</p>
                   </div>
                   <div>
-                    <span className="text-slate-400">Trình độ</span>
-                    <p className="font-medium text-slate-800 mt-0.5">{formData.courseLevel || '—'}</p>
+                    <span className="text-slate-400">{t('createCourse.step3.summaryLevel')}</span>
+                    <p className="font-medium text-slate-800 mt-0.5">{formData.courseLevel || t('createCourse.step3.empty')}</p>
                   </div>
                 </div>
                 {formData.description && (
                   <div>
-                    <span className="text-xs text-slate-400">Mô tả</span>
+                    <span className="text-xs text-slate-400">{t('createCourse.step3.summaryDescription')}</span>
                     <p className="text-sm text-slate-600 mt-0.5 line-clamp-2">{formData.description}</p>
                   </div>
                 )}
               </div>
 
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 text-xs text-blue-700">
-                Khóa học sẽ ở trạng thái <strong>DRAFT</strong> sau khi tạo. Bạn có thể thêm bài học, bài kiểm tra rồi submit để admin duyệt.
+                <Trans i18nKey="createCourse.step3.draftNotice" ns="seller" components={{ strong: <strong /> }} />
               </div>
             </div>
           )}
@@ -467,17 +469,17 @@ export default function SellerCreateCourse() {
           <div className="px-6 sm:px-8 py-5 border-t bg-slate-50/50 flex items-center justify-between">
             {step > 0 ? (
               <Button type="button" variant="outline" onClick={goPrev} className="rounded-xl">
-                <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
+                <ArrowLeft className="w-4 h-4 mr-2" /> {t('createCourse.nav.back')}
               </Button>
             ) : (
               <Button type="button" variant="ghost" onClick={() => navigate('/seller/courses')} className="rounded-xl text-slate-500">
-                Hủy
+                {t('createCourse.nav.cancel')}
               </Button>
             )}
 
             {step < STEPS.length - 1 ? (
               <Button type="button" onClick={goNext} className="rounded-xl px-6">
-                Tiếp theo <ArrowRight className="w-4 h-4 ml-2" />
+                {t('createCourse.nav.next')} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
               <Button
@@ -491,7 +493,7 @@ export default function SellerCreateCourse() {
                 ) : (
                   <Sparkles className="h-4 w-4 mr-2" />
                 )}
-                {createCourseMutation.isPending ? 'Đang tạo...' : 'Tạo khóa học'}
+                {createCourseMutation.isPending ? t('createCourse.nav.submitting') : t('createCourse.nav.submit')}
               </Button>
             )}
           </div>

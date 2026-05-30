@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { UploadProgress } from '@/components/seller/UploadProgress';
 type UploadStatus = 'idle' | 'uploading' | 'done' | 'error';
 
 export default function CreateLessonPage() {
+  const { t } = useTranslation('seller');
   const { courseId } = useParams<{ courseId: string }>();
   const [searchParams] = useSearchParams();
   const moduleId = searchParams.get('moduleId') || undefined;
@@ -56,21 +58,21 @@ export default function CreateLessonPage() {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!formData.title.trim()) {
-      newErrors.title = 'Tiêu đề bài học là bắt buộc';
+      newErrors.title = t('createLesson.errors.titleRequired');
     } else if (formData.title.trim().length > 100) {
-      newErrors.title = 'Tiêu đề không được vượt quá 100 ký tự';
+      newErrors.title = t('createLesson.errors.titleTooLong');
     }
     if (formData.lessonOrder < 1) {
-      newErrors.lessonOrder = 'Thứ tự bài học phải lớn hơn 0';
+      newErrors.lessonOrder = t('createLesson.errors.orderMin');
     }
     if (formData.videoFile) {
       const maxSize = 1024 * 1024 * 1024;
       if (formData.videoFile.size > maxSize) {
-        newErrors.videoFile = 'Kích thước video không được vượt quá 1GB';
+        newErrors.videoFile = t('createLesson.errors.videoTooLarge');
       }
       const allowedTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
       if (!allowedTypes.includes(formData.videoFile.type)) {
-        newErrors.videoFile = 'Chỉ chấp nhận file video (MP4, MPEG, MOV, AVI, WEBM)';
+        newErrors.videoFile = t('createLesson.errors.videoType');
       }
     }
     setErrors(newErrors);
@@ -158,7 +160,7 @@ export default function CreateLessonPage() {
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors mb-4 rounded-xl h-9 px-3 -ml-3"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Quay lại {course?.title ?? 'khóa học'}</span>
+            <span>{t('createLesson.backTo', { course: course?.title ?? t('createLesson.defaultCourse') })}</span>
           </Button>
 
           <div className="flex items-center gap-3">
@@ -166,7 +168,7 @@ export default function CreateLessonPage() {
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">Tạo bài học mới</h1>
+              <h1 className="text-xl font-bold text-slate-900">{t('createLesson.title')}</h1>
               <p className="text-sm text-slate-500">
                 {course?.title}
                 {moduleName && (
@@ -188,17 +190,17 @@ export default function CreateLessonPage() {
             <CardContent className="p-6 space-y-5">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-700 pb-2 border-b border-slate-100">
                 <FileText className="w-4 h-4 text-blue-500" />
-                Thông tin cơ bản
+                {t('createLesson.basicInfo')}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-semibold text-slate-700">
-                  Tiêu đề bài học <span className="text-red-500">*</span>
+                  {t('createLesson.titleLabel')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="title"
                   className="rounded-xl h-11"
-                  placeholder="VD: Bài 1: Giới thiệu về IELTS Writing"
+                  placeholder={t('createLesson.titlePlaceholder')}
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   disabled={isUploading}
@@ -214,11 +216,11 @@ export default function CreateLessonPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-semibold text-slate-700">Mô tả</Label>
+                <Label htmlFor="description" className="text-sm font-semibold text-slate-700">{t('createLesson.descriptionLabel')}</Label>
                 <Textarea
                   id="description"
                   className="rounded-xl"
-                  placeholder="Mô tả chi tiết về nội dung bài học..."
+                  placeholder={t('createLesson.descriptionPlaceholder')}
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   disabled={isUploading}
@@ -229,7 +231,7 @@ export default function CreateLessonPage() {
               <div className="space-y-2">
                 <Label htmlFor="lessonOrder" className="text-sm font-semibold text-slate-700">
                   <Hash className="w-3.5 h-3.5 inline mr-1" />
-                  Thứ tự bài học <span className="text-red-500">*</span>
+                  {t('createLesson.orderLabel')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="lessonOrder"
@@ -241,7 +243,7 @@ export default function CreateLessonPage() {
                   min="1"
                 />
                 <p className="text-xs text-slate-400">
-                  Bài học tiếp theo sẽ có thứ tự: {nextLessonOrder}.
+                  {t('createLesson.orderHint', { order: nextLessonOrder })}
                 </p>
                 {errors.lessonOrder && <p className="text-sm text-red-500">{errors.lessonOrder}</p>}
               </div>
@@ -253,15 +255,17 @@ export default function CreateLessonPage() {
             <CardContent className="p-6 space-y-5">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-700 pb-2 border-b border-slate-100">
                 <Film className="w-4 h-4 text-teal-500" />
-                Video bài giảng
+                {t('createLesson.videoSection')}
               </div>
 
               {formData.videoFile && formData.durationInSeconds && (
                 <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-xl text-sm">
-                  <span className="text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={14} /> Thời lượng tự động:</span>
+                  <span className="text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={14} /> {t('createLesson.autoDuration')}</span>
                   <span className="font-bold text-emerald-700">
-                    {Math.floor(parseFloat(formData.durationInSeconds) / 60)} phút{' '}
-                    {Math.round(parseFloat(formData.durationInSeconds) % 60)} giây
+                    {t('createLesson.durationValue', {
+                      minutes: Math.floor(parseFloat(formData.durationInSeconds) / 60),
+                      seconds: Math.round(parseFloat(formData.durationInSeconds) % 60),
+                    })}
                   </span>
                 </div>
               )}
@@ -276,7 +280,7 @@ export default function CreateLessonPage() {
                 />
               ) : (
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-slate-700">Video bài học (tùy chọn)</Label>
+                  <Label className="text-sm font-semibold text-slate-700">{t('createLesson.videoLabel')}</Label>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -310,14 +314,14 @@ export default function CreateLessonPage() {
                           }}
                           className="mt-2 text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          <X className="w-4 h-4 mr-2" /> Xóa file
+                          <X className="w-4 h-4 mr-2" /> {t('createLesson.removeFile')}
                         </Button>
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm font-semibold text-slate-700">Kéo thả hoặc nhấn để tải lên video</p>
+                        <p className="text-sm font-semibold text-slate-700">{t('createLesson.dropHint')}</p>
                         <p className="text-xs text-slate-400 mt-1">
-                          Hỗ trợ MP4, MPEG, MOV, AVI, WEBM (Tối đa 100MB)
+                          {t('createLesson.formats')}
                         </p>
                       </>
                     )}
@@ -335,7 +339,7 @@ export default function CreateLessonPage() {
               className="rounded-xl px-8 shadow-sm"
               disabled={isUploading || uploadStatus === 'done'}
             >
-              {isUploading ? 'Đang tải lên...' : 'Tạo bài học'}
+              {isUploading ? t('createLesson.uploading') : t('createLesson.submit')}
             </Button>
           </div>
         </form>

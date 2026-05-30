@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,8 +45,6 @@ import { Link } from 'react-router-dom';
 const statCards = [
   {
     key: 'courses',
-    label: 'Khoá học',
-    description: 'Tổng số khoá học của bạn',
     icon: BookOpen,
     href: '/seller/courses',
     color: 'bg-primary/10 text-primary border-primary/20',
@@ -53,8 +52,6 @@ const statCards = [
   },
   {
     key: 'learners',
-    label: 'Người học',
-    description: 'Số học viên đã mua khoá học',
     icon: Users,
     href: '/seller/learners',
     color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
@@ -62,8 +59,6 @@ const statCards = [
   },
   {
     key: 'comments',
-    label: 'Bình luận',
-    description: 'Bình luận trên bài học',
     icon: MessageSquare,
     href: '/seller/comments',
     color: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
@@ -93,12 +88,12 @@ function aggregateLearnersByMonth(learners: { purchasedAt: string }[]) {
     .map(([name, count]) => ({ name, count }));
 }
 
-function greeting() {
+function greetingKey() {
   const h = new Date().getHours();
-  if (h < 11) return 'Chào buổi sáng';
-  if (h < 14) return 'Chào buổi trưa';
-  if (h < 18) return 'Chào buổi chiều';
-  return 'Chào buổi tối';
+  if (h < 11) return 'morning';
+  if (h < 14) return 'noon';
+  if (h < 18) return 'afternoon';
+  return 'evening';
 }
 
 /** Star row for the average rating. Renders 5 stars with partial fill. */
@@ -123,6 +118,7 @@ function RatingStars({ value }: { value: number }) {
 }
 
 export default function SellerDashboard() {
+  const { t } = useTranslation('seller');
   const { user } = useProfile();
   const { data: dashboardStats, isLoading, error } = useSellerDashboard();
 
@@ -148,11 +144,11 @@ export default function SellerDashboard() {
   }
 
   if (error) {
-    return <ErrorMessage message="Không thể tải dữ liệu dashboard. Vui lòng thử lại sau." />;
+    return <ErrorMessage message={t('dashboard.errors.load')} />;
   }
 
   if (!dashboardStats) {
-    return <ErrorMessage message="Không có dữ liệu dashboard." />;
+    return <ErrorMessage message={t('dashboard.errors.noData')} />;
   }
 
   const { coursesCount, learnersCount, commentsCount, averageRating, topCourses, financial } =
@@ -170,12 +166,12 @@ export default function SellerDashboard() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-display">
-            {greeting()}, {user?.fullName?.split(' ').slice(-1)[0] || 'Giảng viên'}
+            {t(`dashboard.greeting.${greetingKey()}`)}, {user?.fullName?.split(' ').slice(-1)[0] || t('dashboard.defaultInstructor')}
           </h1>
           <p className="mt-1 text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="inline-flex items-center gap-1">
               <Sparkles className="h-4 w-4 text-primary/70" />
-              Quản lý khoá học và theo dõi hiệu suất của bạn
+              {t('dashboard.subtitle')}
             </span>
             {averageRating > 0 && (
               <span className="inline-flex items-center gap-1">
@@ -187,29 +183,29 @@ export default function SellerDashboard() {
         <Button asChild size="lg" className="shrink-0">
           <Link to="/seller/courses">
             <Plus className="mr-2 h-5 w-5" />
-            Tạo khoá học mới
+            {t('dashboard.createCourse')}
           </Link>
         </Button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map(({ key, label, description, icon: Icon, href, color, iconBg }) => (
+        {statCards.map(({ key, icon: Icon, href, color, iconBg }) => (
           <Link key={key} to={href} className="group block cursor-pointer h-full">
             <Card
               className={`h-full overflow-hidden border transition-all duration-200 hover:shadow-md hover:border-primary/30 ${color}`}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t(`dashboard.stats.${key}.label`)}</CardTitle>
                 <div className={`rounded-lg p-2 ${iconBg}`}>
                   <Icon className="h-5 w-5" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-display">{statValues[key]}</div>
-                <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t(`dashboard.stats.${key}.description`)}</p>
                 <div className="mt-3 flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  Xem chi tiết
+                  {t('dashboard.viewDetails')}
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </CardContent>
@@ -222,7 +218,7 @@ export default function SellerDashboard() {
           <Card className="h-full overflow-hidden border-emerald-500/20 bg-emerald-500/5 transition-all duration-200 hover:shadow-md hover:border-emerald-500/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Số dư có thể rút
+                {t('dashboard.earnings.label')}
               </CardTitle>
               <div className="rounded-lg bg-emerald-500/15 p-2">
                 <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -234,13 +230,13 @@ export default function SellerDashboard() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {financial.pendingBalance > 0
-                  ? `Đang khoá ${formatVND(financial.pendingBalance)}`
+                  ? t('dashboard.earnings.locked', { amount: formatVND(financial.pendingBalance) })
                   : financial.pendingWithdrawalCount > 0
-                    ? `${financial.pendingWithdrawalCount} đơn rút đang chờ`
-                    : `Tổng đã nhận ${formatVND(financial.totalEarnings)}`}
+                    ? t('dashboard.earnings.pendingWithdrawals', { count: financial.pendingWithdrawalCount })
+                    : t('dashboard.earnings.totalReceived', { amount: formatVND(financial.totalEarnings) })}
               </p>
               <div className="mt-3 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                Xem chi tiết
+                {t('dashboard.viewDetails')}
                 <ArrowRight className="h-3 w-3" />
               </div>
             </CardContent>
@@ -251,8 +247,8 @@ export default function SellerDashboard() {
       {/* Charts: Revenue (with year picker) & Learner Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard
-          title="Doanh thu theo tháng"
-          description={`Số tiền nhận sau khi trừ phí nền tảng — năm ${revenueYear}`}
+          title={t('dashboard.revenueChart.title')}
+          description={t('dashboard.revenueChart.description', { year: revenueYear })}
           headerExtra={
             <div className="flex items-center gap-1">
               <Button
@@ -303,8 +299,8 @@ export default function SellerDashboard() {
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                   <Tooltip
                     contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
-                    formatter={(value: number) => [formatVND(value), 'Số tiền']}
-                    labelFormatter={(label) => `Tháng ${label}`}
+                    formatter={(value: number) => [formatVND(value), t('dashboard.revenueChart.amount')]}
+                    labelFormatter={(label) => t('dashboard.chartMonthLabel', { label })}
                   />
                   <Area
                     type="monotone"
@@ -319,7 +315,7 @@ export default function SellerDashboard() {
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <DollarSign className="mx-auto h-12 w-12 opacity-40" />
-                  <p className="mt-2 text-sm">Chưa có doanh thu nào trong năm {revenueYear}</p>
+                  <p className="mt-2 text-sm">{t('dashboard.revenueChart.empty', { year: revenueYear })}</p>
                 </div>
               </div>
             )}
@@ -327,8 +323,8 @@ export default function SellerDashboard() {
         </ChartCard>
 
         <ChartCard
-          title="Hoạt động học viên"
-          description="Số học viên mới mua khoá học theo tháng (12 tháng gần nhất)"
+          title={t('dashboard.learnerChart.title')}
+          description={t('dashboard.learnerChart.description')}
         >
           <div className="h-[280px] w-full">
             {isLoadingLearners ? (
@@ -352,14 +348,14 @@ export default function SellerDashboard() {
                   <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
-                    formatter={(value: number) => [value, 'Học viên mới']}
-                    labelFormatter={(label) => `Tháng ${label}`}
+                    formatter={(value: number) => [value, t('dashboard.learnerChart.newLearners')]}
+                    labelFormatter={(label) => t('dashboard.chartMonthLabel', { label })}
                   />
                   <Bar
                     dataKey="count"
                     fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
-                    name="Học viên"
+                    name={t('dashboard.learnerChart.seriesName')}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -367,7 +363,7 @@ export default function SellerDashboard() {
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Activity className="mx-auto h-12 w-12 opacity-40" />
-                  <p className="mt-2 text-sm">Chưa có học viên nào</p>
+                  <p className="mt-2 text-sm">{t('dashboard.learnerChart.empty')}</p>
                 </div>
               </div>
             )}
@@ -381,13 +377,13 @@ export default function SellerDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-amber-500" />
-              Top khoá học bán chạy
+              {t('dashboard.topCourses.title')}
             </CardTitle>
-            <CardDescription>3 khoá học có nhiều học viên nhất</CardDescription>
+            <CardDescription>{t('dashboard.topCourses.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             {topCourses.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic">Chưa có khoá học nào có học viên.</p>
+              <p className="text-sm text-muted-foreground italic">{t('dashboard.topCourses.empty')}</p>
             ) : (
               <ul className="space-y-3">
                 {topCourses.map((c, idx) => (
@@ -433,34 +429,34 @@ export default function SellerDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Thao tác nhanh
+              {t('dashboard.quickActions.title')}
             </CardTitle>
-            <CardDescription>Điều hướng nhanh đến các mục quản lý</CardDescription>
+            <CardDescription>{t('dashboard.quickActions.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2">
               <Button variant="outline" className="h-auto justify-start gap-3 py-4" asChild>
                 <Link to="/seller/courses">
                   <BookOpen className="h-5 w-5 shrink-0" />
-                  <span>Quản lý khoá học</span>
+                  <span>{t('dashboard.quickActions.manageCourses')}</span>
                 </Link>
               </Button>
               <Button variant="outline" className="h-auto justify-start gap-3 py-4" asChild>
                 <Link to="/seller/learners">
                   <Users className="h-5 w-5 shrink-0" />
-                  <span>Xem người học</span>
+                  <span>{t('dashboard.quickActions.viewLearners')}</span>
                 </Link>
               </Button>
               <Button variant="outline" className="h-auto justify-start gap-3 py-4" asChild>
                 <Link to="/seller/comments">
                   <MessageSquare className="h-5 w-5 shrink-0" />
-                  <span>Bình luận mới</span>
+                  <span>{t('dashboard.quickActions.newComments')}</span>
                 </Link>
               </Button>
               <Button variant="outline" className="h-auto justify-start gap-3 py-4" asChild>
                 <Link to="/seller/profile">
                   <UserCircle className="h-5 w-5 shrink-0" />
-                  <span>Hồ sơ giảng viên</span>
+                  <span>{t('dashboard.quickActions.instructorProfile')}</span>
                 </Link>
               </Button>
             </div>
