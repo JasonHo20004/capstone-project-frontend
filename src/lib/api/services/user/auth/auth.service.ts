@@ -10,6 +10,10 @@ import type {
   ResendVerificationRequest,
   ResendVerificationApiResponse,
   VerifyEmailApiResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordApiResponse,
+  ResetPasswordRequest,
+  ResetPasswordApiResponse,
 } from '@/lib/api/types/auth.types';
 
 class AuthService {
@@ -76,6 +80,32 @@ class AuthService {
   ): Promise<ResendVerificationApiResponse> {
     const response = await apiClient.post<ResendVerificationApiResponse>(
       '/auth/resend-verification',
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Request a password reset link to be emailed.
+   */
+  async forgotPassword(
+    data: ForgotPasswordRequest
+  ): Promise<ForgotPasswordApiResponse> {
+    const response = await apiClient.post<ForgotPasswordApiResponse>(
+      '/auth/forgot-password',
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Reset the password using the token from the email link.
+   */
+  async resetPassword(
+    data: ResetPasswordRequest
+  ): Promise<ResetPasswordApiResponse> {
+    const response = await apiClient.post<ResetPasswordApiResponse>(
+      '/auth/reset-password',
       data
     );
     return response.data;

@@ -52,6 +52,15 @@ export interface ResendVerificationRequest {
   email: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
 // Backend returns flat fields under `data` for verifyEmail success
 export interface VerifyEmailResponse {
   accessToken: string;
@@ -72,6 +81,10 @@ export type RefreshTokenApiResponse = ApiResponse<RefreshTokenResponse>;
 export type LogoutApiResponse = ApiResponse<EmptyResponse>;
 
 export type ResendVerificationApiResponse = ApiResponse<EmptyResponse>;
+
+export type ForgotPasswordApiResponse = ApiResponse<EmptyResponse>;
+
+export type ResetPasswordApiResponse = ApiResponse<EmptyResponse>;
 
 export type VerifyEmailApiResponse = ApiResponse<VerifyEmailResponse>;
 

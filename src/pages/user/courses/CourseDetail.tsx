@@ -645,7 +645,16 @@ const CourseDetail = () => {
                                       {t('courseDetail.tests.minutesAndMax', { minutes: test.durationInMinutes, score: test.totalScore })}
                                     </div>
                                   </div>
-                                  <Button variant="outline" size="sm" className="rounded-lg">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-lg"
+                                    onClick={() =>
+                                      isPurchased
+                                        ? navigate(`/practice/${test.id}`)
+                                        : handleLessonClick()
+                                    }
+                                  >
                                     {t('courseDetail.tests.doTest')}
                                   </Button>
                                 </div>
@@ -701,7 +710,7 @@ const CourseDetail = () => {
                                   </span>
                                   <Button
                                     className="ml-auto rounded-xl shadow-lg shadow-amber-200/50"
-                                    onClick={() => navigate(`/tests/${course.finalTestId}`)}
+                                    onClick={() => navigate(`/practice/${course.finalTestId}`)}
                                   >
                                     <FileText className="w-4 h-4 mr-1.5" />
                                     {t('courseDetail.finalTest.doTestBtn')}

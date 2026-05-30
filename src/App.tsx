@@ -83,6 +83,8 @@ import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
 import Register from "./pages/shared/auth/Register";
 import VerifyEmailPage from "./pages/shared/auth/VerifyEmail";
+import ForgotPassword from "./pages/shared/auth/ForgotPassword";
+import ResetPassword from "./pages/shared/auth/ResetPassword";
 
 // Layouts
 import SellerLayout from "./components/seller/SellerLayout";
@@ -129,6 +131,8 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/verify" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* protected routes - dashboard học viên */}
           <Route element={<ProtectedRoute />}>
             <Route element={<UserAppLayout />}>

@@ -317,12 +317,7 @@ export default function Profile() {
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   <Input id="email" type="email" className="pl-10 bg-slate-50 text-slate-500" value={user.email} disabled />
                 </div>
-                {editing && (
-                  <Button size="icon" variant="outline" className="shrink-0 h-10 w-10" type="button"
-                    onClick={() => setEmailDialogOpen(true)} title={t('profile.actions.changeEmail')}>
-                    <KeyRound className="w-4 h-4" />
-                  </Button>
-                )}
+                {/* Email là định danh đăng nhập — không cho đổi ở MVP (luồng đổi + xác thực email mới chưa có ở backend). */}
               </div>
               {!(user as any).isEmailVerified && (
                 <p className="text-xs text-amber-600 flex items-center gap-1">

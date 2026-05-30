@@ -122,17 +122,32 @@ export const useAuth = () => {
     },
   });
 
+  // Forgot password — request a reset link by email
+  const forgotPasswordMutation = useMutation({
+    mutationFn: (email: string) => authService.forgotPassword({ email }),
+  });
+
+  // Reset password — set a new password using the emailed token
+  const resetPasswordMutation = useMutation({
+    mutationFn: (data: { token: string; password: string }) =>
+      authService.resetPassword(data),
+  });
+
   return {
     login: loginMutation.mutate,
     register: registerMutation.mutate,
     logout: logoutMutation.mutate,
     verifyEmail: verifyEmailMutation.mutateAsync,
     resendVerification: resendVerificationMutation.mutate,
+    forgotPassword: forgotPasswordMutation.mutate,
+    resetPassword: resetPasswordMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     isRegistering: registerMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
     isVerifying: verifyEmailMutation.isPending,
     isResending: resendVerificationMutation.isPending,
+    isRequestingReset: forgotPasswordMutation.isPending,
+    isResettingPassword: resetPasswordMutation.isPending,
     registerError: registerMutation.error,
   };
 };
