@@ -28,6 +28,7 @@ import { useProfile, useSellerOwnProfile } from '@/hooks/api/use-user';
 import { useSellerDashboard } from '@/hooks/api';
 import { ErrorMessage } from '@/components/ui/error-message';
 import EditSellerProfileDialog from '@/components/seller/account/EditSellerProfileDialog';
+import { useTranslation } from 'react-i18next';
 
 function formatEnglishLevel(raw?: string | null): string {
   if (!raw) return '—';
@@ -39,24 +40,26 @@ function formatEnglishLevel(raw?: string | null): string {
   return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase().replace(/_/g, ' ');
 }
 
-function formatDateVN(iso?: string | null): string {
+function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('vi-VN');
+  return d.toLocaleDateString(locale);
 }
 
 export default function SellerProfile() {
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const { user, isLoading: isLoadingUser, error: userError } = useProfile();
   const { data: dashboardStats, isLoading: isLoadingStats } = useSellerDashboard();
   const { data: sellerProfile, isLoading: isLoadingSeller } = useSellerOwnProfile();
   const [editOpen, setEditOpen] = useState(false);
 
   if (userError) {
-    return <ErrorMessage message="Không thể tải thông tin hồ sơ. Vui lòng thử lại sau." />;
+    return <ErrorMessage message={t('profile.loadError')} />;
   }
   if (!isLoadingUser && !user) {
-    return <ErrorMessage message="Không tìm thấy thông tin người dùng." />;
+    return <ErrorMessage message={t('profile.notFound')} />;
   }
 
   const financial = dashboardStats?.financial;
@@ -93,7 +96,7 @@ export default function SellerProfile() {
               className="bg-white/90 hover:bg-white text-primary border-0 shadow-sm backdrop-blur"
             >
               <Pencil className="w-3.5 h-3.5 mr-1.5" />
-              Chỉnh sửa hồ sơ
+              {t('profile.editProfile')}
             </Button>
           </div>
         </div>
@@ -102,7 +105,7 @@ export default function SellerProfile() {
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14">
             <UserAvatar
               src={user?.profilePicture}
-              name={user?.fullName ?? 'Seller'}
+              name={user?.fullName ?? t('profile.fallbackName')}
               className="h-28 w-28 ring-4 ring-white shadow-[var(--shadow-md)]"
             />
             <div className="flex-1 space-y-2 sm:pb-1">
@@ -115,18 +118,18 @@ export default function SellerProfile() {
                 <>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                     <h1 className="text-2xl font-bold font-display tracking-tight">
-                      {user?.fullName || 'Seller'}
+                      {user?.fullName || t('profile.fallbackName')}
                     </h1>
                     <Badge className="bg-primary/10 text-primary border-0 hover:bg-primary/15">
-                      <GraduationCap className="h-3 w-3 mr-1" /> Giảng viên
+                      <GraduationCap className="h-3 w-3 mr-1" /> {t('profile.badges.instructor')}
                     </Badge>
                     {isActive ? (
                       <Badge className="bg-emerald-50 text-emerald-700 border-0 hover:bg-emerald-100">
-                        <ShieldCheck className="h-3 w-3 mr-1" /> Đang hoạt động
+                        <ShieldCheck className="h-3 w-3 mr-1" /> {t('profile.badges.active')}
                       </Badge>
                     ) : (
                       <Badge variant="destructive">
-                        <ShieldAlert className="h-3 w-3 mr-1" /> Tạm khoá
+                        <ShieldAlert className="h-3 w-3 mr-1" /> {t('profile.badges.suspended')}
                       </Badge>
                     )}
                   </div>
@@ -136,8 +139,7 @@ export default function SellerProfile() {
                     </span>
                     {user?.createdAt && (
                       <span className="flex items-center gap-1.5">
-                        <CalendarDays className="h-3.5 w-3.5" /> Tham gia{' '}
-                        {formatDateVN(user.createdAt)}
+                        <CalendarDays className="h-3.5 w-3.5" /> {t('profile.joined', { date: formatDate(user.createdAt, dateLocale) })}
                       </span>
                     )}
                   </div>
@@ -155,11 +157,10 @@ export default function SellerProfile() {
             <ShieldAlert className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-destructive">
-                Tài khoản Seller đang bị tạm khoá
+                {t('profile.suspendedBanner.title')}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Bạn vẫn xem được hồ sơ nhưng tạm thời không thể xuất bản khoá học hoặc rút tiền.
-                Nếu cho rằng đây là nhầm lẫn, vui lòng liên hệ quản trị viên.
+                {t('profile.suspendedBanner.body')}
               </p>
             </div>
           </CardContent>
@@ -170,23 +171,23 @@ export default function SellerProfile() {
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<BookOpen className="h-4 w-4" />}
-          label="Khoá học"
-          value={isLoadingStats ? null : coursesCount.toLocaleString('vi-VN')}
+          label={t('profile.stats.courses')}
+          value={isLoadingStats ? null : coursesCount.toLocaleString(dateLocale)}
         />
         <StatCard
           icon={<Users className="h-4 w-4" />}
-          label="Người học"
-          value={isLoadingStats ? null : learnersCount.toLocaleString('vi-VN')}
+          label={t('profile.stats.learners')}
+          value={isLoadingStats ? null : learnersCount.toLocaleString(dateLocale)}
         />
         <StatCard
           icon={<Star className="h-4 w-4" />}
-          label="Đánh giá TB"
+          label={t('profile.stats.avgRating')}
           value={isLoadingStats ? null : averageRating > 0 ? averageRating.toFixed(1) : '—'}
           hint={averageRating > 0 ? '/ 5.0' : undefined}
         />
         <StatCard
           icon={<WalletIcon className="h-4 w-4" />}
-          label="Tổng doanh thu"
+          label={t('profile.stats.totalRevenue')}
           value={isLoadingStats ? null : formatVND(totalEarnings)}
         />
       </div>
@@ -196,7 +197,7 @@ export default function SellerProfile() {
         <Card className="lg:col-span-2 border-border/40 shadow-[var(--shadow-sm)]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Award className="h-4 w-4 text-primary" /> Chuyên môn
+              <Award className="h-4 w-4 text-primary" /> {t('profile.expertise.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -221,7 +222,7 @@ export default function SellerProfile() {
             ) : (
               <EmptyHint
                 icon={<Sparkles className="h-4 w-4" />}
-                text="Chưa có chuyên môn — bấm 'Chỉnh sửa hồ sơ' để thêm."
+                text={t('profile.expertise.empty')}
               />
             )}
           </CardContent>
@@ -230,7 +231,7 @@ export default function SellerProfile() {
         <Card className="lg:col-span-3 border-border/40 shadow-[var(--shadow-sm)]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="h-4 w-4 text-primary" /> Chứng chỉ
+              <ShieldCheck className="h-4 w-4 text-primary" /> {t('profile.certification.title')}
               {certification.length > 0 && (
                 <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-normal">
                   {certification.length}
@@ -253,12 +254,12 @@ export default function SellerProfile() {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    title="Nhấn để xem ảnh gốc"
+                    title={t('profile.certification.viewOriginal')}
                     className="group relative block aspect-[4/3] rounded-lg overflow-hidden border border-border/60 bg-muted/30 hover:border-primary/40 hover:shadow-[var(--shadow-md)] transition-all"
                   >
                     <img
                       src={url}
-                      alt={`Chứng chỉ ${idx + 1}`}
+                      alt={t('profile.certification.alt', { index: idx + 1 })}
                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                       loading="lazy"
                     />
@@ -271,7 +272,7 @@ export default function SellerProfile() {
             ) : (
               <EmptyHint
                 icon={<ImageIcon className="h-4 w-4" />}
-                text="Chưa có chứng chỉ — bấm 'Chỉnh sửa hồ sơ' để tải lên."
+                text={t('profile.certification.empty')}
               />
             )}
           </CardContent>
@@ -283,7 +284,7 @@ export default function SellerProfile() {
         <Card className="border-primary/15 bg-gradient-to-br from-primary/[0.04] to-transparent shadow-[var(--shadow-sm)]">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <WalletIcon className="h-4 w-4 text-primary" /> Ví giảng viên
+              <WalletIcon className="h-4 w-4 text-primary" /> {t('profile.wallet.title')}
             </CardTitle>
             <Button
               asChild
@@ -292,14 +293,14 @@ export default function SellerProfile() {
               className="text-primary hover:text-primary hover:bg-primary/10"
             >
               <Link to="/seller/earnings" className="text-xs">
-                Xem chi tiết
+                {t('profile.wallet.viewDetails')}
                 <ArrowUpRight className="h-3 w-3 ml-1" />
               </Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-xs text-muted-foreground">Số dư có thể rút</p>
+              <p className="text-xs text-muted-foreground">{t('profile.wallet.withdrawable')}</p>
               {isLoadingStats ? (
                 <Skeleton className="h-9 w-40 mt-1" />
               ) : (
@@ -310,42 +311,42 @@ export default function SellerProfile() {
             </div>
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/40">
               <div>
-                <p className="text-xs text-muted-foreground">Đang chờ giải ngân</p>
+                <p className="text-xs text-muted-foreground">{t('profile.wallet.pending')}</p>
                 <p className="text-sm font-semibold text-amber-600 mt-0.5">
                   {isLoadingStats ? '—' : formatVND(pendingBalance)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Tổng đã nhận</p>
+                <p className="text-xs text-muted-foreground">{t('profile.wallet.totalReceived')}</p>
                 <p className="text-sm font-semibold text-foreground mt-0.5">
                   {isLoadingStats ? '—' : formatVND(totalEarnings)}
                 </p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground pt-1">
-              Nguồn thu: chia hoa hồng từ học viên mua khoá học.
+              {t('profile.wallet.source')}
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-border/40 shadow-[var(--shadow-sm)]">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Thông tin cá nhân</CardTitle>
+            <CardTitle className="text-base">{t('profile.personal.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <InfoRow
               icon={<Phone className="h-3.5 w-3.5" />}
-              label="Số điện thoại"
+              label={t('profile.personal.phone')}
               value={user?.phoneNumber || '—'}
             />
             <InfoRow
               icon={<CalendarDays className="h-3.5 w-3.5" />}
-              label="Ngày sinh"
-              value={formatDateVN(user?.dateOfBirth)}
+              label={t('profile.personal.dateOfBirth')}
+              value={formatDate(user?.dateOfBirth, dateLocale)}
             />
             <InfoRow
               icon={<GraduationCap className="h-3.5 w-3.5" />}
-              label="Trình độ"
+              label={t('profile.personal.level')}
               value={
                 <Badge variant="outline" className="font-normal">
                   {formatEnglishLevel(user?.englishLevel)}
@@ -353,9 +354,9 @@ export default function SellerProfile() {
               }
             />
             <p className="text-xs text-muted-foreground pt-3 border-t border-border/40">
-              Cần sửa thông tin cá nhân?{' '}
+              {t('profile.personal.editHint')}
               <Link to="/profile" className="text-primary hover:underline font-medium">
-                Đi tới trang tài khoản
+                {t('profile.personal.goToAccount')}
               </Link>
             </p>
           </CardContent>

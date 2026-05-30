@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, RotateCcw, Film, Check } from 'lucide-react';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function UploadProgress({ percent, fileName, fileSizeMB, status, onRetry }: Props) {
+  const { t } = useTranslation('seller');
   const iconBg =
     status === 'done' ? 'bg-emerald-100' : status === 'error' ? 'bg-red-100' : 'bg-blue-100';
   const iconColor =
@@ -31,13 +33,13 @@ export function UploadProgress({ percent, fileName, fileSizeMB, status, onRetry 
       </div>
 
       {status === 'done' ? (
-        <p className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={14} /> Tải lên thành công</p>
+        <p className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={14} /> {t('upload.success')}</p>
       ) : (
         <div className="space-y-1.5">
           <Progress value={percent} className="h-2" />
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>
-              {status === 'error' ? 'Tải lên thất bại' : `Đang tải lên... ${percent}%`}
+              {status === 'error' ? t('upload.failed') : t('upload.uploading', { percent })}
             </span>
             {status === 'error' && onRetry && (
               <Button
@@ -46,7 +48,7 @@ export function UploadProgress({ percent, fileName, fileSizeMB, status, onRetry 
                 className="h-6 text-xs text-blue-600 hover:bg-blue-50 px-2"
                 onClick={onRetry}
               >
-                <RotateCcw className="w-3 h-3 mr-1" /> Thử lại
+                <RotateCcw className="w-3 h-3 mr-1" /> {t('upload.retry')}
               </Button>
             )}
           </div>

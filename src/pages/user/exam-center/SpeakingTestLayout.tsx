@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { aiEvaluationService } from "@/lib/api/services/user/ai-evaluation/ai-evaluation.service";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ function SubmitProgress({
   currentStep: number;
   error: string | null;
 }) {
+  const { t } = useTranslation("exam");
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
@@ -65,7 +67,7 @@ function SubmitProgress({
           )}
         </div>
         <h3 className="text-lg font-bold text-slate-800 text-center mb-4">
-          {error ? 'Có lỗi xảy ra' : currentStep >= steps.length ? 'Hoàn tất!' : 'Đang xử lý...'}
+          {error ? t("speakingTestLayout.submitModal.error") : currentStep >= steps.length ? t("speakingTestLayout.submitModal.done") : t("speakingTestLayout.submitModal.processing")}
         </h3>
 
         {error && (
@@ -108,6 +110,7 @@ export default function SpeakingTestLayout({
   goPrev,
 }: SpeakingTestLayoutProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation("exam");
 
   // ─── Section / Part config ─────────────────────────────────────────────────
   const speakingSections = sections.map((sec, idx) => {
@@ -298,7 +301,7 @@ export default function SpeakingTestLayout({
     const questionIds = Object.keys(blobs);
 
     if (questionIds.length === 0) {
-      setSubmitError("Bạn chưa ghi âm câu nào. Hãy ghi âm ít nhất 1 câu trả lời.");
+      setSubmitError(t("speakingTestLayout.errors.noRecording"));
       return;
     }
 
@@ -343,7 +346,7 @@ export default function SpeakingTestLayout({
       });
 
       const evaluationId = evalResp.data?.evaluationId;
-      if (!evaluationId) throw new Error("Không nhận được evaluationId");
+      if (!evaluationId) throw new Error(t("speakingTestLayout.errors.noEvaluationId"));
 
       setSubmitStep(2);
       let attempts = 0;
@@ -364,20 +367,20 @@ export default function SpeakingTestLayout({
       }
 
       setSubmitStep(3);
-      setSubmitError("Chấm bài quá lâu. Bạn có thể xem kết quả sau ở trang Lịch sử.");
+      setSubmitError(t("speakingTestLayout.errors.gradingTimeout"));
       setTimeout(() => navigate('/exam/speaking-history'), 3000);
 
     } catch (err: any) {
       console.error("Submit speaking error:", err);
-      setSubmitError(err.message || "Đã có lỗi xảy ra khi nộp bài.");
+      setSubmitError(err.message || t("speakingTestLayout.errors.submitFailed"));
     }
-  }, [navigate]);
+  }, [navigate, t]);
 
   const submitSteps = [
-    "Đang upload audio lên server...",
-    "Đang gửi cho AI Examiner...",
-    "AI đang chấm bài (30-60 giây)...",
-    "Hoàn tất!",
+    t("speakingTestLayout.steps.upload"),
+    t("speakingTestLayout.steps.sendAi"),
+    t("speakingTestLayout.steps.grading"),
+    t("speakingTestLayout.steps.done"),
   ];
 
   // ─── Determine the current question ID for recording ──────────────────────
@@ -416,10 +419,10 @@ export default function SpeakingTestLayout({
         <div className="flex items-center gap-3">
           {recordedCount > 0 && (
             <span className="text-[10px] text-green-600 bg-green-50 px-2.5 py-1 rounded-full font-bold border border-green-200">
-              {recordedCount}/{allQuestions.length} đã ghi
+              {t("speakingTestLayout.recordedCount", { count: recordedCount, total: allQuestions.length })}
             </span>
           )}
-          <span className="text-xs text-slate-500 bg-amber-50 px-2.5 py-1 rounded-full font-bold border border-amber-200">SPEAKING</span>
+          <span className="text-xs text-slate-500 bg-amber-50 px-2.5 py-1 rounded-full font-bold border border-amber-200">{t("speakingTestLayout.skillBadge")}</span>
           <span className="text-sm font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg">{formatTime(timeLeft)}</span>
         </div>
       </header>
@@ -437,7 +440,7 @@ export default function SpeakingTestLayout({
                   : 'text-slate-500 hover:bg-slate-100'
               }`}
             >
-              Part {sec.partNum}
+              {t("speakingTestLayout.part", { num: sec.partNum })}
             </button>
           ))}
         </div>
@@ -466,7 +469,7 @@ export default function SpeakingTestLayout({
                         ? 'w-3 h-3 bg-emerald-400 rounded-full'
                         : 'w-3 h-3 bg-slate-200 rounded-full hover:bg-slate-300'
                     }`}
-                    title={`Câu ${i + 1}`}
+                    title={t("speakingTestLayout.questionTitle", { num: i + 1 })}
                   />
                 ))}
               </div>
@@ -479,7 +482,7 @@ export default function SpeakingTestLayout({
               {/* Examiner icon */}
               <div className="flex items-center gap-2 mb-4">
                 <span className="material-symbols-outlined text-indigo-400 text-[20px]">record_voice_over</span>
-                <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Examiner asks</span>
+                <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">{t("speakingTestLayout.examinerAsks")}</span>
               </div>
 
               {/* THE QUESTION - big and centered */}
@@ -491,7 +494,7 @@ export default function SpeakingTestLayout({
               {isCurrentRecorded && !isRecording && (
                 <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3 mb-4 animate-in fade-in duration-300">
                   <span className="material-symbols-outlined text-emerald-500 text-[20px]">check_circle</span>
-                  <span className="text-sm font-bold text-emerald-700">Đã ghi âm</span>
+                  <span className="text-sm font-bold text-emerald-700">{t("speakingTestLayout.recorded")}</span>
                   {audioUrls[currentQuestion.id] && (
                     <button
                       onClick={() => {
@@ -511,7 +514,7 @@ export default function SpeakingTestLayout({
                       <span className="material-symbols-outlined text-[16px]">
                         {playingId === currentQuestion.id ? 'pause' : 'play_arrow'}
                       </span>
-                      Nghe lại
+                      {t("speakingTestLayout.replay")}
                     </button>
                   )}
                   <button
@@ -519,7 +522,7 @@ export default function SpeakingTestLayout({
                     className="ml-auto text-xs font-bold text-red-400 hover:text-red-600 flex items-center gap-1 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[14px]">delete</span>
-                    Ghi lại
+                    {t("speakingTestLayout.reRecord")}
                   </button>
                 </div>
               )}
@@ -527,7 +530,7 @@ export default function SpeakingTestLayout({
               {/* Transcript preview */}
               {transcripts[currentQuestion.id] && (
                 <div className="w-full max-w-xl bg-indigo-50/60 border border-indigo-100 rounded-xl px-5 py-3 mb-4">
-                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Transcript (AI nghe được)</p>
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">{t("speakingTestLayout.transcriptLabel")}</p>
                   <p className="text-sm text-slate-600 italic leading-relaxed">"{transcripts[currentQuestion.id]}"</p>
                 </div>
               )}
@@ -538,7 +541,7 @@ export default function SpeakingTestLayout({
                 className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-indigo-500 transition mb-3 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">{showNotes ? "visibility_off" : "edit_note"}</span>
-                {showNotes ? "Ẩn ghi chú" : "Ghi chú nhanh..."}
+                {showNotes ? t("speakingTestLayout.hideNotes") : t("speakingTestLayout.quickNotes")}
               </button>
 
               {showNotes && (
@@ -546,7 +549,7 @@ export default function SpeakingTestLayout({
                   <textarea
                     value={answers[currentQuestion.id] || ''}
                     onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
-                    placeholder="Gõ nháp ý tưởng / keywords trước khi nói..."
+                    placeholder={t("speakingTestLayout.notesPlaceholderP1")}
                     rows={3}
                     className="w-full bg-white border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 rounded-xl px-4 py-3 text-sm resize-none outline-none transition-all placeholder:text-slate-400 shadow-sm"
                   />
@@ -561,7 +564,7 @@ export default function SpeakingTestLayout({
                   className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 transition cursor-pointer disabled:cursor-not-allowed"
                 >
                   <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-                  Câu trước
+                  {t("speakingTestLayout.prevQuestion")}
                 </button>
                 <span className="text-xs font-bold text-slate-400">{activeQuestionIdx + 1} / {questionsForPart.length}</span>
                 <button
@@ -569,7 +572,7 @@ export default function SpeakingTestLayout({
                   disabled={activeQuestionIdx === questionsForPart.length - 1}
                   className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 transition cursor-pointer disabled:cursor-not-allowed"
                 >
-                  Câu sau
+                  {t("speakingTestLayout.nextQuestion")}
                   <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                 </button>
               </div>
@@ -583,10 +586,10 @@ export default function SpeakingTestLayout({
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-cyan-500" />
 
                 <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-100">
-                  <span className="bg-teal-100 text-teal-700 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl">Part 2 — Cue Card</span>
+                  <span className="bg-teal-100 text-teal-700 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl">{t("speakingTestLayout.cueCardBadge")}</span>
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest leading-none mb-1">Prep Time</span>
+                      <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest leading-none mb-1">{t("speakingTestLayout.prepTime")}</span>
                       <span className={`text-2xl leading-none font-mono font-black ${
                         prepTimeLeft === 0 ? 'text-red-500'
                         : prepTimeLeft <= 10 ? 'text-orange-500 animate-pulse'
@@ -610,7 +613,7 @@ export default function SpeakingTestLayout({
                 </h3>
 
                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-5">
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">You should say:</p>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t("speakingTestLayout.youShouldSay")}</p>
                   <ul className="space-y-4">
                     {cueCardContent.bulletPoints?.filter(Boolean).map((bp: string, i: number) => (
                       <li key={i} className="text-base text-slate-700 flex items-start gap-3">
@@ -633,7 +636,7 @@ export default function SpeakingTestLayout({
                 {isCurrentRecorded && !isRecording && (
                   <div className="mt-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3">
                     <span className="material-symbols-outlined text-emerald-500 text-[20px]">check_circle</span>
-                    <span className="text-sm font-bold text-emerald-700">Đã ghi âm</span>
+                    <span className="text-sm font-bold text-emerald-700">{t("speakingTestLayout.recorded")}</span>
                     {audioUrls[cueCardQ!.id] && (
                       <button
                         onClick={() => {
@@ -651,7 +654,7 @@ export default function SpeakingTestLayout({
                         className="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[16px]">{playingId === cueCardQ!.id ? 'pause' : 'play_arrow'}</span>
-                        Nghe lại
+                        {t("speakingTestLayout.replay")}
                       </button>
                     )}
                     <button
@@ -659,7 +662,7 @@ export default function SpeakingTestLayout({
                       className="ml-auto text-xs font-bold text-red-400 hover:text-red-600 flex items-center gap-1 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[14px]">delete</span>
-                      Ghi lại
+                      {t("speakingTestLayout.reRecord")}
                     </button>
                   </div>
                 )}
@@ -671,13 +674,13 @@ export default function SpeakingTestLayout({
                     className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-teal-600 transition cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px]">{showNotes ? "visibility_off" : "edit_note"}</span>
-                    {showNotes ? "Ẩn ghi chú" : "Ghi chú outline..."}
+                    {showNotes ? t("speakingTestLayout.hideNotes") : t("speakingTestLayout.outlineNotes")}
                   </button>
                   {showNotes && cueCardQ && (
                     <textarea
                       value={answers[cueCardQ.id] || ''}
                       onChange={(e) => setAnswer(cueCardQ.id, e.target.value)}
-                      placeholder="Ghi ý chính hoặc outline trước khi nói..."
+                      placeholder={t("speakingTestLayout.notesPlaceholderP2")}
                       rows={4}
                       className="w-full mt-2 bg-white border border-slate-200 focus:border-teal-400 focus:ring-4 focus:ring-teal-500/10 rounded-xl px-4 py-3 text-sm resize-none outline-none transition-all placeholder:text-slate-400 shadow-sm"
                     />
@@ -699,7 +702,7 @@ export default function SpeakingTestLayout({
             className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-30 transition cursor-pointer disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-            Part trước
+            {t("speakingTestLayout.prevPart")}
           </button>
 
           {/* Center: Recording button */}
@@ -728,7 +731,7 @@ export default function SpeakingTestLayout({
                 </button>
                 <div className="flex flex-col items-start">
                   <span className="text-lg font-mono font-black text-red-500">{formatElapsed(recordingTime)}</span>
-                  <span className="text-[10px] text-red-400 font-bold animate-pulse">● RECORDING</span>
+                  <span className="text-[10px] text-red-400 font-bold animate-pulse">{t("speakingTestLayout.recording")}</span>
                 </div>
               </div>
             ) : (
@@ -741,7 +744,7 @@ export default function SpeakingTestLayout({
                   <span className="material-symbols-outlined text-[28px]">mic</span>
                 </button>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
-                  {isCurrentRecorded ? "Nhấn để ghi lại" : "Nhấn để trả lời"}
+                  {isCurrentRecorded ? t("speakingTestLayout.tapToReRecord") : t("speakingTestLayout.tapToAnswer")}
                 </p>
               </div>
             )}
@@ -753,7 +756,7 @@ export default function SpeakingTestLayout({
               onClick={goNext}
               className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-amber-500 text-white rounded-xl hover:bg-amber-600 shadow-sm transition cursor-pointer"
             >
-              Part tiếp
+              {t("speakingTestLayout.nextPart")}
               <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </button>
           ) : (
@@ -763,7 +766,7 @@ export default function SpeakingTestLayout({
               className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 shadow-sm transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined text-[14px]">check_circle</span>
-              Nộp bài
+              {t("speakingTestLayout.submit")}
             </button>
           )}
         </div>

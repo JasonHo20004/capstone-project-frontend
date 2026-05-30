@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import DataTable from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ type SortKey = 'createdAt' | 'price' | 'rating';
 
 export default function SellerCourses() {
   const navigate = useNavigate();
+  const { t } = useTranslation('seller');
   const { user, isLoading: isProfileLoading } = useProfile();
   const currentUserId = user?.id ?? '';
 
@@ -106,15 +108,15 @@ export default function SellerCourses() {
   const getStatusBadge = (st: string) => {
     switch (st) {
       case 'ACTIVE':
-        return <Badge className="bg-green-600">Đang hoạt động</Badge>;
+        return <Badge className="bg-green-600">{t('courses.status.ACTIVE')}</Badge>;
       case 'PENDING':
-        return <Badge className="bg-yellow-600">Chờ duyệt</Badge>;
+        return <Badge className="bg-yellow-600">{t('courses.status.PENDING')}</Badge>;
       case 'REFUSE':
-        return <Badge variant="destructive">Bị từ chối</Badge>;
+        return <Badge variant="destructive">{t('courses.status.REFUSE')}</Badge>;
       case 'INACTIVE':
-        return <Badge className="bg-gray-600">Tạm dừng</Badge>;
+        return <Badge className="bg-gray-600">{t('courses.status.INACTIVE')}</Badge>;
       case 'DRAFT':
-        return <Badge className="bg-muted text-foreground">Bản nháp</Badge>;
+        return <Badge className="bg-muted text-foreground">{t('courses.status.DRAFT')}</Badge>;
       default:
         return <Badge variant="outline">{st}</Badge>;
     }
@@ -124,13 +126,13 @@ export default function SellerCourses() {
     if (!pendingDeleteCourse) return;
     try {
       await deleteMutation.mutateAsync(pendingDeleteCourse.id);
-      toast.success('Đã xoá khoá học');
+      toast.success(t('courses.deleted'));
       setPendingDeleteCourse(null);
       refetchCourses();
     } catch (err) {
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        (err instanceof Error ? err.message : 'Có lỗi xảy ra');
+        (err instanceof Error ? err.message : t('courses.genericError'));
       toast.error(msg);
     }
   };
@@ -138,8 +140,8 @@ export default function SellerCourses() {
   if (!currentUserId && !isProfileLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Quản lý khoá học của tôi</h1>
-        <p className="text-muted-foreground">Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.</p>
+        <h1 className="text-2xl font-semibold">{t('courses.title')}</h1>
+        <p className="text-muted-foreground">{t('courses.notLoggedIn')}</p>
       </div>
     );
   }
@@ -151,7 +153,7 @@ export default function SellerCourses() {
   if ((isCoursesLoading && !sellerCoursesResponse) || isProfileLoading) {
     return (
       <div className="flex justify-center py-10">
-        <LoadingSpinner text="Đang tải khoá học..." />
+        <LoadingSpinner text={t('courses.loading')} />
       </div>
     );
   }
@@ -159,9 +161,9 @@ export default function SellerCourses() {
   if (isCoursesError && !sellerCoursesResponse) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Quản lý khoá học của tôi</h1>
+        <h1 className="text-2xl font-semibold">{t('courses.title')}</h1>
         <ErrorMessage
-          message={coursesError instanceof Error ? coursesError.message : 'Không thể tải danh sách khoá học.'}
+          message={coursesError instanceof Error ? coursesError.message : t('courses.loadError')}
           onRetry={refetchCourses}
         />
       </div>
@@ -173,21 +175,21 @@ export default function SellerCourses() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-semibold">Quản lý khoá học của tôi</h1>
+        <h1 className="text-2xl font-semibold">{t('courses.title')}</h1>
         <div className="flex items-center gap-2">
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sắp xếp" />
+              <SelectValue placeholder={t('courses.sortPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="createdAt">Mới tạo gần đây</SelectItem>
-              <SelectItem value="price">Giá cao → thấp</SelectItem>
-              <SelectItem value="rating">Nhiều đánh giá</SelectItem>
+              <SelectItem value="createdAt">{t('courses.sort.createdAt')}</SelectItem>
+              <SelectItem value="price">{t('courses.sort.price')}</SelectItem>
+              <SelectItem value="rating">{t('courses.sort.rating')}</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={() => navigate('/seller/courses/new')} className="rounded-xl shadow-lg shadow-primary/20">
             <Sparkles className="mr-2 h-4 w-4" />
-            Tạo khoá học mới
+            {t('courses.create')}
           </Button>
         </div>
       </div>
@@ -215,11 +217,11 @@ export default function SellerCourses() {
       />
 
       <DataTable<Course>
-        title={`Khoá học${isRefetching ? ' • đang tải...' : ''}`}
+        title={`${t('courses.table.title')}${isRefetching ? t('courses.table.loadingSuffix') : ''}`}
         description={
           appliedSearch
-            ? `Đang lọc theo "${appliedSearch}" — xoá ô tìm kiếm và Enter để bỏ lọc`
-            : 'Danh sách khoá học của bạn'
+            ? t('courses.table.filtering', { search: appliedSearch })
+            : t('courses.table.description')
         }
         data={sortedCourses}
         columns={[
@@ -243,7 +245,7 @@ export default function SellerCourses() {
           },
           {
             key: 'title',
-            header: 'Tiêu đề',
+            header: t('courses.table.headerTitle'),
             render: (item) => (
               <div className="space-y-0.5">
                 <div className="font-medium">{item.title}</div>
@@ -253,18 +255,18 @@ export default function SellerCourses() {
               </div>
             ),
           },
-          { key: 'courseLevel', header: 'Level', render: (item) => item.courseLevel || '-' },
-          { key: 'price', header: 'Giá', render: (item) => formatVND(Number(item.price)) },
+          { key: 'courseLevel', header: t('courses.table.headerLevel'), render: (item) => item.courseLevel || '-' },
+          { key: 'price', header: t('courses.table.headerPrice'), render: (item) => formatVND(Number(item.price)) },
           {
             key: 'rating',
-            header: 'Đánh giá',
+            header: t('courses.table.headerRating'),
             render: (item) =>
-              item.ratingCount ? `${item.ratingCount} đánh giá` : <span className="text-muted-foreground">—</span>,
+              item.ratingCount ? t('courses.ratingCount', { count: item.ratingCount }) : <span className="text-muted-foreground">—</span>,
           },
-          { key: 'status', header: 'Trạng thái', render: (item) => getStatusBadge(item.status) },
+          { key: 'status', header: t('courses.table.headerStatus'), render: (item) => getStatusBadge(item.status) },
           {
             key: 'actions',
-            header: 'Hành động',
+            header: t('courses.table.headerActions'),
             className: 'w-20',
             render: (item) => (
               <DropdownMenu>
@@ -275,21 +277,21 @@ export default function SellerCourses() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => navigate(`/seller/courses/${item.id}`)}>
-                    <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
+                    <Eye className="mr-2 h-4 w-4" /> {t('courses.viewDetail')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
                     onClick={() => setPendingDeleteCourse(item)}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" /> Xoá khoá học
+                    <Trash2 className="mr-2 h-4 w-4" /> {t('courses.deleteAction')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ),
           },
         ]}
-        emptyMessage="Bạn chưa có khoá học nào."
+        emptyMessage={t('courses.empty')}
       />
 
       <AlertDialog
@@ -298,23 +300,32 @@ export default function SellerCourses() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoá khoá học?</AlertDialogTitle>
+            <AlertDialogTitle>{t('courses.deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                Bạn sắp xoá khoá học <strong>{pendingDeleteCourse?.title}</strong>.
+                <Trans
+                  i18nKey="courses.deleteDialog.subject"
+                  ns="seller"
+                  values={{ title: pendingDeleteCourse?.title }}
+                  components={{ strong: <strong /> }}
+                />
               </span>
               {pendingDeleteCourse &&
               (pendingDeleteCourse.status === 'ACTIVE' || pendingDeleteCourse.status === 'PENDING') ? (
                 <span className="block text-destructive">
-                  ⚠️ Khoá học này có thể đã có học viên mua. Hệ thống sẽ <strong>tự động hoàn tiền</strong> cho buyer và <strong>thu hồi quyền truy cập</strong> của họ. Hành động này không thể hoàn tác.
+                  <Trans
+                    i18nKey="courses.deleteDialog.warning"
+                    ns="seller"
+                    components={{ strong: <strong /> }}
+                  />
                 </span>
               ) : (
-                <span className="block">Hành động này không thể hoàn tác.</span>
+                <span className="block">{t('courses.deleteDialog.irreversible')}</span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{t('courses.deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -323,7 +334,7 @@ export default function SellerCourses() {
               disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteMutation.isPending ? 'Đang xoá...' : 'Xoá vĩnh viễn'}
+              {deleteMutation.isPending ? t('courses.deleteDialog.deleting') : t('courses.deleteDialog.deletePermanent')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -355,24 +366,28 @@ interface CourseFiltersBarProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'ALL', label: 'Tất cả trạng thái' },
-  { value: 'ACTIVE', label: 'Đang hoạt động' },
-  { value: 'PENDING', label: 'Chờ duyệt' },
-  { value: 'REFUSE', label: 'Bị từ chối' },
-  { value: 'INACTIVE', label: 'Tạm dừng' },
-  { value: 'DRAFT', label: 'Bản nháp' },
+  { value: 'ALL', labelKey: 'courses.filters.allStatuses' },
+  { value: 'ACTIVE', labelKey: 'courses.status.ACTIVE' },
+  { value: 'PENDING', labelKey: 'courses.status.PENDING' },
+  { value: 'REFUSE', labelKey: 'courses.status.REFUSE' },
+  { value: 'INACTIVE', labelKey: 'courses.status.INACTIVE' },
+  { value: 'DRAFT', labelKey: 'courses.status.DRAFT' },
 ];
 
 function CourseFiltersBar({
   searchInput, appliedSearch, onSearchInput, onSearchSubmit, onSearchClear,
   status, onStatusChange, level, onLevelChange, levels, onResetAll,
 }: CourseFiltersBarProps) {
+  const { t } = useTranslation('seller');
   const inputRef = useRef<HTMLInputElement>(null);
   const hasPending = searchInput.trim() !== appliedSearch.trim();
   const hasInput = searchInput.length > 0;
   const hasAnyFilter = appliedSearch !== '' || status !== 'ALL' || level !== 'ALL';
 
-  const statusLabel = STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
+  const statusLabel = (() => {
+    const opt = STATUS_OPTIONS.find((o) => o.value === status);
+    return opt ? t(opt.labelKey) : status;
+  })();
 
   return (
     <div className="space-y-3">
@@ -392,20 +407,20 @@ function CourseFiltersBar({
                 onSearchClear();
               }
             }}
-            placeholder="Tìm theo tiêu đề khoá học..."
+            placeholder={t('courses.filters.searchPlaceholder')}
             className="pl-9 pr-24"
           />
           {/* Right-side adornments: pending hint + clear button */}
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {hasPending && (
               <span className="hidden sm:inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
-                <CornerDownLeft className="w-3 h-3" /> Enter
+                <CornerDownLeft className="w-3 h-3" /> {t('courses.filters.enter')}
               </span>
             )}
             {hasInput && (
               <button
                 type="button"
-                aria-label="Xoá ô tìm kiếm"
+                aria-label={t('courses.filters.clearSearchAria')}
                 onClick={() => {
                   onSearchClear();
                   inputRef.current?.focus();
@@ -420,22 +435,22 @@ function CourseFiltersBar({
 
         <Select value={status} onValueChange={onStatusChange}>
           <SelectTrigger className="w-full md:w-[180px]">
-            <SelectValue placeholder="Trạng thái" />
+            <SelectValue placeholder={t('courses.filters.statusPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              <SelectItem key={o.value} value={o.value}>{t(o.labelKey)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select value={level} onValueChange={onLevelChange}>
           <SelectTrigger className="w-full md:w-[140px]">
-            <SelectValue placeholder="Level" />
+            <SelectValue placeholder={t('courses.filters.levelPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             {levels.map((l) => (
-              <SelectItem key={l} value={l}>{l === 'ALL' ? 'Tất cả level' : l}</SelectItem>
+              <SelectItem key={l} value={l}>{l === 'ALL' ? t('courses.filters.allLevels') : l}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -444,22 +459,22 @@ function CourseFiltersBar({
       {/* Active filter chips */}
       {hasAnyFilter && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground">Đang lọc:</span>
+          <span className="text-xs text-muted-foreground">{t('courses.filters.filteringLabel')}</span>
           {appliedSearch && (
-            <FilterChip label={`Tìm: "${appliedSearch}"`} onRemove={onSearchClear} />
+            <FilterChip label={t('courses.filters.searchChip', { search: appliedSearch })} onRemove={onSearchClear} />
           )}
           {status !== 'ALL' && (
             <FilterChip label={statusLabel} onRemove={() => onStatusChange('ALL')} />
           )}
           {level !== 'ALL' && (
-            <FilterChip label={`Level ${level}`} onRemove={() => onLevelChange('ALL')} />
+            <FilterChip label={t('courses.filters.levelChip', { level })} onRemove={() => onLevelChange('ALL')} />
           )}
           <button
             type="button"
             onClick={onResetAll}
             className="text-xs text-primary hover:underline ml-1"
           >
-            Xoá tất cả
+            {t('courses.filters.clearAll')}
           </button>
         </div>
       )}
@@ -468,12 +483,13 @@ function CourseFiltersBar({
 }
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  const { t } = useTranslation('seller');
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
       {label}
       <button
         type="button"
-        aria-label={`Xoá ${label}`}
+        aria-label={t('courses.filters.removeAria', { label })}
         onClick={onRemove}
         className="rounded-full hover:bg-primary/20 p-0.5"
       >

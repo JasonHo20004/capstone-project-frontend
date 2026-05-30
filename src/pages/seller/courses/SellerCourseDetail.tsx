@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,17 +44,27 @@ interface ModuleData {
 
 const DRAFT_KEY = (id: string) => `seller_course_draft_${id}`;
 
-const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
-  DRAFT:    { label: 'Bản nháp',   bg: 'bg-slate-100',   text: 'text-slate-700' },
-  PENDING:  { label: 'Chờ duyệt',  bg: 'bg-amber-100',   text: 'text-amber-700' },
-  ACTIVE:   { label: 'Hoạt động',  bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  REFUSE:   { label: 'Bị từ chối', bg: 'bg-red-100',     text: 'text-red-700' },
-  INACTIVE: { label: 'Tạm ngưng',  bg: 'bg-gray-100',    text: 'text-gray-600' },
+const statusStyle: Record<string, { bg: string; text: string }> = {
+  DRAFT:    { bg: 'bg-slate-100',   text: 'text-slate-700' },
+  PENDING:  { bg: 'bg-amber-100',   text: 'text-amber-700' },
+  ACTIVE:   { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  REFUSE:   { bg: 'bg-red-100',     text: 'text-red-700' },
+  INACTIVE: { bg: 'bg-gray-100',    text: 'text-gray-600' },
 };
 
 export default function SellerCourseDetail() {
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const statusConfig = useMemo<Record<string, { label: string; bg: string; text: string }>>(() => {
+    const out: Record<string, { label: string; bg: string; text: string }> = {};
+    for (const key of Object.keys(statusStyle)) {
+      out[key] = { label: t(`courseDetail.status.${key}`), ...statusStyle[key] };
+    }
+    return out;
+  }, [t]);
 
   const { data: course, isLoading, isError, error, refetch } = useCourse(id);
   const { data: modules = [], refetch: refetchModules } = useModules(id);
@@ -106,42 +117,42 @@ export default function SellerCourseDetail() {
     return [
       {
         key: 'thumbnail',
-        label: 'Có ảnh thumbnail',
+        label: t('courseDetail.checklist.thumbnail'),
         done: !!merged.thumbnailUrl || !!thumbnailFile,
-        hint: 'Lên ảnh thumbnail ở tab "Cập nhật"',
+        hint: t('courseDetail.checklist.thumbnailHint'),
       },
       {
         key: 'description',
-        label: 'Có mô tả khoá học (≥ 20 ký tự)',
+        label: t('courseDetail.checklist.description'),
         done: !!(merged.description && merged.description.trim().length >= 20),
-        hint: 'Mô tả ngắn gọn về mục tiêu & nội dung khoá học',
+        hint: t('courseDetail.checklist.descriptionHint'),
       },
       {
         key: 'price',
-        label: 'Đã đặt giá',
+        label: t('courseDetail.checklist.price'),
         done: typeof merged.price === 'number' && merged.price >= 0,
-        hint: 'Đặt 0đ cho khoá miễn phí',
+        hint: t('courseDetail.checklist.priceHint'),
       },
       {
         key: 'level',
-        label: 'Đã chọn trình độ',
+        label: t('courseDetail.checklist.level'),
         done: !!merged.courseLevel,
-        hint: 'A1, A2, B1, B2, C1, hoặc C2',
+        hint: t('courseDetail.checklist.levelHint'),
       },
       {
         key: 'lessons-min',
-        label: 'Có ít nhất 3 bài học',
+        label: t('courseDetail.checklist.lessonsMin'),
         done: lessons.length >= 3,
-        hint: `Hiện có ${lessons.length} bài học`,
+        hint: t('courseDetail.checklist.lessonsMinHint', { count: lessons.length }),
       },
       {
         key: 'lesson-content',
-        label: 'Ít nhất 1 bài học có nội dung (video hoặc bài kiểm tra)',
+        label: t('courseDetail.checklist.lessonContent'),
         done: hasLessonWithContent,
-        hint: 'Upload video hoặc gắn quiz vào bài học',
+        hint: t('courseDetail.checklist.lessonContentHint'),
       },
     ];
-  }, [course, draft, thumbnailFile, lessons]);
+  }, [course, draft, thumbnailFile, lessons, t]);
 
   const handlePublish = async () => {
     if (!id) return;
@@ -150,7 +161,7 @@ export default function SellerCourseDetail() {
       refetch();
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? 'Không thể xuất bản khoá học';
+        ?? t('courseDetail.publishError');
       toast.error(msg);
     }
   };
@@ -170,7 +181,7 @@ export default function SellerCourseDetail() {
     if (!id) return;
     const hasDraft = Object.keys(draft).length > 0;
     if (!hasDraft && !thumbnailFile) {
-      toast.info('Không có thay đổi nào để lưu.');
+      toast.info(t('courseDetail.noChanges'));
       return;
     }
 
@@ -209,7 +220,7 @@ export default function SellerCourseDetail() {
     if (!id) return;
     localStorage.removeItem(DRAFT_KEY(id));
     setDraft({});
-    toast.info('Đã xoá bản nháp, trở về dữ liệu gốc');
+    toast.info(t('courseDetail.draftCleared'));
   };
 
   if (isLoading) {
@@ -236,11 +247,11 @@ export default function SellerCourseDetail() {
     return (
       <div className="max-w-2xl mx-auto py-20 space-y-4">
         <ErrorMessage
-          message={error instanceof Error ? error.message : 'Không thể tải dữ liệu khoá học.'}
+          message={error instanceof Error ? error.message : t('courseDetail.loadError')}
           onRetry={refetch}
         />
         <Button variant="outline" onClick={() => navigate('/seller/courses')}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách
+          <ArrowLeft className="w-4 h-4 mr-2" /> {t('courseDetail.backToList')}
         </Button>
       </div>
     );
@@ -251,8 +262,8 @@ export default function SellerCourseDetail() {
       <div className="max-w-2xl mx-auto py-20">
         <EmptyState
           icon={<BookOpen className="w-8 h-8 text-slate-400" />}
-          title="Khoá học không tồn tại"
-          actionLabel="Quay lại danh sách"
+          title={t('courseDetail.notFoundTitle')}
+          actionLabel={t('courseDetail.backToList')}
           onAction={() => navigate('/seller/courses')}
         />
       </div>
@@ -274,7 +285,7 @@ export default function SellerCourseDetail() {
               onClick={() => navigate('/seller/courses')}
               className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors rounded-xl h-9 px-3 -ml-3"
             >
-              <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
+              <ArrowLeft className="w-4 h-4" /> {t('courseDetail.backToList')}
             </Button>
             {course && (
               <Button
@@ -282,9 +293,9 @@ export default function SellerCourseDetail() {
                 size="sm"
                 onClick={() => window.open(`/courses/${course.id}?preview=true`, '_blank')}
                 className="rounded-xl"
-                title="Xem khoá học dưới góc nhìn học viên"
+                title={t('courseDetail.previewTitle')}
               >
-                <Eye className="w-4 h-4 mr-1.5" /> Xem trước
+                <Eye className="w-4 h-4 mr-1.5" /> {t('courseDetail.preview')}
               </Button>
             )}
           </div>
@@ -303,8 +314,8 @@ export default function SellerCourseDetail() {
                 <div className="min-w-0">
                   <h1 className="text-2xl font-bold text-slate-900 truncate">{merged.title}</h1>
                   <p className="mt-1 text-sm text-slate-500">
-                    {seller?.fullName ?? 'Giảng viên ẩn danh'}
-                    {merged.courseLevel && <> • Level <span className="font-semibold text-slate-700">{merged.courseLevel}</span></>}
+                    {seller?.fullName ?? t('courseDetail.anonymousInstructor')}
+                    {merged.courseLevel && <> • {t('courseDetail.level')} <span className="font-semibold text-slate-700">{merged.courseLevel}</span></>}
                   </p>
                 </div>
                 <span className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${st.bg} ${st.text}`}>
@@ -312,12 +323,12 @@ export default function SellerCourseDetail() {
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
-                <StatPill icon={<GraduationCap className="w-3.5 h-3.5" />} label="Giá" value={formatVND(merged.price ?? 0)} />
-                <StatPill icon={<Layers className="w-3.5 h-3.5" />} label="Module" value={`${modulesTyped.length}`} />
-                <StatPill icon={<BookOpen className="w-3.5 h-3.5" />} label="Bài học" value={`${lessons.length - quizLessonCount}`} />
-                <StatPill icon={<ClipboardList className="w-3.5 h-3.5" />} label="Bài kiểm tra" value={`${quizLessonCount}`} />
-                <StatPill icon={<Clock className="w-3.5 h-3.5" />} label="Thời lượng" value={totalDuration > 0 ? `${Math.round(totalDuration / 60)} phút` : '—'} />
-                <StatPill icon={<Star className="w-3.5 h-3.5" />} label="Đánh giá" value={averageRating ? `${averageRating} ★` : '—'} />
+                <StatPill icon={<GraduationCap className="w-3.5 h-3.5" />} label={t('courseDetail.pills.price')} value={formatVND(merged.price ?? 0)} />
+                <StatPill icon={<Layers className="w-3.5 h-3.5" />} label={t('courseDetail.pills.module')} value={`${modulesTyped.length}`} />
+                <StatPill icon={<BookOpen className="w-3.5 h-3.5" />} label={t('courseDetail.pills.lesson')} value={`${lessons.length - quizLessonCount}`} />
+                <StatPill icon={<ClipboardList className="w-3.5 h-3.5" />} label={t('courseDetail.pills.test')} value={`${quizLessonCount}`} />
+                <StatPill icon={<Clock className="w-3.5 h-3.5" />} label={t('courseDetail.pills.duration')} value={totalDuration > 0 ? t('courseDetail.minutes', { count: Math.round(totalDuration / 60) }) : '—'} />
+                <StatPill icon={<Star className="w-3.5 h-3.5" />} label={t('courseDetail.pills.rating')} value={averageRating ? `${averageRating} ★` : '—'} />
               </div>
             </div>
           </div>
@@ -329,30 +340,30 @@ export default function SellerCourseDetail() {
         <Tabs defaultValue="overview">
           <TabsList className="bg-white border shadow-sm rounded-xl p-1 mb-6">
             <TabsTrigger value="overview" className="rounded-lg gap-1.5 data-[state=active]:shadow-sm">
-              <BookOpen className="w-4 h-4" /> Tổng quan
+              <BookOpen className="w-4 h-4" /> {t('courseDetail.tabs.overview')}
             </TabsTrigger>
             <TabsTrigger value="lessons" className="rounded-lg gap-1.5 data-[state=active]:shadow-sm">
-              <Layers className="w-4 h-4" /> Module & Bài học
+              <Layers className="w-4 h-4" /> {t('courseDetail.tabs.lessons')}
             </TabsTrigger>
             <TabsTrigger value="ratings" className="rounded-lg gap-1.5 data-[state=active]:shadow-sm">
-              <Star className="w-4 h-4" /> Đánh giá
+              <Star className="w-4 h-4" /> {t('courseDetail.tabs.ratings')}
             </TabsTrigger>
             <TabsTrigger value="update" className="rounded-lg gap-1.5 data-[state=active]:shadow-sm">
-              <Settings className="w-4 h-4" /> Cập nhật
+              <Settings className="w-4 h-4" /> {t('courseDetail.tabs.update')}
             </TabsTrigger>
             <TabsTrigger value="final-test" className="rounded-lg gap-1.5 data-[state=active]:shadow-sm">
-              <ClipboardCheck className="w-4 h-4" /> Bài kiểm tra cuối khoá
+              <ClipboardCheck className="w-4 h-4" /> {t('courseDetail.tabs.finalTest')}
             </TabsTrigger>
           </TabsList>
 
           {/* Overview */}
           <TabsContent value="overview" className="space-y-5">
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-              <QuickStatCard icon={<Layers className="w-5 h-5 text-indigo-500" />} label="Module" value={modulesTyped.length} />
-              <QuickStatCard icon={<BookOpen className="w-5 h-5 text-blue-500" />} label="Bài học" value={lessons.length - quizLessonCount} />
-              <QuickStatCard icon={<ClipboardList className="w-5 h-5 text-amber-500" />} label="Bài kiểm tra" value={quizLessonCount} />
-              <QuickStatCard icon={<Clock className="w-5 h-5 text-teal-500" />} label="Thời lượng" value={totalDuration > 0 ? `${Math.round(totalDuration / 60)} phút` : '0'} />
-              <QuickStatCard icon={<Star className="w-5 h-5 text-amber-500" />} label="Đánh giá TB" value={averageRating ?? '—'} />
+              <QuickStatCard icon={<Layers className="w-5 h-5 text-indigo-500" />} label={t('courseDetail.quickStats.module')} value={modulesTyped.length} />
+              <QuickStatCard icon={<BookOpen className="w-5 h-5 text-blue-500" />} label={t('courseDetail.quickStats.lesson')} value={lessons.length - quizLessonCount} />
+              <QuickStatCard icon={<ClipboardList className="w-5 h-5 text-amber-500" />} label={t('courseDetail.quickStats.test')} value={quizLessonCount} />
+              <QuickStatCard icon={<Clock className="w-5 h-5 text-teal-500" />} label={t('courseDetail.quickStats.duration')} value={totalDuration > 0 ? t('courseDetail.minutes', { count: Math.round(totalDuration / 60) }) : '0'} />
+              <QuickStatCard icon={<Star className="w-5 h-5 text-amber-500" />} label={t('courseDetail.quickStats.avgRating')} value={averageRating ?? '—'} />
             </div>
             <CourseReviewWorkflow
               course={{
@@ -376,32 +387,32 @@ export default function SellerCourseDetail() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-slate-400" /> Mô tả khóa học
+                  <FileText className="w-4 h-4 text-slate-400" /> {t('courseDetail.descriptionTitle')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                  {merged.description || <span className="italic text-slate-400">Chưa có mô tả. Hãy thêm mô tả ở tab "Cập nhật".</span>}
+                  {merged.description || <span className="italic text-slate-400">{t('courseDetail.descriptionEmpty')}</span>}
                 </p>
               </CardContent>
             </Card>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-5 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-700">Thông tin chi tiết</h3>
-                  <InfoRow label="Trình độ" value={merged.courseLevel ?? '—'} />
-                  <InfoRow label="Danh mục" value={(merged as any).category ?? '—'} />
-                  <InfoRow label="Giá" value={formatVND(merged.price ?? 0)} />
-                  <InfoRow label="Trạng thái" value={<span className={`${st.bg} ${st.text} px-2 py-0.5 rounded-full text-xs font-semibold`}>{st.label}</span>} />
+                  <h3 className="text-sm font-bold text-slate-700">{t('courseDetail.detailInfo')}</h3>
+                  <InfoRow label={t('courseDetail.info.level')} value={merged.courseLevel ?? '—'} />
+                  <InfoRow label={t('courseDetail.info.category')} value={(merged as any).category ?? '—'} />
+                  <InfoRow label={t('courseDetail.info.price')} value={formatVND(merged.price ?? 0)} />
+                  <InfoRow label={t('courseDetail.info.status')} value={<span className={`${st.bg} ${st.text} px-2 py-0.5 rounded-full text-xs font-semibold`}>{st.label}</span>} />
                 </CardContent>
               </Card>
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-5 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-700">Thời gian</h3>
-                  <InfoRow label="Ngày tạo" value={merged.createdAt ? new Date(merged.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'} />
-                  <InfoRow label="Cập nhật" value={merged.updatedAt ? new Date(merged.updatedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'} />
-                  <InfoRow label="Bài kiểm tra" value={course.finalTestId ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={14} /> Đã có</span> : <span className="inline-flex items-center gap-1 text-red-500"><XCircle size={14} /> Chưa có</span>} />
-                  <InfoRow label="Bình luận" value={`${totalComments}`} />
+                  <h3 className="text-sm font-bold text-slate-700">{t('courseDetail.timeSection')}</h3>
+                  <InfoRow label={t('courseDetail.time.createdAt')} value={merged.createdAt ? new Date(merged.createdAt).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'} />
+                  <InfoRow label={t('courseDetail.time.updatedAt')} value={merged.updatedAt ? new Date(merged.updatedAt).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'} />
+                  <InfoRow label={t('courseDetail.time.finalTest')} value={course.finalTestId ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={14} /> {t('courseDetail.time.hasFinalTest')}</span> : <span className="inline-flex items-center gap-1 text-red-500"><XCircle size={14} /> {t('courseDetail.time.noFinalTest')}</span>} />
+                  <InfoRow label={t('courseDetail.time.comments')} value={`${totalComments}`} />
                 </CardContent>
               </Card>
             </div>
@@ -425,16 +436,16 @@ export default function SellerCourseDetail() {
           {/* Ratings */}
           <TabsContent value="ratings" className="space-y-5">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Đánh giá từ học viên</h2>
-              <p className="text-sm text-slate-500">{ratings.length} đánh giá{averageRating ? ` • Trung bình: ${averageRating} ★` : ''}</p>
+              <h2 className="text-lg font-bold text-slate-900">{t('courseDetail.ratingsTitle')}</h2>
+              <p className="text-sm text-slate-500">{t('courseDetail.ratingsCount', { count: ratings.length })}{averageRating ? t('courseDetail.ratingsAverage', { rating: averageRating }) : ''}</p>
             </div>
             {ratings.length === 0 ? (
               <Card className="border-2 border-dashed border-slate-200">
                 <CardContent className="p-0">
                   <EmptyState
                     icon={<Star className="w-7 h-7 text-amber-400" />}
-                    title="Chưa có đánh giá"
-                    description="Đánh giá sẽ xuất hiện khi học viên hoàn thành khóa học."
+                    title={t('courseDetail.ratingsEmpty')}
+                    description={t('courseDetail.ratingsEmptyDesc')}
                   />
                 </CardContent>
               </Card>
@@ -443,13 +454,13 @@ export default function SellerCourseDetail() {
                 {ratings.map((r: Rating) => (
                   <div key={r.id} className="bg-white rounded-xl border border-slate-200 p-4">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm text-slate-800">{r.user?.fullName ?? 'Ẩn danh'}</span>
+                      <span className="font-medium text-sm text-slate-800">{r.user?.fullName ?? t('courseDetail.anonymous')}</span>
                       <div className="flex items-center gap-1 text-amber-500 text-sm font-bold">
                         {r.score} <Star className="w-3.5 h-3.5 fill-current" />
                       </div>
                     </div>
                     {r.content && <p className="text-sm text-slate-600 mt-2">{r.content}</p>}
-                    <p className="text-xs text-slate-400 mt-2">{new Date(r.createdAt).toLocaleString('vi-VN')}</p>
+                    <p className="text-xs text-slate-400 mt-2">{new Date(r.createdAt).toLocaleString(dateLocale)}</p>
                   </div>
                 ))}
               </div>

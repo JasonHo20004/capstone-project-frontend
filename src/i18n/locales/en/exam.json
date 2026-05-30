@@ -1,4 +1,94 @@
 {
+  "speakingTest": {
+    "workshopTitle": "IELTS Speaking Workshop",
+    "workshopSubtitle": "Interactive AI Examiner",
+    "topic": {
+      "heading": "Choose a Speaking topic",
+      "subtitle": "The AI Examiner will interview you in the real IELTS Speaking format: Part 1 → Part 2 → Part 3",
+      "starting": "Starting...",
+      "randomTopic": "Random topic",
+      "orChoose": "or choose a topic",
+      "adminCreated": "Admin-created",
+      "upgrade": {
+        "title": "PRO topic",
+        "body": "This topic is for the Pro plan. Upgrade to unlock all Speaking topics.",
+        "close": "Close",
+        "upgradeBtn": "Upgrade to Pro"
+      }
+    },
+    "micCheck": {
+      "back": "Back",
+      "title": "Mic check & Preparation",
+      "topicLabel": "Topic: {{topic}}",
+      "testMic": "Test microphone",
+      "micOk": "Mic OK",
+      "micWaiting": "Waiting for permission...",
+      "testHint": "Say a few sentences — if the bar below turns green/orange, your mic is working well.",
+      "grantMic": "Grant microphone access",
+      "vocabTitle": "Band 7+ vocabulary for this topic",
+      "vocabHint": "Try to use these words while speaking — the AI Examiner will reward your Lexical Resource.",
+      "vocabBadge": "B7+",
+      "vocabEmpty": "No suggestions yet — you can still start the test.",
+      "instructionsTitle": "Quick guide",
+      "instructions": {
+        "part1": "<b>Part 1</b>: 4-5 personal questions, ~30 seconds per answer",
+        "part2": "<b>Part 2</b>: 1 cue card — you get <b>1 minute to prepare</b>, then speak continuously for <b>1-2 minutes</b>",
+        "part3": "<b>Part 3</b>: Open discussion questions, 45-60 seconds per answer",
+        "controls": "You can <b>pause</b> or <b>finish early</b> at any time"
+      },
+      "start": "Start Speaking test"
+    },
+    "conversation": {
+      "partLabels": {
+        "1": "Part 1 — Introduction & Interview",
+        "2": "Part 2 — Individual Long Turn",
+        "3": "Part 3 — Two-way Discussion"
+      },
+      "partFallback": "Part {{num}}",
+      "vocabTip": "Vocabulary tips",
+      "hide": "Hide",
+      "show": "Show",
+      "transcript": "Transcript",
+      "finishEarly": "Finish early",
+      "vocabPanelTitle": "Band 7+ vocabulary",
+      "historyTitle": "Conversation history & Transcripts",
+      "examiner": "Examiner",
+      "you": "You (Detected Speech)",
+      "noConversation": "No conversation yet.",
+      "analyzing": "Examiner is analyzing...",
+      "preparingNext": "Preparing the next question",
+      "cueCardBadge": "Part 2 — Cue Card",
+      "prep": "Prep",
+      "youShouldSay": "You should say:",
+      "hideNotes": "Hide notes",
+      "addNotes": "Add notes...",
+      "notesPlaceholder": "Type your draft / script here...",
+      "paused": "PAUSED",
+      "resume": "Resume",
+      "pause": "Pause",
+      "pausedHint": "Paused",
+      "stopHint": "Press STOP to finish",
+      "wait": "Please wait...",
+      "startAnswering": "Tap to start answering"
+    },
+    "grading": {
+      "title": "Grading...",
+      "subtitle": "AI is analyzing your speech",
+      "hint": "This may take 30-60 seconds"
+    },
+    "result": {
+      "title": "Speaking Result",
+      "history": "History",
+      "back": "Back",
+      "overallBand": "Overall Band Score",
+      "na": "N/A",
+      "feedbackTitle": "Detailed feedback",
+      "transcriptTitle": "Audio transcript",
+      "examiner": "Examiner",
+      "you": "You (Detected Speech)",
+      "practiceMore": "Practice more"
+    }
+  },
   "examCenter": {
     "title": "IELTS Exam Center",
     "subtitle": "Practice all 4 IELTS skills — Reading, Writing, Listening, Speaking.",
@@ -1201,6 +1291,400 @@
         "confirm": "Exit",
         "cancel": "Stay"
       }
+    }
+  },
+  "speakingResultPage": {
+    "grading": {
+      "title": "Grading...",
+      "subtitle": "AI is analyzing your speaking",
+      "hint": "This may take 30-60 seconds"
+    },
+    "error": {
+      "title": "Unable to load result",
+      "body": "The result does not exist or an error occurred.",
+      "backToExamCenter": "Back to Exam Center"
+    },
+    "header": {
+      "title": "Speaking Result",
+      "history": "History",
+      "back": "Back"
+    },
+    "overallBandScore": "Overall Band Score",
+    "delta": {
+      "bandSuffix": "band",
+      "same": "Same as last time",
+      "vs": "vs \"{{topic}}\"",
+      "previous": "last attempt"
+    },
+    "criteria": {
+      "fluency": "Fluency & Coherence",
+      "lexical": "Lexical Resource",
+      "grammar": "Grammar Range",
+      "pronunciation": "Pronunciation"
+    },
+    "feedbackTitle": "Detailed feedback",
+    "feedbackParts": {
+      "strengths": "Strengths:\n- ",
+      "areasToImprove": "\nAreas to improve:\n- ",
+      "tips": "\nPractice tips:\n- "
+    },
+    "conversation": {
+      "title": "Transcript & recording per turn"
+    },
+    "singleTranscript": {
+      "title": "Recording transcript"
+    },
+    "analyze": {
+      "analyzing": "Analyzing...",
+      "analyzed_one": "Analyzed {{count}} error",
+      "analyzed_other": "Analyzed {{count}} errors",
+      "find": "Find grammar/vocab errors"
+    },
+    "roles": {
+      "examiner": "Examiner",
+      "you": "You (transcribed by Whisper)"
+    },
+    "hideAudio": "Hide audio",
+    "replay": "Replay",
+    "noContent": "(no content)",
+    "errorDetails": "Error details:",
+    "fullRecording": "Full recording:",
+    "modelAnswer": {
+      "title": "Band 8 model answer",
+      "generating": "Generating...",
+      "view": "View model answer",
+      "placeholder": "See how the AI Examiner answers at band 8 to learn from it.",
+      "keyVocab": "Standout words/phrases in the model answer",
+      "advice": "Advice"
+    },
+    "practiceMore": "Keep practicing",
+    "evaluationTopic": "Speaking Evaluation"
+  },
+  "skillTree": {
+    "header": {
+      "title": "Learning Map",
+      "back": "← Back",
+      "changeTopic": "← Change topic"
+    },
+    "celebrationMessages": {
+      "1": "Perfect! 🎉",
+      "2": "Great work! ✨",
+      "3": "You're on fire! 🔥",
+      "4": "Brilliant! 🌟",
+      "5": "Outstanding! 💪"
+    },
+    "topics": {
+      "travel": {
+        "label": "Travel",
+        "description": "Booking, directions, airports"
+      },
+      "food": {
+        "label": "Food & Dining",
+        "description": "Ordering, cooking, nutrition"
+      },
+      "business": {
+        "label": "Business",
+        "description": "Email, meetings, presentations"
+      },
+      "health": {
+        "label": "Health",
+        "description": "Doctor visits, symptoms, medicine"
+      },
+      "technology": {
+        "label": "Technology",
+        "description": "Internet, software, AI"
+      },
+      "education": {
+        "label": "Education",
+        "description": "School, lectures, exams"
+      },
+      "daily_life": {
+        "label": "Daily Life",
+        "description": "Shopping, socializing, family"
+      },
+      "environment": {
+        "label": "Environment",
+        "description": "Pollution, conservation, recycling"
+      }
+    },
+    "levels": {
+      "A1": {
+        "description": "Beginner",
+        "subtext": "Simple introductions & phrases"
+      },
+      "A2": {
+        "description": "Elementary",
+        "subtext": "Everyday situations & routines"
+      },
+      "B1": {
+        "description": "Intermediate",
+        "subtext": "Travel, work & school convos"
+      },
+      "B2": {
+        "description": "Upper-Inter",
+        "subtext": "Opinions & detailed discussion"
+      },
+      "C1": {
+        "description": "Advanced",
+        "subtext": "Fluent, complex communication"
+      },
+      "C2": {
+        "description": "Proficiency",
+        "subtext": "Near-native nuance & precision"
+      }
+    },
+    "resume": {
+      "heading": "Continue Your Journey",
+      "subtitle": "Pick up where you left off",
+      "lastVisited": "Last visited",
+      "loading": "Loading…",
+      "tapToResume": "Tap to resume →"
+    },
+    "newTopic": {
+      "headingResumable": "Explore a New World",
+      "subtitleResumable": "Pick a destination — each world mixes grammar, vocabulary and listening",
+      "heading": "Choose Your World",
+      "subtitle": "Each world is a learning adventure mixing grammar, vocabulary and listening"
+    },
+    "topicCard": {
+      "popular": "Popular",
+      "lessons": "~{{count}} lessons",
+      "difficultyAria": "Difficulty {{level}} out of 5",
+      "enterWorld": "Enter world"
+    },
+    "level": {
+      "selectTitle": "Select Level",
+      "cefrScale": "Standard CEFR scale",
+      "placementHint": "Not sure? Take a quick placement test →",
+      "building": "AI is building your path...",
+      "startLearning": "Start Learning"
+    },
+    "tree": {
+      "level": "Level {{level}}",
+      "change": "Change",
+      "startQuiz": "Start Quiz"
+    }
+  },
+  "speakingTestLayout": {
+    "submitModal": {
+      "error": "An error occurred",
+      "done": "Completed!",
+      "processing": "Processing..."
+    },
+    "steps": {
+      "upload": "Uploading audio to server...",
+      "sendAi": "Sending to AI Examiner...",
+      "grading": "AI is grading (30-60 seconds)...",
+      "done": "Completed!"
+    },
+    "errors": {
+      "noRecording": "You haven't recorded anything yet. Please record at least 1 answer.",
+      "noEvaluationId": "Did not receive an evaluationId",
+      "gradingTimeout": "Grading is taking too long. You can view the result later in the History page.",
+      "submitFailed": "An error occurred while submitting."
+    },
+    "skillBadge": "SPEAKING",
+    "recordedCount": "{{count}}/{{total}} recorded",
+    "part": "Part {{num}}",
+    "questionTitle": "Question {{num}}",
+    "examinerAsks": "Examiner asks",
+    "recorded": "Recorded",
+    "replay": "Replay",
+    "reRecord": "Re-record",
+    "transcriptLabel": "Transcript (what AI heard)",
+    "hideNotes": "Hide notes",
+    "quickNotes": "Quick notes...",
+    "outlineNotes": "Outline notes...",
+    "notesPlaceholderP1": "Jot down ideas / keywords before speaking...",
+    "notesPlaceholderP2": "Note main points or an outline before speaking...",
+    "prevQuestion": "Previous",
+    "nextQuestion": "Next",
+    "cueCardBadge": "Part 2 — Cue Card",
+    "prepTime": "Prep Time",
+    "youShouldSay": "You should say:",
+    "prevPart": "Previous part",
+    "nextPart": "Next part",
+    "submit": "Submit",
+    "tapToReRecord": "Tap to re-record",
+    "tapToAnswer": "Tap to answer",
+    "recording": "● RECORDING"
+  },
+  "testResultPage": {
+    "loading": "Loading results...",
+    "notFound": "Result not found",
+    "examCenter": "Exam Center",
+    "history": "History",
+    "historyFull": "Test history",
+    "defaultTestTitle": "Test",
+    "testCompleted": "Test Completed",
+    "band": "Band",
+    "noPassage": "No passage content.",
+    "questionTypes": {
+      "MULTIPLE_CHOICE": "MCQ",
+      "MULTIPLE_CHOICE_MULTI_ANSWER": "MCQ (Multi)",
+      "TRUE_FALSE_NOT_GIVEN": "T/F/NG",
+      "YES_NO_NOT_GIVEN": "Y/N/NG",
+      "GAP_FILL": "Fill",
+      "SHORT_ANSWER": "Short",
+      "MATCHING": "Matching"
+    },
+    "stats": {
+      "correct": "Correct",
+      "wrong": "Wrong",
+      "accuracy": "Accuracy",
+      "bandScore": "Band Score"
+    },
+    "questionAlt": "Question {{n}}",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "yourAnswer": "Your answer",
+    "correctAnswer": "Correct answer",
+    "noAnswer": "(no answer)",
+    "showExplanation": "Explanation",
+    "hideExplanation": "Hide explanation",
+    "aiTutor": "AI Tutor",
+    "audioTranscript": "Audio Transcript",
+    "readingPassage": "Reading Passage",
+    "clearHighlight": "Clear highlight",
+    "highlightingEvidence": "Highlighting evidence for <strong>Q{{order}}</strong>",
+    "audioReplay": "Audio replay",
+    "diagram": "Diagram",
+    "sectionDiagramAlt": "Section diagram",
+    "answerReviewCount": "Answer Review · {{count}} questions",
+    "clickToHighlight": "Click a question to highlight evidence",
+    "noQuestions": "This section has no questions.",
+    "discussionTitle": "Discussion",
+    "discussionSubtitle": "Share experiences and ask questions about this test"
+  },
+  "ieltsTestModule": {
+    "loading": {
+      "title": "Loading IELTS Test...",
+      "subtitle": "Fetching test data from server"
+    },
+    "errors": {
+      "noTestId": "No test ID provided.",
+      "notFound": "Test not found.",
+      "loadFailed": "Failed to load test. Please try again.",
+      "submitFailed": "Unable to submit. Please check your connection and try again."
+    },
+    "errorTitle": "Error",
+    "backToExamCenter": "Back to Exam Center",
+    "timeWarnings": {
+      "fiveMin": "5 minutes left — check unanswered questions.",
+      "oneMin": "1 minute left! The test will auto-submit when time runs out."
+    },
+    "submitted": {
+      "title": "Test submitted!",
+      "subtitle": "Your results are being processed...",
+      "examCenter": "Exam Center",
+      "history": "History"
+    },
+    "writing": {
+      "defaultTask1Title": "Task 1 — Chart",
+      "defaultTask2Title": "Task 2 — Essay",
+      "resultHeader": "Writing grading result",
+      "backLink": "Back",
+      "backToExamCenter": "Back to Exam Center",
+      "errorsDetected": "Errors detected ({{count}})",
+      "ieltsWriting": "IELTS Writing",
+      "aiChecking": "AI is checking...",
+      "submitting": "Submitting...",
+      "submit": "Submit",
+      "wordsMin": "{{count}}+ words",
+      "chartLabel": "Chart / Diagram",
+      "task1VisualAlt": "Task 1 Visual",
+      "promptLabel": "Prompt",
+      "writeAtLeast": "Write at least {{count}} words.",
+      "assistantTitle": "AI Writing Assistant",
+      "tipsTitle": "Writing tips",
+      "task1Tips": {
+        "paraphrase": "Start by paraphrasing the prompt",
+        "overview": "Give an overview before details",
+        "compare": "Compare the standout figures"
+      },
+      "task2Tips": {
+        "outline": "Outline: Intro → Body → Conclusion",
+        "bothViews": "Present both viewpoints",
+        "linking": "Use linking words"
+      },
+      "yourEssay": "Your essay",
+      "wordCountLabel": "Words:",
+      "wordsSuffix": "/ {{min}} min",
+      "enough": "Enough words",
+      "essayAria": "Essay writing area",
+      "needMore": "Write <strong>{{remaining}}</strong> more words to reach the minimum ({{min}} words)."
+    },
+    "test": {
+      "answeredShort": "Answered {{answered}}/{{total}}",
+      "sectionProgress": "Section {{current}} / {{total}}",
+      "totalProgress": "Total: {{answered}}/{{total}}",
+      "prevSectionTitle": "Previous section ( [ )",
+      "prevSection": "← Previous section",
+      "nextSectionTitle": "Next section ( ] )",
+      "nextSection": "Next section →",
+      "submitting": "Submitting...",
+      "submitted": "Submitted",
+      "submit": "Submit",
+      "submitFailedTitle": "Submit failed",
+      "mobilePassageListening": "Audio / Context",
+      "mobilePassageReading": "Reading",
+      "mobileQuestions": "Questions ({{answered}}/{{total}})",
+      "audioLabel": "Audio",
+      "audioPlayed": "Finished playing",
+      "audioUnsupported": "Your browser does not support audio.",
+      "audioLockedOnce": "This section has been heard — you cannot replay (IELTS rule).",
+      "audioOnceNotice": "This is a real IELTS test — you can only listen ONCE, with no rewind.",
+      "hideTranscript": "Hide transcript",
+      "showTranscript": "Show transcript",
+      "transcriptLabel": "Transcript",
+      "questionsContext": "Questions Context",
+      "readingPassage": "Reading Passage",
+      "fontDecreaseTitle": "Decrease font size",
+      "fontDecreaseAria": "Decrease passage font size",
+      "fontIncreaseTitle": "Increase font size",
+      "fontIncreaseAria": "Increase passage font size",
+      "highlightOnTitle": "Turn off highlight (key h)",
+      "highlightOffTitle": "Turn on highlight (key h)",
+      "highlightOn": "ON",
+      "highlightLabel": "Highlight",
+      "clearHighlightsTitle": "Clear all highlights",
+      "highlightHintSelect": "Select text → choose color",
+      "highlightHintRemove": "Click a highlight to remove",
+      "noPassage": "No passage content available.",
+      "cancelTitle": "Cancel",
+      "diagramMap": "Diagram / Map",
+      "sectionDiagramAlt": "Section diagram",
+      "resizeTitle": "Drag to resize • Double-click to reset 50/50",
+      "rangeSingle": "Question {{n}}",
+      "rangeMulti": "Questions {{from}}–{{to}}",
+      "unflagTitle": "Remove flag",
+      "flagTitle": "Flag for review",
+      "questionImageAlt": "Question {{n}}",
+      "typeAnswerPlaceholder": "Type your answer...",
+      "questionAria": "Question {{n}}",
+      "selectAnswer": "-- Select an answer --",
+      "matchingPlaceholder": "Enter answer (e.g. A, B, C)...",
+      "questionNavigator": "Question Navigator",
+      "navOk": "(ok)",
+      "navFlagged": "(flagged)",
+      "sectionFallback": "Section {{n}}",
+      "closeWarningAria": "Close warning",
+      "confirm": {
+        "title": "Submit the test?",
+        "answered": "Answered",
+        "unanswered": "<strong>{{count}}</strong> questions left unanswered. Submit anyway?",
+        "allDone": "You have completed all questions.",
+        "noEdit": "After submitting, you cannot edit your answers.",
+        "continueTest": "Continue working",
+        "submitting": "Submitting...",
+        "submit": "Submit"
+      }
+    },
+    "highlightColors": {
+      "Yellow": "Yellow",
+      "Green": "Green",
+      "Blue": "Blue",
+      "Pink": "Pink"
     }
   }
 }

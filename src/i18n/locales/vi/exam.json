@@ -1,4 +1,94 @@
 {
+  "speakingTest": {
+    "workshopTitle": "IELTS Speaking Workshop",
+    "workshopSubtitle": "Giám khảo AI tương tác",
+    "topic": {
+      "heading": "Chọn chủ đề Speaking",
+      "subtitle": "AI Examiner sẽ hỏi bạn theo format IELTS Speaking thật: Part 1 → Part 2 → Part 3",
+      "starting": "Đang khởi tạo...",
+      "randomTopic": "Chủ đề ngẫu nhiên",
+      "orChoose": "hoặc chọn một chủ đề",
+      "adminCreated": "Admin tạo",
+      "upgrade": {
+        "title": "Chủ đề PRO",
+        "body": "Chủ đề này dành cho gói Pro. Nâng cấp để truy cập tất cả chủ đề Speaking.",
+        "close": "Đóng",
+        "upgradeBtn": "Nâng cấp Pro"
+      }
+    },
+    "micCheck": {
+      "back": "Quay lại",
+      "title": "Kiểm tra mic & Chuẩn bị",
+      "topicLabel": "Chủ đề: {{topic}}",
+      "testMic": "Test microphone",
+      "micOk": "Mic OK",
+      "micWaiting": "Đang chờ quyền...",
+      "testHint": "Hãy nói thử vài câu — nếu thanh dưới chuyển sang xanh/cam là mic đang hoạt động tốt.",
+      "grantMic": "Cấp quyền microphone",
+      "vocabTitle": "Từ vựng band 7+ cho chủ đề này",
+      "vocabHint": "Cố gắng dùng những từ này khi nói — AI Examiner sẽ cộng điểm Lexical Resource.",
+      "vocabBadge": "B7+",
+      "vocabEmpty": "Chưa có gợi ý — bạn vẫn có thể bắt đầu bài thi.",
+      "instructionsTitle": "Hướng dẫn nhanh",
+      "instructions": {
+        "part1": "<b>Part 1</b>: 4-5 câu hỏi cá nhân, mỗi câu trả lời ~30 giây",
+        "part2": "<b>Part 2</b>: 1 cue card — bạn có <b>1 phút chuẩn bị</b>, sau đó nói liên tục <b>1-2 phút</b>",
+        "part3": "<b>Part 3</b>: Câu hỏi mở thảo luận, mỗi câu trả lời 45-60 giây",
+        "controls": "Bạn có thể <b>tạm dừng</b> hoặc <b>kết thúc sớm</b> bất cứ lúc nào"
+      },
+      "start": "Bắt đầu thi Speaking"
+    },
+    "conversation": {
+      "partLabels": {
+        "1": "Part 1 — Introduction & Interview",
+        "2": "Part 2 — Individual Long Turn",
+        "3": "Part 3 — Two-way Discussion"
+      },
+      "partFallback": "Part {{num}}",
+      "vocabTip": "Mẹo từ vựng",
+      "hide": "Ẩn",
+      "show": "Xem",
+      "transcript": "Transcript",
+      "finishEarly": "Kết thúc sớm",
+      "vocabPanelTitle": "Từ vựng band 7+",
+      "historyTitle": "Lịch sử hội thoại & Bóc băng (Transcripts)",
+      "examiner": "Examiner",
+      "you": "You (Detected Speech)",
+      "noConversation": "Chưa có đoạn hội thoại nào.",
+      "analyzing": "Examiner đang phân tích...",
+      "preparingNext": "Chuẩn bị câu hỏi tiếp theo",
+      "cueCardBadge": "Part 2 — Cue Card",
+      "prep": "Prep",
+      "youShouldSay": "You should say:",
+      "hideNotes": "Ẩn ghi chú",
+      "addNotes": "Ghi chú thêm...",
+      "notesPlaceholder": "Gõ nháp / script của bạn vào đây...",
+      "paused": "PAUSED",
+      "resume": "Tiếp tục",
+      "pause": "Tạm dừng",
+      "pausedHint": "Đang tạm dừng",
+      "stopHint": "Nhấn STOP để kết thúc",
+      "wait": "Vui lòng đợi...",
+      "startAnswering": "Nhấn để bắt đầu trả lời"
+    },
+    "grading": {
+      "title": "Đang chấm điểm...",
+      "subtitle": "AI đang phân tích bài nói của bạn",
+      "hint": "Quá trình này có thể mất 30-60 giây"
+    },
+    "result": {
+      "title": "Speaking Result",
+      "history": "Lịch sử",
+      "back": "Quay lại",
+      "overallBand": "Overall Band Score",
+      "na": "N/A",
+      "feedbackTitle": "Nhận xét chi tiết",
+      "transcriptTitle": "Bản dịch băng ghi âm (Transcript)",
+      "examiner": "Examiner",
+      "you": "You (Detected Speech)",
+      "practiceMore": "Luyện tiếp"
+    }
+  },
   "examCenter": {
     "title": "Trung tâm thi IELTS",
     "subtitle": "Luyện tập đầy đủ 4 kỹ năng IELTS — Đọc, Viết, Nghe, Nói.",
@@ -1201,6 +1291,400 @@
         "confirm": "Thoát",
         "cancel": "Ở lại"
       }
+    }
+  },
+  "speakingResultPage": {
+    "grading": {
+      "title": "Đang chấm điểm...",
+      "subtitle": "AI đang phân tích bài nói của bạn",
+      "hint": "Quá trình này có thể mất 30-60 giây"
+    },
+    "error": {
+      "title": "Không thể tải kết quả",
+      "body": "Kết quả không tồn tại hoặc đã có lỗi xảy ra.",
+      "backToExamCenter": "Quay lại Exam Center"
+    },
+    "header": {
+      "title": "Kết quả Speaking",
+      "history": "Lịch sử",
+      "back": "Quay lại"
+    },
+    "overallBandScore": "Điểm Band tổng",
+    "delta": {
+      "bandSuffix": "band",
+      "same": "Bằng lần trước",
+      "vs": "so với \"{{topic}}\"",
+      "previous": "lần trước"
+    },
+    "criteria": {
+      "fluency": "Fluency & Coherence",
+      "lexical": "Lexical Resource",
+      "grammar": "Grammar Range",
+      "pronunciation": "Pronunciation"
+    },
+    "feedbackTitle": "Nhận xét chi tiết",
+    "feedbackParts": {
+      "strengths": "Điểm mạnh:\n- ",
+      "areasToImprove": "\nCần cải thiện:\n- ",
+      "tips": "\nGợi ý luyện tập:\n- "
+    },
+    "conversation": {
+      "title": "Bản dịch & ghi âm theo từng câu"
+    },
+    "singleTranscript": {
+      "title": "Bản dịch băng ghi âm"
+    },
+    "analyze": {
+      "analyzing": "Đang phân tích...",
+      "analyzed_one": "Đã phân tích {{count}} lỗi",
+      "analyzed_other": "Đã phân tích {{count}} lỗi",
+      "find": "Tìm lỗi grammar/vocab"
+    },
+    "roles": {
+      "examiner": "Examiner",
+      "you": "Bạn (transcribed by Whisper)"
+    },
+    "hideAudio": "Ẩn audio",
+    "replay": "Nghe lại",
+    "noContent": "(không có nội dung)",
+    "errorDetails": "Chi tiết các lỗi:",
+    "fullRecording": "Bản ghi âm hoàn chỉnh:",
+    "modelAnswer": {
+      "title": "Đáp án mẫu Band 8",
+      "generating": "Đang sinh...",
+      "view": "Xem đáp án mẫu",
+      "placeholder": "Xem cách AI Examiner trả lời ở band 8 để học theo.",
+      "keyVocab": "Từ/cụm nổi bật trong đáp án mẫu",
+      "advice": "Lời khuyên"
+    },
+    "practiceMore": "Luyện tiếp",
+    "evaluationTopic": "Đánh giá Speaking"
+  },
+  "skillTree": {
+    "header": {
+      "title": "Bản đồ học tập",
+      "back": "← Quay lại",
+      "changeTopic": "← Đổi chủ đề"
+    },
+    "celebrationMessages": {
+      "1": "Hoàn hảo! 🎉",
+      "2": "Làm tốt lắm! ✨",
+      "3": "Bạn đang bùng cháy! 🔥",
+      "4": "Xuất sắc! 🌟",
+      "5": "Tuyệt vời! 💪"
+    },
+    "topics": {
+      "travel": {
+        "label": "Du lịch",
+        "description": "Đặt chỗ, chỉ đường, sân bay"
+      },
+      "food": {
+        "label": "Ẩm thực",
+        "description": "Gọi món, nấu ăn, dinh dưỡng"
+      },
+      "business": {
+        "label": "Kinh doanh",
+        "description": "Email, họp, thuyết trình"
+      },
+      "health": {
+        "label": "Sức khỏe",
+        "description": "Khám bệnh, triệu chứng, thuốc men"
+      },
+      "technology": {
+        "label": "Công nghệ",
+        "description": "Internet, phần mềm, AI"
+      },
+      "education": {
+        "label": "Giáo dục",
+        "description": "Trường học, bài giảng, kỳ thi"
+      },
+      "daily_life": {
+        "label": "Đời sống",
+        "description": "Mua sắm, giao tiếp, gia đình"
+      },
+      "environment": {
+        "label": "Môi trường",
+        "description": "Ô nhiễm, bảo tồn, tái chế"
+      }
+    },
+    "levels": {
+      "A1": {
+        "description": "Sơ cấp",
+        "subtext": "Giới thiệu & cụm từ đơn giản"
+      },
+      "A2": {
+        "description": "Cơ bản",
+        "subtext": "Tình huống & thói quen hằng ngày"
+      },
+      "B1": {
+        "description": "Trung cấp",
+        "subtext": "Hội thoại du lịch, công việc & trường học"
+      },
+      "B2": {
+        "description": "Trung cao",
+        "subtext": "Bày tỏ quan điểm & thảo luận chi tiết"
+      },
+      "C1": {
+        "description": "Nâng cao",
+        "subtext": "Giao tiếp trôi chảy, phức tạp"
+      },
+      "C2": {
+        "description": "Thành thạo",
+        "subtext": "Tinh tế & chính xác gần như người bản xứ"
+      }
+    },
+    "resume": {
+      "heading": "Tiếp tục hành trình",
+      "subtitle": "Tiếp tục từ chỗ bạn dừng lại",
+      "lastVisited": "Vừa xem",
+      "loading": "Đang tải…",
+      "tapToResume": "Chạm để tiếp tục →"
+    },
+    "newTopic": {
+      "headingResumable": "Khám phá thế giới mới",
+      "subtitleResumable": "Chọn một điểm đến — mỗi thế giới kết hợp ngữ pháp, từ vựng và nghe",
+      "heading": "Chọn thế giới của bạn",
+      "subtitle": "Mỗi thế giới là một hành trình học tập kết hợp ngữ pháp, từ vựng và nghe"
+    },
+    "topicCard": {
+      "popular": "Phổ biến",
+      "lessons": "~{{count}} bài học",
+      "difficultyAria": "Độ khó {{level}} trên 5",
+      "enterWorld": "Vào thế giới"
+    },
+    "level": {
+      "selectTitle": "Chọn trình độ",
+      "cefrScale": "Thang chuẩn CEFR",
+      "placementHint": "Chưa chắc? Làm bài kiểm tra xếp lớp nhanh →",
+      "building": "AI đang xây dựng lộ trình cho bạn...",
+      "startLearning": "Bắt đầu học"
+    },
+    "tree": {
+      "level": "Trình độ {{level}}",
+      "change": "Đổi",
+      "startQuiz": "Bắt đầu Quiz"
+    }
+  },
+  "speakingTestLayout": {
+    "submitModal": {
+      "error": "Có lỗi xảy ra",
+      "done": "Hoàn tất!",
+      "processing": "Đang xử lý..."
+    },
+    "steps": {
+      "upload": "Đang upload audio lên server...",
+      "sendAi": "Đang gửi cho AI Examiner...",
+      "grading": "AI đang chấm bài (30-60 giây)...",
+      "done": "Hoàn tất!"
+    },
+    "errors": {
+      "noRecording": "Bạn chưa ghi âm câu nào. Hãy ghi âm ít nhất 1 câu trả lời.",
+      "noEvaluationId": "Không nhận được evaluationId",
+      "gradingTimeout": "Chấm bài quá lâu. Bạn có thể xem kết quả sau ở trang Lịch sử.",
+      "submitFailed": "Đã có lỗi xảy ra khi nộp bài."
+    },
+    "skillBadge": "SPEAKING",
+    "recordedCount": "{{count}}/{{total}} đã ghi",
+    "part": "Phần {{num}}",
+    "questionTitle": "Câu {{num}}",
+    "examinerAsks": "Giám khảo hỏi",
+    "recorded": "Đã ghi âm",
+    "replay": "Nghe lại",
+    "reRecord": "Ghi lại",
+    "transcriptLabel": "Transcript (AI nghe được)",
+    "hideNotes": "Ẩn ghi chú",
+    "quickNotes": "Ghi chú nhanh...",
+    "outlineNotes": "Ghi chú outline...",
+    "notesPlaceholderP1": "Gõ nháp ý tưởng / keywords trước khi nói...",
+    "notesPlaceholderP2": "Ghi ý chính hoặc outline trước khi nói...",
+    "prevQuestion": "Câu trước",
+    "nextQuestion": "Câu sau",
+    "cueCardBadge": "Part 2 — Cue Card",
+    "prepTime": "Thời gian chuẩn bị",
+    "youShouldSay": "Bạn nên nói về:",
+    "prevPart": "Phần trước",
+    "nextPart": "Phần tiếp",
+    "submit": "Nộp bài",
+    "tapToReRecord": "Nhấn để ghi lại",
+    "tapToAnswer": "Nhấn để trả lời",
+    "recording": "● ĐANG GHI"
+  },
+  "testResultPage": {
+    "loading": "Đang tải kết quả...",
+    "notFound": "Không tìm thấy kết quả",
+    "examCenter": "Exam Center",
+    "history": "Lịch sử",
+    "historyFull": "Lịch sử làm bài",
+    "defaultTestTitle": "Bài thi",
+    "testCompleted": "Đã hoàn thành bài thi",
+    "band": "Band",
+    "noPassage": "Không có nội dung passage.",
+    "questionTypes": {
+      "MULTIPLE_CHOICE": "MCQ",
+      "MULTIPLE_CHOICE_MULTI_ANSWER": "MCQ (Multi)",
+      "TRUE_FALSE_NOT_GIVEN": "T/F/NG",
+      "YES_NO_NOT_GIVEN": "Y/N/NG",
+      "GAP_FILL": "Fill",
+      "SHORT_ANSWER": "Short",
+      "MATCHING": "Matching"
+    },
+    "stats": {
+      "correct": "Đúng",
+      "wrong": "Sai",
+      "accuracy": "Độ chính xác",
+      "bandScore": "Band Score"
+    },
+    "questionAlt": "Câu {{n}}",
+    "correct": "Đúng",
+    "incorrect": "Sai",
+    "yourAnswer": "Câu trả lời của bạn",
+    "correctAnswer": "Đáp án đúng",
+    "noAnswer": "(chưa trả lời)",
+    "showExplanation": "Lời giải",
+    "hideExplanation": "Ẩn lời giải",
+    "aiTutor": "AI Tutor",
+    "audioTranscript": "Bản ghi âm thanh",
+    "readingPassage": "Bài đọc",
+    "clearHighlight": "Xóa đánh dấu",
+    "highlightingEvidence": "Đang đánh dấu dẫn chứng cho <strong>Q{{order}}</strong>",
+    "audioReplay": "Nghe lại audio",
+    "diagram": "Sơ đồ",
+    "sectionDiagramAlt": "Sơ đồ phần thi",
+    "answerReviewCount": "Xem lại đáp án · {{count}} câu hỏi",
+    "clickToHighlight": "Nhấp vào câu hỏi để đánh dấu dẫn chứng",
+    "noQuestions": "Phần này không có câu hỏi nào.",
+    "discussionTitle": "Thảo luận",
+    "discussionSubtitle": "Chia sẻ kinh nghiệm, hỏi đáp về bài thi này"
+  },
+  "ieltsTestModule": {
+    "loading": {
+      "title": "Đang tải bài thi IELTS...",
+      "subtitle": "Đang tải dữ liệu bài thi từ máy chủ"
+    },
+    "errors": {
+      "noTestId": "Không có ID bài thi.",
+      "notFound": "Không tìm thấy bài thi.",
+      "loadFailed": "Không tải được bài thi. Vui lòng thử lại.",
+      "submitFailed": "Không thể nộp bài. Vui lòng kiểm tra mạng và thử lại."
+    },
+    "errorTitle": "Lỗi",
+    "backToExamCenter": "Quay lại Exam Center",
+    "timeWarnings": {
+      "fiveMin": "Còn 5 phút — hãy kiểm tra các câu chưa làm.",
+      "oneMin": "Còn 1 phút! Bài sẽ tự nộp khi hết giờ."
+    },
+    "submitted": {
+      "title": "Bài thi đã được nộp!",
+      "subtitle": "Kết quả đang được xử lý...",
+      "examCenter": "Exam Center",
+      "history": "Lịch sử"
+    },
+    "writing": {
+      "defaultTask1Title": "Task 1 — Biểu đồ",
+      "defaultTask2Title": "Task 2 — Essay",
+      "resultHeader": "Kết quả chấm Writing",
+      "backLink": "Quay lại",
+      "backToExamCenter": "Quay lại Exam Center",
+      "errorsDetected": "Lỗi phát hiện ({{count}})",
+      "ieltsWriting": "IELTS Writing",
+      "aiChecking": "AI đang kiểm tra...",
+      "submitting": "Đang nộp...",
+      "submit": "Nộp bài",
+      "wordsMin": "{{count}}+ từ",
+      "chartLabel": "Biểu đồ / Sơ đồ",
+      "task1VisualAlt": "Task 1 Visual",
+      "promptLabel": "Đề bài",
+      "writeAtLeast": "Viết ít nhất {{count}} từ.",
+      "assistantTitle": "AI Writing Assistant",
+      "tipsTitle": "Mẹo viết",
+      "task1Tips": {
+        "paraphrase": "Bắt đầu bằng câu paraphrase đề bài",
+        "overview": "Nêu overview trước khi vào chi tiết",
+        "compare": "So sánh số liệu nổi bật"
+      },
+      "task2Tips": {
+        "outline": "Lập dàn ý: Mở bài → Thân bài → Kết luận",
+        "bothViews": "Trình bày cả 2 quan điểm",
+        "linking": "Dùng linking words"
+      },
+      "yourEssay": "Bài viết của bạn",
+      "wordCountLabel": "Số từ:",
+      "wordsSuffix": "/ {{min}} min",
+      "enough": "Đủ từ",
+      "essayAria": "Khu vực soạn bài viết",
+      "needMore": "Cần viết thêm <strong>{{remaining}}</strong> từ nữa để đạt mức tối thiểu ({{min}} từ)."
+    },
+    "test": {
+      "answeredShort": "Đã trả lời {{answered}}/{{total}}",
+      "sectionProgress": "Phần {{current}} / {{total}}",
+      "totalProgress": "Tổng: {{answered}}/{{total}}",
+      "prevSectionTitle": "Phần trước ( [ )",
+      "prevSection": "← Phần trước",
+      "nextSectionTitle": "Phần tiếp ( ] )",
+      "nextSection": "Phần tiếp →",
+      "submitting": "Đang nộp...",
+      "submitted": "Đã nộp",
+      "submit": "Nộp bài",
+      "submitFailedTitle": "Nộp bài thất bại",
+      "mobilePassageListening": "Audio / Ngữ cảnh",
+      "mobilePassageReading": "Bài đọc",
+      "mobileQuestions": "Câu hỏi ({{answered}}/{{total}})",
+      "audioLabel": "Audio",
+      "audioPlayed": "Đã phát xong",
+      "audioUnsupported": "Trình duyệt của bạn không hỗ trợ audio.",
+      "audioLockedOnce": "Section này đã nghe xong — không thể nghe lại (chuẩn IELTS).",
+      "audioOnceNotice": "Đây là bài thi IELTS thật — bạn chỉ được nghe MỘT lần, không tua lại được.",
+      "hideTranscript": "Ẩn transcript",
+      "showTranscript": "Hiện transcript",
+      "transcriptLabel": "Transcript",
+      "questionsContext": "Ngữ cảnh câu hỏi",
+      "readingPassage": "Bài đọc",
+      "fontDecreaseTitle": "Giảm cỡ chữ",
+      "fontDecreaseAria": "Giảm cỡ chữ bài đọc",
+      "fontIncreaseTitle": "Tăng cỡ chữ",
+      "fontIncreaseAria": "Tăng cỡ chữ bài đọc",
+      "highlightOnTitle": "Tắt highlight (phím h)",
+      "highlightOffTitle": "Bật highlight (phím h)",
+      "highlightOn": "BẬT",
+      "highlightLabel": "Highlight",
+      "clearHighlightsTitle": "Xóa tất cả highlight",
+      "highlightHintSelect": "Bôi đen chữ → chọn màu",
+      "highlightHintRemove": "Click highlight để xóa",
+      "noPassage": "Không có nội dung bài đọc.",
+      "cancelTitle": "Hủy",
+      "diagramMap": "Sơ đồ / Bản đồ",
+      "sectionDiagramAlt": "Sơ đồ phần thi",
+      "resizeTitle": "Kéo để chỉnh độ rộng • Nhấp đúp để đặt lại 50/50",
+      "rangeSingle": "Câu {{n}}",
+      "rangeMulti": "Câu {{from}}–{{to}}",
+      "unflagTitle": "Bỏ đánh dấu",
+      "flagTitle": "Đánh dấu để xem lại",
+      "questionImageAlt": "Câu {{n}}",
+      "typeAnswerPlaceholder": "Nhập câu trả lời...",
+      "questionAria": "Câu {{n}}",
+      "selectAnswer": "-- Chọn đáp án --",
+      "matchingPlaceholder": "Nhập đáp án (VD: A, B, C)...",
+      "questionNavigator": "Điều hướng câu hỏi",
+      "navOk": "(đã làm)",
+      "navFlagged": "(đánh dấu)",
+      "sectionFallback": "Phần {{n}}",
+      "closeWarningAria": "Đóng cảnh báo",
+      "confirm": {
+        "title": "Nộp bài thi?",
+        "answered": "Đã trả lời",
+        "unanswered": "Còn <strong>{{count}}</strong> câu chưa trả lời. Vẫn nộp?",
+        "allDone": "Bạn đã hoàn thành tất cả câu hỏi.",
+        "noEdit": "Sau khi nộp, bạn không thể chỉnh sửa đáp án.",
+        "continueTest": "Tiếp tục làm bài",
+        "submitting": "Đang nộp...",
+        "submit": "Nộp bài"
+      }
+    },
+    "highlightColors": {
+      "Yellow": "Vàng",
+      "Green": "Xanh lá",
+      "Blue": "Xanh dương",
+      "Pink": "Hồng"
     }
   }
 }

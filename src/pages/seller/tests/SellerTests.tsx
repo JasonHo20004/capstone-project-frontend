@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ interface SellerTest {
 
 export default function SellerTests() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('seller');
 
   const [tests, setTests] = useState<SellerTest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +58,7 @@ export default function SellerTests() {
       setTests(res.data ?? []);
     } catch (err) {
       console.error(err);
-      setError("Không thể tải danh sách bài kiểm tra. Vui lòng thử lại.");
+      setError(t("tests.loadError"));
     } finally {
       setLoading(false);
     }
@@ -90,15 +92,15 @@ export default function SellerTests() {
     setDeleting(true);
     try {
       await courseService.deleteTest(pendingDelete.id);
-      toast.success("Đã xóa bài kiểm tra");
-      setTests((prev) => (prev ?? []).filter((t) => t.id !== pendingDelete.id));
+      toast.success(t("tests.deleted"));
+      setTests((prev) => (prev ?? []).filter((x) => x.id !== pendingDelete.id));
       setPendingDelete(null);
     } catch (err) {
       // Most common reason for failure is FK from CourseTest — the test is
       // still linked to a course as a final test.
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Không thể xóa. Có thể bài kiểm tra đang được dùng làm Final Test của một khoá học.";
+        t("tests.deleteFailedLinked");
       toast.error(msg);
     } finally {
       setDeleting(false);
@@ -123,20 +125,20 @@ export default function SellerTests() {
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
             <ClipboardList className="w-6 h-6 text-primary" />
-            Bài kiểm tra của tôi
+            {t('tests.title')}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tất cả bài kiểm tra bạn đã tạo. Dùng làm Final Test cho khoá học.
+            {t('tests.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={load}>
             <RefreshCw className="w-4 h-4 mr-2" />
-            Tải lại
+            {t('tests.reload')}
           </Button>
           <Button size="sm" onClick={() => navigate('/seller/tests/new')}>
             <ClipboardList className="w-4 h-4 mr-2" />
-            Tạo bài kiểm tra
+            {t('tests.create')}
           </Button>
         </div>
       </div>
@@ -144,7 +146,7 @@ export default function SellerTests() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Tìm theo tiêu đề…"
+          placeholder={t('tests.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -157,8 +159,8 @@ export default function SellerTests() {
             <FileWarning className="w-10 h-10 text-muted-foreground/40 mb-3" />
             <p className="text-sm text-muted-foreground">
               {tests?.length === 0
-                ? 'Bạn chưa tạo bài kiểm tra nào. Nhấn "Tạo bài kiểm tra" để bắt đầu.'
-                : "Không tìm thấy bài kiểm tra phù hợp với tìm kiếm."}
+                ? t('tests.emptyNone')
+                : t('tests.emptyFiltered')}
             </p>
             {tests?.length === 0 && (
               <Button
@@ -166,24 +168,24 @@ export default function SellerTests() {
                 className="mt-4"
                 onClick={() => navigate('/seller/tests/new')}
               >
-                <ClipboardList className="w-4 h-4 mr-2" /> Tạo bài kiểm tra
+                <ClipboardList className="w-4 h-4 mr-2" /> {t('tests.create')}
               </Button>
             )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((t) => {
-            const linkedCount = t._count?.courseTests ?? 0;
+          {filtered.map((test) => {
+            const linkedCount = test._count?.courseTests ?? 0;
             const isLinked = linkedCount > 0;
             return (
-              <Card key={t.id} className="flex flex-col">
+              <Card key={test.id} className="flex flex-col">
                 <CardContent className="p-5 space-y-3 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold leading-tight line-clamp-2">{t.title}</h3>
-                    {t.testType === "FINAL" && (
+                    <h3 className="font-semibold leading-tight line-clamp-2">{test.title}</h3>
+                    {test.testType === "FINAL" && (
                       <Badge variant="secondary" className="shrink-0">
-                        Final
+                        {t('tests.finalBadge')}
                       </Badge>
                     )}
                   </div>
@@ -191,46 +193,46 @@ export default function SellerTests() {
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="font-normal">
                       <ListChecks className="w-3 h-3 mr-1" />
-                      {t._count?.questions ?? 0} câu hỏi
+                      {t('tests.questionCount', { count: test._count?.questions ?? 0 })}
                     </Badge>
-                    {t.durationInMinutes ? (
+                    {test.durationInMinutes ? (
                       <Badge variant="outline" className="font-normal">
                         <Clock className="w-3 h-3 mr-1" />
-                        {t.durationInMinutes} phút
+                        {t('tests.minutes', { count: test.durationInMinutes })}
                       </Badge>
                     ) : null}
-                    {t.passingScore != null && t.totalScore != null && t.totalScore > 0 ? (
+                    {test.passingScore != null && test.totalScore != null && test.totalScore > 0 ? (
                       <Badge variant="outline" className="font-normal">
                         <Trophy className="w-3 h-3 mr-1" />
-                        {Math.round((t.passingScore / t.totalScore) * 100)}% đạt
+                        {t('tests.passPercent', { percent: Math.round((test.passingScore / test.totalScore) * 100) })}
                       </Badge>
                     ) : null}
                   </div>
 
                   <div className="text-xs text-muted-foreground space-y-1">
                     <div>
-                      Loại:{" "}
+                      {t('tests.typeLabel')}{" "}
                       <span className="text-foreground">
-                        {t.englishTestType?.name || "—"}
+                        {test.englishTestType?.name || "—"}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Link2 className="w-3 h-3" />
                       {isLinked ? (
                         <span className="text-emerald-600 dark:text-emerald-400">
-                          Đang dùng cho {linkedCount} khoá học
+                          {t('tests.linkedTo', { count: linkedCount })}
                         </span>
                       ) : (
-                        <span>Chưa liên kết với khoá học nào</span>
+                        <span>{t('tests.notLinked')}</span>
                       )}
                     </div>
                     <div>
-                      Trạng thái:{" "}
+                      {t('tests.statusLabel')}{" "}
                       <Badge variant="secondary" className="font-normal">
-                        {t.status}
+                        {test.status}
                       </Badge>
                     </div>
-                    <div>Tạo: {new Date(t.createdAt).toLocaleDateString("vi-VN")}</div>
+                    <div>{t('tests.createdLabel', { date: new Date(test.createdAt).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-GB') })}</div>
                   </div>
                 </CardContent>
 
@@ -239,16 +241,16 @@ export default function SellerTests() {
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => navigate(`/seller/tests/${t.id}`)}
+                    onClick={() => navigate(`/seller/tests/${test.id}`)}
                   >
-                    Xem
+                    {t('tests.view')}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => setPendingDelete(t)}
-                    title={isLinked ? "Phải gỡ khỏi khoá học trước khi xoá" : "Xoá bài kiểm tra"}
+                    onClick={() => setPendingDelete(test)}
+                    title={isLinked ? t('tests.deleteLinkedTitle') : t('tests.deleteTitle')}
                     disabled={isLinked}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -265,15 +267,19 @@ export default function SellerTests() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xoá bài kiểm tra?
+              {t('tests.deleteDialog.title')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn sắp xoá <strong className="text-slate-900">"{pendingDelete?.title}"</strong>.
-              Hành động này không thể hoàn tác. Toàn bộ câu hỏi và lịch sử luyện tập sẽ mất.
+              <Trans
+                i18nKey="tests.deleteDialog.body"
+                ns="seller"
+                values={{ title: pendingDelete?.title }}
+                components={{ strong: <strong className="text-slate-900" /> }}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t('tests.deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               disabled={deleting}
@@ -283,7 +289,7 @@ export default function SellerTests() {
               }}
             >
               {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Xoá vĩnh viễn
+              {t('tests.deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

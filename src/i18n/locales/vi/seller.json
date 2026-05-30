@@ -1,0 +1,854 @@
+{
+  "sidebar": {
+    "brand": {
+      "title": "Giảng viên",
+      "subtitle": "Quản lý khoá học"
+    },
+    "nav": {
+      "dashboard": "Tổng quan",
+      "courses": "Khoá học của tôi",
+      "tests": "Bài kiểm tra",
+      "earnings": "Doanh thu",
+      "monthlyReport": "Báo cáo tháng",
+      "learners": "Người học",
+      "comments": "Bình luận",
+      "profile": "Hồ sơ"
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Tìm kiếm khoá học, người học...",
+    "backHome": "Về trang chủ",
+    "notifications": "Thông báo",
+    "noNotifications": "Không có thông báo nào",
+    "viewAll": "Xem tất cả"
+  },
+  "upload": {
+    "success": "Tải lên thành công",
+    "failed": "Tải lên thất bại",
+    "uploading": "Đang tải lên... {{percent}}%",
+    "retry": "Thử lại"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Chào buổi sáng",
+      "noon": "Chào buổi trưa",
+      "afternoon": "Chào buổi chiều",
+      "evening": "Chào buổi tối"
+    },
+    "defaultInstructor": "Giảng viên",
+    "subtitle": "Quản lý khoá học và theo dõi hiệu suất của bạn",
+    "createCourse": "Tạo khoá học mới",
+    "viewDetails": "Xem chi tiết",
+    "errors": {
+      "load": "Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.",
+      "noData": "Không có dữ liệu dashboard."
+    },
+    "stats": {
+      "courses": {
+        "label": "Khoá học",
+        "description": "Tổng số khoá học của bạn"
+      },
+      "learners": {
+        "label": "Người học",
+        "description": "Số học viên đã mua khoá học"
+      },
+      "comments": {
+        "label": "Bình luận",
+        "description": "Bình luận trên bài học"
+      }
+    },
+    "earnings": {
+      "label": "Số dư có thể rút",
+      "locked": "Đang khoá {{amount}}",
+      "pendingWithdrawals": "{{count}} đơn rút đang chờ",
+      "totalReceived": "Tổng đã nhận {{amount}}"
+    },
+    "chartMonthLabel": "Tháng {{label}}",
+    "revenueChart": {
+      "title": "Doanh thu theo tháng",
+      "description": "Số tiền nhận sau khi trừ phí nền tảng — năm {{year}}",
+      "empty": "Chưa có doanh thu nào trong năm {{year}}",
+      "amount": "Số tiền"
+    },
+    "learnerChart": {
+      "title": "Hoạt động học viên",
+      "description": "Số học viên mới mua khoá học theo tháng (12 tháng gần nhất)",
+      "newLearners": "Học viên mới",
+      "seriesName": "Học viên",
+      "empty": "Chưa có học viên nào"
+    },
+    "topCourses": {
+      "title": "Top khoá học bán chạy",
+      "description": "3 khoá học có nhiều học viên nhất",
+      "empty": "Chưa có khoá học nào có học viên."
+    },
+    "quickActions": {
+      "title": "Thao tác nhanh",
+      "description": "Điều hướng nhanh đến các mục quản lý",
+      "manageCourses": "Quản lý khoá học",
+      "viewLearners": "Xem người học",
+      "newComments": "Bình luận mới",
+      "instructorProfile": "Hồ sơ giảng viên"
+    }
+  },
+  "courses": {
+    "title": "Quản lý khoá học của tôi",
+    "notLoggedIn": "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.",
+    "loading": "Đang tải khoá học...",
+    "loadError": "Không thể tải danh sách khoá học.",
+    "sortPlaceholder": "Sắp xếp",
+    "sort": {
+      "createdAt": "Mới tạo gần đây",
+      "price": "Giá cao → thấp",
+      "rating": "Nhiều đánh giá"
+    },
+    "create": "Tạo khoá học mới",
+    "status": {
+      "ACTIVE": "Đang hoạt động",
+      "PENDING": "Chờ duyệt",
+      "REFUSE": "Bị từ chối",
+      "INACTIVE": "Tạm dừng",
+      "DRAFT": "Bản nháp"
+    },
+    "deleted": "Đã xoá khoá học",
+    "genericError": "Có lỗi xảy ra",
+    "ratingCount": "{{count}} đánh giá",
+    "viewDetail": "Xem chi tiết",
+    "deleteAction": "Xoá khoá học",
+    "empty": "Bạn chưa có khoá học nào.",
+    "table": {
+      "title": "Khoá học",
+      "loadingSuffix": " • đang tải...",
+      "filtering": "Đang lọc theo \"{{search}}\" — xoá ô tìm kiếm và Enter để bỏ lọc",
+      "description": "Danh sách khoá học của bạn",
+      "headerTitle": "Tiêu đề",
+      "headerLevel": "Level",
+      "headerPrice": "Giá",
+      "headerRating": "Đánh giá",
+      "headerStatus": "Trạng thái",
+      "headerActions": "Hành động"
+    },
+    "deleteDialog": {
+      "title": "Xoá khoá học?",
+      "subject": "Bạn sắp xoá khoá học <strong>{{title}}</strong>.",
+      "warning": "⚠️ Khoá học này có thể đã có học viên mua. Hệ thống sẽ <strong>tự động hoàn tiền</strong> cho buyer và <strong>thu hồi quyền truy cập</strong> của họ. Hành động này không thể hoàn tác.",
+      "irreversible": "Hành động này không thể hoàn tác.",
+      "cancel": "Huỷ",
+      "deleting": "Đang xoá...",
+      "deletePermanent": "Xoá vĩnh viễn"
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm theo tiêu đề khoá học...",
+      "enter": "Enter",
+      "clearSearchAria": "Xoá ô tìm kiếm",
+      "statusPlaceholder": "Trạng thái",
+      "levelPlaceholder": "Level",
+      "allLevels": "Tất cả level",
+      "allStatuses": "Tất cả trạng thái",
+      "filteringLabel": "Đang lọc:",
+      "searchChip": "Tìm: \"{{search}}\"",
+      "levelChip": "Level {{level}}",
+      "clearAll": "Xoá tất cả",
+      "removeAria": "Xoá {{label}}"
+    }
+  },
+  "tests": {
+    "loadError": "Không thể tải danh sách bài kiểm tra. Vui lòng thử lại.",
+    "deleted": "Đã xóa bài kiểm tra",
+    "deleteFailedLinked": "Không thể xóa. Có thể bài kiểm tra đang được dùng làm Final Test của một khoá học.",
+    "title": "Bài kiểm tra của tôi",
+    "subtitle": "Tất cả bài kiểm tra bạn đã tạo. Dùng làm Final Test cho khoá học.",
+    "reload": "Tải lại",
+    "create": "Tạo bài kiểm tra",
+    "searchPlaceholder": "Tìm theo tiêu đề…",
+    "emptyNone": "Bạn chưa tạo bài kiểm tra nào. Nhấn \"Tạo bài kiểm tra\" để bắt đầu.",
+    "emptyFiltered": "Không tìm thấy bài kiểm tra phù hợp với tìm kiếm.",
+    "finalBadge": "Final",
+    "questionCount": "{{count}} câu hỏi",
+    "minutes": "{{count}} phút",
+    "passPercent": "{{percent}}% đạt",
+    "typeLabel": "Loại:",
+    "linkedTo": "Đang dùng cho {{count}} khoá học",
+    "notLinked": "Chưa liên kết với khoá học nào",
+    "statusLabel": "Trạng thái:",
+    "createdLabel": "Tạo: {{date}}",
+    "view": "Xem",
+    "deleteLinkedTitle": "Phải gỡ khỏi khoá học trước khi xoá",
+    "deleteTitle": "Xoá bài kiểm tra",
+    "deleteDialog": {
+      "title": "Xoá bài kiểm tra?",
+      "body": "Bạn sắp xoá <strong>\"{{title}}\"</strong>. Hành động này không thể hoàn tác. Toàn bộ câu hỏi và lịch sử luyện tập sẽ mất.",
+      "cancel": "Hủy",
+      "confirm": "Xoá vĩnh viễn"
+    }
+  },
+  "testDetail": {
+    "notFound": "Không tìm thấy bài kiểm tra.",
+    "loadError": "Không thể tải bài kiểm tra.",
+    "backToList": "Quay lại danh sách",
+    "list": "Danh sách",
+    "finalBadge": "Final",
+    "deleteAction": "Xóa bài kiểm tra",
+    "stats": {
+      "questions": "Câu hỏi",
+      "minutes": "Phút",
+      "totalScore": "Tổng điểm",
+      "passScore": "Điểm đạt"
+    },
+    "generalInfo": "Thông tin chung",
+    "typeLabel": "Loại bài:",
+    "createdLabel": "Tạo:",
+    "updatedLabel": "Cập nhật lần cuối:",
+    "questionListTitle": "Danh sách câu hỏi ({{count}})",
+    "emptyQuestions": "Bài kiểm tra này chưa có câu hỏi.",
+    "questionLabel": "Câu {{n}}:",
+    "noContent": "(chưa có nội dung)",
+    "explanationLabel": "Giải thích:",
+    "deleteSuccess": "Đã xóa bài kiểm tra",
+    "deleteError": "Không thể xóa. Bài kiểm tra có thể đang được dùng cho một khoá học.",
+    "deleteDialog": {
+      "title": "Xóa bài kiểm tra?",
+      "body": "Bạn sắp xoá <strong>\"{{title}}\"</strong>. Hành động này không thể hoàn tác. Nếu bài này đang được dùng làm Final Test của khoá học, hệ thống sẽ từ chối — hãy gỡ trước trong tab Final Test của khoá đó.",
+      "cancel": "Hủy",
+      "confirm": "Xoá vĩnh viễn"
+    }
+  },
+  "createTest": {
+    "loading": "Đang tải bài kiểm tra…",
+    "header": {
+      "titleEdit": "Chỉnh sửa bài kiểm tra",
+      "titleFinal": "Tạo bài kiểm tra cuối khoá",
+      "titleNew": "Tạo bài kiểm tra mới",
+      "descEdit": "Cập nhật nội dung. Câu trả lời cũ của học viên không bị ảnh hưởng.",
+      "descFinal": "Tạo xong sẽ tự liên kết làm bài kiểm tra cuối khoá của khoá học đang chọn.",
+      "descNew": "Bài kiểm tra này có thể dùng làm bài kiểm tra giữa module hoặc cuối khoá. Gắn vào khoá học sau khi tạo xong."
+    },
+    "save": {
+      "edit": "Lưu thay đổi",
+      "link": "Tạo và liên kết",
+      "create": "Tạo bài kiểm tra",
+      "saving": "Đang lưu..."
+    },
+    "backToList": "Quay lại danh sách",
+    "backToCourse": "Quay lại khoá học",
+    "fields": {
+      "title": "Tiêu đề bài kiểm tra",
+      "titlePlaceholder": "VD: Bài kiểm tra Module 1 - Vocabulary",
+      "duration": "Thời gian (phút)",
+      "passingScore": "Điểm đạt (%)",
+      "totalScore": "Tổng điểm",
+      "totalScoreValue": "{{count}} câu × 10 = {{score}} điểm"
+    },
+    "questionsHeading": "Danh sách câu hỏi",
+    "importFromFile": "Import từ file",
+    "addSection": "Thêm phần mới",
+    "sectionLabel": "Phần {{n}}",
+    "sectionInstructionPlaceholder": "Instruction cho phần này (có thể để trống)...",
+    "removeSectionTitle": "Xóa phần này",
+    "noContent": "(chưa có nội dung)",
+    "optionSummary": "{{filled}}/4 đáp án • Đúng: {{letter}}",
+    "questionContentLabel": "Nội dung câu hỏi",
+    "questionContentPlaceholder": "Nhập nội dung câu hỏi...",
+    "optionPlaceholder": "Đáp án {{letter}}",
+    "explanationLabel": "Giải thích (tùy chọn)",
+    "explanationPlaceholder": "Giải thích tại sao đáp án đúng...",
+    "addQuestion": "Thêm câu hỏi vào phần này",
+    "cancel": "Hủy",
+    "existingFinalDialog": {
+      "title": "Khoá học đã có đề tốt nghiệp",
+      "body": "Mỗi khoá học chỉ có một đề tốt nghiệp. Bạn muốn chỉnh sửa đề hiện có? Học viên đã làm bài trên đề cũ vẫn được giữ kết quả.",
+      "back": "Quay lại khoá học",
+      "edit": "Chỉnh sửa đề hiện có"
+    },
+    "toasts": {
+      "notFound": "Không tìm thấy bài kiểm tra",
+      "loadError": "Không thể tải bài kiểm tra",
+      "titleRequired": "Vui lòng nhập tiêu đề bài kiểm tra",
+      "questionEmpty": "Câu {{n}}: chưa có nội dung câu hỏi",
+      "optionsRequired": "Câu {{n}}: điền đầy đủ 4 đáp án",
+      "noTestType": "Không tìm thấy loại bài kiểm tra",
+      "updated": "Đã cập nhật bài kiểm tra!",
+      "createFailed": "Tạo bài kiểm tra thất bại",
+      "createdLinked": "Đã tạo và liên kết làm bài kiểm tra cuối khoá!",
+      "created": "Đã tạo bài kiểm tra thành công!",
+      "saveError": "Lỗi khi lưu bài kiểm tra",
+      "minQuestion": "Phải có ít nhất 1 câu hỏi",
+      "minSection": "Phải có ít nhất 1 phần"
+    }
+  },
+  "earningsPage": {
+    "loadError": "Không thể tải dữ liệu doanh thu. Vui lòng thử lại sau.",
+    "header": {
+      "title": "Tài chính & Rút tiền",
+      "subtitle": "Theo dõi thu nhập, phí thanh toán và quản lý rút tiền"
+    },
+    "withdraw": "Rút tiền về Ngân hàng",
+    "withdrawDisabled": {
+      "pending": "Bạn đang có lệnh rút chờ duyệt — chờ admin xử lý trước",
+      "belowMin": "Số dư khả dụng phải ≥ {{amount}}"
+    },
+    "stats": {
+      "available": "Khả dụng (Có thể rút)",
+      "availablePending": "Đang khoá {{count}} lệnh chờ duyệt",
+      "availableBelowMin": "Cần tối thiểu {{amount}} để rút",
+      "availableDefault": "Đã trừ tiền đang chờ rút",
+      "pending": "Đang chờ mở khoá ({{days}} ngày)",
+      "pendingDesc": "Tiền sẽ tự mở khoá sau khi qua thời gian giữ",
+      "sold": "Đã bán (tổng tiền học viên trả)",
+      "soldDesc": "Phí cổng đã trừ: {{amount}}",
+      "split": "Tỷ lệ chia với platform",
+      "splitDesc": "Platform giữ {{percent}}%",
+      "splitLoading": "Đang tải…"
+    },
+    "example": {
+      "title": "Cách tính thu nhập trên 1 đơn hàng",
+      "coursePrice": "Giá khoá học",
+      "gatewayFee": "Phí cổng ({{percent}}% + {{fixed}})",
+      "netRevenue": "Net Revenue",
+      "platformFee": "Platform fee",
+      "platformFeeWithPercent": "Platform fee ({{percent}}%)",
+      "youReceive": "Bạn nhận",
+      "note": "Sau khi học viên trả, tiền vào trạng thái <strong>Đang khoá {{days}} ngày</strong> để xử lý hoàn tiền/khiếu nại, sau đó chuyển sang <strong>Sẵn sàng rút</strong>."
+    },
+    "growth": {
+      "title": "Tăng trưởng tháng này vs tháng trước",
+      "detail": "Tháng này: <strong>{{amount}}</strong> • Tháng trước: {{last}}",
+      "needData": "Cần ít nhất 2 tháng dữ liệu."
+    },
+    "ytd": {
+      "title": "Tổng thu nhập YTD (cho khai thuế)",
+      "note": "Năm {{year}} — đã trừ phí cổng & platform fee. Dùng \"Xuất CSV\" để có chi tiết từng đơn cho hồ sơ thuế.",
+      "empty": "Chưa có dữ liệu năm nay."
+    },
+    "tabs": {
+      "earnings": "Lịch sử Doanh thu",
+      "byCourse": "Theo khoá học",
+      "withdrawals": "Lịch sử Rút tiền"
+    },
+    "chart": {
+      "title": "Thu nhập theo tháng (12 tháng gần nhất)",
+      "description": "Thu nhập ròng sau phí cổng + platform fee — đã loại đơn hoàn tiền",
+      "tooltipLabel": "Thu nhập",
+      "tooltipMonth": "Tháng {{label}}",
+      "emptyTitle": "Chưa có doanh thu",
+      "emptyHint": "Khi học viên mua khoá, biểu đồ sẽ hiện ở đây."
+    },
+    "filters": {
+      "allStatuses": "Tất cả trạng thái",
+      "pending": "Đang khoá",
+      "available": "Sẵn sàng rút",
+      "released": "Đã rút",
+      "refunded": "Đã hoàn",
+      "allCourses": "Tất cả khoá học",
+      "exportCsv": "Xuất CSV"
+    },
+    "table": {
+      "title": "Chi tiết bán hàng",
+      "description": "Lịch sử doanh thu từ mỗi giao dịch mua khoá học",
+      "date": "Ngày",
+      "course": "Khoá học",
+      "learnerPaid": "Học viên trả",
+      "gatewayFee": "Phí cổng",
+      "platformFee": "Platform fee",
+      "youReceive": "Bạn nhận",
+      "status": "Trạng thái"
+    },
+    "emptyTx": {
+      "title": "Không có giao dịch",
+      "hintFiltered": "Không tìm thấy giao dịch khớp bộ lọc.",
+      "hintDefault": "Khi học viên mua khoá học, giao dịch sẽ hiện ở đây."
+    },
+    "byCourse": {
+      "title": "Doanh thu theo khoá học",
+      "description": "Tổng tiền bạn đã nhận theo từng khoá (loại đơn hoàn). Sắp xếp giảm dần.",
+      "emptyTitle": "Chưa có doanh thu theo khoá",
+      "emptyHint": "Tạo và xuất bản khoá để bắt đầu.",
+      "salesGross": "{{count}} lượt • Gross: {{amount}}"
+    },
+    "statusBadge": {
+      "almostReady": "Sắp mở",
+      "locked": "Khoá ({{days}}d)",
+      "available": "Sẵn sàng rút",
+      "released": "Đã rút",
+      "refunded": "Đã hoàn"
+    },
+    "pagination": {
+      "prev": "Trước",
+      "next": "Tiếp",
+      "page": "Trang {{page}} / {{total}}"
+    },
+    "csv": {
+      "date": "Ngay",
+      "course": "Khoa hoc",
+      "gross": "Gross (VND)",
+      "gatewayFee": "Phi cong (VND)",
+      "platformFee": "Platform fee (VND)",
+      "sellerReceives": "Ban nhan (VND)",
+      "status": "Trang thai",
+      "unlockDate": "Mo khoa",
+      "amount": "So tien (VND)",
+      "bank": "Ngan hang",
+      "accountName": "Chu tai khoan",
+      "accountNumber": "So tai khoan",
+      "adminNote": "Ghi chu admin"
+    }
+  },
+  "monthlyFees": {
+    "title": "Doanh thu theo tháng",
+    "subtitle": "Tổng hợp doanh thu, phí cổng + phí nền tảng và số tiền nhận theo từng tháng.",
+    "exportCsv": "Xuất CSV",
+    "summary": {
+      "totalRevenue": "Tổng doanh thu {{year}}",
+      "salesCount": "{{count}} đơn bán",
+      "fees": "Phí cổng + nền tảng",
+      "feesBreakdown": "Cổng: {{gateway}} • Nền tảng: {{platform}}",
+      "netReceived": "Số tiền nhận",
+      "yoy": "{{pct}}% so với {{year}}",
+      "available": "Khả dụng (có thể rút)",
+      "locked": "Đang khoá: {{amount}}"
+    },
+    "chart": {
+      "title": "Biểu đồ doanh thu {{year}}",
+      "description": "Số tiền nhận sau khi đã trừ phí cổng + phí nền tảng cho mỗi tháng",
+      "net": "Số tiền nhận",
+      "gross": "Doanh thu gộp",
+      "emptyTitle": "Chưa có doanh thu năm {{year}}",
+      "emptyHint": "Khi học viên mua khoá học, biểu đồ sẽ hiển thị tại đây."
+    },
+    "table": {
+      "title": "Chi tiết theo tháng — {{year}}",
+      "description": "Bấm vào tháng để xem chi tiết từng đơn bán",
+      "month": "Tháng",
+      "monthLabel": "Tháng {{month}}",
+      "gross": "Doanh thu gộp",
+      "gatewayFee": "Phí cổng",
+      "platformFee": "Phí nền tảng",
+      "net": "Số tiền nhận",
+      "sales": "Đơn",
+      "monthNoSales": "Tháng này chưa có đơn",
+      "monthView": "Xem chi tiết"
+    },
+    "empty": {
+      "title": "Chưa có doanh thu năm {{year}}",
+      "hintPast": "Bạn không có giao dịch nào trong năm {{year}}. Bấm \"{{current}} →\" để xem năm hiện tại.",
+      "hintCurrent": "Doanh thu sẽ xuất hiện khi học viên mua khoá học của bạn."
+    },
+    "drill": {
+      "title": "Chi tiết tháng {{month}}/{{year}}",
+      "description": "Từng đơn bán và số tiền seller nhận sau khi trừ phí.",
+      "empty": "Không có đơn bán nào trong tháng này.",
+      "date": "Ngày",
+      "course": "Khoá học",
+      "learnerPaid": "Học viên trả",
+      "youReceive": "Bạn nhận",
+      "status": "Trạng thái",
+      "totalOrders": "Tổng {{count}} đơn"
+    },
+    "status": {
+      "PENDING": "Đang khoá",
+      "AVAILABLE": "Sẵn sàng rút",
+      "RELEASED": "Đã rút",
+      "REFUNDED": "Đã hoàn"
+    },
+    "csv": {
+      "month": "Thang",
+      "year": "Nam",
+      "gross": "Doanh_thu_gop",
+      "gatewayFee": "Phi_cong_thanh_toan",
+      "platformFee": "Phi_nen_tang",
+      "netReceived": "So_tien_nhan",
+      "sales": "So_don"
+    }
+  },
+  "learners": {
+    "title": "Quản lý người học",
+    "subtitle": "Theo dõi và quản lý người học trên các khóa học của bạn",
+    "stats": {
+      "totalEnrollments": "Tổng lượt đăng ký",
+      "coursesWithLearners": "Khoá học có người học",
+      "newThisWeek": "Đăng ký 7 ngày qua"
+    },
+    "searchPlaceholder": "Tìm theo tên hoặc email người học...",
+    "courseFilterPlaceholder": "Lọc theo khoá học",
+    "allCourses": "Tất cả khoá học",
+    "sortPlaceholder": "Sắp xếp",
+    "sort": {
+      "dateDesc": "Ngày đăng ký: mới nhất",
+      "dateAsc": "Ngày đăng ký: cũ nhất",
+      "courseAsc": "Khoá học: A → Z",
+      "courseDesc": "Khoá học: Z → A"
+    },
+    "perPage": "{{count}} / trang",
+    "exporting": "Đang xuất...",
+    "exportCsv": "Xuất CSV",
+    "tableTitle": "Danh sách người học",
+    "error": {
+      "title": "Không thể tải danh sách người học",
+      "hint": "Vui lòng thử lại sau."
+    },
+    "empty": {
+      "filtered": "Không tìm thấy kết quả",
+      "none": "Chưa có người học nào",
+      "filteredHint": "Thử thay đổi từ khoá tìm kiếm hoặc bỏ lọc khoá học",
+      "noneHint": "Người học sẽ xuất hiện ở đây khi họ đăng ký khoá học của bạn",
+      "manageCourses": "Quản lý khoá học"
+    },
+    "headers": {
+      "learner": "Người học",
+      "course": "Khoá học",
+      "enrolledOn": "Ngày đăng ký"
+    },
+    "actionsAria": "Tác vụ",
+    "copyEmail": "Sao chép email",
+    "viewCourse": "Xem khoá học",
+    "pagination": {
+      "summary": "Trang {{page}} / {{total}} · {{count}} kết quả",
+      "prevAria": "Trang trước",
+      "nextAria": "Trang sau"
+    },
+    "toasts": {
+      "noEmail": "Người học chưa có email",
+      "copied": "Đã sao chép email",
+      "copyFailed": "Không thể sao chép",
+      "noData": "Không có dữ liệu để xuất",
+      "exported": "Đã xuất {{count}} người học",
+      "exportFailed": "Xuất CSV thất bại"
+    },
+    "timeAgo": {
+      "justNow": "Vừa xong",
+      "minutes": "{{count}} phút trước",
+      "hours": "{{count}} giờ trước",
+      "days": "{{count}} ngày trước",
+      "months": "{{count}} tháng trước",
+      "years": "{{count}} năm trước"
+    },
+    "csv": {
+      "name": "Tên người học",
+      "email": "Email",
+      "course": "Khoá học",
+      "enrolledDate": "Ngày đăng ký"
+    }
+  },
+  "profile": {
+    "loadError": "Không thể tải thông tin hồ sơ. Vui lòng thử lại sau.",
+    "notFound": "Không tìm thấy thông tin người dùng.",
+    "editProfile": "Chỉnh sửa hồ sơ",
+    "fallbackName": "Seller",
+    "badges": {
+      "instructor": "Giảng viên",
+      "active": "Đang hoạt động",
+      "suspended": "Tạm khoá"
+    },
+    "joined": "Tham gia {{date}}",
+    "suspendedBanner": {
+      "title": "Tài khoản Seller đang bị tạm khoá",
+      "body": "Bạn vẫn xem được hồ sơ nhưng tạm thời không thể xuất bản khoá học hoặc rút tiền. Nếu cho rằng đây là nhầm lẫn, vui lòng liên hệ quản trị viên."
+    },
+    "stats": {
+      "courses": "Khoá học",
+      "learners": "Người học",
+      "avgRating": "Đánh giá TB",
+      "totalRevenue": "Tổng doanh thu"
+    },
+    "expertise": {
+      "title": "Chuyên môn",
+      "empty": "Chưa có chuyên môn — bấm 'Chỉnh sửa hồ sơ' để thêm."
+    },
+    "certification": {
+      "title": "Chứng chỉ",
+      "viewOriginal": "Nhấn để xem ảnh gốc",
+      "alt": "Chứng chỉ {{index}}",
+      "empty": "Chưa có chứng chỉ — bấm 'Chỉnh sửa hồ sơ' để tải lên."
+    },
+    "wallet": {
+      "title": "Ví giảng viên",
+      "viewDetails": "Xem chi tiết",
+      "withdrawable": "Số dư có thể rút",
+      "pending": "Đang chờ giải ngân",
+      "totalReceived": "Tổng đã nhận",
+      "source": "Nguồn thu: chia hoa hồng từ học viên mua khoá học."
+    },
+    "personal": {
+      "title": "Thông tin cá nhân",
+      "phone": "Số điện thoại",
+      "dateOfBirth": "Ngày sinh",
+      "level": "Trình độ",
+      "editHint": "Cần sửa thông tin cá nhân? ",
+      "goToAccount": "Đi tới trang tài khoản"
+    }
+  },
+  "createLesson": {
+    "defaultCourse": "khoá học",
+    "backTo": "Quay lại {{course}}",
+    "title": "Tạo bài học mới",
+    "basicInfo": "Thông tin cơ bản",
+    "titleLabel": "Tiêu đề bài học",
+    "titlePlaceholder": "VD: Bài 1: Giới thiệu về IELTS Writing",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Mô tả chi tiết về nội dung bài học...",
+    "orderLabel": "Thứ tự bài học",
+    "orderHint": "Bài học tiếp theo sẽ có thứ tự: {{order}}.",
+    "videoSection": "Video bài giảng",
+    "autoDuration": "Thời lượng tự động:",
+    "durationValue": "{{minutes}} phút {{seconds}} giây",
+    "videoLabel": "Video bài học (tùy chọn)",
+    "removeFile": "Xóa file",
+    "dropHint": "Kéo thả hoặc nhấn để tải lên video",
+    "formats": "Hỗ trợ MP4, MPEG, MOV, AVI, WEBM (Tối đa 100MB)",
+    "submit": "Tạo bài học",
+    "uploading": "Đang tải lên...",
+    "errors": {
+      "titleRequired": "Tiêu đề bài học là bắt buộc",
+      "titleTooLong": "Tiêu đề không được vượt quá 100 ký tự",
+      "orderMin": "Thứ tự bài học phải lớn hơn 0",
+      "videoTooLarge": "Kích thước video không được vượt quá 1GB",
+      "videoType": "Chỉ chấp nhận file video (MP4, MPEG, MOV, AVI, WEBM)"
+    }
+  },
+  "createCourse": {
+    "topTitle": "Tạo khoá học mới",
+    "backToList": "Quay lại",
+    "stepLabel": "Bước {{n}}",
+    "steps": {
+      "basic": "Thông tin cơ bản",
+      "description": "Mô tả & danh mục",
+      "media": "Hình ảnh & Xác nhận"
+    },
+    "step1": {
+      "title": "Thông tin cơ bản",
+      "subtitle": "Điền tiêu đề và giá cho khoá học của bạn",
+      "titleLabel": "Tiêu đề khoá học",
+      "titlePlaceholder": "VD: IELTS Speaking Masterclass — Band 7.0+",
+      "priceLabel": "Giá (VNĐ)",
+      "pricePlaceholder": "500000",
+      "levelLabel": "Trình độ",
+      "levelPlaceholder": "Chọn trình độ",
+      "clearLevel": "Xóa level"
+    },
+    "step2": {
+      "title": "Mô tả & Danh mục",
+      "subtitle": "Giúp học viên hiểu khoá học của bạn",
+      "descLabel": "Mô tả khoá học",
+      "descPlaceholder": "Mô tả chi tiết: đối tượng, nội dung chính, kết quả đạt được...",
+      "descHint": "Mô tả hấp dẫn giúp tăng tỉ lệ đăng ký",
+      "categoryLabel": "Danh mục",
+      "categoryPlaceholder": "Chọn danh mục",
+      "customCategoryHint": "Hoặc nhập danh mục tùy chỉnh:",
+      "customCategoryPlaceholder": "VD: PTE, Cambridge..."
+    },
+    "step3": {
+      "title": "Hình ảnh & Xác nhận",
+      "subtitle": "Thêm thumbnail và kiểm tra lại thông tin",
+      "thumbnailLabel": "Ảnh đại diện khoá học",
+      "thumbnailAlt": "Thumbnail",
+      "changeImage": "Đổi ảnh",
+      "remove": "Xóa",
+      "uploadHint": "Nhấn để tải ảnh lên",
+      "uploadFormats": "JPEG, PNG, WEBP, GIF • Tối đa 5MB",
+      "summaryTitle": "Tóm tắt khoá học",
+      "summaryTitleLabel": "Tiêu đề",
+      "summaryPrice": "Giá",
+      "summaryCategory": "Danh mục",
+      "summaryLevel": "Trình độ",
+      "summaryDescription": "Mô tả",
+      "priceUnit": "{{amount}} đ",
+      "empty": "—",
+      "draftNotice": "Khoá học sẽ ở trạng thái <strong>DRAFT</strong> sau khi tạo. Bạn có thể thêm bài học, bài kiểm tra rồi submit để admin duyệt."
+    },
+    "nav": {
+      "back": "Quay lại",
+      "cancel": "Hủy",
+      "next": "Tiếp theo",
+      "submit": "Tạo khoá học",
+      "submitting": "Đang tạo..."
+    },
+    "toasts": {
+      "imageType": "Chỉ chấp nhận JPEG, PNG, WEBP, GIF",
+      "imageTooLarge": "File không được vượt quá 5MB"
+    },
+    "errors": {
+      "titleRequired": "Tiêu đề là bắt buộc",
+      "titleTooLong": "Tối đa 100 ký tự",
+      "priceRequired": "Giá là bắt buộc",
+      "priceInvalid": "Giá không hợp lệ"
+    }
+  },
+  "courseDetail": {
+    "loadError": "Không thể tải dữ liệu khoá học.",
+    "backToList": "Quay lại danh sách",
+    "notFoundTitle": "Khoá học không tồn tại",
+    "preview": "Xem trước",
+    "previewTitle": "Xem khoá học dưới góc nhìn học viên",
+    "anonymousInstructor": "Giảng viên ẩn danh",
+    "level": "Level",
+    "publishError": "Không thể xuất bản khoá học",
+    "noChanges": "Không có thay đổi nào để lưu.",
+    "draftCleared": "Đã xoá bản nháp, trở về dữ liệu gốc",
+    "checklist": {
+      "thumbnail": "Có ảnh thumbnail",
+      "thumbnailHint": "Lên ảnh thumbnail ở tab \"Cập nhật\"",
+      "description": "Có mô tả khoá học (≥ 20 ký tự)",
+      "descriptionHint": "Mô tả ngắn gọn về mục tiêu & nội dung khoá học",
+      "price": "Đã đặt giá",
+      "priceHint": "Đặt 0đ cho khoá miễn phí",
+      "level": "Đã chọn trình độ",
+      "levelHint": "A1, A2, B1, B2, C1, hoặc C2",
+      "lessonsMin": "Có ít nhất 3 bài học",
+      "lessonsMinHint": "Hiện có {{count}} bài học",
+      "lessonContent": "Ít nhất 1 bài học có nội dung (video hoặc bài kiểm tra)",
+      "lessonContentHint": "Upload video hoặc gắn quiz vào bài học"
+    },
+    "pills": {
+      "price": "Giá",
+      "module": "Module",
+      "lesson": "Bài học",
+      "test": "Bài kiểm tra",
+      "duration": "Thời lượng",
+      "rating": "Đánh giá"
+    },
+    "minutes": "{{count}} phút",
+    "tabs": {
+      "overview": "Tổng quan",
+      "lessons": "Module & Bài học",
+      "ratings": "Đánh giá",
+      "update": "Cập nhật",
+      "finalTest": "Bài kiểm tra cuối khoá"
+    },
+    "quickStats": {
+      "module": "Module",
+      "lesson": "Bài học",
+      "test": "Bài kiểm tra",
+      "duration": "Thời lượng",
+      "avgRating": "Đánh giá TB"
+    },
+    "descriptionTitle": "Mô tả khóa học",
+    "descriptionEmpty": "Chưa có mô tả. Hãy thêm mô tả ở tab \"Cập nhật\".",
+    "detailInfo": "Thông tin chi tiết",
+    "info": {
+      "level": "Trình độ",
+      "category": "Danh mục",
+      "price": "Giá",
+      "status": "Trạng thái"
+    },
+    "timeSection": "Thời gian",
+    "time": {
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Cập nhật",
+      "finalTest": "Bài kiểm tra",
+      "hasFinalTest": "Đã có",
+      "noFinalTest": "Chưa có",
+      "comments": "Bình luận"
+    },
+    "ratingsTitle": "Đánh giá từ học viên",
+    "ratingsCount": "{{count}} đánh giá",
+    "ratingsAverage": " • Trung bình: {{rating}} ★",
+    "ratingsEmpty": "Chưa có đánh giá",
+    "ratingsEmptyDesc": "Đánh giá sẽ xuất hiện khi học viên hoàn thành khóa học.",
+    "anonymous": "Ẩn danh",
+    "status": {
+      "DRAFT": "Bản nháp",
+      "PENDING": "Chờ duyệt",
+      "ACTIVE": "Hoạt động",
+      "REFUSE": "Bị từ chối",
+      "INACTIVE": "Tạm ngưng"
+    }
+  },
+  "reviewWorkflow": {
+    "rejection": {
+      "title": "Khóa học bị từ chối duyệt",
+      "reasonLabel": "Lý do từ admin:",
+      "rejectedAt": "Bị từ chối lúc {{date}}",
+      "resubmit": "Sửa & gửi lại",
+      "fixContent": "Sửa nội dung khoá học",
+      "completeBelow": "Hoàn thành các mục bên dưới rồi gửi lại"
+    },
+    "pending": {
+      "title": "Đang chờ admin duyệt",
+      "body": "Khóa học đang trong hàng đợi duyệt. Thông thường mất <strong>1–3 ngày</strong> làm việc. Bạn sẽ nhận thông báo ngay khi có kết quả.",
+      "submittedAt": "Đã gửi lúc {{date}}",
+      "daysAgo": "{{count}} ngày trước",
+      "delayed": "Đã quá hạn thường lệ. Nếu cần gấp, có thể liên hệ admin qua trang hỗ trợ.",
+      "cancelHint": "Trong khi chờ, bạn có thể huỷ gửi và tiếp tục chỉnh sửa ở tab “Cập nhật” (đổi trạng thái về Bản nháp)."
+    },
+    "checklist": {
+      "title": "Sẵn sàng gửi duyệt?",
+      "ready": "Đã đủ điều kiện. Bấm \"Gửi duyệt\" để admin xét duyệt khoá học.",
+      "remaining": "Còn {{count}} mục cần hoàn thành.",
+      "submitting": "Đang gửi…",
+      "submit": "Gửi duyệt"
+    },
+    "recheckTitle": "Kiểm tra trước khi gửi lại",
+    "history": {
+      "title": "Lịch sử duyệt",
+      "loading": "Đang tải…",
+      "empty": "Chưa có sự kiện nào."
+    },
+    "confirm": {
+      "title": "Xác nhận gửi duyệt",
+      "description": "Sau khi gửi, admin sẽ xét duyệt. Bạn vẫn có thể huỷ gửi và quay về Bản nháp nếu cần.",
+      "titleLabel": "Tiêu đề",
+      "levelLabel": "Trình độ",
+      "priceLabel": "Giá",
+      "descriptionLabel": "Mô tả",
+      "descriptionEmpty": "Chưa có",
+      "checklistLabel": "Checklist",
+      "cancel": "Huỷ",
+      "submitting": "Đang gửi…",
+      "confirm": "Xác nhận gửi"
+    },
+    "transition": {
+      "sellerSubmit": "Seller gửi duyệt",
+      "adminApprove": "Admin đã duyệt",
+      "adminReject": "Admin từ chối",
+      "sellerCancel": "Seller huỷ gửi",
+      "inactive": "Tạm ngưng khoá học",
+      "statusChange": "Đổi trạng thái: {{from}} → {{to}}"
+    }
+  },
+  "metadataTab": {
+    "toasts": {
+      "imageTooLarge": "Ảnh thumbnail không được vượt quá 5MB.",
+      "imageType": "Chỉ chấp nhận JPG, PNG, WebP."
+    },
+    "title": "Cập nhật khóa học",
+    "subtitle": "Chỉnh sửa thông tin và trạng thái khóa học",
+    "fields": {
+      "title": "Tiêu đề",
+      "price": "Giá (VNĐ)",
+      "level": "Level",
+      "levelPlaceholder": "Chọn level",
+      "status": "Trạng thái",
+      "description": "Mô tả",
+      "thumbnail": "Ảnh thumbnail"
+    },
+    "priceWarning": "Thay đổi giá chỉ áp dụng cho học viên <strong>mua sau khi lưu</strong>. Học viên đã mua không được hoàn lại / phụ thu chênh lệch.",
+    "statusActions": {
+      "submitToast": "Nhấn \"Lưu\" để gửi duyệt.",
+      "submit": "Gửi duyệt",
+      "suspendToast": "Nhấn \"Lưu\" để tạm ngưng.",
+      "suspend": "Tạm ngưng"
+    },
+    "statusHints": {
+      "pending": "Đang chờ admin duyệt.",
+      "refuse": "Bị từ chối. Hãy sửa rồi gửi lại."
+    },
+    "statusChange": "Sẽ chuyển sang <strong>{{status}}</strong> khi bạn lưu.",
+    "pendingLabel": "Chờ duyệt",
+    "inactiveLabel": "Tạm ngưng",
+    "thumbnail": {
+      "newAlt": "Thumbnail mới",
+      "currentAlt": "Thumbnail hiện tại",
+      "empty": "Chưa có ảnh",
+      "newBadge": "Mới",
+      "change": "Đổi ảnh thumbnail",
+      "upload": "Tải lên thumbnail",
+      "cancelNew": "Huỷ ảnh mới",
+      "formats": "JPG, PNG, WebP, tối đa 5MB."
+    },
+    "save": {
+      "saving": "Đang lưu...",
+      "save": "Lưu & cập nhật"
+    },
+    "clearDraft": "Xoá bản nháp"
+  }
+}

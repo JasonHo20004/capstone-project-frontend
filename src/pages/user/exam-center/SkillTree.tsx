@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/api/config";
 import SkillTreeFlow, { type SkillTreeNodeData, NODE_THEME } from "./components/SkillTreeFlow";
 import MiniQuizDialog from "./components/MiniQuizDialog";
@@ -25,21 +26,16 @@ import {
 
 const XP_PER_NODE = 15;
 
-const CELEBRATION_MESSAGES = [
-  "Perfect! 🎉",
-  "Great work! ✨",
-  "You're on fire! 🔥",
-  "Brilliant! 🌟",
-  "Outstanding! 💪",
-];
+// Celebration messages are resolved at runtime via t(`skillTree.celebrationMessages.${n}`)
+const CELEBRATION_MESSAGE_COUNT = 5;
 
 // ─── Topic / Level Definitions ───────────────────────────────────────────────
+// User-facing label/description/subtext live in i18n (skillTree.topics / .levels);
+// these constants hold only ids, icons, colors and gameplay metadata.
 
 interface TopicDef {
   id: string;
-  label: string;
   icon: LucideIcon;
-  description: string;
   color: string;
   popular?: boolean;
   nodeCount: number;
@@ -47,23 +43,23 @@ interface TopicDef {
 }
 
 const TOPICS: TopicDef[] = [
-  { id: "travel",      label: "Travel",       icon: Globe,     description: "Booking, directions, airports",      color: "from-blue-500 to-cyan-500",      popular: true, nodeCount: 24, difficulty: 2 },
-  { id: "food",        label: "Food & Dining", icon: Pizza,     description: "Ordering, cooking, nutrition",        color: "from-orange-500 to-amber-500",                  nodeCount: 20, difficulty: 2 },
-  { id: "business",    label: "Business",     icon: Briefcase, description: "Email, meetings, presentations",      color: "from-slate-600 to-slate-800",    popular: true, nodeCount: 32, difficulty: 4 },
-  { id: "health",      label: "Health",       icon: Hospital,  description: "Doctor visits, symptoms, medicine",   color: "from-emerald-500 to-green-600",                 nodeCount: 22, difficulty: 3 },
-  { id: "technology",  label: "Technology",   icon: Laptop,    description: "Internet, software, AI",              color: "from-violet-500 to-purple-600",                 nodeCount: 28, difficulty: 4 },
-  { id: "education",   label: "Education",    icon: BookOpen,  description: "School, lectures, exams",             color: "from-indigo-500 to-blue-600",                   nodeCount: 26, difficulty: 3 },
-  { id: "daily_life",  label: "Daily Life",   icon: Home,      description: "Shopping, socializing, family",       color: "from-pink-500 to-rose-500",      popular: true, nodeCount: 18, difficulty: 1 },
-  { id: "environment", label: "Environment",  icon: Leaf,      description: "Pollution, conservation, recycling",  color: "from-teal-500 to-emerald-600",                  nodeCount: 24, difficulty: 3 },
+  { id: "travel",      icon: Globe,     color: "from-blue-500 to-cyan-500",      popular: true, nodeCount: 24, difficulty: 2 },
+  { id: "food",        icon: Pizza,     color: "from-orange-500 to-amber-500",                  nodeCount: 20, difficulty: 2 },
+  { id: "business",    icon: Briefcase, color: "from-slate-600 to-slate-800",    popular: true, nodeCount: 32, difficulty: 4 },
+  { id: "health",      icon: Hospital,  color: "from-emerald-500 to-green-600",                 nodeCount: 22, difficulty: 3 },
+  { id: "technology",  icon: Laptop,    color: "from-violet-500 to-purple-600",                 nodeCount: 28, difficulty: 4 },
+  { id: "education",   icon: BookOpen,  color: "from-indigo-500 to-blue-600",                   nodeCount: 26, difficulty: 3 },
+  { id: "daily_life",  icon: Home,      color: "from-pink-500 to-rose-500",      popular: true, nodeCount: 18, difficulty: 1 },
+  { id: "environment", icon: Leaf,      color: "from-teal-500 to-emerald-600",                  nodeCount: 24, difficulty: 3 },
 ];
 
 const LEVELS = [
-  { id: "A1", label: "A1", description: "Beginner",     subtext: "Simple introductions & phrases",     color: "#22c55e" },
-  { id: "A2", label: "A2", description: "Elementary",   subtext: "Everyday situations & routines",     color: "#84cc16" },
-  { id: "B1", label: "B1", description: "Intermediate", subtext: "Travel, work & school convos",       color: "#eab308" },
-  { id: "B2", label: "B2", description: "Upper-Inter",  subtext: "Opinions & detailed discussion",     color: "#f97316" },
-  { id: "C1", label: "C1", description: "Advanced",     subtext: "Fluent, complex communication",      color: "#ef4444" },
-  { id: "C2", label: "C2", description: "Proficiency",  subtext: "Near-native nuance & precision",     color: "#dc2626" },
+  { id: "A1", label: "A1", color: "#22c55e" },
+  { id: "A2", label: "A2", color: "#84cc16" },
+  { id: "B1", label: "B1", color: "#eab308" },
+  { id: "B2", label: "B2", color: "#f97316" },
+  { id: "C1", label: "C1", color: "#ef4444" },
+  { id: "C2", label: "C2", color: "#dc2626" },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -124,6 +120,12 @@ function readLastVisitedCache(): LastVisitedCache | null {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function SkillTree() {
+  const { t } = useTranslation("exam");
+
+  // i18n label resolvers for module-level topic/level definitions
+  const topicLabel = (id: string) => t(`skillTree.topics.${id}.label`);
+  const topicDesc = (id: string) => t(`skillTree.topics.${id}.description`);
+
   // ── Flow state ────────────────────────────────────────────────────────────
   const [step, setStep] = useState<"topic" | "level" | "tree">("topic");
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
@@ -319,8 +321,9 @@ export default function SkillTree() {
 
           // Sprint 7: show celebration
           if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+          const messageIndex = Math.floor(Math.random() * CELEBRATION_MESSAGE_COUNT) + 1;
           setCelebration({
-            message: CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)],
+            message: t(`skillTree.celebrationMessages.${messageIndex}`),
           });
           const dismissDelay = prefersReducedMotion ? 2500 : 1600;
           celebrationTimerRef.current = setTimeout(() => setCelebration(null), dismissDelay);
@@ -392,10 +395,10 @@ export default function SkillTree() {
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-white text-lg">Learning Map</h1>
+            <h1 className="font-bold text-white text-lg">{t("skillTree.header.title")}</h1>
           </div>
           <Link to="/dashboard" className="text-sm text-indigo-300 hover:text-indigo-100 font-medium">
-            ← Back
+            {t("skillTree.header.back")}
           </Link>
         </header>
 
@@ -405,8 +408,8 @@ export default function SkillTree() {
           {hasResumable && (
             <div className="mb-12">
               <div className="mb-6">
-                <h2 className="text-2xl font-black text-white mb-1">Continue Your Journey</h2>
-                <p className="text-slate-400 text-sm">Pick up where you left off</p>
+                <h2 className="text-2xl font-black text-white mb-1">{t("skillTree.resume.heading")}</h2>
+                <p className="text-slate-400 text-sm">{t("skillTree.resume.subtitle")}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -440,13 +443,13 @@ export default function SkillTree() {
                           <div className="flex items-center gap-2 min-w-0">
                             {tInfo && <tInfo.icon size={16} className="text-slate-300 shrink-0" />}
                             <span className="font-bold text-white text-sm truncate">
-                              {tInfo?.label ?? tree.topic}
+                              {tInfo ? topicLabel(tInfo.id) : tree.topic}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 ml-2 shrink-0">
                             {isLastVisited && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30">
-                                Last visited
+                                {t("skillTree.resume.lastVisited")}
                               </span>
                             )}
                             <span
@@ -481,11 +484,11 @@ export default function SkillTree() {
                           {isResuming ? (
                             <span className="flex items-center gap-1.5 text-[11px] text-indigo-300 font-semibold">
                               <span className="inline-block w-3 h-3 border border-indigo-300 border-t-indigo-100 rounded-full animate-spin" />
-                              Loading…
+                              {t("skillTree.resume.loading")}
                             </span>
                           ) : (
                             <span className="text-[11px] text-indigo-300 font-semibold group-hover:text-indigo-100 transition-colors">
-                              Tap to resume →
+                              {t("skillTree.resume.tapToResume")}
                             </span>
                           )}
                         </div>
@@ -502,13 +505,13 @@ export default function SkillTree() {
             <div className={`mb-6 ${hasResumable ? "" : "text-center"}`}>
               {hasResumable ? (
                 <>
-                  <h2 className="text-2xl font-black text-white mb-1">Explore a New World</h2>
-                  <p className="text-slate-400 text-sm">Pick a destination — each world mixes grammar, vocabulary and listening</p>
+                  <h2 className="text-2xl font-black text-white mb-1">{t("skillTree.newTopic.headingResumable")}</h2>
+                  <p className="text-slate-400 text-sm">{t("skillTree.newTopic.subtitleResumable")}</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-3xl font-black text-white mb-3">Choose Your World</h2>
-                  <p className="text-slate-400 text-lg">Each world is a learning adventure mixing grammar, vocabulary and listening</p>
+                  <h2 className="text-3xl font-black text-white mb-3">{t("skillTree.newTopic.heading")}</h2>
+                  <p className="text-slate-400 text-lg">{t("skillTree.newTopic.subtitle")}</p>
                 </>
               )}
             </div>
@@ -536,7 +539,7 @@ export default function SkillTree() {
                   {/* Popular ribbon */}
                   {topic.popular && (
                     <div className="absolute top-4 right-4 z-10 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-white/95 text-slate-900 rounded-full shadow-lg">
-                      <Sparkles size={11} /> Popular
+                      <Sparkles size={11} /> {t("skillTree.topicCard.popular")}
                     </div>
                   )}
 
@@ -547,16 +550,16 @@ export default function SkillTree() {
 
                   {/* Body */}
                   <div className="absolute inset-x-0 bottom-0 z-10 p-6 text-white">
-                    <h3 className="font-black text-2xl mb-1 drop-shadow-md">{topic.label}</h3>
-                    <p className="text-sm text-white/85 leading-snug mb-4 line-clamp-2">{topic.description}</p>
+                    <h3 className="font-black text-2xl mb-1 drop-shadow-md">{topicLabel(topic.id)}</h3>
+                    <p className="text-sm text-white/85 leading-snug mb-4 line-clamp-2">{topicDesc(topic.id)}</p>
 
                     {/* Stats row */}
                     <div className="flex items-center justify-between gap-3 mb-3">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-white/90">
                         <BookMarked size={12} />
-                        <span>~{topic.nodeCount} lessons</span>
+                        <span>{t("skillTree.topicCard.lessons", { count: topic.nodeCount })}</span>
                       </div>
-                      <div className="flex items-center gap-0.5" aria-label={`Difficulty ${topic.difficulty} out of 5`}>
+                      <div className="flex items-center gap-0.5" aria-label={t("skillTree.topicCard.difficultyAria", { level: topic.difficulty })}>
                         {[1, 2, 3, 4, 5].map((i) => (
                           <span
                             key={i}
@@ -571,7 +574,7 @@ export default function SkillTree() {
 
                     {/* CTA */}
                     <div className="flex items-center justify-between border-t border-white/20 pt-3">
-                      <span className="text-xs font-bold uppercase tracking-wider text-white/90">Enter world</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-white/90">{t("skillTree.topicCard.enterWorld")}</span>
                       <ChevronRight size={18} className="text-white group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
@@ -603,13 +606,13 @@ export default function SkillTree() {
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-white text-lg">Learning Map</h1>
+            <h1 className="font-bold text-white text-lg">{t("skillTree.header.title")}</h1>
           </div>
           <button
             onClick={() => setStep("topic")}
             className="text-sm text-indigo-300 hover:text-indigo-100 font-medium"
           >
-            ← Change topic
+            {t("skillTree.header.changeTopic")}
           </button>
         </header>
 
@@ -617,10 +620,10 @@ export default function SkillTree() {
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900/60 backdrop-blur rounded-full shadow-lg border border-slate-700/60 mb-4 text-slate-100">
               {topicInfo && <topicInfo.icon size={18} />}
-              <span className="font-bold">{topicInfo?.label}</span>
+              <span className="font-bold">{topicInfo ? topicLabel(topicInfo.id) : ""}</span>
             </div>
-            <h2 className="text-3xl font-black text-white mb-3">Select Level</h2>
-            <p className="text-slate-400">Standard CEFR scale</p>
+            <h2 className="text-3xl font-black text-white mb-3">{t("skillTree.level.selectTitle")}</h2>
+            <p className="text-slate-400">{t("skillTree.level.cefrScale")}</p>
           </div>
 
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-10">
@@ -637,8 +640,8 @@ export default function SkillTree() {
                 <div className="text-2xl font-black mb-0.5" style={{ color: level.color }}>
                   {level.label}
                 </div>
-                <div className="text-[10px] text-slate-200 font-semibold leading-tight">{level.description}</div>
-                <div className="text-[8px] text-slate-400 mt-1 leading-snug">{level.subtext}</div>
+                <div className="text-[10px] text-slate-200 font-semibold leading-tight">{t(`skillTree.levels.${level.id}.description`)}</div>
+                <div className="text-[8px] text-slate-400 mt-1 leading-snug">{t(`skillTree.levels.${level.id}.subtext`)}</div>
               </button>
             ))}
           </div>
@@ -648,7 +651,7 @@ export default function SkillTree() {
               to="/placement-test"
               className="text-sm text-indigo-300 hover:text-indigo-100 font-medium transition-colors"
             >
-              Not sure? Take a quick placement test →
+              {t("skillTree.level.placementHint")}
             </Link>
           </div>
 
@@ -661,12 +664,12 @@ export default function SkillTree() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  AI is building your path...
+                  {t("skillTree.level.building")}
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <ArrowRight size={18} />
-                  Start Learning
+                  {t("skillTree.level.startLearning")}
                 </span>
               )}
             </button>
@@ -695,8 +698,8 @@ export default function SkillTree() {
           <div className="flex items-center gap-2 min-w-0 shrink">
             {topicInfo && <topicInfo.icon size={16} className="text-slate-300 shrink-0" />}
             <div className="min-w-0">
-              <div className="font-bold text-white text-sm leading-tight truncate">{topicInfo?.label}</div>
-              <div className="text-[10px] text-slate-500">Level {levelInfo?.label}</div>
+              <div className="font-bold text-white text-sm leading-tight truncate">{topicInfo ? topicLabel(topicInfo.id) : ""}</div>
+              <div className="text-[10px] text-slate-500">{t("skillTree.tree.level", { level: levelInfo?.label })}</div>
             </div>
           </div>
 
@@ -735,7 +738,7 @@ export default function SkillTree() {
               }}
               className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
             >
-              Change
+              {t("skillTree.tree.change")}
             </button>
           </div>
         </div>
@@ -835,7 +838,7 @@ export default function SkillTree() {
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   <span className="text-xl">🎮</span>
-                  Start Quiz
+                  {t("skillTree.tree.startQuiz")}
                 </span>
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useTranslation, Trans } from "react-i18next";
 import { BarChart2, Lightbulb, Lock } from 'lucide-react';
 import apiClient from "@/lib/api/config";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
@@ -77,6 +78,7 @@ interface TestData {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function IeltsTestModule() {
+  const { t } = useTranslation("exam");
   const { testId, sessionId: urlSessionId } = useParams<{ testId: string; sessionId?: string }>();
   const [sessionId, setSessionId] = useState<string | null>(urlSessionId || null);
   const [testData, setTestData] = useState<TestData | null>(null);
@@ -253,7 +255,7 @@ export default function IeltsTestModule() {
   useEffect(() => {
     const fetchTest = async () => {
       if (!testId) {
-        setError("No test ID provided.");
+        setError(t("ieltsTestModule.errors.noTestId"));
         setLoading(false);
         return;
       }
@@ -263,7 +265,7 @@ export default function IeltsTestModule() {
         const test = resp.data?.data;
 
         if (!test) {
-          setError("Test not found.");
+          setError(t("ieltsTestModule.errors.notFound"));
           setLoading(false);
           return;
         }
@@ -296,7 +298,7 @@ export default function IeltsTestModule() {
         setLoading(false);
       } catch (err: any) {
         console.error("Failed to fetch test:", err);
-        setError(err.response?.data?.message || "Failed to load test. Please try again.");
+        setError(err.response?.data?.message || t("ieltsTestModule.errors.loadFailed"));
         setLoading(false);
       }
     };
@@ -358,9 +360,9 @@ export default function IeltsTestModule() {
         setTimeout(() => setTimeWarning(curr => (curr === msg ? null : curr)), 6000);
       }
     };
-    fire(300, 'Còn 5 phút — hãy kiểm tra các câu chưa làm.');
-    fire(60, 'Còn 1 phút! Bài sẽ tự nộp khi hết giờ.');
-  }, [timeLeft, testData, submitted]);
+    fire(300, t('ieltsTestModule.timeWarnings.fiveMin'));
+    fire(60, t('ieltsTestModule.timeWarnings.oneMin'));
+  }, [timeLeft, testData, submitted, t]);
 
   // ─── Writing assistant (debounced) ──────────────────────────────────────────
   useEffect(() => {
@@ -458,12 +460,12 @@ export default function IeltsTestModule() {
         setSubmitted(true);
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Không thể nộp bài. Vui lòng kiểm tra mạng và thử lại.";
+      const msg = err?.response?.data?.message || err?.message || t("ieltsTestModule.errors.submitFailed");
       setSubmitError(msg);
     } finally {
       setIsSubmitting(false);
     }
-  }, [testData, answers, navigate, isSubmitting, submitted, autoSaveKey, highlightKey]);
+  }, [testData, answers, navigate, isSubmitting, submitted, autoSaveKey, highlightKey, t]);
 
   // ─── Highlight Handlers (must be before any early returns!) ──────────────
   const attachMarkRemovalHandler = useCallback((mark: HTMLElement) => {
@@ -622,8 +624,8 @@ export default function IeltsTestModule() {
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6 mx-auto"></div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Loading IELTS Test...</h2>
-          <p className="text-slate-500">Fetching test data from server</p>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">{t("ieltsTestModule.loading.title")}</h2>
+          <p className="text-slate-500">{t("ieltsTestModule.loading.subtitle")}</p>
         </div>
       </div>
     );
@@ -634,10 +636,10 @@ export default function IeltsTestModule() {
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-8 max-w-md text-center">
           <span className="material-symbols-outlined text-red-500 text-5xl mb-4 block">error</span>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Error</h2>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">{t("ieltsTestModule.errorTitle")}</h2>
           <p className="text-slate-600 mb-6">{error}</p>
           <Link to="/exam" className="inline-block bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-colors">
-            Back to Exam Center
+            {t("ieltsTestModule.backToExamCenter")}
           </Link>
         </div>
       </div>
@@ -656,14 +658,14 @@ export default function IeltsTestModule() {
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="text-center space-y-4">
           <span className="material-symbols-outlined text-5xl text-green-500">check_circle</span>
-          <h2 className="text-xl font-bold text-slate-800">Bài thi đã được nộp!</h2>
-          <p className="text-slate-500">Kết quả đang được xử lý...</p>
+          <h2 className="text-xl font-bold text-slate-800">{t("ieltsTestModule.submitted.title")}</h2>
+          <p className="text-slate-500">{t("ieltsTestModule.submitted.subtitle")}</p>
           <div className="flex gap-3 justify-center">
             <Link to="/exam" className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">
-              ← Exam Center
+              ← {t("ieltsTestModule.submitted.examCenter")}
             </Link>
             <Link to="/exam/history" className="px-6 py-2.5 bg-white text-indigo-600 rounded-xl font-bold border-2 border-indigo-200 hover:bg-indigo-50 transition">
-              <BarChart2 size={16} className="mr-1.5 inline-block" /> Lịch sử
+              <BarChart2 size={16} className="mr-1.5 inline-block" /> {t("ieltsTestModule.submitted.history")}
             </Link>
           </div>
         </div>
@@ -704,7 +706,7 @@ export default function IeltsTestModule() {
       const isTask1 = q?.questionType?.includes('TASK1') || sec.title?.toLowerCase().includes('task 1');
       return {
         sectionIdx: idx,
-        title: sec.title || (isTask1 ? 'Task 1 — Biểu đồ' : 'Task 2 — Essay'),
+        title: sec.title || (isTask1 ? t('ieltsTestModule.writing.defaultTask1Title') : t('ieltsTestModule.writing.defaultTask2Title')),
         taskType: isTask1 ? 1 as const : 2 as const,
         imageUrl: sec.imageUrl || q?.imageUrl || (q as any)?.content?.imageUrl,
         prompt: q?.questionText || (q as any)?.content?.prompt || (q as any)?.content?.text || '',
@@ -754,40 +756,40 @@ export default function IeltsTestModule() {
           <header className="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-emerald-600">edit_note</span>
-              <h1 className="font-bold text-slate-800 text-sm">Kết quả chấm Writing</h1>
+              <h1 className="font-bold text-slate-800 text-sm">{t("ieltsTestModule.writing.resultHeader")}</h1>
             </div>
-            <Link to="/exam" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">← Quay lại</Link>
+            <Link to="/exam" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">← {t("ieltsTestModule.writing.backLink")}</Link>
           </header>
           <div className="max-w-4xl mx-auto p-8">
             {(!writingEvaluation || writingEvaluation.status === 'PENDING' || writingEvaluation.status === 'PROCESSING') && (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-6" />
-                <h2 className="text-xl font-bold text-slate-800 mb-2">AI đang chấm bài...</h2>
-                <p className="text-slate-500">Thường mất 15-30 giây. Vui lòng đợi.</p>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">{t("writingTest.result.evaluatingTitle")}</h2>
+                <p className="text-slate-500">{t("writingTest.result.evaluatingSubtitle")}</p>
               </div>
             )}
             {writingEvaluation?.status === 'FAILED' && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-                <h2 className="text-xl font-bold text-red-800 mb-2">Chấm bài thất bại</h2>
-                <p className="text-red-600 mb-4">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
+                <h2 className="text-xl font-bold text-red-800 mb-2">{t("writingTest.result.failedTitle")}</h2>
+                <p className="text-red-600 mb-4">{t("writingTest.result.failedBody")}</p>
                 <button onClick={() => { setShowWritingResult(false); setWritingEvalId(null); setWritingSubmitting(false); }}
-                  className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700">Thử lại</button>
+                  className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700">{t("writingTest.result.retry")}</button>
               </div>
             )}
             {writingEvaluation?.status === 'COMPLETED' && writingEvaluation.criteria && (
               <div className="space-y-6">
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-                  <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">Estimated Band</p>
+                  <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mb-2">{t("writingTest.result.estimatedBand")}</p>
                   <div className="text-7xl font-black text-emerald-600 mb-2">{writingEvaluation.overallBand}</div>
-                  <p className="text-xs text-slate-400 italic mb-3">AI evaluation may vary ±0.5 band from official IELTS scoring</p>
+                  <p className="text-xs text-slate-400 italic mb-3">{t("writingTest.result.disclaimer")}</p>
                   <p className="text-slate-600 text-sm max-w-xl mx-auto">{writingEvaluation.overallFeedback}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { key: 'task_achievement', label: 'Task Achievement', icon: 'task_alt' },
-                    { key: 'coherence', label: 'Coherence & Cohesion', icon: 'link' },
-                    { key: 'lexical', label: 'Lexical Resource', icon: 'dictionary' },
-                    { key: 'grammar', label: 'Grammar Range & Accuracy', icon: 'spellcheck' },
+                    { key: 'task_achievement', label: t('writingTest.result.criteria.taskAchievement'), icon: 'task_alt' },
+                    { key: 'coherence', label: t('writingTest.result.criteria.coherence'), icon: 'link' },
+                    { key: 'lexical', label: t('writingTest.result.criteria.lexical'), icon: 'dictionary' },
+                    { key: 'grammar', label: t('writingTest.result.criteria.grammar'), icon: 'spellcheck' },
                   ].map(({ key, label, icon }) => {
                     const c = writingEvaluation.criteria?.[key as keyof typeof writingEvaluation.criteria];
                     if (!c) return null;
@@ -809,7 +811,7 @@ export default function IeltsTestModule() {
                   <div className="bg-white rounded-xl border border-slate-200 p-6">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                       <span className="material-symbols-outlined text-amber-500">warning</span>
-                      Lỗi phát hiện ({writingEvaluation.highlightedErrors.length})
+                      {t("ieltsTestModule.writing.errorsDetected", { count: writingEvaluation.highlightedErrors.length })}
                     </h3>
                     <div className="space-y-3">
                       {writingEvaluation.highlightedErrors.map((err: any, i: number) => (
@@ -825,7 +827,7 @@ export default function IeltsTestModule() {
                   </div>
                 )}
                 <div className="text-center pt-4">
-                  <Link to="/exam" className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors">Quay lại Exam Center</Link>
+                  <Link to="/exam" className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors">{t("ieltsTestModule.writing.backToExamCenter")}</Link>
                 </div>
               </div>
             )}
@@ -848,13 +850,13 @@ export default function IeltsTestModule() {
             </div>
             <div>
               <h1 className="font-bold text-slate-800 text-sm leading-tight">{testData?.title}</h1>
-              <span className="text-[11px] text-slate-500">IELTS Writing</span>
+              <span className="text-[11px] text-slate-500">{t("ieltsTestModule.writing.ieltsWriting")}</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
             {assistantLoading && (
               <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 animate-pulse">
-                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />AI đang kiểm tra...
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />{t("ieltsTestModule.writing.aiChecking")}
               </div>
             )}
             <div className={`px-2.5 py-1 rounded-md font-mono font-bold text-sm ${timeLeft < 300 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>
@@ -862,7 +864,7 @@ export default function IeltsTestModule() {
             </div>
             <button onClick={handleWritingSubmit} disabled={writingSubmitting || wWordCount < 20}
               className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-colors">
-              {writingSubmitting ? 'Đang nộp...' : 'Nộp bài'}
+              {writingSubmitting ? t("ieltsTestModule.writing.submitting") : t("ieltsTestModule.writing.submit")}
             </button>
           </div>
         </header>
@@ -890,25 +892,25 @@ export default function IeltsTestModule() {
                   {activeWSection.taskType === 1 ? 'bar_chart' : 'edit_note'}
                 </span>
                 <h2 className="font-bold text-slate-700 text-sm">{activeWSection.title}</h2>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-auto">{activeWSection.wordCountMin}+ từ</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-auto">{t("ieltsTestModule.writing.wordsMin", { count: activeWSection.wordCountMin })}</span>
               </div>
             </div>
             <div className="flex-1 p-5 space-y-5">
               {activeWSection.imageUrl && (
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Biểu đồ / Sơ đồ</p>
-                  <img src={activeWSection.imageUrl} alt="Task 1 Visual" className="w-full rounded-lg border border-slate-200 bg-white" />
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{t("ieltsTestModule.writing.chartLabel")}</p>
+                  <img src={activeWSection.imageUrl} alt={t("ieltsTestModule.writing.task1VisualAlt")} className="w-full rounded-lg border border-slate-200 bg-white" />
                 </div>
               )}
               <div className="bg-emerald-50/60 rounded-xl p-4 border border-emerald-100">
-                <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">Đề bài</p>
+                <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2">{t("ieltsTestModule.writing.promptLabel")}</p>
                 <p className="text-sm text-slate-800 leading-relaxed italic">{activeWSection.prompt}</p>
-                <p className="text-xs text-slate-600 mt-3">Write at least {activeWSection.wordCountMin} words.</p>
+                <p className="text-xs text-slate-600 mt-3">{t("ieltsTestModule.writing.writeAtLeast", { count: activeWSection.wordCountMin })}</p>
               </div>
               {assistantResult && (assistantResult.errors.length > 0 || assistantResult.suggestions.length > 0) && (
                 <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                   <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">auto_fix_high</span>AI Writing Assistant
+                    <span className="material-symbols-outlined text-[14px]">auto_fix_high</span>{t("ieltsTestModule.writing.assistantTitle")}
                   </h4>
                   {assistantResult.errors.map((err, i) => (
                     <div key={`e-${i}`} className="text-xs mb-2 p-2 bg-white rounded border border-amber-100">
@@ -926,12 +928,12 @@ export default function IeltsTestModule() {
                 </div>
               )}
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mẹo viết</h4>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">{t("ieltsTestModule.writing.tipsTitle")}</h4>
                 <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
                   {activeWSection.taskType === 1 ? (
-                    <><li>Bắt đầu bằng câu paraphrase đề bài</li><li>Nêu overview trước khi vào chi tiết</li><li>So sánh số liệu nổi bật</li></>
+                    <><li>{t("ieltsTestModule.writing.task1Tips.paraphrase")}</li><li>{t("ieltsTestModule.writing.task1Tips.overview")}</li><li>{t("ieltsTestModule.writing.task1Tips.compare")}</li></>
                   ) : (
-                    <><li>Lập dàn ý: Mở bài → Thân bài → Kết luận</li><li>Trình bày cả 2 quan điểm</li><li>Dùng linking words</li></>
+                    <><li>{t("ieltsTestModule.writing.task2Tips.outline")}</li><li>{t("ieltsTestModule.writing.task2Tips.bothViews")}</li><li>{t("ieltsTestModule.writing.task2Tips.linking")}</li></>
                   )}
                 </ul>
               </div>
@@ -941,16 +943,16 @@ export default function IeltsTestModule() {
           {/* Right — Essay Editor */}
           <div className="w-[62%] bg-white flex flex-col h-full">
             <div className="px-5 py-2 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0">
-              <span className="text-xs text-slate-500 font-medium">Bài viết của bạn</span>
+              <span className="text-xs text-slate-500 font-medium">{t("ieltsTestModule.writing.yourEssay")}</span>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-slate-400">
-                  Số từ:{' '}
+                  {t("ieltsTestModule.writing.wordCountLabel")}{' '}
                   <span className={`font-bold ${wWordCount >= activeWSection.wordCountMin ? 'text-emerald-600' : wWordCount >= activeWSection.wordCountMin * 0.8 ? 'text-amber-600' : 'text-slate-700'}`}>{wWordCount}</span>
-                  <span className="text-slate-300 ml-1">/ {activeWSection.wordCountMin} min</span>
+                  <span className="text-slate-300 ml-1">{t("ieltsTestModule.writing.wordsSuffix", { min: activeWSection.wordCountMin })}</span>
                 </span>
                 {wWordCount >= activeWSection.wordCountMin && (
                   <span className="text-[10px] flex items-center gap-0.5 text-emerald-600 font-bold">
-                    <span className="material-symbols-outlined text-[14px]">check_circle</span> Đủ từ
+                    <span className="material-symbols-outlined text-[14px]">check_circle</span> {t("ieltsTestModule.writing.enough")}
                   </span>
                 )}
               </div>
@@ -960,11 +962,16 @@ export default function IeltsTestModule() {
               placeholder={activeWSection.taskType === 1 ? 'The chart/diagram illustrates...' : 'In today\'s society, the issue of...'}
               value={currentWEssay}
               onChange={(e) => setWritingEssays(prev => ({ ...prev, [activeWritingTab]: e.target.value }))}
-              aria-label="Khu vực soạn bài viết"
+              aria-label={t("ieltsTestModule.writing.essayAria")}
             />
             {wWordCount < activeWSection.wordCountMin && (
               <div className="px-5 py-2 border-t border-amber-100 bg-amber-50/70 text-[11px] text-amber-800 shrink-0">
-                Cần viết thêm <strong>{activeWSection.wordCountMin - wWordCount}</strong> từ nữa để đạt mức tối thiểu ({activeWSection.wordCountMin} từ).
+                <Trans
+                  i18nKey="ieltsTestModule.writing.needMore"
+                  ns="exam"
+                  values={{ remaining: activeWSection.wordCountMin - wWordCount, min: activeWSection.wordCountMin }}
+                  components={{ strong: <strong /> }}
+                />
               </div>
             )}
           </div>
@@ -987,26 +994,26 @@ export default function IeltsTestModule() {
             <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase shrink-0 ${isListeningTest ? "bg-teal-100 text-teal-700" : "bg-indigo-100 text-indigo-700"}`}>
               {testSkillLabel}
             </span>
-            <span className="text-xs text-slate-400 ml-1 hidden lg:inline">Đã trả lời {answeredCount}/{currentQuestions.length}</span>
+            <span className="text-xs text-slate-400 ml-1 hidden lg:inline">{t("ieltsTestModule.test.answeredShort", { answered: answeredCount, total: currentQuestions.length })}</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <span className="text-xs text-slate-500 hidden sm:inline">
-              Phần {currentSectionIdx + 1} / {sections.length}
+              {t("ieltsTestModule.test.sectionProgress", { current: currentSectionIdx + 1, total: sections.length })}
             </span>
             <span className="text-xs text-slate-400 hidden lg:inline">
-              Tổng: {totalAnswered}/{allQuestions.length}
+              {t("ieltsTestModule.test.totalProgress", { answered: totalAnswered, total: allQuestions.length })}
             </span>
             <div className={`px-2.5 sm:px-3 py-1 rounded-md font-mono font-bold text-sm ${timeLeft < 60 ? "bg-red-100 text-red-700 animate-pulse" : timeLeft < 120 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"}`}>
               {formatTime(timeLeft)}
             </div>
             {currentSectionIdx > 0 && (
-              <button onClick={goPrev} className="bg-slate-200 text-slate-700 px-2 sm:px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300 cursor-pointer" title="Phần trước ( [ )">
-                <span className="hidden sm:inline">← Phần trước</span><span className="sm:hidden">←</span>
+              <button onClick={goPrev} className="bg-slate-200 text-slate-700 px-2 sm:px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-300 cursor-pointer" title={t("ieltsTestModule.test.prevSectionTitle")}>
+                <span className="hidden sm:inline">{t("ieltsTestModule.test.prevSection")}</span><span className="sm:hidden">←</span>
               </button>
             )}
             {currentSectionIdx < sections.length - 1 ? (
-              <button onClick={goNext} className="bg-indigo-600 text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-700 cursor-pointer" title="Phần tiếp ( ] )">
-                <span className="hidden sm:inline">Phần tiếp →</span><span className="sm:hidden">→</span>
+              <button onClick={goNext} className="bg-indigo-600 text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-700 cursor-pointer" title={t("ieltsTestModule.test.nextSectionTitle")}>
+                <span className="hidden sm:inline">{t("ieltsTestModule.test.nextSection")}</span><span className="sm:hidden">→</span>
               </button>
             ) : (
               <button
@@ -1014,7 +1021,7 @@ export default function IeltsTestModule() {
                 disabled={isSubmitting || submitted}
                 className="bg-green-600 text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed cursor-pointer"
               >
-                {isSubmitting ? 'Đang nộp...' : submitted ? 'Đã nộp' : 'Nộp bài'}
+                {isSubmitting ? t("ieltsTestModule.test.submitting") : submitted ? t("ieltsTestModule.test.submitted") : t("ieltsTestModule.test.submit")}
               </button>
             )}
           </div>
@@ -1028,7 +1035,7 @@ export default function IeltsTestModule() {
         </div>
         {submitError && (
           <div className="absolute top-16 right-3 sm:right-6 bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded-md text-xs shadow-lg max-w-sm z-50">
-            <strong className="block mb-0.5">Nộp bài thất bại</strong>
+            <strong className="block mb-0.5">{t("ieltsTestModule.test.submitFailedTitle")}</strong>
             <span>{submitError}</span>
             <button onClick={() => setSubmitError(null)} className="ml-2 text-red-500 hover:text-red-700 font-bold">×</button>
           </div>
@@ -1041,13 +1048,13 @@ export default function IeltsTestModule() {
           onClick={() => setMobilePane('passage')}
           className={`flex-1 py-2 text-xs font-bold transition-colors ${mobilePane === 'passage' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400'}`}
         >
-          {isListeningTest ? 'Audio / Ngữ cảnh' : 'Bài đọc'}
+          {isListeningTest ? t("ieltsTestModule.test.mobilePassageListening") : t("ieltsTestModule.test.mobilePassageReading")}
         </button>
         <button
           onClick={() => setMobilePane('questions')}
           className={`flex-1 py-2 text-xs font-bold transition-colors ${mobilePane === 'questions' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-slate-400'}`}
         >
-          Câu hỏi ({totalAnswered}/{allQuestions.length})
+          {t("ieltsTestModule.test.mobileQuestions", { answered: totalAnswered, total: allQuestions.length })}
         </button>
       </div>
 
@@ -1071,11 +1078,11 @@ export default function IeltsTestModule() {
                 <div className="flex items-center justify-between mb-3 gap-2">
                   <div className="flex items-center gap-2">
                     <span className={`material-symbols-outlined text-xl ${alreadyPlayed ? "text-slate-400" : "text-teal-600"}`}>headphones</span>
-                    <h3 className={`text-sm font-bold ${alreadyPlayed ? "text-slate-500" : "text-teal-800"}`}>{currentSection.title} — Audio</h3>
+                    <h3 className={`text-sm font-bold ${alreadyPlayed ? "text-slate-500" : "text-teal-800"}`}>{currentSection.title} — {t("ieltsTestModule.test.audioLabel")}</h3>
                   </div>
                   {alreadyPlayed && (
                     <span className="text-[10px] font-black uppercase tracking-widest bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
-                      Đã phát xong
+                      {t("ieltsTestModule.test.audioPlayed")}
                     </span>
                   )}
                 </div>
@@ -1093,12 +1100,12 @@ export default function IeltsTestModule() {
                   src={currentSection.mediaUrl}
                   preload="auto"
                 >
-                  Your browser does not support audio.
+                  {t("ieltsTestModule.test.audioUnsupported")}
                 </audio>
                 <p className={`text-xs mt-2 ${alreadyPlayed ? "text-slate-500" : "text-teal-600"}`}>
                   {alreadyPlayed
-                    ? <><Lock size={12} className="inline mr-1" />Section này đã nghe xong — không thể nghe lại (chuẩn IELTS).</>
-                    : <><Lightbulb size={12} className="inline mr-1" />Đây là bài thi IELTS thật — bạn chỉ được nghe MỘT lần, không tua lại được.</>}
+                    ? <><Lock size={12} className="inline mr-1" />{t("ieltsTestModule.test.audioLockedOnce")}</>
+                    : <><Lightbulb size={12} className="inline mr-1" />{t("ieltsTestModule.test.audioOnceNotice")}</>}
                 </p>
 
                 {/* Transcript reveal — only after submission */}
@@ -1111,13 +1118,13 @@ export default function IeltsTestModule() {
                       <span className="material-symbols-outlined text-[16px]">
                         {showTranscript[sid] ? "visibility_off" : "subtitles"}
                       </span>
-                      {showTranscript[sid] ? "Ẩn transcript" : "Hiện transcript"}
+                      {showTranscript[sid] ? t("ieltsTestModule.test.hideTranscript") : t("ieltsTestModule.test.showTranscript")}
                     </button>
                     {showTranscript[sid] && (
                       <div className="mt-3 bg-white border border-slate-200 rounded-xl p-4 max-h-[400px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
                           <span className="material-symbols-outlined text-indigo-500 text-[16px]">subtitles</span>
-                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transcript — {currentSection.title}</p>
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("ieltsTestModule.test.transcriptLabel")} — {currentSection.title}</p>
                         </div>
                         <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">
                           {currentSection.audioTranscript}
@@ -1133,7 +1140,7 @@ export default function IeltsTestModule() {
           {/* Highlight Toolbar */}
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              {isListeningTest ? "Questions Context" : "Reading Passage"}
+              {isListeningTest ? t("ieltsTestModule.test.questionsContext") : t("ieltsTestModule.test.readingPassage")}
             </h3>
             <div className="flex items-center gap-2">
               {/* Font size controls */}
@@ -1142,8 +1149,8 @@ export default function IeltsTestModule() {
                   onClick={() => setPassageFontScale(s => Math.max(0.85, +(s - 0.1).toFixed(2)))}
                   disabled={passageFontScale <= 0.85}
                   className="px-2 py-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-l-lg"
-                  title="Giảm cỡ chữ"
-                  aria-label="Giảm cỡ chữ bài đọc"
+                  title={t("ieltsTestModule.test.fontDecreaseTitle")}
+                  aria-label={t("ieltsTestModule.test.fontDecreaseAria")}
                 >
                   <span className="material-symbols-outlined text-[16px]">text_decrease</span>
                 </button>
@@ -1151,8 +1158,8 @@ export default function IeltsTestModule() {
                   onClick={() => setPassageFontScale(s => Math.min(1.4, +(s + 0.1).toFixed(2)))}
                   disabled={passageFontScale >= 1.4}
                   className="px-2 py-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-r-lg"
-                  title="Tăng cỡ chữ"
-                  aria-label="Tăng cỡ chữ bài đọc"
+                  title={t("ieltsTestModule.test.fontIncreaseTitle")}
+                  aria-label={t("ieltsTestModule.test.fontIncreaseAria")}
                 >
                   <span className="material-symbols-outlined text-[16px]">text_increase</span>
                 </button>
@@ -1164,16 +1171,16 @@ export default function IeltsTestModule() {
                     ? 'bg-amber-100 text-amber-700 border border-amber-300 shadow-sm'
                     : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent'
                 }`}
-                title={highlightMode ? 'Tắt highlight (phím h)' : 'Bật highlight (phím h)'}
+                title={highlightMode ? t('ieltsTestModule.test.highlightOnTitle') : t('ieltsTestModule.test.highlightOffTitle')}
                 aria-pressed={highlightMode}
               >
                 <span className="material-symbols-outlined text-[16px]">ink_highlighter</span>
-                {highlightMode ? 'ON' : 'Highlight'}
+                {highlightMode ? t('ieltsTestModule.test.highlightOn') : t('ieltsTestModule.test.highlightLabel')}
               </button>
               {highlightMode && (
                 <button onClick={clearAllHighlights}
                   className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                  title="Xóa tất cả highlight"
+                  title={t("ieltsTestModule.test.clearHighlightsTitle")}
                 >
                   <span className="material-symbols-outlined text-[14px]">delete_sweep</span>
                 </button>
@@ -1184,9 +1191,9 @@ export default function IeltsTestModule() {
           {/* Highlight Mode Hint */}
           {highlightMode && (
             <div className="mb-3 flex items-center gap-3 text-[11px] text-slate-400">
-              <span>Bôi đen chữ → chọn màu</span>
+              <span>{t("ieltsTestModule.test.highlightHintSelect")}</span>
               <span className="text-slate-300">|</span>
-              <span>Click highlight để xóa</span>
+              <span>{t("ieltsTestModule.test.highlightHintRemove")}</span>
               <span className="text-slate-300">|</span>
               <div className="flex gap-1">
                 {HIGHLIGHT_COLORS.map((c) => (
@@ -1201,7 +1208,7 @@ export default function IeltsTestModule() {
             style={{ fontSize: `${(0.875 * passageFontScale).toFixed(3)}rem`, ...(highlightMode ? { userSelect: 'text' as const } : {}) }}
           >
             {(() => {
-              if (!passageContent) return <p className="text-slate-400 italic text-sm">No passage content available.</p>;
+              if (!passageContent) return <p className="text-slate-400 italic text-sm">{t("ieltsTestModule.test.noPassage")}</p>;
               const paragraphs = passageContent.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
               // If only 1 paragraph or very short, render as-is
               if (paragraphs.length < 2) {
@@ -1248,13 +1255,13 @@ export default function IeltsTestModule() {
                   <button key={c.name} onClick={() => applyHighlight(c.color)}
                     className="w-7 h-7 rounded-lg hover:scale-110 transition-transform flex items-center justify-center"
                     style={{ backgroundColor: c.color, border: `2px solid ${c.border}` }}
-                    title={c.name}
+                    title={t(`ieltsTestModule.highlightColors.${c.name}`)}
                   />
                 ))}
                 <div className="w-px h-5 bg-slate-200 mx-0.5" />
                 <button onClick={() => { window.getSelection()?.removeAllRanges(); setHighlightPopover(null); }}
                   className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-red-100 transition-colors flex items-center justify-center text-slate-400 hover:text-red-500"
-                  title="Cancel"
+                  title={t("ieltsTestModule.test.cancelTitle")}
                 >
                   <span className="material-symbols-outlined text-[14px]">close</span>
                 </button>
@@ -1267,8 +1274,8 @@ export default function IeltsTestModule() {
           {/* Section Image (Maps, Diagrams) */}
           {currentSection.imageUrl && (
             <div className="mt-6">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Diagram / Map</h3>
-              <img src={currentSection.imageUrl} alt="Section diagram" className="w-full rounded-lg border border-slate-200 shadow-sm" />
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t("ieltsTestModule.test.diagramMap")}</h3>
+              <img src={currentSection.imageUrl} alt={t("ieltsTestModule.test.sectionDiagramAlt")} className="w-full rounded-lg border border-slate-200 shadow-sm" />
             </div>
           )}
         </div>
@@ -1282,7 +1289,7 @@ export default function IeltsTestModule() {
           }}
           onDoubleClick={() => setLeftWidth(50)}
           className="hidden lg:flex items-center justify-center w-1.5 shrink-0 bg-slate-100 hover:bg-indigo-200 cursor-col-resize transition-colors group"
-          title="Kéo để chỉnh độ rộng • Nhấp đúp để đặt lại 50/50"
+          title={t("ieltsTestModule.test.resizeTitle")}
           role="separator"
           aria-orientation="vertical"
         >
@@ -1309,8 +1316,8 @@ export default function IeltsTestModule() {
                 const first = group.questions[0];
                 const last = group.questions[group.questions.length - 1];
                 const rangeLabel = first.questionOrder === last.questionOrder
-                  ? `Question ${first.questionOrder}`
-                  : `Questions ${first.questionOrder}–${last.questionOrder}`;
+                  ? t("ieltsTestModule.test.rangeSingle", { n: first.questionOrder })
+                  : t("ieltsTestModule.test.rangeMulti", { from: first.questionOrder, to: last.questionOrder });
                 const instruction = SECTION_INSTRUCTIONS[group.type];
 
                 return (
@@ -1356,7 +1363,7 @@ export default function IeltsTestModule() {
                           ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                           : 'bg-slate-50 text-slate-300 hover:text-amber-500 hover:bg-amber-50'
                       }`}
-                      title={flaggedQuestions.has(q.id) ? 'Bỏ đánh dấu' : 'Đánh dấu để xem lại'}
+                      title={flaggedQuestions.has(q.id) ? t('ieltsTestModule.test.unflagTitle') : t('ieltsTestModule.test.flagTitle')}
                     >
                       <span className="material-symbols-outlined text-[16px]">
                         {flaggedQuestions.has(q.id) ? 'flag' : 'outlined_flag'}
@@ -1367,7 +1374,7 @@ export default function IeltsTestModule() {
                   {/* Question Image (Maps, Diagrams) */}
                   {qImage && (
                     <div className="mb-3">
-                      <img src={qImage} alt={`Question ${q.questionOrder}`} className="max-w-full rounded-lg border border-slate-200 shadow-sm" />
+                      <img src={qImage} alt={t("ieltsTestModule.test.questionImageAlt", { n: q.questionOrder })} className="max-w-full rounded-lg border border-slate-200 shadow-sm" />
                     </div>
                   )}
 
@@ -1444,11 +1451,11 @@ export default function IeltsTestModule() {
                   {((qType === "GAP_FILL" && !qSummaryText) || qType === "SHORT_ANSWER") && (
                     <input type="text" value={answers[q.id] || ""} onChange={e => setAnswer(q.id, e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="Type your answer..." />
+                      placeholder={t("ieltsTestModule.test.typeAnswerPlaceholder")} />
                   )}
 
                   {(qType === "TRUE_FALSE_NOT_GIVEN" || qType === "YES_NO_NOT_GIVEN") && (
-                    <div className="flex gap-3" role="radiogroup" aria-label={`Câu ${q.questionOrder}`}>
+                    <div className="flex gap-3" role="radiogroup" aria-label={t("ieltsTestModule.test.questionAria", { n: q.questionOrder })}>
                       {(qType === "TRUE_FALSE_NOT_GIVEN" ? ["TRUE", "FALSE", "NOT GIVEN"] : ["YES", "NO", "NOT GIVEN"]).map(opt => (
                         <button key={opt} onClick={() => setAnswer(q.id, opt)}
                           role="radio" aria-checked={answers[q.id] === opt}
@@ -1474,7 +1481,7 @@ export default function IeltsTestModule() {
                               : 'border-slate-200 text-slate-500 hover:border-indigo-200'
                           }`}
                         >
-                          <option value="">-- Chọn đáp án --</option>
+                          <option value="">{t("ieltsTestModule.test.selectAnswer")}</option>
                           {qOptions.map((opt, idx) => (
                             <option key={idx} value={String.fromCharCode(65 + idx)}>
                               {String.fromCharCode(65 + idx)}. {opt}
@@ -1486,7 +1493,7 @@ export default function IeltsTestModule() {
                     ) : (
                       <input type="text" value={answers[q.id] || ""} onChange={e => setAnswer(q.id, e.target.value)}
                         className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
-                        placeholder="Nhập đáp án (VD: A, B, C)..." />
+                        placeholder={t("ieltsTestModule.test.matchingPlaceholder")} />
                     )
                   )}
                 </div>
@@ -1508,7 +1515,7 @@ export default function IeltsTestModule() {
             >
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[16px] text-indigo-600">grid_view</span>
-                <span className="text-xs font-bold text-slate-600">Question Navigator</span>
+                <span className="text-xs font-bold text-slate-600">{t("ieltsTestModule.test.questionNavigator")}</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">
                   {totalAnswered}/{allQuestions.length}
                 </span>
@@ -1529,7 +1536,7 @@ export default function IeltsTestModule() {
                 {sections.map((sec, secIdx) => (
                   <div key={secIdx} className="mb-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                      {sec.title || `Section ${secIdx + 1}`}
+                      {sec.title || t("ieltsTestModule.test.sectionFallback", { n: secIdx + 1 })}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {sec.questions.map((q) => {
@@ -1555,7 +1562,7 @@ export default function IeltsTestModule() {
                               }
                               ${isFlagged ? 'ring-2 ring-amber-400' : ''}
                             `}
-                            title={`Q${q.questionOrder}${isAnswered ? ' (ok)' : ''}${isFlagged ? ' (flagged)' : ''}`}
+                            title={`Q${q.questionOrder}${isAnswered ? ' ' + t('ieltsTestModule.test.navOk') : ''}${isFlagged ? ' ' + t('ieltsTestModule.test.navFlagged') : ''}`}
                           >
                             {q.questionOrder}
                             {isFlagged && (
@@ -1581,7 +1588,7 @@ export default function IeltsTestModule() {
           <div className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-bold">
             <span className="material-symbols-outlined text-[18px]">schedule</span>
             {timeWarning}
-            <button onClick={() => setTimeWarning(null)} className="ml-2 text-white/80 hover:text-white" aria-label="Đóng cảnh báo">×</button>
+            <button onClick={() => setTimeWarning(null)} className="ml-2 text-white/80 hover:text-white" aria-label={t("ieltsTestModule.test.closeWarningAria")}>×</button>
           </div>
         </div>
       )}
@@ -1597,39 +1604,46 @@ export default function IeltsTestModule() {
                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-green-600">task_alt</span>
                 </div>
-                <h2 className="text-lg font-bold text-slate-800">Nộp bài thi?</h2>
+                <h2 className="text-lg font-bold text-slate-800">{t("ieltsTestModule.test.confirm.title")}</h2>
               </div>
               <div className="space-y-2 text-sm text-slate-600 mb-5">
                 <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                  <span>Đã trả lời</span>
+                  <span>{t("ieltsTestModule.test.confirm.answered")}</span>
                   <span className="font-bold text-emerald-600">{totalAnswered}/{allQuestions.length}</span>
                 </div>
                 {unanswered > 0 ? (
                   <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-700">
                     <span className="material-symbols-outlined text-[18px]">warning</span>
-                    <span>Còn <strong>{unanswered}</strong> câu chưa trả lời. Vẫn nộp?</span>
+                    <span>
+                      <Trans
+                        i18nKey="ieltsTestModule.test.confirm.unanswered"
+                        ns="exam"
+                        values={{ count: unanswered }}
+                        components={{ strong: <strong /> }}
+                      />
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-emerald-700">
                     <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                    <span>Bạn đã hoàn thành tất cả câu hỏi.</span>
+                    <span>{t("ieltsTestModule.test.confirm.allDone")}</span>
                   </div>
                 )}
-                <p className="text-xs text-slate-400 pt-1">Sau khi nộp, bạn không thể chỉnh sửa đáp án.</p>
+                <p className="text-xs text-slate-400 pt-1">{t("ieltsTestModule.test.confirm.noEdit")}</p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSubmitConfirm(false)}
                   className="flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
                 >
-                  Tiếp tục làm bài
+                  {t("ieltsTestModule.test.confirm.continueTest")}
                 </button>
                 <button
                   onClick={() => { setShowSubmitConfirm(false); handleSubmit(); }}
                   disabled={isSubmitting}
                   className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-slate-400 transition-colors"
                 >
-                  {isSubmitting ? 'Đang nộp...' : 'Nộp bài'}
+                  {isSubmitting ? t("ieltsTestModule.test.confirm.submitting") : t("ieltsTestModule.test.confirm.submit")}
                 </button>
               </div>
             </div>
