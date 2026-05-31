@@ -251,6 +251,36 @@ class RagService {
     const resp = await apiClient.post("/rag/listening/generate", payload, { timeout: 300000 });
     return resp.data;
   }
+
+  // ── AI Answer-Reference (Study4-style "where is the answer") ─────────────
+  /**
+   * Locate the sentence in a reading passage / listening transcript that
+   * justifies a question's answer. Used by the test editor to pre-fill the
+   * answer reference, which the author can then adjust.
+   */
+  async findJustification(payload: {
+    passage: string;
+    question_text: string;
+    question_type: string;
+    correct_answer: string;
+    skill?: string;
+  }): Promise<FindJustificationResponse> {
+    const resp = await apiClient.post("/rag/find-justification", payload, { timeout: 120000 });
+    return resp.data;
+  }
+}
+
+export interface FindJustificationResponse {
+  success: boolean;
+  /** The verbatim justifying sentence, or "" if none found. */
+  snippet: string;
+  /** Char offsets into the supplied passage/transcript (best-effort). */
+  start?: number;
+  end?: number;
+  /** Listening only — seconds, mapped from Whisper segments when available. */
+  audio_start?: number;
+  audio_end?: number;
+  confidence?: number;
 }
 
 export interface GeneratedQuestion {

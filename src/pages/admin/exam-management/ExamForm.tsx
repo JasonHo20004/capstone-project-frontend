@@ -39,6 +39,8 @@ import {
 import apiClient from '@/lib/api/config';
 import { ragService } from '@/lib/api/services/rag.service';
 import type { GeneratedQuestion } from '@/lib/api/services/rag.service';
+import { AnswerReferencePicker, snippetToAudioRange } from './AnswerReferencePicker';
+import type { AnswerReference } from './AnswerReferencePicker';
 
 type SkillType = 'READING' | 'LISTENING' | 'WRITING' | 'SPEAKING';
 type QuestionType = 'MULTIPLE_CHOICE' | 'MULTIPLE_CHOICE_MULTI_ANSWER' | 'GAP_FILL' | 'SHORT_ANSWER' | 'TRUE_FALSE_NOT_GIVEN' | 'YES_NO_NOT_GIVEN' | 'MATCHING';
@@ -49,6 +51,8 @@ interface QuestionData {
   options: string[];
   content: Record<string, any>;
   answer: Record<string, any>;
+  /** Study4-style "answer location" — where this answer is justified in the passage/transcript. */
+  answerReference?: AnswerReference | null;
   explanation: string;
   questionOrder: number;
   imageUrl: string;
@@ -96,6 +100,29 @@ const QUESTION_TYPES: { label: string; value: QuestionType; desc: string }[] = [
 const parseGapPlaceholders = (text: string): number[] => {
   const matches = text.match(/\{\{(\d+)\}\}/g) || [];
   return matches.map(m => parseInt(m.replace(/[{}]/g, '')));
+};
+
+/** Build a human-readable "correct answer" string from a question, for the AI prompt. */
+const describeCorrectAnswer = (q: QuestionData): string => {
+  const a: any = q.answer || {};
+  switch (q.questionType) {
+    case 'MULTIPLE_CHOICE':
+      return q.options?.[a.correctIndex ?? 0] || '';
+    case 'MULTIPLE_CHOICE_MULTI_ANSWER':
+      return (a.correctIndices || []).map((i: number) => q.options?.[i]).filter(Boolean).join('; ');
+    case 'TRUE_FALSE_NOT_GIVEN':
+    case 'YES_NO_NOT_GIVEN':
+      return a.correctAnswer || '';
+    case 'GAP_FILL':
+      if (a.gaps) return Object.values(a.gaps).map((v: any) => (Array.isArray(v) ? v[0] : v)).filter(Boolean).join(', ');
+      return (a.text || []).join(', ');
+    case 'SHORT_ANSWER':
+      return (a.text || []).join(', ');
+    case 'MATCHING':
+      return a.correctOption || (a.text || [])[0] || '';
+    default:
+      return '';
+  }
 };
 
 const emptyQuestion = (order: number): QuestionData => ({
@@ -146,6 +173,8 @@ export default function ExamFormPage() {
   // Speech-to-text (Groq Whisper) of an uploaded/linked audio → script — per-section.
   const [transcribing, setTranscribing] = useState<number | null>(null);
   const [showAiConfig, setShowAiConfig] = useState<number | null>(null);
+  // AI "suggest answer reference" — tracks which question (`${sIdx}-${qIdx}`) is loading.
+  const [suggestingRef, setSuggestingRef] = useState<string | null>(null);
   const [form, setForm] = useState<TestFormData>({
     title: '',
     durationInMinutes: 60,
@@ -200,6 +229,7 @@ export default function ExamFormPage() {
                 options: q.options || ['', '', '', ''],
                 content: q.content || {},
                 answer: q.answer || {},
+                answerReference: q.answerReference || undefined,
                 explanation: q.explanation || '',
                 questionOrder: q.questionOrder || i + 1,
                 imageUrl: q.imageUrl || '',
@@ -521,6 +551,55 @@ export default function ExamFormPage() {
     setTimeout(() => imageInputRef.current?.click(), 0);
   };
 
+  // Ask the RAG service to locate the sentence in the passage/transcript that
+  // justifies this question's answer, then pre-fill the reference (editable).
+  const suggestReference = async (sIdx: number, qIdx: number) => {
+    const section = form.sections[sIdx];
+    const q = section?.questions[qIdx];
+    if (!section || !q) return;
+    const source = isListening
+      ? (section.audioTranscript || section.passageContent)
+      : section.passageContent;
+    if (!source || source.trim().length < 10) return;
+
+    const key = `${sIdx}-${qIdx}`;
+    setSuggestingRef(key);
+    setAiError(null);
+    try {
+      const resp = await ragService.findJustification({
+        passage: source,
+        question_text: q.questionText || (q.content as any)?.text || '',
+        question_type: q.questionType,
+        correct_answer: describeCorrectAnswer(q),
+        skill: isListening ? 'LISTENING' : 'READING',
+      });
+      if (resp?.snippet) {
+        const ref: AnswerReference = {
+          snippet: resp.snippet,
+          start: typeof resp.start === 'number' ? resp.start : undefined,
+          end: typeof resp.end === 'number' ? resp.end : undefined,
+          source: 'ai',
+        };
+        if (isListening) {
+          ref.audioStart = typeof resp.audio_start === 'number' ? resp.audio_start : undefined;
+          ref.audioEnd = typeof resp.audio_end === 'number' ? resp.audio_end : undefined;
+          if (ref.audioStart === undefined && section.audioSegments?.length) {
+            const range = snippetToAudioRange(resp.snippet, section.audioSegments);
+            ref.audioStart = range.audioStart;
+            ref.audioEnd = range.audioEnd;
+          }
+        }
+        updateQuestion(sIdx, qIdx, 'answerReference', ref);
+      } else {
+        setAiError('AI không tìm được dẫn chứng phù hợp — bạn có thể bôi đen thủ công.');
+      }
+    } catch {
+      setAiError('Không lấy được gợi ý dẫn chứng từ AI. Vui lòng thử lại hoặc bôi đen thủ công.');
+    } finally {
+      setSuggestingRef(null);
+    }
+  };
+
   const handleSubmit = () => {
     const payload: any = {
       title: form.title,
@@ -578,6 +657,10 @@ export default function ExamFormPage() {
             // answer is the correct option letter/text per question
             item.content = { text: q.questionText, options: q.options.filter(Boolean), instruction: (q.content as any)?.instruction || '' };
             item.answer = { correctOption: (q.answer as any)?.correctOption || (q.answer as any)?.text?.[0] || '' };
+          }
+          // Study4-style answer reference (where the answer is justified in the passage/transcript).
+          if (q.answerReference?.snippet) {
+            item.answerReference = { ...q.answerReference, source: q.answerReference.source || 'manual' };
           }
           return item;
         }),
@@ -1404,6 +1487,19 @@ export default function ExamFormPage() {
                                   : <><ImagePlus className="h-3 w-3" /> Thêm ảnh</>}
                               </Button>
                             )}
+                          </div>
+
+                          {/* Answer reference — Study4-style "where is the answer" location */}
+                          <div className="pt-2 border-t">
+                            <AnswerReferencePicker
+                              sourceText={isListening ? (section.audioTranscript || section.passageContent) : section.passageContent}
+                              isListening={isListening}
+                              segments={section.audioSegments}
+                              value={q.answerReference}
+                              onChange={(ref) => updateQuestion(sIdx, qIdx, 'answerReference', ref)}
+                              onAiSuggest={() => suggestReference(sIdx, qIdx)}
+                              aiLoading={suggestingRef === `${sIdx}-${qIdx}`}
+                            />
                           </div>
                         </CardContent>
 

@@ -20,6 +20,16 @@ interface QuestionAnswer {
   correctAnswer?: string;
 }
 
+/** Study4-style answer location — where the answer is justified in the passage/transcript. */
+interface AnswerRef {
+  snippet: string;
+  start?: number;
+  end?: number;
+  audioStart?: number;
+  audioEnd?: number;
+  source?: "manual" | "ai";
+}
+
 interface RawQuestion {
   id: string;
   sectionId?: string | null;
@@ -30,6 +40,7 @@ interface RawQuestion {
   imageUrl?: string | null;
   content?: QuestionContent | null;
   answer?: QuestionAnswer | null;
+  answerReference?: AnswerRef | null;
   explanation?: string | null;
 }
 
@@ -85,6 +96,7 @@ interface ReviewQuestion {
   explanation: string | null;
   imageUrl?: string | null;
   content?: QuestionContent | null;
+  answerReference?: AnswerRef | null;
 }
 
 interface ReviewSection {
@@ -173,9 +185,12 @@ function collectEvidenceTerms(q: ReviewQuestion | undefined): string[] {
 function HighlightedPassage({
   passage,
   activeTerms,
+  referenceSnippet,
 }: {
   passage: string;
   activeTerms: string[];
+  /** Exact answer-location snippet (Study4-style). Takes priority over keyword terms. */
+  referenceSnippet?: string | null;
 }) {
   const { t } = useTranslation("exam");
   const paragraphs = useMemo(() => {
@@ -183,29 +198,39 @@ function HighlightedPassage({
     return passage.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
   }, [passage]);
 
+  const ref = (referenceSnippet || "").trim();
+  const isReference = ref.length > 0;
+  // Reference mode: flexible-whitespace match of the exact authored snippet so the
+  // precise answer location is highlighted (and gets the #answer-evidence scroll target).
+  // Fallback mode: legacy keyword evidence terms.
+  const pattern = isReference
+    ? escapeRegExp(ref).replace(/\s+/g, "\\s+")
+    : activeTerms.filter(Boolean).map(escapeRegExp).sort((a, b) => b.length - a.length).join("|");
+  let evidenceAssigned = false;
+
   const renderText = (text: string) => {
-    if (!activeTerms.length) return <>{text}</>;
-    const pattern = activeTerms
-      .filter(Boolean)
-      .map(escapeRegExp)
-      .sort((a, b) => b.length - a.length)
-      .join("|");
     if (!pattern) return <>{text}</>;
     const regex = new RegExp(`(${pattern})`, "gi");
     const parts = text.split(regex);
+    const matchRegex = new RegExp(`^(${pattern})$`, "i");
     return (
       <>
         {parts.map((part, i) => {
-          const matchRegex = new RegExp(`^(${pattern})$`, "i");
-          return matchRegex.test(part) ? (
+          if (!matchRegex.test(part)) return <Fragment key={i}>{part}</Fragment>;
+          const assignId = isReference && !evidenceAssigned;
+          if (assignId) evidenceAssigned = true;
+          return (
             <mark
               key={i}
-              className="bg-amber-200/80 text-amber-900 rounded px-0.5 underline decoration-amber-500/60 decoration-2 underline-offset-2"
+              id={assignId ? "answer-evidence" : undefined}
+              className={
+                isReference
+                  ? "bg-amber-300 text-amber-950 rounded px-0.5 ring-1 ring-amber-400/70 shadow-sm"
+                  : "bg-amber-200/80 text-amber-900 rounded px-0.5 underline decoration-amber-500/60 decoration-2 underline-offset-2"
+              }
             >
               {part}
             </mark>
-          ) : (
-            <Fragment key={i}>{part}</Fragment>
           );
         })}
       </>
@@ -347,9 +372,12 @@ export default function TestResultPage() {
               correctAnswer: correctDisplay,
               correctAnswerRaw: correctRaw,
               isCorrect: !!ua?.isCorrect,
-              explanation: q.explanation || null,
+              explanation: q.explanation || ua?.question?.explanation || null,
               imageUrl: q.imageUrl || null,
               content: contentData,
+              // The attempt detail (/tests/attempts/:id) always returns the reference;
+              // the /tests/:id fetch only includes it for owners/admins, so prefer the attempt.
+              answerReference: q.answerReference || ua?.question?.answerReference || null,
             };
           });
 
@@ -372,6 +400,44 @@ export default function TestResultPage() {
       setActiveSectionId(sections[0].id);
     }
   }, [sections, activeSectionId]);
+
+  // When a question is focused, scroll the passage/transcript to the exact answer
+  // location, and (for listening) seek the audio player to the answer moment.
+  useEffect(() => {
+    if (!focusedQuestionId) return;
+    const section = sections.find(s => s.id === activeSectionId) || sections[0];
+    const fq = section?.questions.find(q => q.questionId === focusedQuestionId);
+    const ref = fq?.answerReference;
+    if (!ref?.snippet) return;
+
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById("answer-evidence");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (typeof ref.audioStart === "number" && section?.mediaUrl) {
+      setShowAudioReplay(prev => ({ ...prev, [section.id]: true }));
+      const applySeek = () => {
+        const audio = document.getElementById("result-audio") as HTMLAudioElement | null;
+        if (!audio) return false;
+        try {
+          audio.currentTime = ref.audioStart as number;
+          audio.play().catch(() => {});
+        } catch {
+          /* seeking before metadata is loaded — ignore */
+        }
+        return true;
+      };
+      // Audio element may need a tick to mount after opening the replay panel.
+      if (!applySeek()) timer = setTimeout(applySeek, 250);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      if (timer) clearTimeout(timer);
+    };
+  }, [focusedQuestionId, activeSectionId, sections]);
 
   const activeSection = sections.find(s => s.id === activeSectionId) || sections[0];
 
@@ -826,7 +892,7 @@ export default function TestResultPage() {
                   )}
                 </div>
 
-                {focusedQuestion && activeTerms.length > 0 && (
+                {focusedQuestion && (activeTerms.length > 0 || !!focusedQuestion.answerReference?.snippet) && (
                   <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-500 text-[14px]">ink_highlighter</span>
                     <Trans
@@ -860,14 +926,22 @@ export default function TestResultPage() {
                           </span>
                         </button>
                         {showAudioReplay[activeSection.id] && (
-                          <audio controls src={activeSection.mediaUrl} className="w-full mt-3 h-10" />
+                          <audio id="result-audio" controls src={activeSection.mediaUrl} className="w-full mt-3 h-10" />
                         )}
                       </div>
                     )}
-                    <HighlightedPassage passage={activeSection.audioTranscript} activeTerms={activeTerms} />
+                    <HighlightedPassage
+                      passage={activeSection.audioTranscript}
+                      activeTerms={activeTerms}
+                      referenceSnippet={focusedQuestion?.answerReference?.snippet}
+                    />
                   </>
                 ) : (
-                  <HighlightedPassage passage={activeSection.passage} activeTerms={activeTerms} />
+                  <HighlightedPassage
+                    passage={activeSection.passage}
+                    activeTerms={activeTerms}
+                    referenceSnippet={focusedQuestion?.answerReference?.snippet}
+                  />
                 )}
 
                 {activeSection.imageUrl && (
