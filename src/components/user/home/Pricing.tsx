@@ -24,8 +24,8 @@ export default function Pricing() {
 
   const freePlan = plans.find((p) => p.type === 'FREE');
   const proPlan = plans.find((p) => p.type === 'PRO');
-  const currentPlanType = subscription?.plan?.type ?? null;
   const isLoggedIn = !!user;
+  const currentPlanType = isLoggedIn ? subscription?.plan?.type ?? null : null;
   const proCtaTo = '/#pricing';
 
   const reveal = (i = 0) => ({

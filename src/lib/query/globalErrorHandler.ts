@@ -53,15 +53,28 @@ function extractErrorMessage(error: unknown): string {
  * Shows a toast notification for failed queries and mutations.
  * Use with QueryCache.onError and MutationCache.onError.
  */
+/**
+ * A 401 with no stored access token is a guest hitting an authenticated
+ * endpoint (e.g. /users/profile on a public page) — not an expired session.
+ * Don't show a "session expired" toast or force a logout in that case.
+ */
+function isGuestUnauthorized(err: ErrorWithDetails): boolean {
+  return err?.response?.status === 401 && !localStorage.getItem("accessToken");
+}
+
 export function handleQueryError(error: unknown): void {
   const err = error as ErrorWithDetails;
   if (err?.response?.status === 403) return;
+  if (isGuestUnauthorized(err)) return;
 
   const message = extractErrorMessage(error);
   toast.error(message, { id: "GLOBAL_QUERY_ERROR" });
 }
 
 export function handleMutationError(error: unknown): void {
+  const err = error as ErrorWithDetails;
+  if (isGuestUnauthorized(err)) return;
+
   const message = extractErrorMessage(error);
   toast.error(message);
 }

@@ -192,6 +192,7 @@
     "toasts": {
       "loginRequiredCart": "Bạn cần đăng nhập để thêm vào giỏ hàng",
       "loginRequiredBuy": "Bạn cần đăng nhập để mua khoá học",
+      "loginRequiredLesson": "Bạn cần đăng nhập để xem nội dung bài học",
       "loginAction": "Đăng nhập"
     }
   },

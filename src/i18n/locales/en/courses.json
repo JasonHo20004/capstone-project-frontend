@@ -192,6 +192,7 @@
     "toasts": {
       "loginRequiredCart": "Please sign in to add items to your cart",
       "loginRequiredBuy": "Please sign in to buy this course",
+      "loginRequiredLesson": "Please sign in to view lesson content",
       "loginAction": "Sign in"
     }
   },
