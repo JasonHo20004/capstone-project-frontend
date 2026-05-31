@@ -4,6 +4,7 @@ import { Lightbulb, BarChart2 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/api/config";
 import DiscussionSection from "@/components/DiscussionSection";
+import SyncedAudioTranscript from "@/components/user/exam-center/SyncedAudioTranscript";
 import { assessmentService } from "@/lib/api/services/user/assessment/assessment.service";
 
 interface TestInfo {
@@ -13,7 +14,15 @@ interface TestInfo {
   totalScore: number | null;
   practiceCount: number | null;
   testSkills?: { skill: string }[];
-  sections: { id: string; title: string; totalQuestions: number | null; questions: any[] }[];
+  sections: {
+    id: string;
+    title: string;
+    totalQuestions: number | null;
+    questions: any[];
+    mediaUrl?: string | null;
+    audioTranscript?: string | null;
+    audioSegments?: { start: number; end: number; text: string }[] | null;
+  }[];
 }
 
 export default function TestDetailPage() {
@@ -241,6 +250,18 @@ export default function TestDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Listening review — replay audio + click any transcript line to jump there */}
+            {(test?.sections || []).filter((s) => s.mediaUrl).map((s) => (
+              <div key={s.id} className="mb-8">
+                <SyncedAudioTranscript
+                  audioUrl={s.mediaUrl as string}
+                  segments={s.audioSegments}
+                  transcript={s.audioTranscript ?? undefined}
+                  title={`Nghe lại — ${s.title}`}
+                />
+              </div>
+            ))}
 
             {/* Answer Review Table */}
             {details.length > 0 && (

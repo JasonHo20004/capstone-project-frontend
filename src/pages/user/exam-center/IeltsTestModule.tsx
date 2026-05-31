@@ -82,6 +82,9 @@ export default function IeltsTestModule() {
   const { t } = useTranslation("exam");
   const { testId, sessionId: urlSessionId } = useParams<{ testId: string; sessionId?: string }>();
   const [sessionId, setSessionId] = useState<string | null>(urlSessionId || null);
+  // Mirror sessionId in a ref so submit (incl. the timer's auto-submit) always
+  // sends the current session id without depending on / re-creating callbacks.
+  const sessionIdRef = useRef<string | null>(urlSessionId || null);
   const [testData, setTestData] = useState<TestData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +180,24 @@ export default function IeltsTestModule() {
     return () => clearTimeout(t);
   }, [answers, writingEssays, autoSaveKey, submitted]);
 
+  // Keep the session-id ref in sync with state.
+  useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
+
+  // Best-effort server-side draft autosave (debounced, slower than localStorage).
+  // Backs up answers beyond the browser so work survives a localStorage wipe or
+  // a device switch. Degrades silently if the draft endpoint isn't ready.
+  useEffect(() => {
+    if (submitted || !testData?.id) return;
+    const sid = sessionIdRef.current;
+    if (!sid || Object.keys(answers).length === 0) return;
+    const h = setTimeout(() => {
+      apiClient
+        .post(`/tests/${testData.id}/draft`, { sessionId: sid, answers })
+        .catch(() => { /* offline / endpoint not migrated yet — local draft covers it */ });
+    }, 4000);
+    return () => clearTimeout(h);
+  }, [answers, testData?.id, submitted]);
+
   // Warn before an accidental refresh / tab close while the test is in progress.
   useBeforeUnload(
     !!testData && !submitted && !loading,
@@ -192,19 +213,58 @@ export default function IeltsTestModule() {
   const [playedSections, setPlayedSections] = useState<Set<string>>(new Set());
   const [audioStarted, setAudioStarted] = useState(false);
   const [showTranscript, setShowTranscript] = useState<Record<string, boolean>>({});
+  // True while the listening audio is buffering/loading — the countdown pauses so
+  // a slow connection doesn't eat exam time. Mirrored to a ref so the 1s timer
+  // can read it without restarting the interval each time it flips.
+  const [audioLoading, setAudioLoading] = useState(false);
+  const audioLoadingRef = useRef(false);
+  useEffect(() => { audioLoadingRef.current = audioLoading; }, [audioLoading]);
 
   useEffect(() => {
     setAudioStarted(false);
   }, [currentSectionIdx]);
 
+  // Persist which listening sections have already played, so a refresh can't
+  // re-enable replaying the audio. (The timer is server-anchored separately;
+  // this closes the matching "listen once" hole.)
+  useEffect(() => {
+    if (!testId) return;
+    try {
+      const raw = localStorage.getItem(`ielts_played_${testId}`);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) setPlayedSections(new Set(arr));
+      }
+    } catch { /* ignore parse errors */ }
+  }, [testId]);
+
+  useEffect(() => {
+    if (!testId || submitted) return;
+    try {
+      if (playedSections.size > 0) {
+        localStorage.setItem(`ielts_played_${testId}`, JSON.stringify([...playedSections]));
+      }
+    } catch { /* quota or private mode — ignore */ }
+  }, [playedSections, testId, submitted]);
+
   const handleAudioPlay = useCallback(() => {
     setAudioStarted(true);
+    setAudioLoading(false); // playback started → not buffering
   }, []);
 
   const handleAudioEnded = useCallback(() => {
+    setAudioLoading(false);
     const sid = testData?.sections?.[currentSectionIdx]?.id;
     if (sid) setPlayedSections(prev => new Set(prev).add(sid));
   }, [testData, currentSectionIdx]);
+
+  // Buffering ↔ ready, used to pause/resume the exam countdown.
+  const handleAudioWaiting = useCallback(() => setAudioLoading(true), []);
+  const handleAudioReady = useCallback(() => setAudioLoading(false), []);
+
+  // Reset the loading flag when switching sections so a previous section's
+  // buffering state can never leave the timer paused.
+  useEffect(() => { setAudioLoading(false); }, [currentSectionIdx]);
 
   const handleAudioSeeking = useCallback(() => {
     const el = audioRef.current;
@@ -291,28 +351,43 @@ export default function IeltsTestModule() {
         }
 
         setTestData(test);
+        // Default in case /start fails (network blip) — overridden below by the
+        // server-anchored remaining time on success.
         setTimeLeft((test.durationInMinutes || 60) * 60);
 
-        // Create practice session BEFORE showing test (so URL has sessionId immediately)
-        if (!urlSessionId) {
-          try {
-            const token = localStorage.getItem("accessToken");
-            let userId: string | undefined;
-            if (token) {
-              const payload = JSON.parse(atob(token.split(".")[1]));
-              userId = payload.sub || payload.userId || payload.id;
-            }
-            if (userId) {
-              const startResp = await apiClient.post(`/tests/${test.id}/start`, { userId });
-              const newSessionId = startResp.data?.data?.sessionId;
-              if (newSessionId) {
-                setSessionId(newSessionId);
-                window.history.replaceState(null, "", `/exam/test/${testId}/session/${newSessionId}`);
-              }
-            }
-          } catch (err) {
-            console.warn("Failed to create session:", err);
+        // Open (or resume) the practice session on the server. startSession
+        // reuses an existing ONGOING session, so its startedAt is stable across
+        // refreshes — the countdown is derived from it instead of resetting to
+        // the full duration (which previously let a refresh reset the clock and
+        // re-enable the listening audio). Identity is taken from the JWT server-side.
+        try {
+          const startResp = await apiClient.post(`/tests/${test.id}/start`);
+          const s = startResp.data?.data;
+          if (s?.sessionId) {
+            setSessionId(s.sessionId);
+            window.history.replaceState(null, "", `/exam/test/${testId}/session/${s.sessionId}`);
           }
+          const durationSec = ((s?.durationInMinutes ?? test.durationInMinutes) || 60) * 60;
+          if (s?.startedAt) {
+            const elapsed = Math.floor((Date.now() - new Date(s.startedAt).getTime()) / 1000);
+            setTimeLeft(Math.max(0, durationSec - elapsed));
+          }
+          // Restore the server-side draft when there's no local draft (e.g.
+          // resuming on another device). A local draft, if present, wins.
+          if (s?.draftAnswers && typeof s.draftAnswers === "object") {
+            setAnswers(prev =>
+              Object.keys(prev).length > 0 ? prev : (s.draftAnswers as Record<string, string>),
+            );
+          }
+        } catch (err: any) {
+          // Attempt-limit / auth errors must block the test, not silently start it.
+          const status = err?.response?.status;
+          if (status === 401 || status === 403 || status === 429) {
+            setError(err?.response?.data?.message || t("ieltsTestModule.errors.loadFailed"));
+            setLoading(false);
+            return;
+          }
+          console.warn("Failed to create session:", err);
         }
 
         setLoading(false);
@@ -358,6 +433,10 @@ export default function IeltsTestModule() {
   useEffect(() => {
     if (!testData || submitted || timeLeft <= 0) return;
     const timer = setInterval(() => {
+      // Pause the countdown while listening audio is buffering so a slow
+      // connection doesn't burn exam time. (The server deadline has a generous
+      // grace window, so brief client-side pauses never cause a late rejection.)
+      if (audioLoadingRef.current) return;
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
@@ -464,13 +543,21 @@ export default function IeltsTestModule() {
         if (Object.keys(obj).length > 0) submissions[qId] = JSON.stringify(obj);
         else delete submissions[qId];
       }
-      const resp = await apiClient.post(`/tests/${testData.id}/submit`, { submissions, userId });
+      const resp = await apiClient.post(`/tests/${testData.id}/submit`, {
+        submissions,
+        userId,
+        // Closes the ONGOING session opened at start (server grades it once).
+        sessionId: sessionIdRef.current,
+      });
       const sessionId = resp.data?.data?.sessionId;
       if (autoSaveKey) {
         try { localStorage.removeItem(autoSaveKey); } catch {}
       }
       if (highlightKey) {
         try { localStorage.removeItem(highlightKey); } catch {}
+      }
+      if (testId) {
+        try { localStorage.removeItem(`ielts_played_${testId}`); } catch {}
       }
       if (sessionId) {
         navigate(`/practice/${testData.id}/result/${sessionId}`);
@@ -1116,6 +1203,13 @@ export default function IeltsTestModule() {
                   onEnded={handleAudioEnded}
                   onSeeking={handleAudioSeeking}
                   onTimeUpdate={handleAudioTimeUpdate}
+                  onLoadStart={handleAudioWaiting}
+                  onWaiting={handleAudioWaiting}
+                  onStalled={handleAudioWaiting}
+                  onCanPlay={handleAudioReady}
+                  onPlaying={handleAudioReady}
+                  onPause={handleAudioReady}
+                  onError={handleAudioReady}
                   className={`w-full h-10 ${alreadyPlayed ? "opacity-50 pointer-events-none" : ""}`}
                   src={currentSection.mediaUrl}
                   preload="auto"
@@ -1127,9 +1221,15 @@ export default function IeltsTestModule() {
                     ? <><Lock size={12} className="inline mr-1" />{t("ieltsTestModule.test.audioLockedOnce")}</>
                     : <><Lightbulb size={12} className="inline mr-1" />{t("ieltsTestModule.test.audioOnceNotice")}</>}
                 </p>
+                {audioLoading && !alreadyPlayed && (
+                  <p className="text-xs mt-1 text-amber-600 flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
+                    Đang tải audio — đồng hồ tạm dừng
+                  </p>
+                )}
 
-                {/* Transcript reveal — only after submission */}
-                {submitted && currentSection.audioTranscript && (
+                {/* Transcript reveal — available on demand during the test (and after) */}
+                {currentSection.audioTranscript && (
                   <div className="mt-4 pt-4 border-t border-slate-200">
                     <button
                       onClick={() => setShowTranscript(prev => ({ ...prev, [sid]: !prev[sid] }))}

@@ -237,6 +237,20 @@ class RagService {
     const resp = await apiClient.post("/rag/reading/generate", payload);
     return resp.data;
   }
+
+  // ── AI Listening Generator (audio + questions from a script) ─────────────
+  async generateListening(payload: {
+    transcript: string;
+    question_types?: string[];
+    num_questions?: number;
+    difficulty?: string;
+    language?: string;
+    level?: string;
+  }): Promise<ListeningGenResponse> {
+    // TTS + LLM can take a while for a long script.
+    const resp = await apiClient.post("/rag/listening/generate", payload, { timeout: 300000 });
+    return resp.data;
+  }
 }
 
 export interface GeneratedQuestion {
@@ -251,6 +265,14 @@ export interface GeneratedQuestion {
 
 export interface ReadingGenResponse {
   success: boolean;
+  questions: GeneratedQuestion[];
+  summary: string;
+}
+
+export interface ListeningGenResponse {
+  success: boolean;
+  audio_url: string;
+  transcript: string;
   questions: GeneratedQuestion[];
   summary: string;
 }

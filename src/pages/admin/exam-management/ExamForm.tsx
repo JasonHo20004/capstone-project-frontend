@@ -60,6 +60,8 @@ interface SectionData {
   passageContent: string;
   mediaUrl: string;
   audioTranscript: string;
+  /** Whisper per-segment timestamps for transcript↔audio sync in review. */
+  audioSegments?: { start: number; end: number; text: string }[];
   imageUrl: string;
   questions: QuestionData[];
   collapsed: boolean;
@@ -139,6 +141,10 @@ export default function ExamFormPage() {
   const [aiNumQuestions, setAiNumQuestions] = useState(10);
   const [aiDifficulty, setAiDifficulty] = useState('intermediate');
   const [aiTypes, setAiTypes] = useState(['MULTIPLE_CHOICE', 'TRUE_FALSE_NOT_GIVEN', 'GAP_FILL']);
+  // AI listening generation (TTS audio + questions from a script) — per-section.
+  const [listeningGenerating, setListeningGenerating] = useState<number | null>(null);
+  // Speech-to-text (Groq Whisper) of an uploaded/linked audio → script — per-section.
+  const [transcribing, setTranscribing] = useState<number | null>(null);
   const [showAiConfig, setShowAiConfig] = useState<number | null>(null);
   const [form, setForm] = useState<TestFormData>({
     title: '',
@@ -186,6 +192,7 @@ export default function ExamFormPage() {
               passageContent: s.passages?.[0]?.content || '',
               mediaUrl: s.mediaUrl || '',
               audioTranscript: s.audioTranscript || '',
+              audioSegments: Array.isArray(s.audioSegments) ? s.audioSegments : undefined,
               imageUrl: s.imageUrl || '',
               questions: s.questions?.map((q: any) => ({
                 questionText: q.questionText || '',
@@ -288,6 +295,43 @@ export default function ExamFormPage() {
     });
   };
 
+  // Speech-to-text: send an audio URL (S3 / external) to Groq Whisper and fill
+  // the section's script. Lets the admin get a transcript without typing it.
+  const transcribeAudioUrl = async (sIdx: number, audioUrl: string) => {
+    if (!audioUrl) {
+      setAiError('Chưa có audio để tạo transcript.');
+      return;
+    }
+    setTranscribing(sIdx);
+    setAiError(null);
+    try {
+      const resp = await apiClient.post('/ai/transcribe', { audioUrl }, { timeout: 180000 });
+      const transcript = (resp.data?.data?.transcript || '').trim();
+      // Per-segment timestamps power the click-a-line-to-seek review after submit.
+      const segments = Array.isArray(resp.data?.data?.segments) ? resp.data.data.segments : [];
+      if (transcript) {
+        setForm(prev => {
+          const sections = [...prev.sections];
+          sections[sIdx] = {
+            ...sections[sIdx],
+            // Student-facing "show script", and also the AI-Tutor/question source.
+            audioTranscript: transcript,
+            audioSegments: segments,
+            passageContent: sections[sIdx].passageContent || transcript,
+          };
+          return { ...prev, sections };
+        });
+      } else {
+        setAiError('Whisper không trả về transcript (audio quá ngắn hoặc không phải tiếng Anh?).');
+      }
+    } catch (err: any) {
+      console.error('Transcribe error:', err);
+      setAiError(err?.response?.data?.error || err?.message || 'Lỗi tạo transcript từ audio.');
+    } finally {
+      setTranscribing(null);
+    }
+  };
+
   const handleAudioUpload = async (file: File, sectionIdx: number) => {
     setUploading(true);
     setUploadingSectionIdx(sectionIdx);
@@ -296,9 +340,58 @@ export default function ExamFormPage() {
       fd.append('audio', file);
       const resp = await apiClient.post('/tests/upload-audio', fd);
       const url = resp.data?.data?.url;
-      if (url) updateSection(sectionIdx, 'mediaUrl', url);
+      if (url) {
+        updateSection(sectionIdx, 'mediaUrl', url);
+        // Auto-transcribe the just-uploaded audio so the admin never types the
+        // script. (Best-effort — they can re-run or edit manually if it fails.)
+        transcribeAudioUrl(sectionIdx, url);
+      }
     } catch (err) { console.error('Upload failed:', err); }
     finally { setUploading(false); setUploadingSectionIdx(null); }
+  };
+
+  // Generate questions from the (Whisper) transcript — questions only, keeps the
+  // uploaded audio as-is.
+  const handleQuestionsFromTranscript = async (sIdx: number) => {
+    const transcript = form.sections[sIdx]?.audioTranscript;
+    if (!transcript || transcript.trim().length < 30) {
+      setAiError('Chưa có transcript. Hãy tạo transcript từ audio trước.');
+      return;
+    }
+    setAiGenerating(sIdx);
+    setAiError(null);
+    try {
+      const resp = await ragService.generateReadingQuestions({
+        passage: transcript,
+        question_types: aiTypes,
+        num_questions: aiNumQuestions,
+        difficulty: aiDifficulty,
+      });
+      if (resp.success && resp.questions.length > 0) {
+        setForm(prev => {
+          const sections = [...prev.sections];
+          const existingCount = sections[sIdx].questions.length;
+          const newQuestions: QuestionData[] = resp.questions.map((q, i) => ({
+            questionText: q.questionText,
+            questionType: (q.questionType as QuestionType) || 'MULTIPLE_CHOICE',
+            options: q.options || [],
+            content: q.content || {},
+            answer: q.answer || {},
+            explanation: q.explanation || '',
+            questionOrder: existingCount + i + 1,
+            imageUrl: '',
+          }));
+          sections[sIdx] = { ...sections[sIdx], questions: [...sections[sIdx].questions, ...newQuestions] };
+          return { ...prev, sections };
+        });
+      } else {
+        setAiError('AI không tạo được câu hỏi. Vui lòng thử lại.');
+      }
+    } catch (err: any) {
+      setAiError(err?.response?.data?.detail || err?.message || 'Lỗi tạo câu hỏi từ transcript.');
+    } finally {
+      setAiGenerating(null);
+    }
   };
 
   // ── AI Question Generation Handler ──────────────────────────────────────
@@ -349,6 +442,61 @@ export default function ExamFormPage() {
     }
   };
 
+  // ── AI Listening: synthesize audio + generate questions from the script ──
+  const handleGenerateListening = async (sIdx: number) => {
+    const script = form.sections[sIdx]?.passageContent;
+    if (!script || script.trim().length < 30) {
+      setAiError('Cần nhập script/transcript (tối thiểu 30 ký tự) để AI tạo audio + câu hỏi.');
+      return;
+    }
+    setListeningGenerating(sIdx);
+    setAiError(null);
+    try {
+      const resp = await ragService.generateListening({
+        transcript: script,
+        question_types: aiTypes,
+        num_questions: aiNumQuestions,
+        difficulty: aiDifficulty,
+        language: 'en',
+      });
+      if (resp.success) {
+        setForm(prev => {
+          const sections = [...prev.sections];
+          const existingCount = sections[sIdx].questions.length;
+          const newQuestions: QuestionData[] = (resp.questions || []).map((q, i) => ({
+            questionText: q.questionText,
+            questionType: (q.questionType as QuestionType) || 'MULTIPLE_CHOICE',
+            options: q.options || [],
+            content: q.content || {},
+            answer: q.answer || {},
+            explanation: q.explanation || '',
+            questionOrder: existingCount + i + 1,
+            imageUrl: '',
+          }));
+          sections[sIdx] = {
+            ...sections[sIdx],
+            // Use the synthesized audio if returned; keep any existing audio otherwise.
+            mediaUrl: resp.audio_url || sections[sIdx].mediaUrl,
+            // Populate the post-submit transcript from the script if empty.
+            audioTranscript: sections[sIdx].audioTranscript || script,
+            questions: [...sections[sIdx].questions, ...newQuestions],
+          };
+          return { ...prev, sections };
+        });
+        if (!resp.audio_url) {
+          setAiError('Đã tạo câu hỏi nhưng AI chưa tạo được audio — hãy upload audio thủ công.');
+        }
+      } else {
+        setAiError('AI không tạo được nội dung nghe. Vui lòng thử lại.');
+      }
+    } catch (err: any) {
+      console.error('AI Listening error:', err);
+      setAiError(err?.response?.data?.detail || err?.message || 'Lỗi tạo nội dung nghe. Vui lòng thử lại.');
+    } finally {
+      setListeningGenerating(null);
+    }
+  };
+
   const handleImageUpload = async (file: File) => {
     if (!imageUploadTarget) return;
     setUploadingImage(true);
@@ -385,6 +533,7 @@ export default function ExamFormPage() {
         skill: selectedSkill || undefined,
         mediaUrl: section.mediaUrl || undefined,
         audioTranscript: section.audioTranscript || undefined,
+        audioSegments: (section.audioSegments && section.audioSegments.length > 0) ? section.audioSegments : undefined,
         imageUrl: section.imageUrl || undefined,
         passageContent: section.passageContent || undefined,
         questions: section.questions.map((q) => {
@@ -655,12 +804,12 @@ export default function ExamFormPage() {
                               Your browser does not support audio.
                             </audio>
 
-                            {/* Audio transcript — shown to student AFTER submission */}
+                            {/* Audio transcript — auto-filled by Whisper; student can reveal it on demand */}
                             <div className="mt-3 pt-3 border-t border-primary/10">
                               <div className="flex items-center justify-between mb-1.5">
                                 <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                                   <FileText className="h-3.5 w-3.5" />
-                                  Transcript (hiển thị sau khi học viên nộp bài)
+                                  Transcript / script (học viên có thể bấm "Hiện script")
                                 </Label>
                                 {section.audioTranscript && (
                                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -668,14 +817,37 @@ export default function ExamFormPage() {
                                   </span>
                                 )}
                               </div>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                <Button
+                                  type="button" size="sm" variant="outline" className="gap-1.5"
+                                  disabled={transcribing !== null || !section.mediaUrl}
+                                  onClick={() => transcribeAudioUrl(sIdx, section.mediaUrl)}
+                                >
+                                  {transcribing === sIdx
+                                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang nhận dạng giọng nói…</>
+                                    : <><FileText className="h-4 w-4" /> Tạo transcript từ audio (Whisper)</>}
+                                </Button>
+                                <Button
+                                  type="button" size="sm" variant="outline" className="gap-1.5"
+                                  disabled={aiGenerating !== null || !section.audioTranscript || section.audioTranscript.trim().length < 30}
+                                  onClick={() => handleQuestionsFromTranscript(sIdx)}
+                                >
+                                  {aiGenerating === sIdx
+                                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tạo câu hỏi…</>
+                                    : <><BookOpen className="h-4 w-4" /> Tạo câu hỏi từ transcript</>}
+                                </Button>
+                              </div>
                               <Textarea
-                                placeholder="Dán transcript của audio ở đây. Học viên sẽ thấy nội dung này sau khi nộp bài để tự kiểm tra kỹ năng nghe."
+                                placeholder="Tự động điền từ Whisper sau khi upload audio. Bạn có thể chỉnh tay. Học viên có thể bấm 'Hiện script' để xem khi làm bài."
                                 value={section.audioTranscript}
                                 onChange={(e) => updateSection(sIdx, 'audioTranscript', e.target.value)}
                                 className="min-h-[120px] text-sm resize-y font-mono"
                               />
+                              {aiError && (transcribing === sIdx || aiGenerating === sIdx) && (
+                                <p className="text-xs text-destructive mt-1">❌ {aiError}</p>
+                              )}
                               <p className="text-[11px] text-muted-foreground mt-1.5">
-                                💡 Có thể paste trực tiếp transcript chuẩn của Cambridge IELTS để học viên đối chiếu sau bài thi.
+                                💡 Upload audio xong AI tự tạo transcript (Groq Whisper). Có thể chỉnh lại trước khi tạo câu hỏi.
                               </p>
                             </div>
                           </div>
@@ -780,6 +952,22 @@ export default function ExamFormPage() {
                             value={section.passageContent}
                             onChange={(e) => updateSection(sIdx, 'passageContent', e.target.value)}
                           />
+                          {/* AI: synthesize audio + generate questions straight from this script */}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 gap-1.5"
+                            disabled={listeningGenerating !== null || !section.passageContent || section.passageContent.trim().length < 30}
+                            onClick={() => handleGenerateListening(sIdx)}
+                          >
+                            {listeningGenerating === sIdx
+                              ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tạo audio + câu hỏi…</>
+                              : <><Headphones className="h-4 w-4" /> Tạo audio + câu hỏi từ script (AI)</>}
+                          </Button>
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            AI đọc script thành audio (TTS) và tạo {aiNumQuestions} câu hỏi từ nội dung. Audio tạo ra sẽ thay cho file phía trên.
+                          </p>
                         </div>
                       </div>
                     ) : (
