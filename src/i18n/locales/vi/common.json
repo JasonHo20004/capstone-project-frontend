@@ -96,6 +96,28 @@
     "message": "Rất tiếc! Không tìm thấy trang",
     "backHome": "Về Trang chủ"
   },
+  "error": {
+    "backHome": "Về trang chủ",
+    "goBack": "Quay lại",
+    "signIn": "Đăng nhập",
+    "tryAgain": "Thử lại",
+    "needHelp": "Cần hỗ trợ? Liên hệ chúng tôi",
+    "unauthorized": {
+      "status": "Chưa đăng nhập",
+      "title": "Vui lòng đăng nhập để tiếp tục",
+      "message": "Trang này dành cho thành viên đã đăng nhập. Hãy đăng nhập và chúng tôi sẽ đưa bạn trở lại ngay."
+    },
+    "forbidden": {
+      "status": "Không có quyền",
+      "title": "Bạn không có quyền truy cập trang này",
+      "message": "Tài khoản của bạn không có quyền vào khu vực này. Hãy liên hệ quản trị viên nếu bạn nghĩ đây là nhầm lẫn."
+    },
+    "serverError": {
+      "status": "Lỗi máy chủ",
+      "title": "Đã có sự cố từ phía chúng tôi",
+      "message": "Đây là lỗi từ phía chúng tôi, không phải bạn. Hãy thử lại sau giây lát, hoặc quay về trang chủ."
+    }
+  },
   "backToTop": "Cuộn lên đầu trang",
   "relativeTime": {
     "justNow": "Vừa xong",

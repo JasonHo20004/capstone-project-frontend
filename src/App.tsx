@@ -82,6 +82,9 @@ import PaymentResultPage from "./pages/user/payment/PaymentResult";
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
+import Unauthorized from "./pages/shared/Unauthorized";
+import Forbidden from "./pages/shared/Forbidden";
+import ServerError from "./pages/shared/ServerError";
 import Register from "./pages/shared/auth/Register";
 import VerifyEmailPage from "./pages/shared/auth/VerifyEmail";
 import ForgotPassword from "./pages/shared/auth/ForgotPassword";
@@ -229,6 +232,11 @@ const App = () => (
           
           {/* Payment result callback (Stripe) */}
           <Route path="/payment/result" element={<PaymentResultPage />} />
+
+          {/* Error pages — reachable by path and for programmatic redirects */}
+          <Route path="/401" element={<Unauthorized />} />
+          <Route path="/403" element={<Forbidden />} />
+          <Route path="/500" element={<ServerError />} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
