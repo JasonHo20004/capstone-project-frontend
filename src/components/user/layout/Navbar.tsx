@@ -31,6 +31,7 @@ const Navbar = () => {
   const scrollLinks = [
     { to: '/', hash: '', i18nKey: 'publicNav.home' },
     { to: '/#about', hash: 'about', i18nKey: 'publicNav.about' },
+    { to: '/#services', hash: 'services', i18nKey: 'publicNav.services' },
     { to: '/#courses', hash: 'courses', i18nKey: 'publicNav.courses' },
     { to: '/#pricing', hash: 'pricing', i18nKey: 'publicNav.pricing' },
   ];

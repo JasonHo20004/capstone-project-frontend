@@ -16,7 +16,7 @@ const Footer = () => {
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
                 <BookOpen className="w-6 h-6" />
               </div>
-              <span className="text-2xl font-bold text-white font-display">SkillBoost</span>
+              <span className="text-2xl font-bold text-white font-display">Alicia</span>
             </Link>
             <p className="text-slate-400 leading-relaxed">
               {t('footer.brandDescription')}
@@ -97,7 +97,7 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-slate-400">
                 <Mail className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                <span>support@skillboost.com</span>
+                <span>support@alicia.com</span>
               </li>
               <li className="flex items-start gap-3 text-slate-400">
                 <Phone className="w-5 h-5 mt-0.5 flex-shrink-0" />

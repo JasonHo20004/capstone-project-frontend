@@ -560,7 +560,7 @@
       "titleFull": "Tạo lộ trình học cá nhân hoá của bạn",
       "titleCompact": "Lộ trình của bạn",
       "aiBadge": "AI hỗ trợ",
-      "tagline": "SkillBoost AI sử dụng trình độ đầu vào, mục tiêu và thói quen học của bạn để dựng lộ trình phù hợp riêng — không phải một lộ trình chung chung.",
+      "tagline": "Alicia AI sử dụng trình độ đầu vào, mục tiêu và thói quen học của bạn để dựng lộ trình phù hợp riêng — không phải một lộ trình chung chung.",
       "backToDashboard": "← Về bảng điều khiển"
     },
     "error": {
@@ -597,7 +597,7 @@
     },
     "generating": {
       "title": "Đang dựng lộ trình cá nhân hoá của bạn…",
-      "subtitle": "SkillBoost AI đang phân tích trình độ, mục tiêu, lịch học và sở thích học của bạn.",
+      "subtitle": "Alicia AI đang phân tích trình độ, mục tiêu, lịch học và sở thích học của bạn.",
       "steps": {
         "1": "Phân tích trình độ CEFR",
         "2": "Hiểu mục tiêu của bạn",
@@ -619,7 +619,7 @@
       },
       "noPlacement": {
         "title": "Chưa có kết quả kiểm tra đầu vào",
-        "body": "Hãy làm bài kiểm tra nhanh để SkillBoost xác định trình độ CEFR của bạn. Bạn vẫn có thể tiếp tục thủ công bên dưới — độ chính xác sẽ hạn chế hơn.",
+        "body": "Hãy làm bài kiểm tra nhanh để Alicia xác định trình độ CEFR của bạn. Bạn vẫn có thể tiếp tục thủ công bên dưới — độ chính xác sẽ hạn chế hơn.",
         "takeTest": "Làm bài kiểm tra đầu vào"
       },
       "levelField": {
@@ -650,7 +650,7 @@
     },
     "step2": {
       "title": "Đặt mục tiêu",
-      "description": "Hãy cho SkillBoost biết bạn đang hướng tới gì. Chúng tôi sẽ kiểm tra tính khả thi so với trình độ và thời hạn.",
+      "description": "Hãy cho Alicia biết bạn đang hướng tới gì. Chúng tôi sẽ kiểm tra tính khả thi so với trình độ và thời hạn.",
       "badge": "Bước 2 / 4",
       "fields": {
         "exam": "Loại kỳ thi",
@@ -924,13 +924,13 @@
       "generate": "Tạo lộ trình học cá nhân hoá",
       "preview": {
         "title": "Sẵn sàng tạo lộ trình",
-        "description": "SkillBoost AI sẽ kết hợp mọi thông tin bạn cung cấp thành lộ trình có cột mốc theo tuần và bài học gợi ý.",
+        "description": "Alicia AI sẽ kết hợp mọi thông tin bạn cung cấp thành lộ trình có cột mốc theo tuần và bài học gợi ý.",
         "listHeading": "Bạn sẽ nhận được:",
         "list1": "Phân tích khoảng cách mục tiêu và độ khả thi",
         "list2": "Bảng xếp hạng ưu tiên kỹ năng kèm lý do",
         "list3": "Lộ trình theo giai đoạn (Nền tảng → Phát triển kỹ năng → Mô phỏng)",
         "list4": "Lịch tuần khớp với các ngày rảnh của bạn",
-        "list5": "Bài học, flashcard và bài thi thử thật bên trong SkillBoost"
+        "list5": "Bài học, flashcard và bài thi thử thật bên trong Alicia"
       }
     },
     "result": {
@@ -1011,7 +1011,7 @@
         },
         "quizzes": {
           "title": "Quiz & bài thi thử",
-          "description": "Đo tiến độ bằng bài đánh giá thật của SkillBoost."
+          "description": "Đo tiến độ bằng bài đánh giá thật của Alicia."
         }
       },
       "types": {

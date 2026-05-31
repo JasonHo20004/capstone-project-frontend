@@ -38,8 +38,8 @@ const Contact = () => {
     {
       icon: Mail,
       title: t('contact.info.email'),
-      content: 'support@skillboost.com',
-      link: 'mailto:support@skillboost.com',
+      content: 'support@alicia.com',
+      link: 'mailto:support@alicia.com',
     },
     {
       icon: Phone,

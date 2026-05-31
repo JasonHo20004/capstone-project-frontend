@@ -26,6 +26,7 @@
   "publicNav": {
     "home": "Trang chủ",
     "about": "Giới thiệu",
+    "services": "Dịch vụ",
     "courses": "Khoá học",
     "pricing": "Bảng giá",
     "workspace": "Khu vực học tập",
@@ -54,7 +55,7 @@
     "labelShort": "Pro"
   },
   "footer": {
-    "rights": "© {{year}} SkillBoost. Bảo lưu mọi quyền.",
+    "rights": "© {{year}} Alicia. Bảo lưu mọi quyền.",
     "brandDescription": "Nâng tầm kỹ năng tiếng Anh với các khóa học do chuyên gia giảng dạy và trải nghiệm học tập tương tác.",
     "quickLinks": "Liên kết nhanh",
     "viewCourses": "Xem khóa học",

@@ -12,3 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Replace host with the production origin before deploy.
+Sitemap: https://www.alicia.com/sitemap.xml

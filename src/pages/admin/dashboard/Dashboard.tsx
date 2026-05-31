@@ -166,7 +166,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-display">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Tổng quan hoạt động hệ thống SkillBoost —{" "}
+            Tổng quan hoạt động hệ thống Alicia —{" "}
             {new Date().toLocaleDateString("vi-VN", {
               weekday: "long",
               year: "numeric",

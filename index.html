@@ -3,22 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SkillBoost - Master English Online | Premium Learning Platform</title>
-    <meta name="description" content="Transform your English skills with SkillBoost. Expert-led courses, interactive lessons, and proven methods to achieve fluency. Start your learning journey today." />
-    <meta name="author" content="SkillBoost" />
+    <title>Alicia - Master English &amp; IELTS Online | Learning Platform</title>
+    <meta name="description" content="Learn English and prepare for IELTS with Alicia. Expert-led courses, AI-graded speaking and writing, a personalised study path, and live classes. Start free today." />
+    <meta name="author" content="Alicia" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0058bc" />
+    <link rel="canonical" href="/" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Lexend:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
-    <meta property="og:title" content="SkillBoost - Master English Online" />
-    <meta property="og:description" content="Transform your English skills with expert-led courses and interactive lessons." />
+    <meta property="og:site_name" content="Alicia" />
+    <meta property="og:title" content="Alicia - Master English &amp; IELTS Online" />
+    <meta property="og:description" content="Learn English and prepare for IELTS with expert-led courses, AI-graded speaking and writing, and a personalised study path." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:url" content="/" />
+    <!-- TODO: add a real 1200x630 share image at public/og-image.png (replaces the removed external scaffold image) -->
+    <meta property="og:image" content="/og-image.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="Alicia - Master English &amp; IELTS Online" />
+    <meta name="twitter:description" content="Learn English and prepare for IELTS with Alicia. AI-graded speaking and writing, a personalised study path, and live classes." />
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "EducationalOrganization",
+        "name": "Alicia",
+        "description": "Online English and IELTS learning platform with expert-led courses, AI-graded speaking and writing, and a personalised study path.",
+        "url": "/",
+        "logo": "/favicon.ico"
+      }
+    </script>
 
     <!-- Apply theme class BEFORE React mounts to avoid a light→dark flash on
          first paint. Mirrors what next-themes will set after hydration. -->
@@ -33,7 +52,7 @@
               window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (isDark) document.documentElement.classList.add('dark');
         } catch (e) {
-          /* localStorage blocked — fall back to light */
+          /* localStorage blocked, fall back to light */
         }
       })();
     </script>
