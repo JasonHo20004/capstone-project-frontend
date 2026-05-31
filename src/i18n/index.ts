@@ -12,6 +12,8 @@ import enAccount from "./locales/en/account.json";
 import enExam from "./locales/en/exam.json";
 import enInfo from "./locales/en/info.json";
 import enSeller from "./locales/en/seller.json";
+import enLivestream from "./locales/en/livestream.json";
+import enFlashcards from "./locales/en/flashcards.json";
 
 import viCommon from "./locales/vi/common.json";
 import viAuth from "./locales/vi/auth.json";
@@ -23,6 +25,8 @@ import viAccount from "./locales/vi/account.json";
 import viExam from "./locales/vi/exam.json";
 import viInfo from "./locales/vi/info.json";
 import viSeller from "./locales/vi/seller.json";
+import viLivestream from "./locales/vi/livestream.json";
+import viFlashcards from "./locales/vi/flashcards.json";
 
 export const SUPPORTED_LANGUAGES = ["en", "vi"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -40,6 +44,8 @@ const resources = {
     exam: enExam,
     info: enInfo,
     seller: enSeller,
+    livestream: enLivestream,
+    flashcards: enFlashcards,
   },
   vi: {
     common: viCommon,
@@ -52,6 +58,8 @@ const resources = {
     exam: viExam,
     info: viInfo,
     seller: viSeller,
+    livestream: viLivestream,
+    flashcards: viFlashcards,
   },
 } as const;
 
@@ -64,7 +72,7 @@ i18n
     supportedLngs: [...SUPPORTED_LANGUAGES],
     nonExplicitSupportedLngs: true,
     load: "languageOnly",
-    ns: ["common", "auth", "landing", "layout", "dashboard", "courses", "account", "exam", "info", "seller"],
+    ns: ["common", "auth", "landing", "layout", "dashboard", "courses", "account", "exam", "info", "seller", "livestream", "flashcards"],
     defaultNS: "common",
     interpolation: {
       escapeValue: false,

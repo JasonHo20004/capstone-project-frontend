@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AxiosError } from "axios";
 import { Mail, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/api/use-auth";
 
 const ForgotPassword = () => {
   const { forgotPassword, isRequestingReset } = useAuth();
+  const { t } = useTranslation("auth");
 
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -16,7 +18,7 @@ const ForgotPassword = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes("@")) {
-      setError("Vui lòng nhập email hợp lệ.");
+      setError(t("forgotPassword.errors.invalidEmail"));
       return;
     }
     setError("");
@@ -30,14 +32,14 @@ const ForgotPassword = () => {
           const seconds = axiosError.response.data?.retryAfterSeconds;
           setError(
             seconds
-              ? `Bạn vừa yêu cầu rồi. Vui lòng thử lại sau ${seconds}s.`
-              : "Bạn yêu cầu quá nhanh. Vui lòng thử lại sau ít phút.",
+              ? t("forgotPassword.errors.tooManyRequestsWithTime", { seconds })
+              : t("forgotPassword.errors.tooManyRequests"),
           );
           return;
         }
         setError(
           axiosError?.response?.data?.error ??
-            "Không gửi được email. Vui lòng thử lại.",
+            t("forgotPassword.errors.sendFailed"),
         );
       },
     });
@@ -50,20 +52,18 @@ const ForgotPassword = () => {
           <div className="flex flex-col items-center text-center space-y-4">
             <CheckCircle2 className="h-12 w-12 text-emerald-500" />
             <h1 className="text-xl font-semibold text-foreground">
-              Kiểm tra email của bạn
+              {t("forgotPassword.sentTitle")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Nếu <span className="text-foreground">{email}</span> có tài khoản,
-              chúng tôi đã gửi một liên kết đặt lại mật khẩu. Liên kết sẽ hết hạn
-              sau 30 phút.
+              {t("forgotPassword.sentDesc", { email })}
             </p>
             <p className="text-xs text-muted-foreground">
-              Không thấy email? Hãy kiểm tra mục spam.
+              {t("forgotPassword.sentSpam")}
             </p>
             <Link to="/login" className="w-full">
               <Button className="w-full" variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-1.5" />
-                Về trang đăng nhập
+                {t("forgotPassword.backToLogin")}
               </Button>
             </Link>
           </div>
@@ -71,16 +71,16 @@ const ForgotPassword = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="text-center space-y-1.5">
               <h1 className="text-xl font-semibold text-foreground">
-                Quên mật khẩu?
+                {t("forgotPassword.title")}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Nhập email tài khoản, chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.
+                {t("forgotPassword.subtitle")}
               </p>
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="email" className="text-xs font-medium text-muted-foreground">
-                Email
+                {t("forgotPassword.emailLabel")}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -88,7 +88,7 @@ const ForgotPassword = () => {
                   id="email"
                   type="email"
                   className="pl-10"
-                  placeholder="ban@email.com"
+                  placeholder={t("forgotPassword.emailPlaceholder")}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -104,10 +104,10 @@ const ForgotPassword = () => {
               {isRequestingReset ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                  Đang gửi...
+                  {t("forgotPassword.submitting")}
                 </>
               ) : (
-                "Gửi liên kết đặt lại"
+                t("forgotPassword.submit")
               )}
             </Button>
 
@@ -116,7 +116,7 @@ const ForgotPassword = () => {
               className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4" />
-              Về trang đăng nhập
+              {t("forgotPassword.backToLogin")}
             </Link>
           </form>
         )}

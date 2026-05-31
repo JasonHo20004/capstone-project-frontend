@@ -1,0 +1,184 @@
+{
+  "page": {
+    "title": "Flashcards",
+    "subtitle": "Tạo, chỉnh sửa, và học bộ thẻ ghi nhớ — phong cách gamified!",
+    "deckCount": "{{count}} bộ thẻ",
+    "cardCount": "{{count}} thẻ"
+  },
+  "tabs": {
+    "mine": "Bộ thẻ của tôi",
+    "explore": "Khám phá"
+  },
+  "explore": {
+    "heading": "Bộ thẻ cộng đồng",
+    "searchPlaceholder": "Tìm bộ thẻ...",
+    "loading": "Đang tải...",
+    "empty": "Chưa có bộ thẻ công khai nào",
+    "emptyHint": "Tạo bộ thẻ và bật công khai để chia sẻ với cộng đồng!",
+    "ownBadge": "Của tôi",
+    "viewAndStudy": "Xem & Học →"
+  },
+  "mine": {
+    "heading": "Bộ thẻ của tôi",
+    "aiGenerate": "AI Tạo thẻ",
+    "addDeck": "Thêm bộ thẻ",
+    "loading": "Đang tải danh sách bộ thẻ...",
+    "empty": "Chưa có bộ thẻ nào",
+    "emptyHint": "Tạo bộ thẻ đầu tiên của bạn để bắt đầu hành trình học tập đầy thú vị!",
+    "createNow": "Tạo ngay"
+  },
+  "sheet": {
+    "study": "HỌC THẺ",
+    "noDesc": "Không có mô tả.",
+    "queueStatus": {
+      "loading": "Đang tính toán thẻ cần ôn...",
+      "done": "Đã ôn hết! Hẹn gặp lại vào lần tới",
+      "newCards": "{{count}} thẻ mới — sẵn sàng cho buổi học đầu tiên",
+      "dueCards": "{{count}} thẻ cần ôn tập ngay bây giờ",
+      "publicDone": "Đã ôn hết!",
+      "publicNew": "{{count}} thẻ mới — sẵn sàng để học",
+      "publicDue": "{{count}} thẻ cần ôn tập"
+    },
+    "cardList": "Danh sách thẻ ({{count}})",
+    "readOnly": "Chỉ xem",
+    "addCard": "Thêm thẻ mới",
+    "resetProgress": "Xóa tiến độ học bộ thẻ này",
+    "publicTitle": "Bộ thẻ cộng đồng",
+    "loadingCards": "Đang tải...",
+    "emptyCards": "Bộ thẻ này chưa có thẻ nào.",
+    "emptyMyCards": "Chưa có thẻ nào trong bộ này",
+    "emptyMyCardsHint": "Thêm thẻ đầu tiên để bắt đầu học nhé!",
+    "addCardNow": "Thêm thẻ ngay"
+  },
+  "dialogs": {
+    "createDeck": {
+      "title": "Tạo bộ thẻ mới",
+      "desc": "Nhập thông tin cho bộ thẻ của bạn",
+      "nameLabel": "Tên bộ thẻ *",
+      "namePlaceholder": "Ví dụ: Từ vựng Business English",
+      "descLabel": "Mô tả",
+      "descPlaceholder": "Mô tả ngắn về bộ thẻ",
+      "isPublic": "Bộ thẻ công khai",
+      "cancel": "Hủy",
+      "create": "Tạo"
+    },
+    "editDeck": {
+      "title": "Chỉnh sửa bộ thẻ",
+      "desc": "Cập nhật thông tin bộ thẻ",
+      "nameLabel": "Tên bộ thẻ *",
+      "isPublic": "Bộ thẻ công khai",
+      "cancel": "Hủy",
+      "save": "Lưu"
+    },
+    "deleteDeck": {
+      "title": "Bạn có chắc chắn muốn xóa?",
+      "desc": "Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn bộ thẻ {{name}} và tất cả các thẻ con bên trong.",
+      "cancel": "Hủy",
+      "confirm": "Tiếp tục xóa"
+    },
+    "createCard": {
+      "title": "Thêm thẻ mới",
+      "desc": "Thêm thẻ vào bộ thẻ đang chọn",
+      "frontLabel": "Mặt trước *",
+      "frontPlaceholder": "Từ/cụm từ",
+      "backLabel": "Mặt sau *",
+      "backPlaceholder": "Định nghĩa/giải thích",
+      "exampleLabel": "Câu ví dụ",
+      "examplePlaceholder": "Ví dụ sử dụng trong câu",
+      "cancel": "Hủy",
+      "create": "Tạo"
+    },
+    "editCard": {
+      "title": "Chỉnh sửa thẻ",
+      "desc": "Cập nhật nội dung thẻ",
+      "frontLabel": "Mặt trước *",
+      "backLabel": "Mặt sau *",
+      "exampleLabel": "Câu ví dụ",
+      "cancel": "Hủy",
+      "save": "Lưu"
+    },
+    "deleteCard": {
+      "title": "Bạn có chắc chắn muốn xóa?",
+      "desc": "Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn thẻ {{name}} khỏi bộ thẻ.",
+      "cancel": "Hủy",
+      "confirm": "Tiếp tục xóa"
+    },
+    "resetProgress": {
+      "title": "Xóa toàn bộ tiến độ?",
+      "desc": "Toàn bộ tiến độ học của bộ thẻ này sẽ bị xóa và bạn sẽ học lại từ đầu. Hành động này không thể hoàn tác.",
+      "cancel": "Hủy",
+      "confirm": "Xóa tiến độ"
+    },
+    "ragGenerator": {
+      "title": "AI Flashcard Generator",
+      "desc": "Upload file hoặc nhập văn bản để AI tự động tạo flashcard"
+    },
+    "studyMode": {
+      "title": "Chế độ học thẻ"
+    }
+  },
+  "tags": {
+    "label": "Tags",
+    "searchPlaceholder": "Tìm tag...",
+    "selected": "Đã chọn {{count}} tag",
+    "selectPlaceholder": "Chọn tag...",
+    "empty": "Không tìm thấy tag."
+  },
+  "toast": {
+    "deckNameRequired": "Vui lòng nhập tên bộ thẻ",
+    "selectDeckFirst": "Hãy chọn một bộ thẻ trước",
+    "cardFieldsRequired": "Vui lòng nhập mặt trước và mặt sau"
+  },
+  "ragGenerator": {
+    "title": "AI Flashcard Generator",
+    "subtitle": "Upload tài liệu hoặc nhập văn bản → Tạo Flashcard tự động → Hỏi đáp về nội dung",
+    "ragBadge": "RAG-Powered",
+    "inputCard": {
+      "title": "Nhập nội dung",
+      "desc": "Chọn cách nhập: upload file hoặc dán văn bản trực tiếp",
+      "uploadTab": "Upload File",
+      "textTab": "Nhập Text"
+    },
+    "dropzone": {
+      "hint": "Kéo file vào đây hoặc click để chọn",
+      "formats": "Hỗ trợ PDF, TXT (tối đa 10MB)",
+      "deselect": "Bỏ chọn",
+      "textPlaceholder": "Dán hoặc nhập nội dung văn bản tại đây... (tối thiểu 50 ký tự)\n\nVí dụ: Dán bài viết, đoạn văn, ghi chú bài giảng...",
+      "charCount": "{{count}} ký tự",
+      "charCountMin": "(cần tối thiểu 50)",
+      "clearContent": "Xóa nội dung"
+    },
+    "settings": {
+      "title": "Cài đặt",
+      "deckLabel": "Chọn bộ Flashcard",
+      "deckPlaceholder": "Chọn bộ thẻ có sẵn...",
+      "noDeck": "Chưa có bộ thẻ nào. Hãy tạo bộ thẻ trước.",
+      "generateBtn": "Tạo Flashcard bằng AI",
+      "generating": "Đang xử lý... (30-60s)"
+    },
+    "pipeline": {
+      "title": "RAG Pipeline",
+      "steps": {
+        "1file": "Upload tài liệu PDF/TXT",
+        "1text": "Nhập văn bản trực tiếp",
+        "2": "Trích xuất & chia nhỏ nội dung",
+        "3": "Embedding → Vector Store",
+        "4": "LLM tạo Flashcard tự động",
+        "5": "Hỏi đáp → Retrieve → Generate"
+      }
+    },
+    "result": {
+      "successBadge": "Thành công",
+      "stats": "{{count}} flashcards • {{pages}} trang • {{chunks}} chunks",
+      "createNew": "Tạo mới",
+      "openFlashcards": "Mở Flashcard",
+      "chatTitle": "Hỏi đáp về tài liệu",
+      "chatBadge": "RAG",
+      "chatPlaceholder": "Hỏi về nội dung tài liệu...",
+      "hideSource": "Ẩn nguồn",
+      "viewSource": "Xem {{count}} nguồn tham chiếu",
+      "searching": "Đang tìm kiếm trong tài liệu...",
+      "send": "Gửi"
+    }
+  }
+}

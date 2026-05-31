@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation, Trans } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,7 @@ export default function AddQuizLessonDialog({
   onSuccess,
 }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation("seller");
   const [tests, setTests] = useState<MyTest[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function AddQuizLessonDialog({
       .then((res) => setTests((res.data as MyTest[]) ?? []))
       .catch((err) => {
         console.error(err);
-        setError("Không thể tải danh sách bài kiểm tra.");
+        setError(t("addQuizLesson.errors.loadFailed"));
       })
       .finally(() => setLoading(false));
   }, [open]);
@@ -84,7 +86,7 @@ export default function AddQuizLessonDialog({
 
   const handleSave = () => {
     if (!selectedId) {
-      toast.error("Hãy chọn 1 bài kiểm tra");
+      toast.error(t("addQuizLesson.errors.noneSelected"));
       return;
     }
     const selected = tests?.find((t) => t.id === selectedId);
@@ -106,7 +108,7 @@ export default function AddQuizLessonDialog({
         onError: (err) => {
           const msg =
             (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-            "Không thể thêm bài kiểm tra";
+            t("addQuizLesson.errors.addFailed");
           toast.error(msg);
         },
       }
@@ -121,11 +123,14 @@ export default function AddQuizLessonDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-primary" />
-            Thêm bài kiểm tra vào module
+            {t("addQuizLesson.title")}
           </DialogTitle>
           <DialogDescription>
-            Chọn 1 bài kiểm tra từ danh sách của bạn. Tạo bài mới ở trang{" "}
-            <strong>Bài kiểm tra của tôi</strong> nếu chưa có.
+            <Trans
+              i18nKey="addQuizLesson.lead"
+              ns="seller"
+              components={{ strong: <strong /> }}
+            />
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +138,7 @@ export default function AddQuizLessonDialog({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo tiêu đề…"
+              placeholder={t("addQuizLesson.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -152,8 +157,8 @@ export default function AddQuizLessonDialog({
               <FileWarning className="w-8 h-8 mb-2" />
               <p className="text-sm max-w-sm">
                 {tests?.length === 0
-                  ? 'Bạn chưa có bài kiểm tra nào. Vào "Bài kiểm tra của tôi" để tạo trước.'
-                  : "Không tìm thấy bài kiểm tra phù hợp."}
+                  ? t("addQuizLesson.empty.noneCreated")
+                  : t("addQuizLesson.empty.noMatch")}
               </p>
               {tests?.length === 0 && (
                 <Button
@@ -163,19 +168,19 @@ export default function AddQuizLessonDialog({
                   onClick={() => navigate("/seller/tests")}
                 >
                   <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                  Mở trang Bài kiểm tra của tôi
+                  {t("addQuizLesson.empty.openTestsPage")}
                 </Button>
               )}
             </div>
           ) : (
             <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-              {filtered.map((t) => {
-                const active = selectedId === t.id;
+              {filtered.map((test) => {
+                const active = selectedId === test.id;
                 return (
                   <button
-                    key={t.id}
+                    key={test.id}
                     type="button"
-                    onClick={() => setSelectedId(t.id)}
+                    onClick={() => setSelectedId(test.id)}
                     disabled={isPending}
                     className={`w-full text-left rounded-lg border p-3 flex items-start gap-3 transition-colors ${
                       active
@@ -189,28 +194,28 @@ export default function AddQuizLessonDialog({
                       }`}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{t.title}</div>
+                      <div className="font-medium truncate">{test.title}</div>
                       <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        {t.testType === "FINAL" && (
+                        {test.testType === "FINAL" && (
                           <Badge
                             variant="secondary"
                             className="font-normal bg-amber-100 text-amber-800 border-amber-200"
-                            title="Đây là bài kiểm tra loại FINAL — thường dùng cho slot cuối khoá"
+                            title={t("addQuizLesson.finalBadgeTitle")}
                           >
-                            Final
+                            {t("addQuizLesson.finalBadge")}
                           </Badge>
                         )}
                         <Badge variant="outline" className="font-normal">
                           <ListChecks className="w-3 h-3 mr-1" />
-                          {t._count?.questions ?? 0} câu
+                          {t("addQuizLesson.questionCount", { count: test._count?.questions ?? 0 })}
                         </Badge>
-                        {t.durationInMinutes ? (
+                        {test.durationInMinutes ? (
                           <Badge variant="outline" className="font-normal">
                             <Clock className="w-3 h-3 mr-1" />
-                            {t.durationInMinutes} phút
+                            {t("addQuizLesson.minutes", { count: test.durationInMinutes })}
                           </Badge>
                         ) : null}
-                        <span className="text-[10px]">{t.status}</span>
+                        <span className="text-[10px]">{test.status}</span>
                       </div>
                     </div>
                   </button>
@@ -221,18 +226,18 @@ export default function AddQuizLessonDialog({
 
           {!loading && filtered.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              Bài kiểm tra mới sẽ được chèn ở vị trí {nextOrder} trong module.
+              {t("addQuizLesson.nextOrderHint", { order: nextOrder })}
             </p>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Hủy
+            {t("addQuizLesson.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={!selectedId || isPending}>
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Thêm vào module
+            {t("addQuizLesson.add")}
           </Button>
         </DialogFooter>
       </DialogContent>

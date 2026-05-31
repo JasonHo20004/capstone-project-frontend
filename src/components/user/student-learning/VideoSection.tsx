@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Clock, MessageSquare, PlayCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import type { LessonPlayer } from "@/types/student-learning";
 
 type VideoSectionProps = {
@@ -22,22 +22,13 @@ const formatDuration = (seconds?: number | null) => {
   return `${mins}m ${secs.toString().padStart(2, "0")}s`;
 };
 
-const getInitials = (name?: string) => {
-  if (!name) return "NN";
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-};
-
 export const VideoSection = ({
   lesson,
   isLoading,
   onMarkComplete,
   markCompletedLoading,
 }: VideoSectionProps) => {
+  const { t } = useTranslation("courses");
   const videoAsset = lesson?.mediaAssets.find((asset) =>
     asset.assetType.toLowerCase().includes("video")
   );
@@ -54,9 +45,9 @@ export const VideoSection = ({
     const onLoaded = () => {
       try {
         const saved = localStorage.getItem(storageKey);
-        const t = saved ? Number(saved) : 0;
-        if (t > 0 && t < (video.duration || Infinity) - 1) {
-          video.currentTime = t;
+        const savedTime = saved ? Number(saved) : 0;
+        if (savedTime > 0 && savedTime < (video.duration || Infinity) - 1) {
+          video.currentTime = savedTime;
         }
       } catch { /* ignore */ }
     };
@@ -101,11 +92,11 @@ export const VideoSection = ({
               <div className="flex h-full w-full flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-center text-white">
                 <PlayCircle className="mb-4 h-12 w-12 opacity-80" />
                 <p className="text-lg font-semibold">
-                  Nội dung dạng văn bản
+                  {t("studentLearning.videoSection.textContent")}
                 </p>
                 <p className="text-sm text-white/70 max-w-md">
                   {lesson?.description ??
-                    "Bài học này không có video. Hãy xem phần mô tả chi tiết phía dưới."}
+                    t("studentLearning.videoSection.noVideoFallback")}
                 </p>
               </div>
             )}
@@ -116,14 +107,14 @@ export const VideoSection = ({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Bài học hiện tại
+              {t("studentLearning.videoSection.currentLesson")}
             </p>
             <h2 className="text-2xl font-bold tracking-tight">
-              {lesson?.title ?? "Chọn một bài học để bắt đầu"}
+              {lesson?.title ?? t("studentLearning.videoSection.selectLessonTitle")}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               {lesson?.description ??
-                "Chọn một bài học trong danh sách để xem nội dung chi tiết."}
+                t("studentLearning.videoSection.selectLessonDesc")}
             </p>
           </div>
           <Button
@@ -132,7 +123,9 @@ export const VideoSection = ({
             variant="secondary"
             className="self-start rounded-full md:self-center"
           >
-            {markCompletedLoading ? "Đang lưu..." : "Đánh dấu hoàn thành"}
+            {markCompletedLoading
+              ? t("studentLearning.videoSection.saving")
+              : t("studentLearning.videoSection.markComplete")}
           </Button>
         </div>
 
@@ -143,13 +136,17 @@ export const VideoSection = ({
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1">
             <MessageSquare className="h-3 w-3" />
-            {lesson?.recentComments?.length ?? 0} bình luận mới
+            {t("studentLearning.videoSection.newCommentsCount", {
+              count: lesson?.recentComments?.length ?? 0,
+            })}
           </span>
         </div>
 
         {lesson?.recentComments?.length ? (
           <div className="rounded-2xl border bg-muted/30 p-4">
-            <p className="text-sm font-semibold">Bình luận gần đây</p>
+            <p className="text-sm font-semibold">
+              {t("studentLearning.videoSection.recentComments")}
+            </p>
             <div className="mt-3 space-y-3">
               {lesson.recentComments.slice(0, 3).map((comment) => (
                 <div
@@ -167,14 +164,14 @@ export const VideoSection = ({
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-            Chưa có bình luận nào cho bài học này. Hãy trở thành người đầu tiên!
+            {t("studentLearning.videoSection.noComments")}
           </div>
         )}
 
         {!isVideoLesson && lesson?.description && (
           <div className="rounded-2xl border bg-muted/40 p-5">
             <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Nội dung bài học
+              {t("studentLearning.videoSection.lessonContent")}
             </p>
             <p className="mt-2 text-sm leading-relaxed text-foreground">
               {lesson.description}
@@ -185,7 +182,7 @@ export const VideoSection = ({
         {!lesson && !isLoading && (
           <div className="rounded-2xl border border-dashed p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Vui lòng chọn một bài học ở cột bên phải để bắt đầu học.
+              {t("studentLearning.videoSection.pickLessonPrompt")}
             </p>
           </div>
         )}
@@ -193,4 +190,3 @@ export const VideoSection = ({
     </div>
   );
 };
-

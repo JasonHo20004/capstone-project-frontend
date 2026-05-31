@@ -2,6 +2,7 @@ import type { Flashcard } from "@/domain";
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, BookOpen, MessageSquare, Volume2 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CardListProps {
   cards: Flashcard[];
@@ -24,12 +25,12 @@ const ACCENT_DOTS = [
 ];
 
 function AudioButton({ audioUrl }: { audioUrl: string }) {
+  const { t } = useTranslation('exam');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handlePlay = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      // Reuse the same Audio element to avoid leaking dozens of instances on rapid clicks.
       if (!audioRef.current) {
         audioRef.current = new Audio();
       }
@@ -50,8 +51,8 @@ function AudioButton({ audioUrl }: { audioUrl: string }) {
       size="sm"
       className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-indigo-400 hover:text-indigo-600 transition-colors"
       onClick={handlePlay}
-      title="Nghe phát âm"
-      aria-label="Phát âm thanh từ vựng"
+      title={t('flashcards.cardList.playAudioTitle')}
+      aria-label={t('flashcards.cardList.playAudioAria')}
     >
       <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
     </Button>

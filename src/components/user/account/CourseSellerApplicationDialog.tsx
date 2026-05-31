@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export default function CourseSellerApplicationDialog({
   existingApplication,
   onSubmitted,
 }: Props) {
+  const { t } = useTranslation('account');
   const createApplicationMutation = useCreateSellerApplication();
 
   const [expInput, setExpInput] = useState('');
@@ -79,7 +81,7 @@ export default function CourseSellerApplicationDialog({
     const v = expInput.trim();
     if (!v) return;
     if (expertise.includes(v)) {
-      toast.warning('Chuyên môn này đã tồn tại');
+      toast.warning(t('sellerApplication.toasts.expertiseExists'));
       return;
     }
     setExpertise((prev) => [...prev, v]);
@@ -96,12 +98,12 @@ export default function CourseSellerApplicationDialog({
       const validFiles = newFiles.filter((f) => f.size <= 5 * 1024 * 1024);
 
       if (validFiles.length < newFiles.length) {
-        toast.warning('Một số file quá lớn (>5MB) đã bị bỏ qua.');
+        toast.warning(t('sellerApplication.toasts.filesTooLarge'));
       }
 
       const remainingSlots = Math.max(0, 10 - certFiles.length);
       if (validFiles.length > remainingSlots) {
-        toast.warning('Chỉ được tải lên tối đa 10 ảnh.');
+        toast.warning(t('sellerApplication.toasts.maxImages'));
         validFiles.splice(remainingSlots);
       }
 
@@ -129,15 +131,15 @@ export default function CourseSellerApplicationDialog({
 
   const handleSubmit = () => {
     if (isBlocked) {
-      toast.error('Bạn không thể nộp đơn lúc này.');
+      toast.error(t('sellerApplication.toasts.blocked'));
       return;
     }
     if (certFiles.length === 0) {
-      toast.error('Vui lòng tải lên ít nhất 1 ảnh chứng chỉ.');
+      toast.error(t('sellerApplication.toasts.certRequired'));
       return;
     }
     if (expertise.length === 0) {
-      toast.error('Vui lòng nhập ít nhất 1 chuyên môn.');
+      toast.error(t('sellerApplication.toasts.expertiseRequired'));
       return;
     }
 
@@ -158,9 +160,9 @@ export default function CourseSellerApplicationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nộp đơn trở thành Giảng viên</DialogTitle>
+          <DialogTitle>{t('sellerApplication.title')}</DialogTitle>
           <DialogDescription>
-            Vui lòng cung cấp thông tin chuyên môn và hình ảnh chứng chỉ để chúng tôi xét duyệt.
+            {t('sellerApplication.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -169,9 +171,9 @@ export default function CourseSellerApplicationDialog({
             <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
               <Clock className="w-5 h-5 mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-medium">Đơn của bạn đang chờ duyệt</p>
+                <p className="font-medium">{t('sellerApplication.pending.title')}</p>
                 <p className="text-amber-800/80 mt-1">
-                  Vui lòng đợi quản trị viên xét duyệt. Bạn sẽ không thể nộp đơn mới cho đến khi có kết quả.
+                  {t('sellerApplication.pending.message')}
                 </p>
               </div>
             </div>
@@ -181,8 +183,8 @@ export default function CourseSellerApplicationDialog({
             <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-900">
               <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-medium">Đơn của bạn đã được duyệt</p>
-                <p className="text-green-800/80 mt-1">Bạn đã là giảng viên, không cần nộp đơn nữa.</p>
+                <p className="font-medium">{t('sellerApplication.approved.title')}</p>
+                <p className="text-green-800/80 mt-1">{t('sellerApplication.approved.message')}</p>
               </div>
             </div>
           )}
@@ -191,15 +193,15 @@ export default function CourseSellerApplicationDialog({
             <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-900">
               <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
               <div className="text-sm space-y-1">
-                <p className="font-medium">Đơn trước đã bị từ chối</p>
+                <p className="font-medium">{t('sellerApplication.rejected.title')}</p>
                 {existingApplication?.rejectionReason && (
                   <p className="text-rose-800/90">
-                    <span className="font-medium">Lý do: </span>
+                    <span className="font-medium">{t('sellerApplication.rejected.reason')}</span>
                     {existingApplication.rejectionReason}
                   </p>
                 )}
                 <p className="text-rose-800/80">
-                  Bạn có thể nộp lại đơn mới sau khi khắc phục các vấn đề trên.
+                  {t('sellerApplication.rejected.canResubmit')}
                 </p>
               </div>
             </div>
@@ -207,10 +209,10 @@ export default function CourseSellerApplicationDialog({
 
           <fieldset disabled={isBlocked} className="space-y-6 disabled:opacity-60">
             <div className="space-y-3">
-              <Label>Chuyên môn & Kỹ năng</Label>
+              <Label>{t('sellerApplication.expertiseLabel')}</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Nhập chuyên môn (VD: IELTS 8.0, Business English...)"
+                  placeholder={t('sellerApplication.expertisePlaceholder')}
                   value={expInput}
                   onChange={(e) => setExpInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -227,7 +229,7 @@ export default function CourseSellerApplicationDialog({
                   type="button"
                   disabled={createApplicationMutation.isPending}
                 >
-                  Thêm
+                  {t('sellerApplication.add')}
                 </Button>
               </div>
 
@@ -245,13 +247,13 @@ export default function CourseSellerApplicationDialog({
                   </Badge>
                 ))}
                 {expertise.length === 0 && (
-                  <span className="text-sm text-muted-foreground italic">Chưa có chuyên môn nào.</span>
+                  <span className="text-sm text-muted-foreground italic">{t('sellerApplication.noExpertise')}</span>
                 )}
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label>Ảnh Chứng chỉ / Bằng cấp</Label>
+              <Label>{t('sellerApplication.certLabel')}</Label>
 
               <input
                 type="file"
@@ -269,9 +271,9 @@ export default function CourseSellerApplicationDialog({
                 <div className="p-3 bg-primary/10 rounded-full mb-3">
                   <Upload className="w-6 h-6 text-primary" />
                 </div>
-                <p className="text-sm font-medium">Nhấn để tải lên ảnh chứng chỉ</p>
+                <p className="text-sm font-medium">{t('sellerApplication.certUploadTitle')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Hỗ trợ JPG, PNG, WebP (tối đa 5MB/file, 10 ảnh)
+                  {t('sellerApplication.certUploadHint')}
                 </p>
               </div>
 
@@ -313,10 +315,10 @@ export default function CourseSellerApplicationDialog({
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="seller-application-message">Lời nhắn cho quản trị viên (tuỳ chọn)</Label>
+              <Label htmlFor="seller-application-message">{t('sellerApplication.messageLabel')}</Label>
               <Textarea
                 id="seller-application-message"
-                placeholder="Giới thiệu ngắn về kinh nghiệm giảng dạy, lý do bạn muốn trở thành giảng viên..."
+                placeholder={t('sellerApplication.messagePlaceholder')}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
@@ -334,7 +336,7 @@ export default function CourseSellerApplicationDialog({
               onClick={() => onOpenChange(false)}
               disabled={createApplicationMutation.isPending}
             >
-              {isBlocked ? 'Đóng' : 'Hủy'}
+              {isBlocked ? t('sellerApplication.close') : t('sellerApplication.cancel')}
             </Button>
             <Button
               type="button"
@@ -344,7 +346,7 @@ export default function CourseSellerApplicationDialog({
               {createApplicationMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              {isRejected ? 'Nộp lại đơn' : 'Nộp đơn'}
+              {isRejected ? t('sellerApplication.resubmit') : t('sellerApplication.submit')}
             </Button>
           </div>
         </div>

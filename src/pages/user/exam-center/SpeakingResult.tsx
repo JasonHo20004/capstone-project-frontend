@@ -1,33 +1,36 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function SpeakingResult() {
+  const { t } = useTranslation("exam");
+
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sans text-slate-900 pb-12">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-md h-16 flex items-center px-6 mb-8 sticky top-0 z-20">
         <Link to="/exam-center" className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
           <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-sm font-medium">Back to Exam Center</span>
+          <span className="text-sm font-medium">{t("speakingResultStatic.backToExamCenter")}</span>
         </Link>
       </header>
 
       <div className="max-w-5xl mx-auto px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Speaking Assessment Results</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{t("speakingResultStatic.title")}</h1>
             <p className="text-slate-500">Completed on Oct 26, 2023 • 4:45 PM</p>
           </div>
           <div className="flex gap-3">
             <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2">
               <span className="material-symbols-outlined text-[20px]">download</span>
-              Report
+              {t("speakingResultStatic.downloadReport")}
             </button>
             <Link
               to="/exam/test/speaking"
               className="px-4 py-2 bg-indigo-600 rounded-lg text-sm font-bold text-white hover:bg-indigo-500 transition-colors flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[20px]">mic</span>
-              Practice Again
+              {t("speakingResultStatic.practiceAgain")}
             </Link>
           </div>
         </div>
@@ -40,7 +43,7 @@ export default function SpeakingResult() {
             <div className="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"></div>
               <div className="relative z-10 text-center">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Overall Band</span>
+                <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">{t("speakingResultStatic.overallBand")}</span>
                 <div className="text-7xl font-black text-indigo-600 my-2 tracking-tighter">7.0</div>
                 <span className="px-3 py-1 bg-green-500/10 text-green-600 text-xs font-bold rounded-full border border-green-500/20">
                   Good User
@@ -50,11 +53,11 @@ export default function SpeakingResult() {
 
             {/* Criteria Breakdown */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-800 mb-6">Score Breakdown</h3>
+              <h3 className="font-bold text-slate-800 mb-6">{t("speakingResultStatic.scoreBreakdown")}</h3>
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between text-sm font-medium mb-2">
-                    <span className="text-slate-600">Fluency & Coherence</span>
+                    <span className="text-slate-600">{t("speakingResultStatic.criteria.fluency")}</span>
                     <span className="text-indigo-600">7.5</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -63,7 +66,7 @@ export default function SpeakingResult() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm font-medium mb-2">
-                    <span className="text-slate-600">Lexical Resource</span>
+                    <span className="text-slate-600">{t("speakingResultStatic.criteria.lexical")}</span>
                     <span className="text-purple-600">7.0</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -72,7 +75,7 @@ export default function SpeakingResult() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm font-medium mb-2">
-                    <span className="text-slate-600">Grammatical Range</span>
+                    <span className="text-slate-600">{t("speakingResultStatic.criteria.grammatical")}</span>
                     <span className="text-pink-600">6.5</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -81,7 +84,7 @@ export default function SpeakingResult() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm font-medium mb-2">
-                    <span className="text-slate-600">Pronunciation</span>
+                    <span className="text-slate-600">{t("speakingResultStatic.criteria.pronunciation")}</span>
                     <span className="text-cyan-600">7.0</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -96,7 +99,7 @@ export default function SpeakingResult() {
           <div className="lg:col-span-2 space-y-6">
             {/* Audio Player */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-800 mb-4">Your Recording</h3>
+              <h3 className="font-bold text-slate-800 mb-4">{t("speakingResultStatic.yourRecording")}</h3>
               <div className="bg-slate-50 rounded-xl p-4 flex items-center gap-4 border border-slate-100">
                 <button className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
                   <span className="material-symbols-outlined">play_arrow</span>
@@ -120,14 +123,14 @@ export default function SpeakingResult() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-100">
                   <span className="material-symbols-outlined text-white text-[18px]">auto_awesome</span>
                 </div>
-                <h3 className="font-bold text-slate-800">AI Analysis & Feedback</h3>
+                <h3 className="font-bold text-slate-800">{t("speakingResultStatic.aiAnalysis")}</h3>
               </div>
 
               <div className="space-y-6">
                 <div className="bg-green-50 border border-green-100 rounded-xl p-4">
                   <h4 className="font-bold text-green-700 text-sm mb-2 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                    Strengths
+                    {t("speakingResultStatic.strengths")}
                   </h4>
                   <ul className="space-y-2 text-sm text-slate-600">
                     <li className="flex items-start gap-2">
@@ -144,7 +147,7 @@ export default function SpeakingResult() {
                 <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
                   <h4 className="font-bold text-orange-700 text-sm mb-2 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">warning</span>
-                    Areas for Improvement
+                    {t("speakingResultStatic.areasForImprovement")}
                   </h4>
                   <ul className="space-y-2 text-sm text-slate-600">
                     <li className="flex items-start gap-2">
@@ -163,7 +166,7 @@ export default function SpeakingResult() {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-slate-700 text-sm mb-3">Vocabulary Suggestions</h4>
+                  <h4 className="font-bold text-slate-700 text-sm mb-3">{t("speakingResultStatic.vocabularySuggestions")}</h4>
                   <div className="flex flex-wrap gap-2">
                     <span className="px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600">
                       <span className="line-through text-slate-400 mr-2">good</span>
@@ -187,4 +190,3 @@ export default function SpeakingResult() {
     </div>
   );
 }
-

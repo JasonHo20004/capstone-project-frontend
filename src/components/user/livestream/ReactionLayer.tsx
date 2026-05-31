@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface FloatingReaction {
   id: number;
@@ -67,6 +68,7 @@ interface BarProps {
 }
 
 export function ReactionBar({ disabled, onSend }: BarProps) {
+  const { t } = useTranslation('livestream');
   const [cooldown, setCooldown] = useState(false);
 
   const handle = (emoji: string) => {
@@ -83,7 +85,7 @@ export function ReactionBar({ disabled, onSend }: BarProps) {
           key={e}
           onClick={() => handle(e)}
           disabled={disabled || cooldown}
-          aria-label={`Send ${e} reaction`}
+          aria-label={t('reactions.sendAria', { emoji: e })}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 active:scale-90 transition-transform disabled:opacity-50 disabled:cursor-not-allowed text-xl leading-none select-none"
         >
           {e}

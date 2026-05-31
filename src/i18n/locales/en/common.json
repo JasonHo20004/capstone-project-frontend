@@ -102,5 +102,67 @@
     "minutesAgo": "{{count}} minutes ago",
     "hoursAgo": "{{count}} hours ago",
     "daysAgo": "{{count}} days ago"
+  },
+  "premium": {
+    "loading": "Checking access...",
+    "title": "Premium Feature",
+    "defaultMessage": "{{feature}} is a Pro plan feature. Upgrade to get full access.",
+    "upgrade": "Upgrade to Pro",
+    "benefits": {
+      "speaking": "In-depth AI Speaking & Writing scoring",
+      "dictation": "Unlimited Dictation Practice",
+      "learningPath": "Personalized Learning Path & Skill Tree"
+    }
+  },
+  "discussion": {
+    "title": "Discussion",
+    "subtitle": "Share experiences, ask questions",
+    "commentPlaceholder": "Write a comment...",
+    "replyPlaceholder": "Write a reply...",
+    "keyboardHint": "Press Enter to send, Shift+Enter for new line.",
+    "emptyHint": "No comments yet. Be the first!",
+    "reply": "Reply",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "report": "Report",
+    "reportTitle": "Report inappropriate comment",
+    "save": "Save",
+    "saving": "Saving...",
+    "edited": "(edited)",
+    "viewMore": "View {{count}} more replies",
+    "collapse": "Collapse",
+    "replyingTo": "Replying to",
+    "reasons": {
+      "SPAM": "Spam / Advertisement",
+      "ABUSE": "Abusive / Harassment",
+      "SCAM": "Scam",
+      "MISINFORMATION": "Misinformation",
+      "OFF_TOPIC": "Off topic",
+      "OTHER": "Other"
+    },
+    "toasts": {
+      "posted": "Comment sent",
+      "replied": "Reply sent",
+      "postError": "Error sending",
+      "emptyContent": "Content cannot be empty",
+      "editSuccess": "Comment updated",
+      "editError": "Error updating comment",
+      "reportSuccess": "Report sent. Thank you!",
+      "reportError": "Failed to submit report"
+    },
+    "reportDialog": {
+      "title": "Report comment",
+      "description": "The comment will be temporarily hidden if many users report it. Admin will review and decide.",
+      "reasonLabel": "Reason",
+      "noteLabel": "Additional note",
+      "noteOptional": "(optional)",
+      "notePlaceholder": "Describe the context for the admin...",
+      "cancel": "Cancel",
+      "submit": "Submit report",
+      "submitting": "Submitting..."
+    }
+  },
+  "offline": {
+    "message": "No internet connection — actions may not be saved. Waiting to reconnect..."
   }
 }

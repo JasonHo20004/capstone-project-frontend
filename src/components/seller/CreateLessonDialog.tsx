@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ export default function CreateLessonDialog({
   existingLessons,
   onSuccess,
 }: Props) {
+  const { t } = useTranslation('seller');
   const createLessonMutation = useCreateLesson();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastFormDataRef = useRef<FormData | null>(null);
@@ -64,21 +66,21 @@ export default function CreateLessonDialog({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!formData.title.trim()) {
-      newErrors.title = 'Tiêu đề bài học là bắt buộc';
+      newErrors.title = t('createLessonDialog.errors.titleRequired');
     } else if (formData.title.trim().length > 100) {
-      newErrors.title = 'Tiêu đề không được vượt quá 100 ký tự';
+      newErrors.title = t('createLessonDialog.errors.titleTooLong');
     }
     if (formData.lessonOrder < 1) {
-      newErrors.lessonOrder = 'Thứ tự bài học phải lớn hơn 0';
+      newErrors.lessonOrder = t('createLessonDialog.errors.orderInvalid');
     }
     if (formData.videoFile) {
       const maxSize = 1024 * 1024 * 1024;
       if (formData.videoFile.size > maxSize) {
-        newErrors.videoFile = 'Kích thước video không được vượt quá 1GB';
+        newErrors.videoFile = t('createLessonDialog.errors.videoTooLarge');
       }
       const allowedTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
       if (!allowedTypes.includes(formData.videoFile.type)) {
-        newErrors.videoFile = 'Chỉ chấp nhận file video (MP4, MPEG, MOV, AVI, WEBM)';
+        newErrors.videoFile = t('createLessonDialog.errors.videoTypeInvalid');
       }
     }
     setErrors(newErrors);
@@ -178,21 +180,19 @@ export default function CreateLessonDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tạo bài học mới</DialogTitle>
-          <DialogDescription>
-            Điền thông tin để tạo bài học mới cho khóa học này.
-          </DialogDescription>
+          <DialogTitle>{t('createLessonDialog.title')}</DialogTitle>
+          <DialogDescription>{t('createLessonDialog.lead')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">
-              Tiêu đề bài học <span className="text-destructive">*</span>
+              {t('createLessonDialog.titleLabel')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="title"
-              placeholder="VD: Bài 1: Giới thiệu về IELTS Writing"
+              placeholder={t('createLessonDialog.titlePlaceholder')}
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               disabled={isUploading}
@@ -210,10 +210,10 @@ export default function CreateLessonDialog({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Mô tả</Label>
+            <Label htmlFor="description">{t('createLessonDialog.descriptionLabel')}</Label>
             <Textarea
               id="description"
-              placeholder="Mô tả chi tiết về bài học..."
+              placeholder={t('createLessonDialog.descriptionPlaceholder')}
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
               disabled={isUploading}
@@ -224,12 +224,12 @@ export default function CreateLessonDialog({
           {/* Lesson Order */}
           <div className="space-y-2">
             <Label htmlFor="lessonOrder">
-              Thứ tự bài học <span className="text-destructive">*</span>
+              {t('createLessonDialog.orderLabel')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="lessonOrder"
               type="number"
-              placeholder="VD: 1"
+              placeholder={t('createLessonDialog.orderPlaceholder')}
               value={formData.lessonOrder}
               onChange={(e) => handleChange('lessonOrder', parseInt(e.target.value) || 1)}
               disabled={isUploading}
@@ -237,7 +237,7 @@ export default function CreateLessonDialog({
               className={errors.lessonOrder ? 'border-destructive' : ''}
             />
             <p className="text-xs text-muted-foreground">
-              Bài học tiếp theo sẽ có thứ tự: {nextLessonOrder}.
+              {t('createLessonDialog.nextOrderHint', { order: nextLessonOrder })}
             </p>
             {errors.lessonOrder && (
               <p className="text-sm text-destructive">{errors.lessonOrder}</p>
@@ -247,10 +247,14 @@ export default function CreateLessonDialog({
           {/* Duration - auto-detected */}
           {formData.videoFile && formData.durationInSeconds && (
             <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-lg text-sm">
-              <span className="text-emerald-600 font-medium inline-flex items-center gap-1"><Check size={12} /> Thời lượng tự động:</span>
+              <span className="text-emerald-600 font-medium inline-flex items-center gap-1">
+                <Check size={12} /> {t('createLessonDialog.autoDuration')}
+              </span>
               <span className="font-bold text-emerald-700">
-                {Math.floor(parseFloat(formData.durationInSeconds) / 60)} phút{' '}
-                {Math.round(parseFloat(formData.durationInSeconds) % 60)} giây
+                {t('createLessonDialog.durationFormat', {
+                  minutes: Math.floor(parseFloat(formData.durationInSeconds) / 60),
+                  seconds: Math.round(parseFloat(formData.durationInSeconds) % 60),
+                })}
               </span>
             </div>
           )}
@@ -266,7 +270,7 @@ export default function CreateLessonDialog({
             />
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="video">Video bài học (tùy chọn)</Label>
+              <Label htmlFor="video">{t('createLessonDialog.videoLabel')}</Label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -300,14 +304,14 @@ export default function CreateLessonDialog({
                       }}
                       className="mt-2"
                     >
-                      <X className="w-4 h-4 mr-2" /> Xóa file
+                      <X className="w-4 h-4 mr-2" /> {t('createLessonDialog.removeFile')}
                     </Button>
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm font-medium">Nhấn để tải lên video</p>
+                    <p className="text-sm font-medium">{t('createLessonDialog.uploadPrompt')}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Hỗ trợ MP4, MPEG, MOV, AVI, WEBM (Tối đa 100MB)
+                      {t('createLessonDialog.uploadHint')}
                     </p>
                   </>
                 )}
@@ -326,10 +330,10 @@ export default function CreateLessonDialog({
               onClick={() => handleOpenChange(false)}
               disabled={isUploading}
             >
-              Hủy
+              {t('createLessonDialog.cancel')}
             </Button>
             <Button type="submit" disabled={isUploading || uploadStatus === 'done'}>
-              {isUploading ? 'Đang tải lên...' : 'Tạo bài học'}
+              {isUploading ? t('createLessonDialog.uploading') : t('createLessonDialog.submit')}
             </Button>
           </div>
         </form>

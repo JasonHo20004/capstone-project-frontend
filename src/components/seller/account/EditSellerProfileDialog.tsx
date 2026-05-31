@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ interface PreviewFile {
 }
 
 export default function EditSellerProfileDialog({ open, onOpenChange, profile }: Props) {
+  const { t } = useTranslation('seller');
   const mutation = useUpdateSellerProfile();
 
   const [expertise, setExpertise] = useState<string[]>(profile.expertise ?? []);
@@ -66,7 +68,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
     const v = expInput.trim();
     if (!v) return;
     if (expertise.includes(v)) {
-      toast.warning('Chuyên môn này đã tồn tại');
+      toast.warning(t('editProfile.errors.duplicateExpertise'));
       return;
     }
     setExpertise((prev) => [...prev, v]);
@@ -87,12 +89,12 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
     const incoming = Array.from(e.target.files);
     const validFiles = incoming.filter((f) => f.size <= 5 * 1024 * 1024);
     if (validFiles.length < incoming.length) {
-      toast.warning('Một số file quá lớn (>5MB) đã bị bỏ qua.');
+      toast.warning(t('editProfile.errors.fileTooLarge'));
     }
 
     const remainingSlots = Math.max(0, 10 - (keptCerts.length + newFiles.length));
     if (validFiles.length > remainingSlots) {
-      toast.warning('Chỉ được tải lên tối đa 10 ảnh chứng chỉ (gồm cả ảnh cũ).');
+      toast.warning(t('editProfile.errors.maxImages'));
       validFiles.splice(remainingSlots);
     }
 
@@ -116,11 +118,11 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
   const handleSubmit = () => {
     const totalCerts = keptCerts.length + newFiles.length;
     if (totalCerts === 0) {
-      toast.error('Phải có ít nhất 1 chứng chỉ.');
+      toast.error(t('editProfile.errors.atLeastOneCert'));
       return;
     }
     if (expertise.length === 0) {
-      toast.error('Phải có ít nhất 1 chuyên môn.');
+      toast.error(t('editProfile.errors.atLeastOneExpertise'));
       return;
     }
 
@@ -142,19 +144,17 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa hồ sơ giảng viên</DialogTitle>
-          <DialogDescription>
-            Cập nhật chuyên môn và chứng chỉ. Bạn có thể xóa ảnh cũ hoặc thêm ảnh mới.
-          </DialogDescription>
+          <DialogTitle>{t('editProfile.title')}</DialogTitle>
+          <DialogDescription>{t('editProfile.lead')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Expertise */}
           <div className="space-y-3">
-            <Label>Chuyên môn & Kỹ năng</Label>
+            <Label>{t('editProfile.expertiseLabel')}</Label>
             <div className="flex gap-2">
               <Input
-                placeholder="VD: IELTS 8.0, Business English..."
+                placeholder={t('editProfile.expertisePlaceholder')}
                 value={expInput}
                 onChange={(e) => setExpInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -166,7 +166,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
                 disabled={isPending}
               />
               <Button variant="secondary" onClick={addExp} type="button" disabled={isPending}>
-                Thêm
+                {t('editProfile.add')}
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
@@ -184,7 +184,9 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
                 </Badge>
               ))}
               {expertise.length === 0 && (
-                <span className="text-sm text-muted-foreground italic">Chưa có chuyên môn nào.</span>
+                <span className="text-sm text-muted-foreground italic">
+                  {t('editProfile.noExpertise')}
+                </span>
               )}
             </div>
           </div>
@@ -192,7 +194,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
           {/* Existing certificates */}
           {keptCerts.length > 0 && (
             <div className="space-y-3">
-              <Label>Chứng chỉ hiện có</Label>
+              <Label>{t('editProfile.existingCerts')}</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {keptCerts.map((url) => (
                   <div
@@ -201,7 +203,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
                   >
                     <img
                       src={url}
-                      alt="Chứng chỉ"
+                      alt={t('editProfile.certAlt')}
                       className="w-full h-full object-contain"
                       loading="lazy"
                     />
@@ -212,7 +214,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
                       onClick={() => removeKeptCert(url)}
                       disabled={isPending}
                       className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Xóa chứng chỉ này"
+                      title={t('editProfile.removeCertTitle')}
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -224,7 +226,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
 
           {/* Upload new certificates */}
           <div className="space-y-3">
-            <Label>Thêm chứng chỉ mới</Label>
+            <Label>{t('editProfile.addNewCerts')}</Label>
             <input
               type="file"
               ref={fileInputRef}
@@ -240,9 +242,9 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
               <div className="p-3 bg-primary/10 rounded-full mb-2">
                 <Upload className="w-5 h-5 text-primary" />
               </div>
-              <p className="text-sm font-medium">Nhấn để tải lên ảnh chứng chỉ</p>
+              <p className="text-sm font-medium">{t('editProfile.uploadPrompt')}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                JPG/PNG/WebP, tối đa 5MB/file. Tổng ≤ 10 ảnh (gồm cả ảnh cũ).
+                {t('editProfile.uploadHint')}
               </p>
             </div>
 
@@ -255,7 +257,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="h-10 w-10 rounded bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        <img src={p.previewUrl} alt="preview" className="h-full w-full object-cover" />
+                        <img src={p.previewUrl} alt={t('editProfile.previewAlt')} className="h-full w-full object-cover" />
                       </div>
                       <div className="flex flex-col overflow-hidden">
                         <span className="text-sm font-medium truncate">{p.file.name}</span>
@@ -282,14 +284,14 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
             {keptCerts.length + newFiles.length === 0 && (
               <div className="flex items-center gap-2 text-xs text-amber-600">
                 <ImageOff className="w-3.5 h-3.5" />
-                Phải có ít nhất 1 chứng chỉ.
+                {t('editProfile.errors.atLeastOneCert')}
               </div>
             )}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-              Hủy
+              {t('editProfile.cancel')}
             </Button>
             <Button
               type="button"
@@ -297,7 +299,7 @@ export default function EditSellerProfileDialog({ open, onOpenChange, profile }:
               disabled={isPending || expertise.length === 0 || keptCerts.length + newFiles.length === 0}
             >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Lưu thay đổi
+              {t('editProfile.save')}
             </Button>
           </div>
         </div>

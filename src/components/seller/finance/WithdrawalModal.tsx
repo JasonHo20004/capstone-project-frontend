@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,9 @@ const MAX_WITHDRAW = 50_000_000;
 const WITHDRAWAL_FEE = 0;
 
 export function WithdrawalModal({ open, onOpenChange, availableBalance }: WithdrawalModalProps) {
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
+
   const [amount, setAmount] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountName, setAccountName] = useState('');
@@ -77,15 +81,15 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
     if (!amountValid) {
       toast.error(
         amountNum < MIN_WITHDRAW
-          ? `Số tiền tối thiểu là ${formatVND(MIN_WITHDRAW)}`
+          ? t('withdrawalModal.errors.belowMin', { amount: formatVND(MIN_WITHDRAW) })
           : amountNum > availableBalance
-          ? 'Số dư khả dụng không đủ'
-          : `Số tiền tối đa mỗi lệnh là ${formatVND(MAX_WITHDRAW)}`
+          ? t('withdrawalModal.errors.insufficient')
+          : t('withdrawalModal.errors.aboveMax', { amount: formatVND(MAX_WITHDRAW) })
       );
       return;
     }
     if (!detailsValid) {
-      toast.error('Kiểm tra lại thông tin ngân hàng (số tài khoản cần 6–20 chữ số)');
+      toast.error(t('withdrawalModal.errors.bankDetails'));
       return;
     }
     setShowPreview(true);
@@ -102,14 +106,16 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
       const requestId = res?.data?.id ?? '';
       const shortId = requestId ? requestId.slice(0, 8).toUpperCase() : '';
       toast.success(
-        shortId ? `Đã tạo yêu cầu rút #WR-${shortId} — chờ admin duyệt` : 'Đã gửi yêu cầu rút tiền'
+        shortId
+          ? t('withdrawalModal.toasts.createdWithId', { id: shortId })
+          : t('withdrawalModal.toasts.createdGeneric')
       );
       reset();
       onOpenChange(false);
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Có lỗi xảy ra khi gửi yêu cầu';
+        t('withdrawalModal.errors.generic');
       toast.error(msg);
       setShowPreview(false);
     }
@@ -117,8 +123,8 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
 
   const arrivesEstimate = useMemo(() => {
     const eta = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3);
-    return eta.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }, []);
+    return eta.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }, [dateLocale]);
 
   return (
     <Dialog
@@ -132,24 +138,22 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
         {!showPreview ? (
           <form onSubmit={handleNext}>
             <DialogHeader>
-              <DialogTitle>Yêu cầu rút tiền</DialogTitle>
+              <DialogTitle>{t('withdrawalModal.title')}</DialogTitle>
               <DialogDescription className="flex items-start gap-2 mt-1">
                 <Clock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                <span>
-                  Admin thường duyệt trong vòng 24 giờ làm việc. Tiền sẽ về tài khoản ngân hàng sau 1–3 ngày làm việc.
-                </span>
+                <span>{t('withdrawalModal.lead')}</span>
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="rounded-lg bg-emerald-500/10 p-3 text-center border border-emerald-500/20">
-                <p className="text-xs text-muted-foreground">Khả dụng</p>
+                <p className="text-xs text-muted-foreground">{t('withdrawalModal.available')}</p>
                 <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-display">
                   {formatVND(availableBalance)}
                 </p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="amount">Số tiền muốn rút (VNĐ)</Label>
+                <Label htmlFor="amount">{t('withdrawalModal.amountLabel')}</Label>
                 <div className="relative">
                   <Input
                     id="amount"
@@ -159,7 +163,7 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
                     step="1000"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder={`Tối thiểu ${formatVND(MIN_WITHDRAW)}`}
+                    placeholder={t('withdrawalModal.amountPlaceholder', { amount: formatVND(MIN_WITHDRAW) })}
                     className="pr-16"
                     required
                   />
@@ -170,50 +174,54 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
                     className="absolute right-1 top-1 h-7 text-xs text-primary"
                     onClick={handleMax}
                   >
-                    Tối đa
+                    {t('withdrawalModal.max')}
                   </Button>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    Tối thiểu {formatVND(MIN_WITHDRAW)} • Tối đa {formatVND(MAX_WITHDRAW)}/lệnh
+                    {t('withdrawalModal.limits', {
+                      min: formatVND(MIN_WITHDRAW),
+                      max: formatVND(MAX_WITHDRAW),
+                    })}
                   </span>
                   <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
                     <ShieldCheck className="w-3 h-3" />
-                    Phí: {WITHDRAWAL_FEE === 0 ? 'Miễn phí' : formatVND(WITHDRAWAL_FEE)}
+                    {t('withdrawalModal.feeLabel')}{' '}
+                    {WITHDRAWAL_FEE === 0 ? t('withdrawalModal.feeFree') : formatVND(WITHDRAWAL_FEE)}
                   </span>
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="bankName">Tên Ngân hàng</Label>
+                <Label htmlFor="bankName">{t('withdrawalModal.bankNameLabel')}</Label>
                 <Input
                   id="bankName"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  placeholder="VD: Vietcombank, Techcombank..."
+                  placeholder={t('withdrawalModal.bankNamePlaceholder')}
                   required
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="accountName">Tên chủ tài khoản</Label>
+                <Label htmlFor="accountName">{t('withdrawalModal.accountNameLabel')}</Label>
                 <Input
                   id="accountName"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value.toUpperCase())}
-                  placeholder="NGUYEN VAN A"
+                  placeholder={t('withdrawalModal.accountNamePlaceholder')}
                   required
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="accountNumber">Số tài khoản</Label>
+                <Label htmlFor="accountNumber">{t('withdrawalModal.accountNumberLabel')}</Label>
                 <Input
                   id="accountNumber"
                   inputMode="numeric"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Nhập số tài khoản (6–20 chữ số)"
+                  placeholder={t('withdrawalModal.accountNumberPlaceholder')}
                   required
                 />
               </div>
@@ -221,45 +229,44 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
               {latestSavedAccount && (
                 <div className="text-xs text-muted-foreground flex items-start gap-2 rounded-md bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 p-2">
                   <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  <span>
-                    Đã tự điền từ lần rút gần nhất ({latestSavedAccount.bankName}). Bạn có thể sửa nếu cần.
-                  </span>
+                  <span>{t('withdrawalModal.autofillHint', { bank: latestSavedAccount.bankName })}</span>
                 </div>
               )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Hủy
+                {t('withdrawalModal.cancel')}
               </Button>
               <Button type="submit" disabled={!amountValid || !detailsValid}>
-                Xem trước
+                {t('withdrawalModal.preview')}
               </Button>
             </DialogFooter>
           </form>
         ) : (
           <div>
             <DialogHeader>
-              <DialogTitle>Xác nhận yêu cầu rút tiền</DialogTitle>
-              <DialogDescription>
-                Kiểm tra kỹ thông tin — admin sẽ chuyển khoản thủ công, sai một chữ số là tiền không về đúng.
-              </DialogDescription>
+              <DialogTitle>{t('withdrawalModal.confirmTitle')}</DialogTitle>
+              <DialogDescription>{t('withdrawalModal.confirmLead')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-2 py-4 text-sm">
-              <SummaryRow label="Số tiền rút" value={formatVND(amountNum)} highlight />
+              <SummaryRow label={t('withdrawalModal.summary.amount')} value={formatVND(amountNum)} highlight />
               <SummaryRow
-                label="Phí giao dịch"
-                value={WITHDRAWAL_FEE === 0 ? 'Miễn phí' : `- ${formatVND(WITHDRAWAL_FEE)}`}
+                label={t('withdrawalModal.summary.fee')}
+                value={WITHDRAWAL_FEE === 0 ? t('withdrawalModal.feeFree') : `- ${formatVND(WITHDRAWAL_FEE)}`}
               />
               <SummaryRow
-                label="Bạn sẽ nhận"
+                label={t('withdrawalModal.summary.receive')}
                 value={formatVND(Math.max(0, amountNum - WITHDRAWAL_FEE))}
                 highlight
               />
               <div className="border-t my-2" />
-              <SummaryRow label="Ngân hàng" value={bankName} />
-              <SummaryRow label="Chủ tài khoản" value={accountName} />
-              <SummaryRow label="Số tài khoản" value={accountNumber} mono />
-              <SummaryRow label="Dự kiến nhận" value={`Trước ${arrivesEstimate}`} />
+              <SummaryRow label={t('withdrawalModal.summary.bank')} value={bankName} />
+              <SummaryRow label={t('withdrawalModal.summary.accountName')} value={accountName} />
+              <SummaryRow label={t('withdrawalModal.summary.accountNumber')} value={accountNumber} mono />
+              <SummaryRow
+                label={t('withdrawalModal.summary.eta')}
+                value={t('withdrawalModal.summary.etaValue', { date: arrivesEstimate })}
+              />
             </div>
             <DialogFooter>
               <Button
@@ -268,10 +275,12 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
                 onClick={() => setShowPreview(false)}
                 disabled={requestWithdrawal.isPending}
               >
-                Quay lại
+                {t('withdrawalModal.back')}
               </Button>
               <Button type="button" onClick={handleConfirm} disabled={requestWithdrawal.isPending}>
-                {requestWithdrawal.isPending ? 'Đang gửi…' : 'Xác nhận gửi'}
+                {requestWithdrawal.isPending
+                  ? t('withdrawalModal.submitting')
+                  : t('withdrawalModal.submit')}
               </Button>
             </DialogFooter>
           </div>

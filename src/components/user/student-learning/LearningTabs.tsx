@@ -1,14 +1,16 @@
+import { useTranslation } from "react-i18next";
+
 import { cn } from "@/lib/utils";
 
 type Tab = {
   id: "overview" | "comments" | "reviews";
-  label: string;
+  labelKey: "overview" | "comments" | "reviews";
 };
 
 const tabs: Tab[] = [
-  { id: "overview", label: "Overview" },
-  { id: "comments", label: "Comments" },
-  { id: "reviews", label: "Reviews" },
+  { id: "overview", labelKey: "overview" },
+  { id: "comments", labelKey: "comments" },
+  { id: "reviews", labelKey: "reviews" },
 ];
 
 type LearningTabsProps = {
@@ -17,6 +19,7 @@ type LearningTabsProps = {
 };
 
 export const LearningTabs = ({ activeTab, onTabChange }: LearningTabsProps) => {
+  const { t } = useTranslation("courses");
   return (
     <div className="flex flex-wrap gap-3 rounded-2xl border bg-muted/40 p-4">
       {tabs.map((tab) => (
@@ -31,7 +34,7 @@ export const LearningTabs = ({ activeTab, onTabChange }: LearningTabsProps) => {
               : "bg-background text-muted-foreground hover:bg-primary/10"
           )}
         >
-          {tab.label}
+          {t(`studentLearning.learningTabs.${tab.labelKey}`)}
         </button>
       ))}
     </div>
@@ -39,4 +42,3 @@ export const LearningTabs = ({ activeTab, onTabChange }: LearningTabsProps) => {
 };
 
 export type LearningTabId = Tab["id"];
-

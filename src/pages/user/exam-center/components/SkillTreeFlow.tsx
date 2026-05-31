@@ -4,6 +4,7 @@
 // =============================================================================
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { BookOpen, Zap, Trophy, Wrench, Pencil, CheckCircle2, Lock, Crown, Gift, RefreshCw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -97,12 +98,12 @@ const BANNER_HEIGHT = 110;
 // Idea 7: remedial side-quest spacing
 const REMEDIAL_OFFSET_X = H_GAP * 0.8;
 
-const SECTION_THEMES: Array<{ label: string; gradient: string; accent: string }> = [
-  { label: "Foundations",      gradient: "from-indigo-500/70 to-blue-500/70",   accent: "#818cf8" },
-  { label: "Skill Building",   gradient: "from-emerald-500/70 to-teal-500/70",  accent: "#34d399" },
-  { label: "Real Conversations", gradient: "from-amber-500/70 to-orange-500/70", accent: "#fbbf24" },
-  { label: "Mastery",          gradient: "from-rose-500/70 to-fuchsia-500/70",  accent: "#f472b6" },
-  { label: "Beyond",           gradient: "from-violet-500/70 to-purple-500/70", accent: "#a78bfa" },
+const SECTION_THEMES: Array<{ labelKey: string; gradient: string; accent: string }> = [
+  { labelKey: "foundations",        gradient: "from-indigo-500/70 to-blue-500/70",   accent: "#818cf8" },
+  { labelKey: "skillBuilding",      gradient: "from-emerald-500/70 to-teal-500/70",  accent: "#34d399" },
+  { labelKey: "realConversations",  gradient: "from-amber-500/70 to-orange-500/70", accent: "#fbbf24" },
+  { labelKey: "mastery",            gradient: "from-rose-500/70 to-fuchsia-500/70",  accent: "#f472b6" },
+  { labelKey: "beyond",             gradient: "from-violet-500/70 to-purple-500/70", accent: "#a78bfa" },
 ];
 
 interface LayoutBanner {
@@ -427,6 +428,7 @@ function sizeForType(type: string): { size: number; r: number } {
 }
 
 export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNodeClick }: SkillTreeFlowProps) {
+  const { t } = useTranslation("exam");
   injectStyles();
 
   // Defend against duplicate ids from the backend (causes React key collisions
@@ -551,14 +553,14 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                 </div>
                 <div className="text-left text-white">
                   <div className="text-[9px] font-bold uppercase tracking-widest opacity-80">
-                    Section {banner.sectionIndex + 1}
+                    {t("skillTree.flow.section", { num: banner.sectionIndex + 1 })}
                   </div>
                   <div className="text-base font-black leading-tight drop-shadow">
-                    {theme.label}
+                    {t(`skillTree.flow.sections.${theme.labelKey}`)}
                   </div>
                 </div>
                 <div className="text-white/80 text-[10px] font-bold uppercase tracking-wider ml-2 hidden sm:block">
-                  +50 Bonus XP
+                  {t("skillTree.flow.bonusXp")}
                 </div>
               </div>
             </div>
@@ -593,7 +595,12 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
               <button
                 onClick={() => handleClick(node)}
                 disabled={isLocked}
-                aria-label={`${data.label} — ${isCompleted ? "completed" : isLocked ? "locked" : isNew ? "new, tap to start" : "active, tap to continue"}`}
+                aria-label={`${data.label} — ${
+                  isCompleted ? t("skillTree.flow.aria.completed")
+                    : isLocked ? t("skillTree.flow.aria.locked")
+                      : isNew ? t("skillTree.flow.aria.newStart")
+                        : t("skillTree.flow.aria.activeContinue")
+                }`}
                 className={`
                   absolute flex items-center justify-center
                   transition-all duration-300 select-none outline-none
@@ -755,7 +762,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                     }}
                   >
                     <RefreshCw size={10} className="shrink-0" />
-                    <span className="truncate">Review: {data.label}</span>
+                    <span className="truncate">{t("skillTree.flow.review", { label: data.label })}</span>
                   </p>
                 ) : (
                   <p
@@ -774,12 +781,12 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                     className="inline-block mt-1 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
                     style={{ backgroundColor: theme.glow, color: theme.bgDark }}
                   >
-                    NEW
+                    {t("skillTree.flow.new")}
                   </span>
                 )}
                 {(isActive && !isNew && !isRemedial) && (
                   <span className="mt-1 text-[10px] text-slate-300 font-medium px-1.5 py-0.5 rounded bg-slate-900/60">
-                    Tap to start
+                    {t("skillTree.flow.tapToStart")}
                   </span>
                 )}
               </div>
@@ -793,7 +800,10 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
           style={{ bottom: 20 }}
         >
           <div className="text-slate-600 text-xs font-medium">
-            {layoutNodes.filter((n) => n.data.status === "completed").length} / {layoutNodes.length} completed
+            {t("skillTree.flow.completedCount", {
+              done: layoutNodes.filter((n) => n.data.status === "completed").length,
+              total: layoutNodes.length,
+            })}
           </div>
         </div>
       </div>

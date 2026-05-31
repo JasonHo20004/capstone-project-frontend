@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,15 +27,17 @@ import { formatVND } from "@/lib/utils";
 
 const STATUS: Record<
   RefundRequestStatus,
-  { label: string; variant: "default" | "secondary" | "destructive"; icon: typeof Clock }
+  { labelKey: string; variant: "default" | "secondary" | "destructive"; icon: typeof Clock }
 > = {
-  PENDING: { label: "Đang chờ duyệt", variant: "secondary", icon: Clock },
-  APPROVED: { label: "Đã duyệt", variant: "default", icon: CheckCircle2 },
-  COMPLETED: { label: "Hoàn tất - đã cộng ví", variant: "default", icon: CheckCircle2 },
-  REJECTED: { label: "Bị từ chối", variant: "destructive", icon: XCircle },
+  PENDING: { labelKey: "statusPending", variant: "secondary", icon: Clock },
+  APPROVED: { labelKey: "statusApproved", variant: "default", icon: CheckCircle2 },
+  COMPLETED: { labelKey: "statusCompleted", variant: "default", icon: CheckCircle2 },
+  REJECTED: { labelKey: "statusRejected", variant: "destructive", icon: XCircle },
 };
 
 export default function Refunds() {
+  const { t, i18n } = useTranslation("account");
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-GB";
   const queryClient = useQueryClient();
   const [requestFor, setRequestFor] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -51,14 +54,14 @@ export default function Refunds() {
       refundService.create(orderId, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userRefunds"] });
-      toast.success("Đã gửi yêu cầu hoàn tiền, admin sẽ xem xét sớm");
+      toast.success(t("refunds.toasts.submitSuccess"));
       setRequestFor(null);
       setReason("");
     },
     onError: (err: unknown) => {
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        (err instanceof Error ? err.message : "Tạo yêu cầu thất bại");
+        (err instanceof Error ? err.message : t("refunds.toasts.submitError"));
       toast.error(msg);
     },
   });
@@ -88,40 +91,39 @@ export default function Refunds() {
       <div className="flex items-center gap-3">
         <Receipt className="h-7 w-7 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Hoàn tiền</h1>
-          <p className="text-sm text-muted-foreground">
-            Yêu cầu hoàn tiền các đơn hàng đã mua. Tiền sẽ được cộng vào ví sau khi admin duyệt.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("refunds.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("refunds.subtitle")}</p>
         </div>
       </div>
 
       {refunds.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold">Yêu cầu của tôi</h2>
+          <h2 className="text-lg font-semibold">{t("refunds.myRequests")}</h2>
           <div className="space-y-2">
             {refunds.map((r) => {
-              const { label, variant, icon: Icon } = STATUS[r.status];
+              const { labelKey, variant, icon: Icon } = STATUS[r.status];
               return (
                 <Card key={r.id}>
                   <CardContent className="p-4 flex flex-wrap items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        <Badge variant={variant}>{label}</Badge>
+                        <Badge variant={variant}>{t(`refunds.${labelKey}`)}</Badge>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(r.createdAt).toLocaleString("vi-VN")}
+                          {new Date(r.createdAt).toLocaleString(dateLocale)}
                         </span>
                       </div>
                       <div className="text-sm">
-                        Đơn <span className="font-mono text-xs">{r.orderId.slice(0, 8)}…</span> —{" "}
+                        {t("refunds.orderLabel")}{" "}
+                        <span className="font-mono text-xs">{r.orderId.slice(0, 8)}…</span> —{" "}
                         <span className="font-bold">{formatVND(Number(r.amount))}</span>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        Lý do: {r.reason}
+                        {t("refunds.reasonLabel")}: {r.reason}
                       </div>
                       {r.adminNote && (
                         <div className="text-xs mt-2 rounded border-l-2 border-primary bg-muted/40 px-2 py-1">
-                          <span className="font-medium">Phản hồi admin:</span> {r.adminNote}
+                          <span className="font-medium">{t("refunds.adminNote")}:</span> {r.adminNote}
                         </div>
                       )}
                     </div>
@@ -134,11 +136,11 @@ export default function Refunds() {
       )}
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Đơn hàng của tôi</h2>
+        <h2 className="text-lg font-semibold">{t("refunds.myOrders")}</h2>
         {orders.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
-              Bạn chưa có đơn hàng nào.
+              {t("refunds.emptyOrders")}
             </CardContent>
           </Card>
         ) : (
@@ -154,12 +156,12 @@ export default function Refunds() {
                       </div>
                       <div className="font-bold">{formatVND(Number(order.totalAmount))}</div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleString("vi-VN")}
+                        {new Date(order.createdAt).toLocaleString(dateLocale)}
                       </div>
                     </div>
                     {existing ? (
                       <Badge variant={STATUS[existing.status].variant}>
-                        {STATUS[existing.status].label}
+                        {t(`refunds.${STATUS[existing.status].labelKey}`)}
                       </Badge>
                     ) : (
                       <Button
@@ -167,7 +169,7 @@ export default function Refunds() {
                         size="sm"
                         onClick={() => setRequestFor(order.id)}
                       >
-                        Yêu cầu hoàn tiền
+                        {t("refunds.requestRefund")}
                       </Button>
                     )}
                   </CardContent>
@@ -181,14 +183,12 @@ export default function Refunds() {
       <Dialog open={!!requestFor} onOpenChange={(open) => !open && setRequestFor(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Yêu cầu hoàn tiền</DialogTitle>
-            <DialogDescription>
-              Vui lòng nêu rõ lý do bạn muốn hoàn tiền cho đơn này. Admin sẽ xem xét và phản hồi trong vòng 3-5 ngày làm việc.
-            </DialogDescription>
+            <DialogTitle>{t("refunds.dialog.title")}</DialogTitle>
+            <DialogDescription>{t("refunds.dialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="refundReason">
-              Lý do <span className="text-destructive">*</span>
+              {t("refunds.dialog.reasonLabel")} <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="refundReason"
@@ -196,10 +196,10 @@ export default function Refunds() {
               maxLength={1000}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="VD: Nội dung khoá học không đúng mô tả; giảng viên không phản hồi; chất lượng video kém..."
+              placeholder={t("refunds.dialog.reasonPlaceholder")}
             />
             <p className="text-xs text-muted-foreground text-right">
-              {reason.length}/1000 (tối thiểu 10 ký tự)
+              {t("refunds.dialog.counter", { count: reason.length })}
             </p>
           </div>
           <DialogFooter>
@@ -210,7 +210,7 @@ export default function Refunds() {
                 setReason("");
               }}
             >
-              Huỷ
+              {t("refunds.dialog.cancel")}
             </Button>
             <Button
               disabled={reason.trim().length < 10 || createMutation.isPending}
@@ -219,7 +219,7 @@ export default function Refunds() {
                 createMutation.mutate({ orderId: requestFor, reason: reason.trim() });
               }}
             >
-              {createMutation.isPending ? "Đang gửi..." : "Gửi yêu cầu"}
+              {createMutation.isPending ? t("refunds.dialog.submitting") : t("refunds.dialog.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>

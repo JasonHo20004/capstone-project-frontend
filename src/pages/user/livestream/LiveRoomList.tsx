@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useUser } from '@/hooks/api/use-user';
 import { Button } from '@/components/ui/button';
@@ -64,22 +65,10 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'bg-slate-100 text-slate-500',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  waiting: 'Waiting',
-  live: 'LIVE',
-  completed: 'Ended',
-};
-
-function timeAgo(iso: string) {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  return `${Math.floor(diff / 3600)}h ago`;
-}
-
 export default function LiveRoomList() {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { t } = useTranslation('livestream');
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState('');
   const [lessonPrompt, setLessonPrompt] = useState('');
@@ -87,6 +76,20 @@ export default function LiveRoomList() {
   const [language, setLanguage] = useState('en');
   const [tab, setTab] = useState<'live' | 'recordings'>('live');
   const [createError, setCreateError] = useState('');
+
+  const statusLabel = (status: string) => {
+    if (status === 'waiting') return t('list.status.waiting');
+    if (status === 'live') return t('list.status.live');
+    if (status === 'completed') return t('list.status.completed');
+    return status;
+  };
+
+  const timeAgo = (iso: string) => {
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60) return t('list.timeAgo.seconds', { n: diff });
+    if (diff < 3600) return t('list.timeAgo.minutes', { n: Math.floor(diff / 60) });
+    return t('list.timeAgo.hours', { n: Math.floor(diff / 3600) });
+  };
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['livestream-rooms'],
@@ -130,7 +133,7 @@ export default function LiveRoomList() {
         throw new Error(
           (data as { detail?: string; message?: string }).detail ||
           (data as { message?: string }).message ||
-          'Không tạo được phòng. Vui lòng đăng nhập lại rồi thử lại.',
+          t('list.dialog.submitError'),
         );
       }
       return res.json() as Promise<{ room_id: string }>;
@@ -155,10 +158,10 @@ export default function LiveRoomList() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Radio className="w-5 h-5 text-indigo-500" />
-            <h1 className="text-2xl font-bold text-slate-900">AI Live Classroom</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{t('list.title')}</h1>
           </div>
           <p className="text-sm text-slate-500">
-            Join a live session or create your own — AI teaches the lesson in real-time.
+            {t('list.subtitle')}
           </p>
         </div>
 
@@ -166,73 +169,73 @@ export default function LiveRoomList() {
           <DialogTrigger asChild>
             <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
               <Plus className="w-4 h-4" />
-              Create Room
+              {t('list.createRoom')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Tạo phòng livestream</DialogTitle>
+              <DialogTitle>{t('list.dialog.title')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
               {/* Title */}
               <div className="space-y-1.5">
-                <Label htmlFor="topic">Tiêu đề lớp học</Label>
+                <Label htmlFor="topic">{t('list.dialog.topicLabel')}</Label>
                 <Input
                   id="topic"
-                  placeholder="Ví dụ: IELTS Speaking Part 2, Phrasal Verbs, Business Email…"
+                  placeholder={t('list.dialog.topicPlaceholder')}
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                 />
-                <p className="text-xs text-slate-400">Hiển thị công khai — học viên sẽ thấy tiêu đề này trên danh sách phòng.</p>
+                <p className="text-xs text-slate-400">{t('list.dialog.topicHint')}</p>
               </div>
 
               {/* Lesson prompt */}
               <div className="space-y-1.5">
                 <Label htmlFor="lesson-prompt">
-                  Nội dung muốn AI dạy
-                  <span className="ml-1.5 text-xs font-normal text-slate-400">(tuỳ chọn)</span>
+                  {t('list.dialog.lessonPromptLabel')}
+                  <span className="ml-1.5 text-xs font-normal text-slate-400">{t('list.dialog.lessonPromptOptional')}</span>
                 </Label>
                 <Textarea
                   id="lesson-prompt"
-                  placeholder={`Ví dụ: Làm thế nào để phát triển idea trong IELTS Speaking Part 2? Tập trung vào cấu trúc câu trả lời, cách dùng linking words và các mẫu câu thông dụng.`}
+                  placeholder={t('list.dialog.lessonPromptPlaceholder')}
                   value={lessonPrompt}
                   onChange={(e) => setLessonPrompt(e.target.value)}
                   rows={4}
                   className="resize-none text-sm"
                 />
-                <p className="text-xs text-slate-400">AI sẽ bám sát hướng dẫn này để sinh nội dung bài giảng. Nếu để trống, AI sẽ tự thiết kế bài dựa theo tiêu đề.</p>
+                <p className="text-xs text-slate-400">{t('list.dialog.lessonPromptHint')}</p>
               </div>
 
               {/* Level */}
               <div className="space-y-1.5">
-                <Label>Trình độ học viên</Label>
+                <Label>{t('list.dialog.levelLabel')}</Label>
                 <Select value={level} onValueChange={setLevel}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="beginner">Beginner (A1–A2)</SelectItem>
-                    <SelectItem value="intermediate">Intermediate (B1–B2)</SelectItem>
-                    <SelectItem value="advanced">Advanced (C1–C2)</SelectItem>
+                    <SelectItem value="beginner">{t('list.dialog.level.beginner')}</SelectItem>
+                    <SelectItem value="intermediate">{t('list.dialog.level.intermediate')}</SelectItem>
+                    <SelectItem value="advanced">{t('list.dialog.level.advanced')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Language */}
               <div className="space-y-1.5">
-                <Label>Ngôn ngữ giảng dạy</Label>
+                <Label>{t('list.dialog.languageLabel')}</Label>
                 <Select value={language} onValueChange={setLanguage}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en">EN Tiếng Anh</SelectItem>
-                    <SelectItem value="vi">VI Tiếng Việt</SelectItem>
+                    <SelectItem value="en">{t('list.dialog.languageEn')}</SelectItem>
+                    <SelectItem value="vi">{t('list.dialog.languageVi')}</SelectItem>
                   </SelectContent>
                 </Select>
                 {language === 'vi' && (
                   <p className="text-xs text-slate-400">
-                    Giảng viên AI sẽ giải thích bằng tiếng Việt — phù hợp cho người mới bắt đầu.
+                    {t('list.dialog.languageViHint')}
                   </p>
                 )}
               </div>
@@ -248,7 +251,7 @@ export default function LiveRoomList() {
                 disabled={!topic.trim() || createRoom.isPending}
                 onClick={() => createRoom.mutate()}
               >
-                {createRoom.isPending ? <LoadingSpinner className="w-4 h-4" /> : 'Bắt đầu livestream'}
+                {createRoom.isPending ? <LoadingSpinner className="w-4 h-4" /> : t('list.dialog.submit')}
               </Button>
             </div>
           </DialogContent>
@@ -265,7 +268,7 @@ export default function LiveRoomList() {
               : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          <Radio className="w-4 h-4" /> Live Rooms
+          <Radio className="w-4 h-4" /> {t('list.tabs.live')}
         </button>
         <button
           onClick={() => setTab('recordings')}
@@ -275,7 +278,7 @@ export default function LiveRoomList() {
               : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          <BookOpen className="w-4 h-4" /> Recordings
+          <BookOpen className="w-4 h-4" /> {t('list.tabs.recordings')}
         </button>
       </div>
 
@@ -289,9 +292,9 @@ export default function LiveRoomList() {
           <div className="flex flex-col items-center gap-4 py-20 text-center">
             <BookOpen className="w-12 h-12 text-slate-300" />
             <div>
-              <p className="font-medium text-slate-700">No recordings yet</p>
+              <p className="font-medium text-slate-700">{t('list.recordings.empty')}</p>
               <p className="text-sm text-slate-400 mt-1">
-                Completed sessions are saved for 7 days.
+                {t('list.recordings.emptyHint')}
               </p>
             </div>
           </div>
@@ -317,11 +320,11 @@ export default function LiveRoomList() {
                 <div className="flex items-center gap-3 text-xs text-slate-400">
                   <span className="flex items-center gap-1">
                     <BookOpen className="w-3 h-3" />
-                    {rec.section_count} sections
+                    {t('list.recordings.sections', { count: rec.section_count })}
                   </span>
                   <span className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
-                    {rec.qa_count} Q&As
+                    {t('list.recordings.qas', { count: rec.qa_count })}
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
@@ -331,7 +334,7 @@ export default function LiveRoomList() {
 
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-slate-500">
-                    Host: <span className="font-medium text-slate-700">{rec.host_name}</span>
+                    {t('list.recordings.hostLabel')} <span className="font-medium text-slate-700">{rec.host_name}</span>
                   </span>
                   <Button
                     size="sm"
@@ -339,7 +342,7 @@ export default function LiveRoomList() {
                     onClick={() => navigate(`/live/replay/${rec.room_id}`)}
                   >
                     <PlayCircle className="w-3.5 h-3.5" />
-                    Watch Replay
+                    {t('list.recordings.watchReplay')}
                   </Button>
                 </div>
               </div>
@@ -354,11 +357,11 @@ export default function LiveRoomList() {
         <div className="flex flex-col items-center gap-5 py-20 text-center">
           <AIAvatarAnime isSpeaking={false} className="w-28 h-28" />
           <div>
-            <p className="font-medium text-slate-700">No live classrooms yet</p>
-            <p className="text-sm text-slate-400 mt-1">Be the first to create one!</p>
+            <p className="font-medium text-slate-700">{t('list.rooms.empty')}</p>
+            <p className="text-sm text-slate-400 mt-1">{t('list.rooms.emptyHint')}</p>
           </div>
           <Button variant="outline" onClick={() => setOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Create a Room
+            <Plus className="w-4 h-4" /> {t('list.rooms.createButton')}
           </Button>
         </div>
       ) : (
@@ -381,7 +384,7 @@ export default function LiveRoomList() {
                   {room.status === 'live' && (
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1 animate-pulse" />
                   )}
-                  {STATUS_LABELS[room.status]}
+                  {statusLabel(room.status)}
                 </span>
               </div>
 
@@ -397,7 +400,7 @@ export default function LiveRoomList() {
                 </span>
                 <span className="text-xs text-slate-400 flex items-center gap-1">
                   <Users className="w-3 h-3" />
-                  {room.participant_count} joined
+                  {t('list.rooms.joined', { count: room.participant_count })}
                 </span>
                 <span className="text-xs text-slate-400 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
@@ -407,7 +410,7 @@ export default function LiveRoomList() {
 
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-slate-500">
-                  Host: <span className="font-medium text-slate-700">{room.host_name}</span>
+                  {t('list.rooms.hostLabel')} <span className="font-medium text-slate-700">{room.host_name}</span>
                 </span>
                 <Button
                   size="sm"
@@ -417,7 +420,7 @@ export default function LiveRoomList() {
                   onClick={() => navigate(`/live/${room.id}`)}
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  {room.status === 'completed' ? 'Ended' : 'Join'}
+                  {room.status === 'completed' ? t('list.rooms.ended') : t('list.rooms.join')}
                 </Button>
               </div>
             </div>
@@ -430,7 +433,7 @@ export default function LiveRoomList() {
           onClick={() => refetch()}
           className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
         >
-          Refresh list
+          {t('list.refresh')}
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Menu } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Navbar from "@/components/user/layout/Navbar";
 import Footer from "@/components/user/layout/Footer";
@@ -36,6 +37,7 @@ const StudentLearningPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { t } = useTranslation("courses");
 
   const activeTab = (searchParams.get("tab") as LearningTabId | null) ?? DEFAULT_TAB;
 
@@ -108,13 +110,13 @@ const StudentLearningPage = () => {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-secondary-light backdrop-blur-glass ring-1 ring-white/15">
-                  Học tập
+                  {t("studentLearning.hero.badge")}
                 </span>
                 <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
-                  Phòng học trực tuyến
+                  {t("studentLearning.hero.title")}
                 </h1>
                 <p className="mt-2 text-white/80">
-                  Xem video, trao đổi và đánh giá khóa học bạn đã đăng ký.
+                  {t("studentLearning.hero.subtitle")}
                 </p>
               </div>
               <div className="flex items-center gap-3 md:hidden">
@@ -126,12 +128,12 @@ const StudentLearningPage = () => {
                       className="inline-flex items-center gap-2 rounded-full text-white hover:text-foreground"
                     >
                       <Menu className="h-4 w-4" />
-                      Bài học
+                      {t("studentLearning.lessonsBtn")}
                     </Button>
                   </DrawerTrigger>
                   <DrawerContent>
                     <DrawerHeader>
-                      <DrawerTitle>Danh sách bài học</DrawerTitle>
+                      <DrawerTitle>{t("studentLearning.syllabusSidebar.title")}</DrawerTitle>
                     </DrawerHeader>
                     <div className="px-4 pb-6">
                       <ScrollArea className="h-[60vh]">
@@ -193,8 +195,8 @@ const StudentLearningPage = () => {
                     reportComment={async (commentId, payload) => {
                       return studentLearningService.reportLessonComment(courseId, effectiveLessonId, commentId, payload);
                     }}
-                    title="Q&A / Bình luận bài học"
-                    subtitle="Đặt câu hỏi hoặc thảo luận về nội dung bài học này"
+                    title={t("studentLearning.lessonComments.heading")}
+                    subtitle={t("studentLearning.lessonComments.subtitle")}
                   />
                 )}
                 {activeTab === "reviews" && <CourseReviews ratings={ratings} />}
@@ -219,5 +221,3 @@ const StudentLearningPage = () => {
 };
 
 export default StudentLearningPage;
-
-

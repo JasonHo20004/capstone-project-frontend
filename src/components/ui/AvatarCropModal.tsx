@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -43,6 +44,7 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
 }
 
 export function AvatarCropModal({ imageSrc, open, onClose, onConfirm }: AvatarCropModalProps) {
+  const { t } = useTranslation('account');
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -72,7 +74,7 @@ export function AvatarCropModal({ imageSrc, open, onClose, onConfirm }: AvatarCr
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl">
         <DialogHeader className="px-6 pt-5 pb-0">
-          <DialogTitle className="text-base font-semibold">Chỉnh sửa ảnh đại diện</DialogTitle>
+          <DialogTitle className="text-base font-semibold">{t('avatarCrop.title')}</DialogTitle>
         </DialogHeader>
 
         {/* Crop area */}
@@ -105,19 +107,19 @@ export function AvatarCropModal({ imageSrc, open, onClose, onConfirm }: AvatarCr
             <ZoomIn className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
           <p className="text-xs text-slate-400 text-center">
-            Kéo để di chuyển • Cuộn chuột hoặc dùng thanh trượt để phóng to/thu nhỏ
+            {t('avatarCrop.hint')}
           </p>
         </div>
 
         <DialogFooter className="px-6 pb-5 flex gap-2 flex-row justify-end">
           <Button variant="ghost" size="sm" onClick={handleReset} type="button">
-            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />Đặt lại
+            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />{t('avatarCrop.reset')}
           </Button>
           <Button variant="outline" size="sm" onClick={onClose} type="button">
-            Hủy
+            {t('avatarCrop.cancel')}
           </Button>
           <Button size="sm" onClick={handleConfirm} disabled={loading} type="button">
-            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Xác nhận'}
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t('avatarCrop.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

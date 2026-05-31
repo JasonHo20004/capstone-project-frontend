@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -60,14 +61,7 @@ function getCurrentUser() {
   }
 }
 
-const REASON_LABELS: Record<ReportReason, string> = {
-  SPAM: 'Spam / Quảng cáo',
-  ABUSE: 'Xúc phạm / Quấy rối',
-  SCAM: 'Lừa đảo',
-  MISINFORMATION: 'Sai thông tin',
-  OFF_TOPIC: 'Lạc đề',
-  OTHER: 'Khác',
-};
+const REPORT_REASONS: ReportReason[] = ['SPAM', 'ABUSE', 'SCAM', 'MISINFORMATION', 'OFF_TOPIC', 'OTHER'];
 
 export default function DiscussionSection({
   fetchComments: fetchCommentsFn,
@@ -77,6 +71,7 @@ export default function DiscussionSection({
   title,
   subtitle,
 }: DiscussionSectionProps) {
+  const { t } = useTranslation('common');
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [isPosting, setIsPosting] = useState(false);
@@ -127,11 +122,11 @@ export default function DiscussionSection({
       .then(() => {
         setCommentText('');
         setReplyingTo(null);
-        toast.success(parentCommentId ? 'Đã gửi trả lời' : 'Đã gửi bình luận');
+        toast.success(parentCommentId ? t('discussion.toasts.replied') : t('discussion.toasts.posted'));
         setPage(1);
         loadComments(1);
       })
-      .catch(() => toast.error('Lỗi khi gửi'))
+      .catch(() => toast.error(t('discussion.toasts.postError')))
       .finally(() => setIsPosting(false));
   };
 
@@ -149,19 +144,19 @@ export default function DiscussionSection({
     if (!editCommentFn) return;
     const trimmed = editingText.trim();
     if (!trimmed) {
-      toast.error('Nội dung không được để trống');
+      toast.error(t('discussion.toasts.emptyContent'));
       return;
     }
     setIsSavingEdit(true);
     try {
       await editCommentFn(commentId, trimmed);
-      toast.success('Đã cập nhật bình luận');
+      toast.success(t('discussion.toasts.editSuccess'));
       cancelEdit();
       loadComments(page);
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Lỗi khi cập nhật bình luận';
+        t('discussion.toasts.editError');
       toast.error(msg);
     } finally {
       setIsSavingEdit(false);
@@ -182,13 +177,13 @@ export default function DiscussionSection({
         reasonType: reportReason,
         note: reportNote.trim() || undefined,
       });
-      toast.success('Đã gửi báo cáo. Cám ơn bạn!');
+      toast.success(t('discussion.toasts.reportSuccess'));
       setReportingComment(null);
       loadComments(page);
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Không thể gửi báo cáo';
+        t('discussion.toasts.reportError');
       toast.error(msg);
     } finally {
       setIsReporting(false);
@@ -257,7 +252,7 @@ export default function DiscussionSection({
                   className={`${isReply ? 'text-[10px]' : 'text-[11px]'} text-slate-400 italic`}
                   title={`Đã chỉnh sửa lúc ${new Date(comment.editedAt).toLocaleString('vi-VN')}`}
                 >
-                  (đã chỉnh sửa)
+                  {t('discussion.edited')}
                 </span>
               )}
               <span className={`${isReply ? 'text-[10px]' : 'text-xs'} text-slate-400 ml-auto`}>
@@ -282,10 +277,10 @@ export default function DiscussionSection({
                     disabled={isSavingEdit || !editingText.trim() || editingText.trim() === comment.content}
                   >
                     <Save className="w-3.5 h-3.5 mr-1" />
-                    {isSavingEdit ? 'Đang lưu…' : 'Lưu'}
+                    {isSavingEdit ? t('discussion.saving') : t('discussion.save')}
                   </Button>
                   <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={isSavingEdit}>
-                    <X className="w-3.5 h-3.5 mr-1" /> Huỷ
+                    <X className="w-3.5 h-3.5 mr-1" /> {t('discussion.cancel')}
                   </Button>
                   <span className="text-xs text-slate-400 ml-auto">
                     {editingText.length}/2000
@@ -304,23 +299,23 @@ export default function DiscussionSection({
                   className={`${isReply ? 'text-[11px]' : 'text-xs'} text-slate-400 hover:text-indigo-600 font-medium transition-colors`}
                   onClick={() => setReplyingTo(isActive ? null : comment)}
                 >
-                  {isActive ? 'Hủy' : 'Trả lời'}
+                  {isActive ? t('discussion.cancel') : t('discussion.reply')}
                 </button>
                 {canEdit && (
                   <button
                     className={`${isReply ? 'text-[11px]' : 'text-xs'} text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1`}
                     onClick={() => startEdit(comment)}
                   >
-                    <Pencil className="w-3 h-3" /> Sửa
+                    <Pencil className="w-3 h-3" /> {t('discussion.edit')}
                   </button>
                 )}
                 {canReport && (
                   <button
                     className={`${isReply ? 'text-[11px]' : 'text-xs'} text-slate-400 hover:text-red-500 font-medium transition-colors inline-flex items-center gap-1`}
                     onClick={() => openReport(comment)}
-                    title="Báo cáo bình luận không phù hợp"
+                    title={t('discussion.reportTitle')}
                   >
-                    <Flag className="w-3 h-3" /> Báo cáo
+                    <Flag className="w-3 h-3" /> {t('discussion.report')}
                   </button>
                 )}
               </div>
@@ -338,7 +333,7 @@ export default function DiscussionSection({
                 onClick={() => toggleExpandReplies(comment.id)}
               >
                 <span className="material-symbols-outlined text-[14px]">expand_more</span>
-                Xem thêm {hiddenCount} trả lời
+                {t('discussion.viewMore', { count: hiddenCount })}
               </button>
             )}
             {isExpanded && hiddenCount > 0 && (
@@ -347,7 +342,7 @@ export default function DiscussionSection({
                 onClick={() => toggleExpandReplies(comment.id)}
               >
                 <span className="material-symbols-outlined text-[14px]">expand_less</span>
-                Ẩn bớt
+                {t('discussion.collapse')}
               </button>
             )}
           </div>
@@ -360,13 +355,13 @@ export default function DiscussionSection({
               {renderCurrentUserAvatar(true)}
               <div className="flex-1">
                 <p className="text-[11px] text-slate-500 mb-1">
-                  {"Trả lời "}<span className="font-semibold text-indigo-600">@{replyingTo.user?.fullName ?? 'Người dùng'}</span>
+                  {t('discussion.replyingTo')}{' '}<span className="font-semibold text-indigo-600">@{replyingTo.user?.fullName ?? 'Người dùng'}</span>
                   <button className="ml-2 text-red-400 hover:text-red-500 inline-flex items-center" onClick={() => setReplyingTo(null)}><X size={12} /></button>
                 </p>
                 <div className="flex gap-1.5">
                   <textarea
                     autoFocus
-                    placeholder="Viết câu trả lời..."
+                    placeholder={t('discussion.replyPlaceholder')}
                     className="rounded-lg resize-none min-h-[36px] text-xs flex-1 border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
                     rows={1}
                     value={commentText}
@@ -403,9 +398,9 @@ export default function DiscussionSection({
       <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
         <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
           <span className="material-symbols-outlined text-indigo-600">forum</span>
-          {title || 'Thảo luận'} ({total})
+          {title || t('discussion.title')} ({total})
         </h3>
-        <p className="text-xs text-slate-400 mt-1">{subtitle || 'Chia sẻ kinh nghiệm, hỏi đáp'}</p>
+        <p className="text-xs text-slate-400 mt-1">{subtitle || t('discussion.subtitle')}</p>
       </div>
 
       <div className="p-6 space-y-4">
@@ -429,7 +424,7 @@ export default function DiscussionSection({
         ) : (
           <div className="text-center py-8">
             <span className="material-symbols-outlined text-5xl text-slate-200 block mb-3">chat_bubble_outline</span>
-            <p className="text-sm text-slate-400 italic">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+            <p className="text-sm text-slate-400 italic">{t('discussion.emptyHint')}</p>
           </div>
         )}
 
@@ -474,7 +469,7 @@ export default function DiscussionSection({
             </div>
             <div className="flex-1 flex gap-2">
               <textarea
-                placeholder="Viết bình luận về bài thi này..."
+                placeholder={t('discussion.commentPlaceholder')}
                 className="rounded-xl resize-none min-h-[44px] flex-1 border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
                 rows={1}
                 value={!replyingTo ? commentText : ''}
@@ -496,7 +491,7 @@ export default function DiscussionSection({
               </button>
             </div>
           </div>
-          <p className="text-xs text-slate-400 mt-2 ml-12">Nhấn Enter để gửi, Shift+Enter để xuống dòng.</p>
+          <p className="text-xs text-slate-400 mt-2 ml-12">{t('discussion.keyboardHint')}</p>
         </div>
       </div>
 
@@ -505,10 +500,10 @@ export default function DiscussionSection({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
-              <Flag className="w-5 h-5" /> Báo cáo bình luận
+              <Flag className="w-5 h-5" /> {t('discussion.reportDialog.title')}
             </DialogTitle>
             <DialogDescription>
-              Bình luận sẽ được ẩn tạm thời nếu nhiều người báo cáo. Admin sẽ xem xét và quyết định.
+              {t('discussion.reportDialog.description')}
             </DialogDescription>
           </DialogHeader>
           {reportingComment && (
@@ -521,12 +516,12 @@ export default function DiscussionSection({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Lý do</label>
+                <label className="text-sm font-medium text-slate-700">{t('discussion.reportDialog.reasonLabel')}</label>
                 <Select value={reportReason} onValueChange={(v) => setReportReason(v as ReportReason)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(REASON_LABELS) as ReportReason[]).map((k) => (
-                      <SelectItem key={k} value={k}>{REASON_LABELS[k]}</SelectItem>
+                    {REPORT_REASONS.map((k) => (
+                      <SelectItem key={k} value={k}>{t(`discussion.reasons.${k}`)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -534,14 +529,15 @@ export default function DiscussionSection({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
-                  Ghi chú thêm <span className="text-xs text-slate-400 font-normal">(tuỳ chọn)</span>
+                  {t('discussion.reportDialog.noteLabel')}{' '}
+                  <span className="text-xs text-slate-400 font-normal">{t('discussion.reportDialog.noteOptional')}</span>
                 </label>
                 <Textarea
                   rows={3}
                   maxLength={500}
                   value={reportNote}
                   onChange={(e) => setReportNote(e.target.value)}
-                  placeholder="Mô tả thêm để admin hiểu bối cảnh…"
+                  placeholder={t('discussion.reportDialog.notePlaceholder')}
                 />
                 <p className="text-[11px] text-slate-400 text-right">{reportNote.length}/500</p>
               </div>
@@ -549,14 +545,14 @@ export default function DiscussionSection({
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setReportingComment(null)} disabled={isReporting}>
-              Huỷ
+              {t('discussion.reportDialog.cancel')}
             </Button>
             <Button
               onClick={submitReport}
               disabled={isReporting}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isReporting ? 'Đang gửi…' : 'Gửi báo cáo'}
+              {isReporting ? t('discussion.reportDialog.submitting') : t('discussion.reportDialog.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

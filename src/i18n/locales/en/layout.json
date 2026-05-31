@@ -39,6 +39,20 @@
     "login": "Sign in",
     "getStarted": "Get started"
   },
+  "cartDropdown": {
+    "ariaLabel": "Cart",
+    "title": "Cart",
+    "itemCount_one": "{{count}} course",
+    "itemCount_other": "{{count}} courses",
+    "empty": "Your cart is empty",
+    "total": "Total",
+    "viewCart": "View cart"
+  },
+  "upgradePro": {
+    "title": "Upgrade to Pro",
+    "labelLong": "Upgrade Pro",
+    "labelShort": "Pro"
+  },
   "footer": {
     "rights": "© {{year}} SkillBoost. All rights reserved.",
     "brandDescription": "Elevate your English skills with expert-led courses and interactive learning experiences.",

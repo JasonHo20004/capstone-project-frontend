@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Volume2, X } from 'lucide-react';
 
 interface TranslationResult {
@@ -93,6 +94,7 @@ function TranslationPopover({
   popover: { word: string; rect: DOMRect; result?: TranslationResult; loading: boolean };
   onClose: () => void;
 }) {
+  const { t } = useTranslation('livestream');
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -135,7 +137,7 @@ function TranslationPopover({
             <button
               onClick={speak}
               className="text-slate-400 hover:text-indigo-500 transition-colors"
-              aria-label="Phát âm"
+              aria-label={t('translate.pronounce')}
             >
               <Volume2 className="w-3.5 h-3.5" />
             </button>
@@ -153,7 +155,7 @@ function TranslationPopover({
         {popover.loading && (
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="inline-block w-3 h-3 border-2 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
-            Đang dịch…
+            {t('translate.loading')}
           </div>
         )}
         {popover.result && !popover.loading && (

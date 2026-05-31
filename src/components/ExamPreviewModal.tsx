@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { X, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 
 interface QuestionData {
@@ -67,6 +68,7 @@ function renderPassage(content: string) {
 }
 
 function ReadOnlyQuestion({ q }: { q: QuestionData }) {
+  const { t } = useTranslation("exam");
   const options = q.options || [];
 
   return (
@@ -123,7 +125,7 @@ function ReadOnlyQuestion({ q }: { q: QuestionData }) {
           <span className="border-b-2 border-indigo-300 min-w-[120px] px-2 py-1 text-sm text-emerald-700 font-medium">
             {q.answer?.text?.[0] || q.answer?.correctAnswer || ""}
           </span>
-          <span className="text-xs text-slate-400">← đáp án đúng</span>
+          <span className="text-xs text-slate-400">{t("examPreview.correctAnswer")}</span>
         </div>
       )}
     </div>
@@ -131,6 +133,7 @@ function ReadOnlyQuestion({ q }: { q: QuestionData }) {
 }
 
 export default function ExamPreviewModal({ isOpen, onClose, title, sections }: ExamPreviewModalProps) {
+  const { t } = useTranslation("exam");
   const [sectionIdx, setSectionIdx] = useState(0);
 
   if (!isOpen) return null;
@@ -181,18 +184,18 @@ export default function ExamPreviewModal({ isOpen, onClose, title, sections }: E
         {/* Left panel */}
         <div className="w-1/2 border-r border-slate-200 overflow-y-auto bg-white p-8">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-            {isListening ? "Questions Context" : "Reading Passage"}
+            {isListening ? t("examPreview.questionsContext") : t("examPreview.readingPassage")}
           </p>
 
           {isListening ? (
             <div className="space-y-4">
               {section.mediaUrl
                 ? <audio controls className="w-full" src={section.mediaUrl} />
-                : <div className="flex items-center justify-center h-20 rounded-xl bg-slate-100 text-slate-400 text-sm">Chưa có audio</div>
+                : <div className="flex items-center justify-center h-20 rounded-xl bg-slate-100 text-slate-400 text-sm">{t("examPreview.noAudio")}</div>
               }
               {section.passageContent && (
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Transcript</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{t("examPreview.transcript")}</p>
                   <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{section.passageContent}</p>
                 </div>
               )}
@@ -200,12 +203,12 @@ export default function ExamPreviewModal({ isOpen, onClose, title, sections }: E
           ) : (
             section.passageContent
               ? renderPassage(section.passageContent)
-              : <p className="text-sm text-slate-400 italic">Chưa có nội dung passage</p>
+              : <p className="text-sm text-slate-400 italic">{t("examPreview.noPassage")}</p>
           )}
 
           {section.imageUrl && (
             <div className="mt-6">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Diagram / Map</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("examPreview.diagramMap")}</p>
               <img src={section.imageUrl} alt="diagram" className="w-full rounded-lg border border-slate-200" />
             </div>
           )}
@@ -215,7 +218,7 @@ export default function ExamPreviewModal({ isOpen, onClose, title, sections }: E
         <div className="w-1/2 overflow-y-auto bg-slate-50 p-6">
           <div className="space-y-5">
             {groups.length === 0 && (
-              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">Chưa có câu hỏi</div>
+              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">{t("examPreview.noQuestions")}</div>
             )}
             {groups.map((group) => {
               const first = group.questions[0];

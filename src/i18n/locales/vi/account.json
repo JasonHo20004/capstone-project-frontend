@@ -214,7 +214,24 @@
       "couponFullCartOnly": "Mã chỉ áp dụng cho toàn bộ giỏ hàng. Hãy chọn tất cả để dùng mã.",
       "couponApplied": "Đã áp dụng mã {{code}}",
       "couponDefaultError": "Không thể áp dụng mã"
+    },
+    "clearConfirm": {
+      "title": "Xoá toàn bộ giỏ hàng?",
+      "description": "Tất cả khoá học trong giỏ sẽ bị xoá. Hành động này không thể hoàn tác.",
+      "cancel": "Huỷ",
+      "confirm": "Xoá tất cả",
+      "clearing": "Đang xoá…"
     }
+  },
+  "paymentDialog": {
+    "title": "Xác nhận thanh toán",
+    "description": "Vui lòng kiểm tra thông tin đơn hàng trước khi xác nhận.",
+    "purchaseDate": "Ngày mua",
+    "total": "Tổng tiền",
+    "items": "Sản phẩm",
+    "empty": "Không có sản phẩm hiển thị.",
+    "cancel": "Huỷ",
+    "confirm": "Xác nhận"
   },
   "paymentResult": {
     "successTitle": "Thanh toán thành công",
@@ -230,6 +247,35 @@
     "statusFailed": "Thất bại",
     "goToWallet": "Vào ví",
     "dashboard": "Bảng điều khiển"
+  },
+  "refunds": {
+    "title": "Hoàn tiền",
+    "subtitle": "Yêu cầu hoàn tiền các đơn hàng đã mua. Tiền sẽ được cộng vào ví sau khi admin duyệt.",
+    "myRequests": "Yêu cầu của tôi",
+    "myOrders": "Đơn hàng của tôi",
+    "emptyOrders": "Bạn chưa có đơn hàng nào.",
+    "requestRefund": "Yêu cầu hoàn tiền",
+    "orderLabel": "Đơn",
+    "reasonLabel": "Lý do",
+    "adminNote": "Phản hồi admin",
+    "statusPending": "Đang chờ duyệt",
+    "statusApproved": "Đã duyệt",
+    "statusCompleted": "Hoàn tất - đã cộng ví",
+    "statusRejected": "Bị từ chối",
+    "toasts": {
+      "submitSuccess": "Đã gửi yêu cầu hoàn tiền, admin sẽ xem xét sớm",
+      "submitError": "Tạo yêu cầu thất bại"
+    },
+    "dialog": {
+      "title": "Yêu cầu hoàn tiền",
+      "description": "Vui lòng nêu rõ lý do bạn muốn hoàn tiền cho đơn này. Admin sẽ xem xét và phản hồi trong vòng 3-5 ngày làm việc.",
+      "reasonLabel": "Lý do",
+      "reasonPlaceholder": "VD: Nội dung khoá học không đúng mô tả; giảng viên không phản hồi; chất lượng video kém...",
+      "counter": "{{count}}/1000 (tối thiểu 10 ký tự)",
+      "cancel": "Huỷ",
+      "submit": "Gửi yêu cầu",
+      "submitting": "Đang gửi..."
+    }
   },
   "notifications": {
     "title": "Thông báo",
@@ -340,6 +386,51 @@
       "WITHDRAWAL_REJECTED": "Rút tiền bị từ chối",
       "comment_report": "Báo cáo bình luận",
       "default": "Thông báo"
+    }
+  },
+  "avatarCrop": {
+    "title": "Chỉnh sửa ảnh đại diện",
+    "hint": "Kéo để di chuyển • Cuộn chuột hoặc dùng thanh trượt để phóng to/thu nhỏ",
+    "reset": "Đặt lại",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận"
+  },
+  "sellerApplication": {
+    "title": "Nộp đơn trở thành Giảng viên",
+    "description": "Vui lòng cung cấp thông tin chuyên môn và hình ảnh chứng chỉ để chúng tôi xét duyệt.",
+    "expertiseLabel": "Chuyên môn & Kỹ năng",
+    "expertisePlaceholder": "Nhập chuyên môn (VD: IELTS 8.0, Business English...)",
+    "add": "Thêm",
+    "noExpertise": "Chưa có chuyên môn nào.",
+    "certLabel": "Ảnh Chứng chỉ / Bằng cấp",
+    "certUploadTitle": "Nhấn để tải lên ảnh chứng chỉ",
+    "certUploadHint": "Hỗ trợ JPG, PNG, WebP (tối đa 5MB/file, 10 ảnh)",
+    "messageLabel": "Lời nhắn cho quản trị viên (tuỳ chọn)",
+    "messagePlaceholder": "Giới thiệu ngắn về kinh nghiệm giảng dạy, lý do bạn muốn trở thành giảng viên...",
+    "close": "Đóng",
+    "cancel": "Hủy",
+    "submit": "Nộp đơn",
+    "resubmit": "Nộp lại đơn",
+    "pending": {
+      "title": "Đơn của bạn đang chờ duyệt",
+      "message": "Vui lòng đợi quản trị viên xét duyệt. Bạn sẽ không thể nộp đơn mới cho đến khi có kết quả."
+    },
+    "approved": {
+      "title": "Đơn của bạn đã được duyệt",
+      "message": "Bạn đã là giảng viên, không cần nộp đơn nữa."
+    },
+    "rejected": {
+      "title": "Đơn trước đã bị từ chối",
+      "reason": "Lý do: ",
+      "canResubmit": "Bạn có thể nộp lại đơn mới sau khi khắc phục các vấn đề trên."
+    },
+    "toasts": {
+      "expertiseExists": "Chuyên môn này đã tồn tại",
+      "filesTooLarge": "Một số file quá lớn (>5MB) đã bị bỏ qua.",
+      "maxImages": "Chỉ được tải lên tối đa 10 ảnh.",
+      "blocked": "Bạn không thể nộp đơn lúc này.",
+      "certRequired": "Vui lòng tải lên ít nhất 1 ảnh chứng chỉ.",
+      "expertiseRequired": "Vui lòng nhập ít nhất 1 chuyên môn."
     }
   }
 }

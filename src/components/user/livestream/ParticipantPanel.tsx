@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Crown, Hand, UserRound, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +32,7 @@ function initials(name: string) {
  * Host sees a "Mời phát biểu" button on raised-hand entries.
  */
 export function ParticipantPanel({ participants, currentUserId, isHost, onInvite, className }: Props) {
+  const { t } = useTranslation('livestream');
   const raised = participants
     .filter(p => p.hand_raised)
     .sort((a, b) => a.hand_position - b.hand_position);
@@ -40,7 +42,7 @@ export function ParticipantPanel({ participants, currentUserId, isHost, onInvite
     <div className={cn('flex flex-col bg-white border-l border-slate-200', className)}>
       <div className="flex items-center gap-1.5 px-4 py-2 border-b border-slate-100 shrink-0">
         <UserRound className="w-3.5 h-3.5 text-slate-400" />
-        <span className="text-xs font-medium text-slate-500">Người trong phòng</span>
+        <span className="text-xs font-medium text-slate-500">{t('participants.heading')}</span>
         <span className="ml-auto text-xs text-slate-400">{participants.length}</span>
       </div>
 
@@ -50,7 +52,7 @@ export function ParticipantPanel({ participants, currentUserId, isHost, onInvite
             <div className="flex items-center gap-1 px-2 mb-1">
               <Hand className="w-3 h-3 text-amber-500" />
               <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600">
-                Đang giơ tay ({raised.length})
+                {t('participants.handsRaised', { count: raised.length })}
               </span>
             </div>
             <div className="space-y-1">
@@ -71,7 +73,7 @@ export function ParticipantPanel({ participants, currentUserId, isHost, onInvite
           {raised.length > 0 && (
             <div className="px-2 mb-1">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                Đang nghe
+                {t('participants.listening')}
               </span>
             </div>
           )}
@@ -92,6 +94,7 @@ function Row({ p, isMe, isHost, onInvite }: {
   isHost: boolean;
   onInvite: (id: string) => void;
 }) {
+  const { t } = useTranslation('livestream');
   return (
     <div
       className={cn(
@@ -110,7 +113,7 @@ function Row({ p, isMe, isHost, onInvite }: {
         {p.hand_raised && (
           <span
             className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-white text-[9px] font-bold flex items-center justify-center shadow"
-            aria-label={`Vị trí ${p.hand_position}`}
+            aria-label={t('participants.handPosition', { n: p.hand_position })}
           >
             {p.hand_position}
           </span>
@@ -120,13 +123,13 @@ function Row({ p, isMe, isHost, onInvite }: {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
           <span className={cn('text-xs font-medium truncate', isMe ? 'text-indigo-700' : 'text-slate-700')}>
-            {p.user_name}{isMe ? ' (bạn)' : ''}
+            {p.user_name}{isMe ? t('participants.you') : ''}
           </span>
-          {p.is_host && <Crown className="w-3 h-3 text-amber-500 shrink-0" aria-label="Host" />}
+          {p.is_host && <Crown className="w-3 h-3 text-amber-500 shrink-0" aria-label={t('participants.host')} />}
         </div>
         {p.hand_raised && (
           <span className="text-[10px] text-amber-600 flex items-center gap-0.5">
-            <Hand className="w-2.5 h-2.5" /> giơ tay
+            <Hand className="w-2.5 h-2.5" /> {t('participants.handLabel')}
           </span>
         )}
       </div>
@@ -135,9 +138,9 @@ function Row({ p, isMe, isHost, onInvite }: {
         <button
           onClick={() => onInvite(p.user_id)}
           className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 rounded transition-colors shrink-0"
-          title="Mời học viên phát biểu"
+          title={t('participants.inviteTitle')}
         >
-          <Megaphone className="w-3 h-3" /> Mời
+          <Megaphone className="w-3 h-3" /> {t('participants.invite')}
         </button>
       )}
     </div>

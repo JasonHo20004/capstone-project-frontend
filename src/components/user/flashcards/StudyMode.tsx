@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Flashcard } from "@/domain";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +100,7 @@ function formatTime(totalSeconds: number): string {
 }
 
 export default function StudyMode({ deckId, onClose }: StudyModeProps) {
+  const { t } = useTranslation('exam');
   const { data: queueData, isLoading: isLoadingQueue } = useGetReviewQueue(deckId);
   const submitReviewMutation = useSubmitReview();
 
@@ -174,13 +176,12 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
       setSessionQueue((q) => [...q, { ...currentCard, queueType: 'LEARNING' as Flashcard['queueType'] }]);
     }
 
-    // Visual feedback
     if (grade === 'again' || grade === 'hard') {
       setFeedbackClass('kahoot-shake');
-      setFeedbackText(grade === 'again' ? 'Sẽ ôn lại sớm' : 'Đã đánh dấu khó');
+      setFeedbackText(grade === 'again' ? t('flashcards.studyMode.feedback.again') : t('flashcards.studyMode.feedback.hard'));
     } else {
       setFeedbackClass('kahoot-glow-correct');
-      setFeedbackText(grade === 'easy' ? 'Quá tốt!' : 'Tốt lắm');
+      setFeedbackText(grade === 'easy' ? t('flashcards.studyMode.feedback.easy') : t('flashcards.studyMode.feedback.good'));
       if (feedbackBandRef.current) {
         spawnConfetti(feedbackBandRef.current);
       }
@@ -193,15 +194,15 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
       setIdx((i) => i + 1);
       setCardKey((k) => k + 1);
     }, 600);
-  }, [currentCard, submitReviewMutation, deckId]);
+  }, [currentCard, submitReviewMutation, deckId, t]);
 
   const renderStatusBadge = (type?: string) => {
     const baseClass = 'text-xs font-bold px-3 py-1 rounded-full border-0 shadow-sm';
     switch (type) {
-      case 'NEW': return <Badge className={`${baseClass} bg-blue-500/90 text-white`}><Zap className="w-3 h-3 mr-1" /> Mới</Badge>;
-      case 'LEARNING': return <Badge className={`${baseClass} bg-amber-500/90 text-white`}><RotateCw className="w-3 h-3 mr-1" /> Đang học</Badge>;
-      case 'REVIEW': return <Badge className={`${baseClass} bg-emerald-500/90 text-white`}><Star className="w-3 h-3 mr-1" /> Ôn tập</Badge>;
-      default: return <Badge className={`${baseClass} bg-slate-500/90 text-white`}>Khác</Badge>;
+      case 'NEW': return <Badge className={`${baseClass} bg-blue-500/90 text-white`}><Zap className="w-3 h-3 mr-1" /> {t('flashcards.studyMode.status.new')}</Badge>;
+      case 'LEARNING': return <Badge className={`${baseClass} bg-amber-500/90 text-white`}><RotateCw className="w-3 h-3 mr-1" /> {t('flashcards.studyMode.status.learning')}</Badge>;
+      case 'REVIEW': return <Badge className={`${baseClass} bg-emerald-500/90 text-white`}><Star className="w-3 h-3 mr-1" /> {t('flashcards.studyMode.status.review')}</Badge>;
+      default: return <Badge className={`${baseClass} bg-slate-500/90 text-white`}>{t('flashcards.studyMode.status.other')}</Badge>;
     }
   };
 
@@ -247,27 +248,26 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
           <div className="w-16 h-16 rounded-full bg-indigo-500/20 animate-ping absolute inset-0" />
           <Loader2 className="w-16 h-16 animate-spin text-indigo-400 relative" />
         </div>
-        <p className="text-indigo-300 font-medium animate-pulse">Đang tải thẻ học...</p>
+        <p className="text-indigo-300 font-medium animate-pulse">{t('flashcards.studyMode.loadingCards')}</p>
       </div>
     );
   }
 
-  // No cards to review at all
   if (!isLoadingQueue && (!queueData || queueData.length === 0)) {
     return (
       <div className="rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 p-8 text-center space-y-4">
         <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
           <Star className="w-8 h-8 text-emerald-400" />
         </div>
-        <h3 className="text-xl font-bold text-white">Không có thẻ cần ôn tập!</h3>
-        <p className="text-indigo-300 text-sm">Tất cả thẻ đã được ôn. Hẹn gặp lại ở phiên học tiếp theo.</p>
+        <h3 className="text-xl font-bold text-white">{t('flashcards.studyMode.empty.title')}</h3>
+        <p className="text-indigo-300 text-sm">{t('flashcards.studyMode.empty.subtitle')}</p>
         <button
           className="mx-auto flex items-center gap-2 h-12 px-8 rounded-xl font-bold text-white
             bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500
             shadow-xl shadow-indigo-500/30 transition-all duration-200 hover:scale-105 active:scale-95"
           onClick={onClose}
         >
-          Đóng
+          {t('flashcards.studyMode.close')}
         </button>
       </div>
     );
@@ -289,7 +289,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Zap className="w-5 h-5 text-amber-400" />
-              Đang học
+              {t('flashcards.studyMode.studying')}
             </h3>
 
             <div className="flex items-center gap-2">
@@ -304,32 +304,31 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
                 <AlertDialogTrigger asChild>
                   <button
                     className="flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-800/60 hover:bg-red-500/20 hover:text-red-400 px-3 py-1.5 rounded-full border border-slate-700/50 hover:border-red-500/30 transition-all duration-200"
-                    title="Hủy phiên học"
+                    title={t('flashcards.studyMode.cancelTitle')}
                   >
                     <X className="w-3.5 h-3.5" />
-                    Hủy
+                    {t('flashcards.studyMode.cancel')}
                   </button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2 text-white">
                       <AlertTriangle className="w-5 h-5 text-amber-400" />
-                      Hủy phiên học?
+                      {t('flashcards.studyMode.cancelDialog.title')}
                     </AlertDialogTitle>
                     <AlertDialogDescription className="text-slate-400">
-                      Tiến trình phiên học sẽ bị mất. Các thẻ đã chấm điểm sẽ được lưu lại,
-                      nhưng các thẻ chưa ôn sẽ không được tính.
+                      {t('flashcards.studyMode.cancelDialog.description')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white">
-                      Tiếp tục học
+                      {t('flashcards.studyMode.cancelDialog.keep')}
                     </AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white border-0"
                       onClick={onClose}
                     >
-                      Hủy phiên học
+                      {t('flashcards.studyMode.cancelDialog.confirm')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -340,13 +339,13 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
           {/* Stats badges row */}
           <div className="flex gap-3 text-sm font-semibold">
             <span className="flex items-center gap-1 text-blue-400 bg-blue-400/10 px-2.5 py-1 rounded-full">
-              {stats.new} Mới
+              {stats.new} {t('flashcards.studyMode.statsShort.new')}
             </span>
             <span className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full">
-              {stats.learning} Học
+              {stats.learning} {t('flashcards.studyMode.statsShort.learning')}
             </span>
             <span className="flex items-center gap-1 text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full">
-              {stats.review} Ôn
+              {stats.review} {t('flashcards.studyMode.statsShort.review')}
             </span>
           </div>
 
@@ -364,7 +363,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
             </div>
           </div>
           <p className="text-xs text-slate-500 text-right font-medium">
-            {idx} / {sessionQueue.length} thẻ
+            {t('flashcards.studyMode.progress', { current: idx, total: sessionQueue.length })}
           </p>
         </div>
 
@@ -403,7 +402,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
                     size="icon"
                     className="absolute top-4 right-4 rounded-full bg-white/10 hover:bg-white/20 text-white z-20 transition-all duration-200"
                     onClick={(e) => playAudio(currentCard.frontContent, currentCard.audioUrl, e)}
-                    aria-label="Phát âm thanh từ vựng"
+                    aria-label={t('flashcards.cardList.playAudioAria')}
                   >
                     <Volume2 className="w-5 h-5" aria-hidden="true" />
                   </Button>
@@ -416,7 +415,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
 
                   {/* "Tap to flip" hint — direct child of flip-card-front so absolute bottom works */}
                   <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-indigo-300/70 flex items-center gap-1.5 animate-pulse font-medium z-10 whitespace-nowrap pointer-events-none">
-                    <RotateCw className="w-3.5 h-3.5" /> Chạm để lật
+                    <RotateCw className="w-3.5 h-3.5" /> {t('flashcards.studyMode.tapToFlip')}
                   </p>
 
                   {/* Pexels attribution badge */}
@@ -488,8 +487,8 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               >
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-200" />
                 <div className="relative flex flex-col items-center gap-0.5">
-                  <span className="text-sm font-black tracking-wide">Quên</span>
-                  <span className="text-[10px] font-medium opacity-80">&lt; 1p</span>
+                  <span className="text-sm font-black tracking-wide">{t('flashcards.studyMode.grade.again')}</span>
+                  <span className="text-[10px] font-medium opacity-80">{t('flashcards.studyMode.gradeHint.again')}</span>
                 </div>
               </button>
 
@@ -504,12 +503,11 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               >
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-200" />
                 <div className="relative flex flex-col items-center gap-0.5">
-                  <span className="text-sm font-black tracking-wide">Khó</span>
-                  <span className="text-[10px] font-medium opacity-80">~2 ngày</span>
+                  <span className="text-sm font-black tracking-wide">{t('flashcards.studyMode.grade.hard')}</span>
+                  <span className="text-[10px] font-medium opacity-80">{t('flashcards.studyMode.gradeHint.hard')}</span>
                 </div>
               </button>
 
-              {/* GOOD — Blue */}
               <button
                 className="kahoot-slide-up-3 group relative h-16 md:h-14 rounded-xl font-bold text-white transition-all duration-200 overflow-hidden
                   bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500
@@ -520,12 +518,11 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               >
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-200" />
                 <div className="relative flex flex-col items-center gap-0.5">
-                  <span className="text-sm font-black tracking-wide">Được</span>
-                  <span className="text-[10px] font-medium opacity-80">~4 ngày</span>
+                  <span className="text-sm font-black tracking-wide">{t('flashcards.studyMode.grade.good')}</span>
+                  <span className="text-[10px] font-medium opacity-80">{t('flashcards.studyMode.gradeHint.good')}</span>
                 </div>
               </button>
 
-              {/* EASY — Green */}
               <button
                 className="kahoot-slide-up-4 group relative h-16 md:h-14 rounded-xl font-bold text-white transition-all duration-200 overflow-hidden
                   bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500
@@ -536,14 +533,13 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               >
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-200" />
                 <div className="relative flex flex-col items-center gap-0.5">
-                  <span className="text-sm font-black tracking-wide">Dễ</span>
-                  <span className="text-[10px] font-medium opacity-80">~7 ngày</span>
+                  <span className="text-sm font-black tracking-wide">{t('flashcards.studyMode.grade.easy')}</span>
+                  <span className="text-[10px] font-medium opacity-80">{t('flashcards.studyMode.gradeHint.easy')}</span>
                 </div>
               </button>
             </div>
           </div>
         ) : (
-          /* ===== CELEBRATION FINISH SCREEN ===== */
           <div className="relative z-10 py-8 text-center space-y-6">
             <div className="kahoot-trophy mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-xl shadow-amber-500/30">
               <Trophy className="w-12 h-12 text-white" />
@@ -551,25 +547,24 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
 
             <div className="space-y-2 kahoot-score-pop" style={{ animationDelay: '0.3s' }}>
               <h3 className="text-3xl font-black text-white">
-                Hoàn thành xuất sắc!
+                {t('flashcards.studyMode.finish.title')}
               </h3>
               <p className="text-indigo-300 text-lg font-medium">
-                Bạn đã hoàn thành tất cả {sessionQueue.length} thẻ trong phiên này.
+                {t('flashcards.studyMode.finish.subtitle', { count: sessionQueue.length })}
               </p>
             </div>
 
-            {/* Stats summary */}
             <div className="flex justify-center gap-4 kahoot-score-pop" style={{ animationDelay: '0.5s' }}>
               <div className="bg-white/5 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10">
                 <p className="text-2xl font-black text-white">{sessionQueue.length}</p>
-                <p className="text-xs text-indigo-300 font-medium">Thẻ đã học</p>
+                <p className="text-xs text-indigo-300 font-medium">{t('flashcards.studyMode.finish.cardsLearned')}</p>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10">
                 <div className="flex items-center gap-1.5 justify-center">
                   <Clock className="w-4 h-4 text-indigo-400" />
                   <p className="text-2xl font-black text-white">{formatTime(elapsedSeconds)}</p>
                 </div>
-                <p className="text-xs text-indigo-300 font-medium">Thời gian</p>
+                <p className="text-xs text-indigo-300 font-medium">{t('flashcards.studyMode.finish.duration')}</p>
               </div>
             </div>
 
@@ -582,7 +577,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               onClick={onClose}
             >
               <Star className="w-5 h-5" />
-              Kết thúc bài học
+              {t('flashcards.studyMode.finish.cta')}
             </button>
           </div>
         )}
