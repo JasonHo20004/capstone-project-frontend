@@ -164,6 +164,31 @@ class AudioQueue {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * Extract the user id the server will authenticate us as, straight from the
+ * access token. The server trusts the JWT `userId` claim (falling back to
+ * `sub`), so deriving our own id the same way keeps "this is me" checks
+ * (spotlight, raised hand, practice results) correct even before the async
+ * profile query has resolved.
+ */
+function userIdFromToken(token: string): string | null {
+  try {
+    const part = token.split('.')[1];
+    if (!part) return null;
+    const json = JSON.parse(
+      decodeURIComponent(
+        atob(part.replace(/-/g, '+').replace(/_/g, '/'))
+          .split('')
+          .map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+          .join(''),
+      ),
+    ) as { userId?: string; sub?: string };
+    return json.userId ?? json.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const LEVEL_COLORS: Record<string, string> = {
   beginner:     'bg-emerald-100 text-emerald-700',
   intermediate: 'bg-blue-100 text-blue-700',
@@ -195,6 +220,10 @@ export default function LiveRoom() {
   const authRetried     = useRef(false);
   const unmounted       = useRef(false);
   const rateLimitRef    = useRef<{ count: number; resetAt: number }>({ count: 0, resetAt: 0 });
+  // Latest user kept in a ref so `connect` doesn't depend on the async profile
+  // query — that dependency is what made the socket tear down (and never come
+  // back) the moment the profile resolved on a cold cache.
+  const userRef         = useRef(user);
 
   const [room, setRoom]                     = useState<RoomInfo | null>(null);
   const [isHost, setIsHost]                 = useState(false);
@@ -232,6 +261,9 @@ export default function LiveRoom() {
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const speakRecRef = useRef<ISpeechRecognition | null>(null);
   const speakTextRef = useRef('');
+
+  // Keep the ref in sync with the latest profile (used by `connect` for name).
+  useEffect(() => { userRef.current = user; }, [user]);
 
   // Sync mute + playback rate to audio queue
   useEffect(() => { audioQueueRef.current.setMuted(muted); }, [muted]);
@@ -435,12 +467,17 @@ export default function LiveRoom() {
       authRetried.current = false;
       setConnected(true);
       setReconnecting(false);
-      const uid = user?.id ?? 'guest-' + Math.random().toString(36).slice(2);
+      // Identity must match what the server derives from the JWT, otherwise our
+      // own messages (spotlight, raised hand, practice) wouldn't be recognised
+      // as "me". The profile query may not have resolved yet, so read the token
+      // claim first and fall back to the profile / a random guest id.
+      const u = userRef.current;
+      const uid = userIdFromToken(token) ?? u?.id ?? 'guest-' + Math.random().toString(36).slice(2);
       currentUserIdRef.current = uid;
       ws.send(JSON.stringify({
         type: 'join',
         user_id: uid,
-        user_name: user?.fullName ?? 'Học viên',
+        user_name: u?.fullName ?? 'Học viên',
       }));
     };
 
@@ -479,10 +516,13 @@ export default function LiveRoom() {
         connect();
       }, reconnectDelay.current);
     };
-  }, [roomId, user?.id, user?.fullName, handleMessage]);
+  }, [roomId, handleMessage]);
 
   useEffect(() => {
     if (!roomId) return;
+    // Re-arm: a previous run's cleanup (or a StrictMode remount) may have left
+    // this true, which would make connect() bail out and never reconnect.
+    unmounted.current = false;
     fetch(`${RAG_BASE}/api/livestream/rooms/${roomId}`)
       .then(r => r.json())
       .then((data: RoomInfo) => { setRoom(data); setStatus(data.status); setTranscript(data.transcript ?? []); })
@@ -762,6 +802,14 @@ export default function LiveRoom() {
           <MessageSquare className="w-3.5 h-3.5" /> Hỏi & Đáp
         </button>
       </div>
+
+      {/* ── Connection banner — shown while a dropped socket auto-reconnects ── */}
+      {reconnecting && (
+        <div className="flex items-center justify-center gap-2 shrink-0 px-4 py-1.5 bg-amber-50 border-b border-amber-200 text-xs font-medium text-amber-700">
+          <WifiOff className="w-3.5 h-3.5 animate-pulse" />
+          Mất kết nối — đang tự động kết nối lại…
+        </div>
+      )}
 
       {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden relative">
