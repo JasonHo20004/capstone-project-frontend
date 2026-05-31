@@ -1360,6 +1360,71 @@
     "practiceMore": "Luyện tiếp",
     "evaluationTopic": "Đánh giá Speaking"
   },
+  "flashcards": {
+    "cardList": {
+      "playAudioTitle": "Nghe phát âm",
+      "playAudioAria": "Phát âm thanh từ vựng"
+    },
+    "deckList": {
+      "public": "Công khai",
+      "private": "Riêng tư"
+    },
+    "studyMode": {
+      "loadingCards": "Đang tải thẻ học...",
+      "empty": {
+        "title": "Không có thẻ cần ôn tập!",
+        "subtitle": "Tất cả thẻ đã được ôn. Hẹn gặp lại ở phiên học tiếp theo."
+      },
+      "close": "Đóng",
+      "studying": "Đang học",
+      "cancel": "Hủy",
+      "cancelTitle": "Hủy phiên học",
+      "cancelDialog": {
+        "title": "Hủy phiên học?",
+        "description": "Tiến trình phiên học sẽ bị mất. Các thẻ đã chấm điểm sẽ được lưu lại, nhưng các thẻ chưa ôn sẽ không được tính.",
+        "keep": "Tiếp tục học",
+        "confirm": "Hủy phiên học"
+      },
+      "statsShort": {
+        "new": "Mới",
+        "learning": "Học",
+        "review": "Ôn"
+      },
+      "progress": "{{current}} / {{total}} thẻ",
+      "status": {
+        "new": "Mới",
+        "learning": "Đang học",
+        "review": "Ôn tập",
+        "other": "Khác"
+      },
+      "tapToFlip": "Chạm để lật",
+      "feedback": {
+        "again": "Sẽ ôn lại sớm",
+        "hard": "Đã đánh dấu khó",
+        "good": "Tốt lắm",
+        "easy": "Quá tốt!"
+      },
+      "grade": {
+        "again": "Quên",
+        "hard": "Khó",
+        "good": "Được",
+        "easy": "Dễ"
+      },
+      "gradeHint": {
+        "again": "< 1p",
+        "hard": "~2 ngày",
+        "good": "~4 ngày",
+        "easy": "~7 ngày"
+      },
+      "finish": {
+        "title": "Hoàn thành xuất sắc!",
+        "subtitle": "Bạn đã hoàn thành tất cả {{count}} thẻ trong phiên này.",
+        "cardsLearned": "Thẻ đã học",
+        "duration": "Thời gian",
+        "cta": "Kết thúc bài học"
+      }
+    }
+  },
   "skillTree": {
     "header": {
       "title": "Bản đồ học tập",
@@ -1463,7 +1528,71 @@
       "level": "Trình độ {{level}}",
       "change": "Đổi",
       "startQuiz": "Bắt đầu Quiz"
-    }
+    },
+    "miniQuiz": {
+      "tts": {
+        "playing": "Đang phát audio...",
+        "tapToListen": "Chạm để nghe",
+        "tapToReplay": "Chạm để nghe lại",
+        "playedOnce": "Đã nghe {{count}} lần",
+        "playedMany": "Đã nghe {{count}} lần",
+        "listenCarefully": "Nghe kỹ rồi trả lời"
+      },
+      "pair": {
+        "terms": "Thuật ngữ",
+        "matches": "Tương ứng",
+        "allMatched": "Đã ghép xong {{count}} cặp!",
+        "nowTapRight": "Bây giờ chạm vào mục tương ứng bên phải",
+        "progress": "{{done}}/{{total}} đã ghép — chạm vào một mục bên trái để bắt đầu"
+      },
+      "progress": {
+        "current": "Câu {{current}} / {{total}}",
+        "answered": "Đã trả lời {{count}}"
+      },
+      "loading": "Đang tạo câu hỏi...",
+      "result": {
+        "excellent": "Xuất sắc!",
+        "keepPracticing": "Hãy luyện tập thêm!",
+        "correctOf": "Đúng {{correct}} / {{total}}",
+        "areasToImprove": "Phần cần cải thiện:",
+        "viewRemedial": "Xem các nút ôn tập",
+        "continueLearning": "Tiếp tục học"
+      },
+      "input": {
+        "placeholder": "Nhập câu trả lời..."
+      },
+      "nav": {
+        "prev": "← Trước",
+        "next": "Tiếp →",
+        "grading": "Đang chấm...",
+        "submit": "Nộp"
+      }
+    },
+    "flow": {
+      "section": "Chặng {{num}}",
+      "bonusXp": "+50 XP thưởng",
+      "review": "Ôn lại: {{label}}",
+      "new": "MỚI",
+      "tapToStart": "Chạm để bắt đầu",
+      "completedCount": "{{done}} / {{total}} đã hoàn thành",
+      "sections": {
+        "foundations": "Nền tảng",
+        "skillBuilding": "Xây dựng kỹ năng",
+        "realConversations": "Hội thoại thực tế",
+        "mastery": "Thành thạo",
+        "beyond": "Vượt giới hạn"
+      },
+      "aria": {
+        "completed": "đã hoàn thành",
+        "locked": "đã khoá",
+        "newStart": "mới, chạm để bắt đầu",
+        "activeContinue": "đang học, chạm để tiếp tục"
+      }
+    },
+    "micDenied": "Không có quyền dùng micro",
+    "micDeniedDesc": "Hãy cho phép quyền micro cho trang này trong trình duyệt rồi thử lại.",
+    "micError": "Không truy cập được micro",
+    "micErrorDesc": "Kiểm tra thiết bị thu âm hoặc thử lại với trình duyệt khác."
   },
   "speakingTestLayout": {
     "submitModal": {
@@ -1685,6 +1814,81 @@
       "Green": "Xanh lá",
       "Blue": "Xanh dương",
       "Pink": "Hồng"
+    },
+    "beforeUnload": "Bài thi đang làm dở sẽ không được nộp nếu bạn rời trang."
+  },
+  "speakingResultStatic": {
+    "backToExamCenter": "Về Trung tâm thi",
+    "title": "Kết quả bài nói",
+    "downloadReport": "Báo cáo",
+    "practiceAgain": "Luyện tập lại",
+    "overallBand": "Điểm tổng quát",
+    "scoreBreakdown": "Chi tiết điểm",
+    "criteria": {
+      "fluency": "Độ lưu loát & Mạch lạc",
+      "lexical": "Vốn từ vựng",
+      "grammatical": "Ngữ pháp",
+      "pronunciation": "Phát âm"
+    },
+    "yourRecording": "Bản ghi của bạn",
+    "aiAnalysis": "Phân tích & Phản hồi từ AI",
+    "strengths": "Điểm mạnh",
+    "areasForImprovement": "Điểm cần cải thiện",
+    "vocabularySuggestions": "Gợi ý từ vựng"
+  },
+  "writingResultStatic": {
+    "backToExamCenter": "Về Trung tâm thi",
+    "title": "Kết quả bài viết",
+    "downloadReport": "Báo cáo PDF",
+    "practiceAgain": "Luyện tập lại",
+    "estimatedBand": "Band ước tính",
+    "scoreBreakdown": "Chi tiết điểm",
+    "criteria": {
+      "taskResponse": "Đáp ứng yêu cầu",
+      "coherence": "Kết cấu & Liên kết",
+      "lexical": "Vốn từ vựng",
+      "grammatical": "Ngữ pháp"
+    },
+    "annotatedFeedback": "Phản hồi chi tiết bài viết",
+    "legend": {
+      "grammar": "Ngữ pháp",
+      "vocabulary": "Từ vựng",
+      "structure": "Cấu trúc"
+    },
+    "recommendedActions": "Hành động đề xuất",
+    "expandVocabulary": {
+      "title": "Mở rộng từ vựng",
+      "cta": "Xem danh sách từ vựng →"
+    },
+    "developIdeas": {
+      "title": "Phát triển ý tưởng đầy đủ",
+      "cta": "Xem hướng dẫn cấu trúc →"
     }
+  },
+  "aiTutor": {
+    "questionLabel": "Câu {{n}}",
+    "saved": "Đã lưu",
+    "streaming": "Đang stream",
+    "restart": "Bắt đầu lại",
+    "loadingHistory": "Đang tải lịch sử...",
+    "greeting": "Chào bạn!",
+    "analyzing": "Đang phân tích câu hỏi...",
+    "selectQuestion": "Chọn một câu sai, sau đó bấm 'AI Giải thích' để bắt đầu.",
+    "connecting": "AI đang kết nối...",
+    "streamingPlaceholder": "Đang stream...",
+    "inputPlaceholder": "Hỏi thêm về câu này...",
+    "stopStream": "Dừng stream",
+    "disclaimer": "AI có thể sai. Kiểm tra lại passage gốc. • Cuộc trò chuyện được lưu tự động.",
+    "streamError": "Lỗi: {{error}}"
+  },
+  "examPreview": {
+    "noAudio": "Chưa có audio",
+    "noPassage": "Chưa có nội dung passage",
+    "noQuestions": "Chưa có câu hỏi",
+    "correctAnswer": "← đáp án đúng",
+    "questionsContext": "Ngữ cảnh câu hỏi",
+    "readingPassage": "Đoạn đọc",
+    "transcript": "Bản ghi",
+    "diagramMap": "Sơ đồ / Bản đồ"
   }
 }

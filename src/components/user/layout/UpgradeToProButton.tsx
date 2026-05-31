@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Crown, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface UpgradeToProButtonProps {
@@ -7,10 +8,11 @@ interface UpgradeToProButtonProps {
 }
 
 export function UpgradeToProButton({ className }: UpgradeToProButtonProps) {
+  const { t } = useTranslation("layout");
   return (
     <Link
       to="/#pricing"
-      title="Nâng cấp lên Pro"
+      title={t("upgradePro.title")}
       className={cn(
         "group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full",
         "px-3 py-2 sm:px-3.5 sm:py-2",
@@ -37,8 +39,8 @@ export function UpgradeToProButton({ className }: UpgradeToProButtonProps) {
       />
 
       <Crown className="h-4 w-4 drop-shadow-sm" strokeWidth={2.25} />
-      <span className="hidden sm:inline">Nâng cấp Pro</span>
-      <span className="sm:hidden">Pro</span>
+      <span className="hidden sm:inline">{t("upgradePro.labelLong")}</span>
+      <span className="sm:hidden">{t("upgradePro.labelShort")}</span>
       <Sparkles
         className="h-3.5 w-3.5 opacity-90 transition-transform duration-300 group-hover:rotate-12"
         strokeWidth={2.25}

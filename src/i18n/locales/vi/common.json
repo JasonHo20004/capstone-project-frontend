@@ -102,5 +102,67 @@
     "minutesAgo": "{{count}} phút trước",
     "hoursAgo": "{{count}} giờ trước",
     "daysAgo": "{{count}} ngày trước"
+  },
+  "premium": {
+    "loading": "Đang kiểm tra quyền truy cập...",
+    "title": "Tính năng Premium",
+    "defaultMessage": "{{feature}} là tính năng dành cho gói Pro. Nâng cấp để trải nghiệm đầy đủ.",
+    "upgrade": "Nâng cấp lên Pro",
+    "benefits": {
+      "speaking": "AI chấm Speaking & Writing chuyên sâu",
+      "dictation": "Luyện Dictation không giới hạn",
+      "learningPath": "Learning Path & Skill Tree cá nhân hóa"
+    }
+  },
+  "discussion": {
+    "title": "Thảo luận",
+    "subtitle": "Chia sẻ kinh nghiệm, hỏi đáp",
+    "commentPlaceholder": "Viết bình luận...",
+    "replyPlaceholder": "Viết câu trả lời...",
+    "keyboardHint": "Nhấn Enter để gửi, Shift+Enter để xuống dòng.",
+    "emptyHint": "Chưa có bình luận nào. Hãy là người đầu tiên!",
+    "reply": "Trả lời",
+    "cancel": "Hủy",
+    "edit": "Sửa",
+    "report": "Báo cáo",
+    "reportTitle": "Báo cáo bình luận không phù hợp",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "edited": "(đã chỉnh sửa)",
+    "viewMore": "Xem thêm {{count}} trả lời",
+    "collapse": "Ẩn bớt",
+    "replyingTo": "Trả lời",
+    "reasons": {
+      "SPAM": "Spam / Quảng cáo",
+      "ABUSE": "Xúc phạm / Quấy rối",
+      "SCAM": "Lừa đảo",
+      "MISINFORMATION": "Sai thông tin",
+      "OFF_TOPIC": "Lạc đề",
+      "OTHER": "Khác"
+    },
+    "toasts": {
+      "posted": "Đã gửi bình luận",
+      "replied": "Đã gửi trả lời",
+      "postError": "Lỗi khi gửi",
+      "emptyContent": "Nội dung không được để trống",
+      "editSuccess": "Đã cập nhật bình luận",
+      "editError": "Lỗi khi cập nhật bình luận",
+      "reportSuccess": "Đã gửi báo cáo. Cám ơn bạn!",
+      "reportError": "Không thể gửi báo cáo"
+    },
+    "reportDialog": {
+      "title": "Báo cáo bình luận",
+      "description": "Bình luận sẽ được ẩn tạm thời nếu nhiều người báo cáo. Admin sẽ xem xét và quyết định.",
+      "reasonLabel": "Lý do",
+      "noteLabel": "Ghi chú thêm",
+      "noteOptional": "(tuỳ chọn)",
+      "notePlaceholder": "Mô tả thêm để admin hiểu bối cảnh…",
+      "cancel": "Huỷ",
+      "submit": "Gửi báo cáo",
+      "submitting": "Đang gửi…"
+    }
+  },
+  "offline": {
+    "message": "Mất kết nối mạng — thao tác có thể chưa được lưu. Đang chờ kết nối lại…"
   }
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Mic, MicOff, RotateCcw, CheckCircle2, XCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -55,6 +56,7 @@ function scoreMatch(target: string, said: string): number {
  * speak it via the mic, and grades how closely they matched.
  */
 export function PracticeCard({ phrase, onResult }: Props) {
+  const { t } = useTranslation('livestream');
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState('');
   const [score, setScore] = useState<number | null>(null);
@@ -98,14 +100,14 @@ export function PracticeCard({ phrase, onResult }: Props) {
   useEffect(() => () => { recRef.current?.abort(); }, []);
 
   const feedback = score === null ? null
-    : score >= 80 ? { color: 'text-emerald-600', icon: <CheckCircle2 className="w-4 h-4" />, label: 'Tuyệt vời!' }
-    : score >= 50 ? { color: 'text-amber-600',  icon: <Sparkles className="w-4 h-4" />,    label: 'Gần đúng — thử lại nhé' }
-    :               { color: 'text-rose-600',   icon: <XCircle className="w-4 h-4" />,     label: 'Cố lên! Đọc lại lần nữa' };
+    : score >= 80 ? { color: 'text-emerald-600', icon: <CheckCircle2 className="w-4 h-4" />, label: t('practice.feedback.great') }
+    : score >= 50 ? { color: 'text-amber-600',  icon: <Sparkles className="w-4 h-4" />,    label: t('practice.feedback.close') }
+    :               { color: 'text-rose-600',   icon: <XCircle className="w-4 h-4" />,     label: t('practice.feedback.tryAgain') };
 
   if (!supported) {
     return (
       <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-        Trình duyệt không hỗ trợ luyện nói. Hãy dùng Chrome/Edge để dùng tính năng này.
+        {t('practice.unsupported')}
       </div>
     );
   }
@@ -114,7 +116,7 @@ export function PracticeCard({ phrase, onResult }: Props) {
     <div className="mt-3 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white overflow-hidden">
       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100/70 border-b border-indigo-100">
         <Sparkles className="w-3 h-3 text-indigo-600" />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Luyện nói</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">{t('practice.label')}</span>
       </div>
 
       <div className="px-3 py-3 space-y-2">
@@ -122,7 +124,7 @@ export function PracticeCard({ phrase, onResult }: Props) {
 
         {heard && (
           <p className="text-xs text-slate-500">
-            Bạn nói: <span className="italic">"{heard}"</span>
+            {t('practice.youSaid')} <span className="italic">"{heard}"</span>
           </p>
         )}
 
@@ -142,12 +144,12 @@ export function PracticeCard({ phrase, onResult }: Props) {
               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5"
             >
               <Mic className="w-3.5 h-3.5" />
-              {score === null ? 'Đọc theo' : 'Thử lại'}
+              {score === null ? t('practice.buttons.tryAloud') : t('practice.buttons.again')}
             </Button>
           ) : (
             <Button size="sm" variant="outline" onClick={stop} className="gap-1.5 border-rose-300 text-rose-600 hover:bg-rose-50">
               <MicOff className="w-3.5 h-3.5" />
-              Dừng
+              {t('practice.buttons.stop')}
             </Button>
           )}
           {score !== null && !listening && (
@@ -158,7 +160,7 @@ export function PracticeCard({ phrase, onResult }: Props) {
               className="gap-1.5 text-slate-500"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Xoá
+              {t('practice.buttons.clear')}
             </Button>
           )}
         </div>

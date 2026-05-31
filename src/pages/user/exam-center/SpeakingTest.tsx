@@ -36,19 +36,11 @@ import { useNavigate } from "react-router-dom";
 
 // Surface a clear, actionable toast when microphone access fails — otherwise
 // the user just sees nothing happen after granting/denying the prompt.
-function notifyMicError(err: unknown) {
+function notifyMicError(onError: (isDenied: boolean) => void, err: unknown) {
   const denied =
     err instanceof DOMException &&
     (err.name === "NotAllowedError" || err.name === "SecurityError");
-  if (denied) {
-    toast.error("Không có quyền dùng micro", {
-      description: "Hãy cho phép quyền micro cho trang này trong trình duyệt rồi thử lại.",
-    });
-  } else {
-    toast.error("Không truy cập được micro", {
-      description: "Kiểm tra thiết bị thu âm hoặc thử lại với trình duyệt khác.",
-    });
-  }
+  onError(denied);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -106,6 +98,14 @@ function SpeakingTestContent() {
   const { data: result } = useSpeakingSessionResult(
     screen === "grading" ? sessionId : null
   );
+
+  const handleMicError = useCallback((isDenied: boolean) => {
+    if (isDenied) {
+      toast.error(t("speakingTest.micDenied"), { description: t("speakingTest.micDeniedDesc") });
+    } else {
+      toast.error(t("speakingTest.micError"), { description: t("speakingTest.micErrorDesc") });
+    }
+  }, [t]);
 
   // ─── DB Topics Query ──────────────────────────────────────────────────────
   const { data: dbTopicsRes } = useQuery({
@@ -208,7 +208,7 @@ function SpeakingTestContent() {
       setMicCheckStream(stream);
     } catch (err) {
       console.error("Mic access error:", err);
-      notifyMicError(err);
+      notifyMicError(handleMicError, err);
     }
   }, []);
 
@@ -259,7 +259,7 @@ function SpeakingTestContent() {
       setIsPaused(false);
     } catch (err) {
       console.error("Mic access error:", err);
-      notifyMicError(err);
+      notifyMicError(handleMicError, err);
     }
   }, []);
 

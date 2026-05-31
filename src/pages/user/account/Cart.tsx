@@ -374,21 +374,21 @@ const CartPage = () => {
       <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('cart.clearConfirm.title', 'Xoá toàn bộ giỏ hàng?')}</AlertDialogTitle>
+            <AlertDialogTitle>{t('cart.clearConfirm.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('cart.clearConfirm.description', 'Tất cả khoá học trong giỏ sẽ bị xoá. Hành động này không thể hoàn tác.')}
+              {t('cart.clearConfirm.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cart.clearConfirm.cancel', 'Huỷ')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('cart.clearConfirm.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => { e.preventDefault(); handleClearCart(); }}
               disabled={clearMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {clearMutation.isPending
-                ? t('cart.clearConfirm.clearing', 'Đang xoá…')
-                : t('cart.clearConfirm.confirm', 'Xoá tất cả')}
+                ? t('cart.clearConfirm.clearing')
+                : t('cart.clearConfirm.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

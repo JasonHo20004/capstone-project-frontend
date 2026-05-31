@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -68,10 +70,12 @@ function SortableLessonRow({
   lesson,
   index,
   onClick,
+  t,
 }: {
   lesson: Lesson;
   index: number;
   onClick: () => void;
+  t: TFunction;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lesson.id,
@@ -83,7 +87,7 @@ function SortableLessonRow({
   };
   return (
     <div ref={setNodeRef} style={style} className="bg-white">
-      <LessonRow lesson={lesson} index={index} onClick={onClick} dragHandleProps={{ ...attributes, ...listeners }} />
+      <LessonRow lesson={lesson} index={index} onClick={onClick} t={t} dragHandleProps={{ ...attributes, ...listeners }} />
     </div>
   );
 }
@@ -93,11 +97,13 @@ function LessonRow({
   index,
   onClick,
   dragHandleProps,
+  t,
 }: {
   lesson: Lesson;
   index: number;
   onClick: () => void;
   dragHandleProps?: Record<string, unknown>;
+  t: TFunction;
 }) {
   const isQuiz = !!lesson.testId;
   return (
@@ -110,7 +116,7 @@ function LessonRow({
           {...dragHandleProps}
           onClick={(e) => e.stopPropagation()}
           className="touch-none p-1 -ml-1 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing"
-          title="Kéo để sắp xếp"
+          title={t('courseModulesTab.dragToSort')}
         >
           <GripVertical className="w-3.5 h-3.5" />
         </button>
@@ -129,16 +135,16 @@ function LessonRow({
         <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
           {lesson.durationInSeconds ? (
             <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" /> {Math.round(lesson.durationInSeconds / 60)} phút
+              <Clock className="w-3 h-3" /> {t('courseModulesTab.minutes', { count: Math.round(lesson.durationInSeconds / 60) })}
             </span>
           ) : null}
           {isQuiz ? (
             <span className="flex items-center gap-1 text-amber-600">
-              <ClipboardList className="w-3 h-3" /> Bài kiểm tra
+              <ClipboardList className="w-3 h-3" /> {t('courseModulesTab.quiz')}
             </span>
           ) : lesson.videoUrl ? (
             <span className="flex items-center gap-1 text-emerald-600">
-              <Play className="w-3 h-3" /> Video
+              <Play className="w-3 h-3" /> {t('courseModulesTab.video')}
             </span>
           ) : null}
           <span className="flex items-center gap-1">
@@ -169,6 +175,7 @@ function SortableModuleItem({
   updatePending,
   deletePending,
   navigate,
+  t,
 }: {
   mod: ModuleData;
   modIdx: number;
@@ -183,6 +190,7 @@ function SortableModuleItem({
   updatePending: boolean;
   deletePending: boolean;
   navigate: (path: string) => void;
+  t: TFunction;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mod.id,
@@ -249,19 +257,21 @@ function SortableModuleItem({
           )}
         </div>
 
-        <span className="text-xs text-slate-400 flex-shrink-0">{mod.lessons.length} bài học</span>
+        <span className="text-xs text-slate-400 flex-shrink-0">
+          {t('courseModulesTab.lessonCount', { count: mod.lessons.length })}
+        </span>
 
         <div className="flex items-center gap-1 flex-shrink-0">
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600" onClick={onAddLesson} title="Thêm bài học">
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600" onClick={onAddLesson} title={t('courseModulesTab.addLesson')}>
             <Plus className="w-3.5 h-3.5" />
           </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-amber-600" onClick={onAddQuiz} title="Thêm bài kiểm tra">
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-amber-600" onClick={onAddQuiz} title={t('courseModulesTab.addQuiz')}>
             <ClipboardList className="w-3.5 h-3.5" />
           </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600" onClick={onEdit} title="Sửa module" disabled={updatePending}>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600" onClick={onEdit} title={t('courseModulesTab.editModule')} disabled={updatePending}>
             <Pencil className="w-3.5 h-3.5" />
           </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-red-600" onClick={onDelete} title="Xóa module" disabled={deletePending}>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-400 hover:text-red-600" onClick={onDelete} title={t('courseModulesTab.deleteModule')} disabled={deletePending}>
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -271,13 +281,13 @@ function SortableModuleItem({
         <div className="divide-y divide-slate-50">
           {mod.lessons.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="text-sm text-slate-400 italic">Chưa có bài học trong module này</p>
+              <p className="text-sm text-slate-400 italic">{t('courseModulesTab.noLessons')}</p>
               <div className="mt-2 flex items-center justify-center gap-2">
                 <Button size="sm" variant="outline" className="text-xs rounded-lg" onClick={onAddLesson}>
-                  <Plus className="w-3 h-3 mr-1" /> Thêm bài học
+                  <Plus className="w-3 h-3 mr-1" /> {t('courseModulesTab.addLesson')}
                 </Button>
                 <Button size="sm" variant="outline" className="text-xs rounded-lg text-amber-700 border-amber-200 hover:bg-amber-50" onClick={onAddQuiz}>
-                  <ClipboardList className="w-3 h-3 mr-1" /> Thêm bài kiểm tra
+                  <ClipboardList className="w-3 h-3 mr-1" /> {t('courseModulesTab.addQuiz')}
                 </Button>
               </div>
             </div>
@@ -289,6 +299,7 @@ function SortableModuleItem({
                     key={l.id}
                     lesson={l}
                     index={i}
+                    t={t}
                     onClick={() =>
                       navigate(
                         l.testId
@@ -319,6 +330,7 @@ export function CourseModulesTab({
   refetch,
 }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation('seller');
 
   const [localModules, setLocalModules] = useState<ModuleData[]>(modules);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
@@ -345,7 +357,7 @@ export function CourseModulesTab({
       {
         onError: () => {
           setLocalModules(previous);
-          toast.error('Không thể sắp xếp lại bài học. Đã hoàn tác.');
+          toast.error(t('courseModulesTab.toastReorderLessonsFailed'));
         },
         onSuccess: () => {
           refetchModules();
@@ -395,7 +407,7 @@ export function CourseModulesTab({
       {
         onError: () => {
           setLocalModules(previous);
-          toast.error('Không thể sắp xếp lại module. Đã hoàn tác.');
+          toast.error(t('courseModulesTab.toastReorderModulesFailed'));
         },
       }
     );
@@ -453,13 +465,13 @@ export function CourseModulesTab({
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Module & Bài học</h2>
+          <h2 className="text-lg font-bold text-slate-900">{t('courseModulesTab.header')}</h2>
           <p className="text-sm text-slate-500">
-            {localModules.length} module • {unassignedLessons.length} bài học chưa phân loại
+            {t('courseModulesTab.summary', { moduleCount: localModules.length, unassignedCount: unassignedLessons.length })}
           </p>
         </div>
         <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)} className="rounded-xl shadow-sm">
-          <FolderPlus className="mr-2 h-4 w-4" /> Tạo Module
+          <FolderPlus className="mr-2 h-4 w-4" /> {t('courseModulesTab.createModule')}
         </Button>
       </div>
 
@@ -468,9 +480,9 @@ export function CourseModulesTab({
           <CardContent className="p-0">
             <EmptyState
               icon={<Layers className="w-7 h-7 text-indigo-400" />}
-              title="Chưa có module nào"
-              description="Tạo module để tổ chức bài học theo chủ đề."
-              actionLabel="Tạo module đầu tiên"
+              title={t('courseModulesTab.emptyTitle')}
+              description={t('courseModulesTab.emptyDescription')}
+              actionLabel={t('courseModulesTab.createFirstModule')}
               onAction={() => setIsCreateDialogOpen(true)}
             />
           </CardContent>
@@ -487,7 +499,7 @@ export function CourseModulesTab({
                         className="h-8 text-sm rounded-lg"
                         value={editModuleTitle}
                         onChange={(e) => setEditModuleTitle(e.target.value)}
-                        placeholder="Tên module"
+                        placeholder={t('courseModulesTab.moduleNamePlaceholder')}
                         autoFocus
                       />
                       <Textarea
@@ -495,14 +507,14 @@ export function CourseModulesTab({
                         rows={2}
                         value={editModuleDescription}
                         onChange={(e) => setEditModuleDescription(e.target.value)}
-                        placeholder="Mô tả (tùy chọn)"
+                        placeholder={t('courseModulesTab.moduleDescPlaceholder')}
                       />
                       <div className="flex items-center justify-end gap-2">
                         <Button size="sm" variant="ghost" className="h-8 rounded-lg text-xs" onClick={() => setEditingModuleId(null)}>
-                          Hủy
+                          {t('courseModulesTab.cancel')}
                         </Button>
                         <Button size="sm" className="h-8 rounded-lg text-xs" onClick={() => handleUpdateModule(mod.id)} disabled={updateModuleMutation.isPending}>
-                          <Save className="w-3 h-3 mr-1" /> Lưu
+                          <Save className="w-3 h-3 mr-1" /> {t('courseModulesTab.save')}
                         </Button>
                       </div>
                     </div>
@@ -523,6 +535,7 @@ export function CourseModulesTab({
                     updatePending={updateModuleMutation.isPending}
                     deletePending={deleteModuleMutation.isPending}
                     navigate={navigate}
+                    t={t}
                   />
                 )
               )}
@@ -534,7 +547,7 @@ export function CourseModulesTab({
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
                 <h3 className="font-semibold text-slate-600 text-sm flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-slate-400" />
-                  Bài học chưa phân loại
+                  {t('courseModulesTab.unassignedTitle')}
                   <span className="text-xs text-slate-400">({unassignedLessons.length})</span>
                 </h3>
               </div>
@@ -544,6 +557,7 @@ export function CourseModulesTab({
                     key={l.id}
                     lesson={l}
                     index={i}
+                    t={t}
                     onClick={() => navigate(`/seller/courses/${courseId}/lessons/${l.id}`)}
                   />
                 ))}
@@ -557,38 +571,38 @@ export function CourseModulesTab({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FolderPlus className="w-5 h-5 text-indigo-500" /> Tạo Module mới
+              <FolderPlus className="w-5 h-5 text-indigo-500" /> {t('courseModulesTab.createDialogTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Tên module *</label>
+              <label className="text-sm font-semibold text-slate-700">{t('courseModulesTab.moduleNameLabel')}</label>
               <Input
                 className="rounded-xl"
-                placeholder="VD: Module 1: Foundation Skills"
+                placeholder={t('courseModulesTab.moduleNameExample')}
                 value={newModuleTitle}
                 onChange={(e) => setNewModuleTitle(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Mô tả (tùy chọn)</label>
+              <label className="text-sm font-semibold text-slate-700">{t('courseModulesTab.moduleDescLabel')}</label>
               <Textarea
                 className="rounded-xl"
                 rows={2}
-                placeholder="Mô tả ngắn về nội dung module"
+                placeholder={t('courseModulesTab.moduleDescExample')}
                 value={newModuleDescription}
                 onChange={(e) => setNewModuleDescription(e.target.value)}
               />
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" className="rounded-xl" onClick={() => setIsCreateDialogOpen(false)}>Hủy</Button>
+            <Button variant="outline" className="rounded-xl" onClick={() => setIsCreateDialogOpen(false)}>{t('courseModulesTab.cancel')}</Button>
             <Button
               className="rounded-xl"
               onClick={handleCreateModule}
               disabled={!newModuleTitle.trim() || createModuleMutation.isPending}
             >
-              {createModuleMutation.isPending ? 'Đang tạo...' : 'Tạo Module'}
+              {createModuleMutation.isPending ? t('courseModulesTab.creating') : t('courseModulesTab.createModuleButton')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -610,15 +624,19 @@ export function CourseModulesTab({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xoá module?
+              {t('courseModulesTab.confirmDeleteTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn sắp xoá module <strong className="text-slate-900">"{pendingDeleteModule?.title}"</strong>.
-              Các bài học bên trong sẽ chuyển thành <em>bài học chưa phân loại</em>, không bị mất.
+              <Trans
+                i18nKey="courseModulesTab.confirmDeleteDesc"
+                ns="seller"
+                values={{ title: pendingDeleteModule?.title ?? '' }}
+                components={{ strong: <strong className="text-slate-900" />, em: <em /> }}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteModuleMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteModuleMutation.isPending}>{t('courseModulesTab.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               disabled={deleteModuleMutation.isPending}
@@ -627,7 +645,7 @@ export function CourseModulesTab({
                 confirmDeleteModule();
               }}
             >
-              {deleteModuleMutation.isPending ? 'Đang xoá…' : 'Xoá module'}
+              {deleteModuleMutation.isPending ? t('courseModulesTab.deleting') : t('courseModulesTab.deleteModuleButton')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

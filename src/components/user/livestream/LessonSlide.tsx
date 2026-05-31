@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Quote, Sparkles, BookMarked } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TranslatableText } from './TranslatableText';
@@ -30,6 +31,7 @@ interface Props {
  * - Optional avatar PIP in the top-right
  */
 export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }: Props) {
+  const { t } = useTranslation('livestream');
   const hasSlideData = !!(
     (chunk.key_points && chunk.key_points.length) ||
     (chunk.keywords && chunk.keywords.length) ||
@@ -147,7 +149,7 @@ export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }
                 <div className="flex items-center gap-1 mb-1.5">
                   <Sparkles className="w-3 h-3 text-amber-500" />
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                    Từ vựng
+                    {t('slide.vocabulary')}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -170,7 +172,7 @@ export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }
                 <div className="flex items-center gap-1 mb-1">
                   <Quote className="w-3 h-3 text-indigo-400" />
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                    Ví dụ
+                    {t('slide.example')}
                   </span>
                 </div>
                 <div className="rounded-lg bg-slate-50 border-l-2 border-indigo-400 px-3 py-2">

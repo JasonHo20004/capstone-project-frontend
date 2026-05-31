@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSubscription } from '@/context/SubscriptionContext';
 import { Button } from '@/components/ui/button';
 import { Crown, Sparkles, ArrowRight } from 'lucide-react';
@@ -20,6 +21,7 @@ const featureLabels: Record<PremiumFeature, string> = {
 };
 
 export function PremiumGate({ feature, children, message }: PremiumGateProps) {
+  const { t } = useTranslation('common');
   const { hasFeature, isLoading } = useSubscription();
   const navigate = useNavigate();
 
@@ -28,7 +30,7 @@ export function PremiumGate({ feature, children, message }: PremiumGateProps) {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Đang kiểm tra quyền truy cập...</p>
+          <p className="text-sm text-muted-foreground">{t('premium.loading')}</p>
         </div>
       </div>
     );
@@ -49,15 +51,10 @@ export function PremiumGate({ feature, children, message }: PremiumGateProps) {
         {/* Title */}
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight">
-            Tính năng Premium
+            {t('premium.title')}
           </h2>
           <p className="text-muted-foreground">
-            {message || (
-              <>
-                <span className="font-medium text-foreground">{featureLabels[feature]}</span>
-                {' '}là tính năng dành cho gói Pro. Nâng cấp để trải nghiệm đầy đủ.
-              </>
-            )}
+            {message || t('premium.defaultMessage', { feature: featureLabels[feature] })}
           </p>
         </div>
 
@@ -65,15 +62,15 @@ export function PremiumGate({ feature, children, message }: PremiumGateProps) {
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-xl p-4 space-y-3 text-left border border-amber-200/50 dark:border-amber-800/30">
           <div className="flex items-center gap-2 text-sm">
             <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            <span>AI chấm Speaking & Writing chuyên sâu</span>
+            <span>{t('premium.benefits.speaking')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            <span>Luyện Dictation không giới hạn</span>
+            <span>{t('premium.benefits.dictation')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            <span>Learning Path & Skill Tree cá nhân hóa</span>
+            <span>{t('premium.benefits.learningPath')}</span>
           </div>
         </div>
 
@@ -83,7 +80,7 @@ export function PremiumGate({ feature, children, message }: PremiumGateProps) {
           className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold shadow-lg shadow-amber-200/50 transition-all hover:shadow-xl hover:shadow-amber-300/50"
           onClick={() => navigate('/#pricing')}
         >
-          Nâng cấp lên Pro
+          {t('premium.upgrade')}
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -19,13 +20,18 @@ export default function PaymentDialog({
   open,
   onOpenChange,
   amount,
-  title = 'Xác nhận thanh toán',
+  title,
   items = [],
   purchaseDate,
-  confirmLabel = 'Xác nhận',
+  confirmLabel,
   onConfirm,
 }: PaymentDialogProps) {
-  const dateText = useMemo(() => (purchaseDate ?? new Date()).toLocaleString('vi-VN'), [purchaseDate]);
+  const { t, i18n } = useTranslation('account');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
+  const dateText = useMemo(
+    () => (purchaseDate ?? new Date()).toLocaleString(dateLocale),
+    [purchaseDate, dateLocale],
+  );
 
   const handleConfirm = () => {
     onConfirm?.();
@@ -36,26 +42,26 @@ export default function PaymentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Vui lòng kiểm tra thông tin đơn hàng trước khi xác nhận.</DialogDescription>
+          <DialogTitle>{title ?? t('paymentDialog.title')}</DialogTitle>
+          <DialogDescription>{t('paymentDialog.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Ngày mua</Label>
+              <Label>{t('paymentDialog.purchaseDate')}</Label>
               <div className="text-lg font-semibold">{dateText}</div>
             </div>
             <div>
-              <Label>Tổng tiền</Label>
+              <Label>{t('paymentDialog.total')}</Label>
               <div className="text-lg font-semibold text-primary">{formatVND(amount)}</div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Sản phẩm</Label>
+            <Label>{t('paymentDialog.items')}</Label>
             {items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Không có sản phẩm hiển thị.</p>
+              <p className="text-sm text-muted-foreground">{t('paymentDialog.empty')}</p>
             ) : (
               <ul className="space-y-2">
                 {items.map((item, idx) => (
@@ -71,10 +77,10 @@ export default function PaymentDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Huỷ
+            {t('paymentDialog.cancel')}
           </Button>
           <Button onClick={handleConfirm} className="bg-gradient-primary">
-            {confirmLabel}
+            {confirmLabel ?? t('paymentDialog.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

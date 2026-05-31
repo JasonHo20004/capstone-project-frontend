@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ import type {
   WithdrawalRequest,
   WithdrawalRequestStatus,
 } from '@/lib/api/services/withdrawal.service';
+import type { TFunction } from 'i18next';
 
 type StatusFilter = 'ALL' | WithdrawalRequestStatus;
 
@@ -50,6 +52,9 @@ interface Props {
  * doesn't grow huge when there are many old withdrawals.
  */
 export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props) {
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
+
   const { data: withdrawalsData } = useSellerWithdrawalHistory({ page, limit: 10 });
   const list = withdrawalsData?.data ?? [];
 
@@ -70,12 +75,12 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
     if (!pendingCancel) return;
     try {
       await cancelMutation.mutateAsync(pendingCancel.id);
-      toast.success('Đã huỷ lệnh rút — tiền đã hoàn về số dư khả dụng');
+      toast.success(t('withdrawalHistory.toasts.cancelled'));
       setPendingCancel(null);
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Không thể huỷ lệnh rút';
+        t('withdrawalHistory.toasts.cancelFailed');
       toast.error(msg);
     }
   };
@@ -84,11 +89,15 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
     try {
       const res = await retryMutation.mutateAsync({ id: req.id });
       const newId = res?.data?.id?.slice(0, 8).toUpperCase();
-      toast.success(newId ? `Đã gửi lại lệnh rút #WR-${newId}` : 'Đã gửi lại lệnh rút');
+      toast.success(
+        newId
+          ? t('withdrawalHistory.toasts.retriedWithId', { id: newId })
+          : t('withdrawalHistory.toasts.retriedGeneric')
+      );
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Không thể gửi lại lệnh rút';
+        t('withdrawalHistory.toasts.retryFailed');
       toast.error(msg);
     }
   };
@@ -107,14 +116,14 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
           className="h-9 rounded-md border bg-background px-3 text-sm"
         >
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="PENDING">Chờ duyệt</option>
-          <option value="APPROVED">Đã chuyển khoản</option>
-          <option value="REJECTED">Bị từ chối</option>
-          <option value="CANCELLED">Đã huỷ</option>
+          <option value="ALL">{t('withdrawalHistory.filter.all')}</option>
+          <option value="PENDING">{t('withdrawalHistory.filter.pending')}</option>
+          <option value="APPROVED">{t('withdrawalHistory.filter.approved')}</option>
+          <option value="REJECTED">{t('withdrawalHistory.filter.rejected')}</option>
+          <option value="CANCELLED">{t('withdrawalHistory.filter.cancelled')}</option>
         </select>
         <Button variant="outline" size="sm" onClick={onExportCsv} className="ml-auto">
-          <Download className="w-4 h-4 mr-1.5" /> Xuất CSV
+          <Download className="w-4 h-4 mr-1.5" /> {t('withdrawalHistory.exportCsv')}
         </Button>
       </div>
 
@@ -123,12 +132,14 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
           <CardContent className="py-12 text-center">
             <Clock className="w-10 h-10 opacity-30 mx-auto" />
             <p className="mt-2 text-sm font-medium">
-              {statusFilter === 'ALL' ? 'Chưa có lệnh rút tiền' : 'Không có lệnh khớp bộ lọc'}
+              {statusFilter === 'ALL'
+                ? t('withdrawalHistory.empty.noneTitle')
+                : t('withdrawalHistory.empty.filteredTitle')}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {statusFilter === 'ALL'
-                ? 'Khi bạn rút tiền, lịch sử sẽ hiển thị ở đây.'
-                : 'Đổi bộ lọc để xem các lệnh khác.'}
+                ? t('withdrawalHistory.empty.noneHint')
+                : t('withdrawalHistory.empty.filteredHint')}
             </p>
           </CardContent>
         </Card>
@@ -146,6 +157,8 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
               onDownloadProof={() => req.proofImageUrl && handleDownloadProof(req.proofImageUrl, req.id)}
               cancelPending={cancelMutation.isPending}
               retryPending={retryMutation.isPending}
+              t={t}
+              dateLocale={dateLocale}
             />
           ))}
         </div>
@@ -159,10 +172,10 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
             disabled={page <= 1}
             onClick={() => onPageChange(Math.max(1, page - 1))}
           >
-            Trước
+            {t('withdrawalHistory.pagination.prev')}
           </Button>
           <span className="text-sm text-muted-foreground">
-            Trang {page} / {withdrawalsData.totalPages}
+            {t('withdrawalHistory.pagination.page', { page, total: withdrawalsData.totalPages })}
           </span>
           <Button
             variant="outline"
@@ -170,7 +183,7 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
             disabled={page >= withdrawalsData.totalPages}
             onClick={() => onPageChange(page + 1)}
           >
-            Tiếp
+            {t('withdrawalHistory.pagination.next')}
           </Button>
         </div>
       )}
@@ -178,19 +191,26 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
       <AlertDialog open={!!pendingCancel} onOpenChange={(o) => !o && setPendingCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Huỷ lệnh rút tiền?</AlertDialogTitle>
+            <AlertDialogTitle>{t('withdrawalHistory.cancelDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tiền sẽ hoàn về <strong>Số dư khả dụng</strong> ngay lập tức.
-              Bạn có thể gửi lại lệnh rút mới sau đó.
+              <Trans
+                i18nKey="withdrawalHistory.cancelDialog.bodyHtml"
+                ns="seller"
+                components={{ strong: <strong /> }}
+              />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelMutation.isPending}>Không</AlertDialogCancel>
+            <AlertDialogCancel disabled={cancelMutation.isPending}>
+              {t('withdrawalHistory.cancelDialog.no')}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => { e.preventDefault(); handleCancel(); }}
               disabled={cancelMutation.isPending}
             >
-              {cancelMutation.isPending ? 'Đang huỷ…' : 'Xác nhận huỷ'}
+              {cancelMutation.isPending
+                ? t('withdrawalHistory.cancelDialog.cancelling')
+                : t('withdrawalHistory.cancelDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -199,21 +219,19 @@ export function WithdrawalHistoryTab({ page, onPageChange, onExportCsv }: Props)
       <Dialog open={!!proofPreviewUrl} onOpenChange={(o) => !o && setProofPreviewUrl(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Biên lai chuyển khoản</DialogTitle>
-            <DialogDescription>
-              Bấm "Mở ảnh trong tab mới" để tải về (chuột phải → Lưu ảnh).
-            </DialogDescription>
+            <DialogTitle>{t('withdrawalHistory.proofDialog.title')}</DialogTitle>
+            <DialogDescription>{t('withdrawalHistory.proofDialog.lead')}</DialogDescription>
           </DialogHeader>
           {proofPreviewUrl && (
             <div className="space-y-3">
               <img
                 src={proofPreviewUrl}
-                alt="Biên lai"
+                alt={t('withdrawalHistory.proofDialog.alt')}
                 className="w-full max-h-[60vh] object-contain rounded border"
               />
               <Button asChild variant="outline" size="sm">
                 <a href={proofPreviewUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Mở ảnh trong tab mới
+                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> {t('withdrawalHistory.proofDialog.openInTab')}
                 </a>
               </Button>
             </div>
@@ -234,11 +252,13 @@ interface CardProps {
   onDownloadProof: () => void;
   cancelPending: boolean;
   retryPending: boolean;
+  t: TFunction;
+  dateLocale: string;
 }
 
 function WithdrawalCard({
   req, expanded, onToggle, onCancel, onRetry, onPreviewProof, onDownloadProof,
-  cancelPending, retryPending,
+  cancelPending, retryPending, t, dateLocale,
 }: CardProps) {
   const shortId = req.id.slice(0, 8).toUpperCase();
   const isStale =
@@ -246,10 +266,14 @@ function WithdrawalCard({
     Date.now() - new Date(req.createdAt).getTime() > 48 * 60 * 60 * 1000;
   const supportMail =
     `mailto:support@capstoneproject.com?subject=` +
-    encodeURIComponent(`[Withdrawal #WR-${shortId}] Cần hỗ trợ`) +
+    encodeURIComponent(t('withdrawalHistory.support.subject', { id: shortId })) +
     `&body=` +
     encodeURIComponent(
-      `Yêu cầu rút tiền #WR-${shortId} (${formatVND(req.amount)}) đã chờ duyệt từ ${new Date(req.createdAt).toLocaleString('vi-VN')}.`
+      t('withdrawalHistory.support.body', {
+        id: shortId,
+        amount: formatVND(req.amount),
+        date: new Date(req.createdAt).toLocaleString(dateLocale),
+      })
     );
 
   return (
@@ -259,7 +283,7 @@ function WithdrawalCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-xs text-muted-foreground">#WR-{shortId}</span>
-              <StatusBadge status={req.status} />
+              <StatusBadge status={req.status} t={t} />
             </div>
             <div className="mt-1 text-lg font-bold font-display">{formatVND(req.amount)}</div>
             <div className="text-xs text-muted-foreground">
@@ -270,17 +294,17 @@ function WithdrawalCard({
           <div className="flex items-center gap-2 flex-wrap">
             {req.status === 'PENDING' && (
               <Button size="sm" variant="outline" onClick={onCancel} disabled={cancelPending}>
-                <Ban className="w-3.5 h-3.5 mr-1" /> Huỷ lệnh
+                <Ban className="w-3.5 h-3.5 mr-1" /> {t('withdrawalHistory.card.cancel')}
               </Button>
             )}
             {req.status === 'REJECTED' && (
               <Button size="sm" onClick={onRetry} disabled={retryPending}>
-                <RefreshCw className="w-3.5 h-3.5 mr-1" /> Rút lại
+                <RefreshCw className="w-3.5 h-3.5 mr-1" /> {t('withdrawalHistory.card.retry')}
               </Button>
             )}
             {req.proofImageUrl && (
               <Button size="sm" variant="outline" onClick={onDownloadProof}>
-                <Download className="w-3.5 h-3.5 mr-1" /> Biên lai
+                <Download className="w-3.5 h-3.5 mr-1" /> {t('withdrawalHistory.card.proof')}
               </Button>
             )}
             <Button size="sm" variant="ghost" onClick={onToggle}>
@@ -291,11 +315,11 @@ function WithdrawalCard({
 
         {req.status === 'REJECTED' && req.adminNote && (
           <div className="rounded-lg border border-red-200 bg-red-50/60 dark:bg-red-900/10 p-3 space-y-2">
-            <div className="text-xs font-semibold text-red-700 dark:text-red-400">Lý do từ chối:</div>
-            <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{req.adminNote}</p>
-            <div className="text-xs text-muted-foreground">
-              Tiền đã được hoàn về số dư khả dụng. Bạn có thể chỉnh sửa và gửi lại.
+            <div className="text-xs font-semibold text-red-700 dark:text-red-400">
+              {t('withdrawalHistory.card.rejectionReason')}
             </div>
+            <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{req.adminNote}</p>
+            <div className="text-xs text-muted-foreground">{t('withdrawalHistory.card.rejectionNote')}</div>
           </div>
         )}
 
@@ -303,9 +327,9 @@ function WithdrawalCard({
           <div className="flex items-start gap-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-2 text-xs text-amber-900 dark:text-amber-200">
             <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
             <span className="flex-1">
-              Đã chờ duyệt hơn 48 giờ. Nếu cần gấp,{' '}
+              {t('withdrawalHistory.card.stale')}{' '}
               <a href={supportMail} className="font-semibold underline">
-                liên hệ hỗ trợ
+                {t('withdrawalHistory.card.supportLink')}
               </a>
               .
             </span>
@@ -314,11 +338,12 @@ function WithdrawalCard({
 
         {expanded && (
           <div className="pt-3 border-t space-y-3">
-            <Timeline req={req} onPreviewProof={onPreviewProof} />
+            <Timeline req={req} onPreviewProof={onPreviewProof} t={t} dateLocale={dateLocale} />
             {req.retriedFromId && (
               <div className="text-xs text-muted-foreground">
-                Đây là lệnh gửi lại sau lần bị từ chối #WR-
-                {req.retriedFromId.slice(0, 8).toUpperCase()}.
+                {t('withdrawalHistory.card.retriedFrom', {
+                  id: req.retriedFromId.slice(0, 8).toUpperCase(),
+                })}
               </div>
             )}
           </div>
@@ -328,30 +353,30 @@ function WithdrawalCard({
   );
 }
 
-function StatusBadge({ status }: { status: WithdrawalRequestStatus }) {
+function StatusBadge({ status, t }: { status: WithdrawalRequestStatus; t: TFunction }) {
   switch (status) {
     case 'PENDING':
       return (
         <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/30">
-          <Clock className="w-3 h-3 mr-1" /> Chờ duyệt
+          <Clock className="w-3 h-3 mr-1" /> {t('withdrawalHistory.status.PENDING')}
         </Badge>
       );
     case 'APPROVED':
       return (
         <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
-          <CheckCircle2 className="w-3 h-3 mr-1" /> Đã chuyển khoản
+          <CheckCircle2 className="w-3 h-3 mr-1" /> {t('withdrawalHistory.status.APPROVED')}
         </Badge>
       );
     case 'REJECTED':
       return (
         <Badge variant="outline" className="bg-red-500/10 text-red-700 border-red-500/30">
-          <XCircle className="w-3 h-3 mr-1" /> Bị từ chối
+          <XCircle className="w-3 h-3 mr-1" /> {t('withdrawalHistory.status.REJECTED')}
         </Badge>
       );
     case 'CANCELLED':
       return (
         <Badge variant="outline" className="bg-slate-500/10 text-slate-700 border-slate-500/30">
-          <Ban className="w-3 h-3 mr-1" /> Đã huỷ
+          <Ban className="w-3 h-3 mr-1" /> {t('withdrawalHistory.status.CANCELLED')}
         </Badge>
       );
   }
@@ -360,9 +385,11 @@ function StatusBadge({ status }: { status: WithdrawalRequestStatus }) {
 interface TimelineProps {
   req: WithdrawalRequest;
   onPreviewProof: () => void;
+  t: TFunction;
+  dateLocale: string;
 }
 
-function Timeline({ req, onPreviewProof }: TimelineProps) {
+function Timeline({ req, onPreviewProof, t, dateLocale }: TimelineProps) {
   const events: Array<{
     when: string;
     label: string;
@@ -372,21 +399,21 @@ function Timeline({ req, onPreviewProof }: TimelineProps) {
 
   events.push({
     when: req.createdAt,
-    label: 'Bạn gửi yêu cầu rút tiền',
+    label: t('withdrawalHistory.timeline.submitted'),
     dot: 'bg-blue-500',
   });
 
   if (req.status === 'APPROVED' && req.processedAt) {
     events.push({
       when: req.processedAt,
-      label: 'Admin đã chuyển khoản',
+      label: t('withdrawalHistory.timeline.approved'),
       dot: 'bg-emerald-500',
       detail: req.proofImageUrl ? (
         <button
           onClick={onPreviewProof}
           className="text-xs text-emerald-700 dark:text-emerald-400 underline mt-1"
         >
-          Xem biên lai
+          {t('withdrawalHistory.timeline.viewProof')}
         </button>
       ) : undefined,
     });
@@ -394,25 +421,25 @@ function Timeline({ req, onPreviewProof }: TimelineProps) {
     const eta = new Date(new Date(req.processedAt).getTime() + 3 * 24 * 60 * 60 * 1000);
     events.push({
       when: eta.toISOString(),
-      label: 'Dự kiến tiền về tài khoản',
+      label: t('withdrawalHistory.timeline.etaArrival'),
       dot: 'bg-slate-300',
     });
   } else if (req.status === 'REJECTED' && req.processedAt) {
     events.push({
       when: req.processedAt,
-      label: 'Admin từ chối — tiền hoàn về số dư',
+      label: t('withdrawalHistory.timeline.rejected'),
       dot: 'bg-red-500',
     });
   } else if (req.status === 'CANCELLED' && req.cancelledAt) {
     events.push({
       when: req.cancelledAt,
-      label: 'Bạn huỷ lệnh rút — tiền hoàn về số dư',
+      label: t('withdrawalHistory.timeline.cancelled'),
       dot: 'bg-slate-400',
     });
   } else if (req.status === 'PENDING') {
     events.push({
       when: '',
-      label: 'Chờ admin duyệt…',
+      label: t('withdrawalHistory.timeline.waiting'),
       dot: 'bg-amber-500',
     });
   }
@@ -426,7 +453,7 @@ function Timeline({ req, onPreviewProof }: TimelineProps) {
           />
           {ev.when && (
             <div className="text-xs text-muted-foreground">
-              {new Date(ev.when).toLocaleString('vi-VN')}
+              {new Date(ev.when).toLocaleString(dateLocale)}
             </div>
           )}
           <div className="text-sm font-medium">{ev.label}</div>

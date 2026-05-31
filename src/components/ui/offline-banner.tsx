@@ -1,4 +1,5 @@
 import { WifiOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
 /**
@@ -7,6 +8,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
  * gives the user a clear "you are offline" signal instead of failing silently.
  */
 export function OfflineBanner() {
+  const { t } = useTranslation("common");
   const online = useOnlineStatus();
   if (online) return null;
 
@@ -18,7 +20,7 @@ export function OfflineBanner() {
     >
       <span className="inline-flex items-center justify-center gap-2">
         <WifiOff className="h-4 w-4" />
-        Mất kết nối mạng — thao tác có thể chưa được lưu. Đang chờ kết nối lại…
+        {t("offline.message")}
       </span>
     </div>
   );

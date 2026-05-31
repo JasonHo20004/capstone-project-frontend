@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
 import CourseCard from '@/components/user/course/CourseCard';
@@ -15,6 +16,7 @@ import type { Course } from "@/domain";
 const levels = ['all', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 const Courses = () => {
+  const { t } = useTranslation('courses');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [page, setPage] = useState(1); // Page cho danh sách "Chưa mua"
@@ -81,13 +83,13 @@ const Courses = () => {
             </div>
             <div className="relative z-10 max-w-2xl">
               <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-full text-primary-light text-xs font-bold uppercase tracking-widest">
-                Explore
+                {t('coursesPage.heroBadge')}
               </span>
               <h1 className="text-4xl md:text-5xl font-black mt-4 tracking-tight">
-                Khám phá khoá học theo lộ trình của bạn
+                {t('coursesPage.heroTitle')}
               </h1>
               <p className="text-slate-200 mt-4">
-                Duyệt danh sách khoá học, lọc theo trình độ và tìm nội dung phù hợp để học ngay.
+                {t('coursesPage.heroSubtitle')}
               </p>
             </div>
           </div>
@@ -98,7 +100,7 @@ const Courses = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="Tìm khóa học, kỹ năng hoặc giảng viên..."
+                placeholder={t('coursesPage.searchPlaceholder')}
                 className="pl-10 border-slate-200 bg-slate-50"
                 value={searchQuery}
                 onChange={handleSearch}
@@ -107,18 +109,18 @@ const Courses = () => {
             <div className="flex items-center gap-3">
               <Select value={selectedLevel} onValueChange={handleLevel}>
                 <SelectTrigger className="w-[160px] bg-white">
-                  <SelectValue placeholder="Trình độ" />
+                  <SelectValue placeholder={t('coursesPage.levelPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {levels.map((l) => (
                     <SelectItem key={l} value={l}>
-                      {l === 'all' ? 'Tất cả' : l}
+                      {l === 'all' ? t('coursesPage.allLevels') : l}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="text-sm text-slate-500 whitespace-nowrap">
-                {pagination?.total || 0} kết quả
+                {t('coursesPage.resultsCount', { count: pagination?.total || 0 })}
               </div>
             </div>
           </div>
@@ -134,7 +136,7 @@ const Courses = () => {
               {user && myCourses.length > 0 && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900">Khóa học của bạn</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">{t('coursesPage.yourCourses')}</h2>
                   {myCourses.length > 0 && (
                     <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">
                       {myCourses.length}
@@ -142,25 +144,24 @@ const Courses = () => {
                   )}
                 </div>
 
-                {/* Logic: Có khóa học thì hiện Grid, Không có thì hiện Thông báo */}
                 {myCourses.length > 0 ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {myCourses.map(course => (
-                      <CourseCard 
-                        key={course.id} 
-                        course={course} 
-                        purchased 
-                        hideAddToCart 
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        purchased
+                        hideAddToCart
                       />
                     ))}
                   </div>
                 ) : (
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center">
                     <p className="text-slate-800 font-medium text-lg">
-                      Bạn chưa đăng ký khóa học nào.
+                      {t('coursesPage.emptyEnrolled')}
                     </p>
                     <p className="text-slate-500 text-sm mt-1">
-                      Hãy khám phá các khóa học chất lượng bên dưới và bắt đầu hành trình học tập ngay hôm nay!
+                      {t('coursesPage.emptyEnrolledHint')}
                     </p>
                   </div>
                 )}
@@ -169,14 +170,13 @@ const Courses = () => {
               </div>
             )}
 
-              {/* --- PHẦN 2: KHÓA HỌC CÓ SẴN (PHÂN TRANG) --- */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-slate-900">
-                    {user ? 'Khám phá thêm' : 'Danh sách khóa học'}
+                    {user ? t('coursesPage.exploreMore') : t('coursesPage.coursesList')}
                   </h2>
                   <span className="text-slate-500 text-sm">
-                    {pagination?.total || 0} kết quả
+                    {t('coursesPage.resultsCount', { count: pagination?.total || 0 })}
                   </span>
                 </div>
 
@@ -188,7 +188,6 @@ const Courses = () => {
                       ))}
                     </div>
 
-                    {/* Pagination Controls */}
                     {pagination && pagination.totalPages > 1 && (
                       <div className="flex justify-center items-center gap-4">
                         <Button
@@ -196,9 +195,9 @@ const Courses = () => {
                           onClick={() => setPage(old => Math.max(old - 1, 1))}
                           disabled={page === 1}
                         >
-                          <ChevronLeft className="w-4 h-4 mr-2" /> Trước
+                          <ChevronLeft className="w-4 h-4 mr-2" /> {t('coursesPage.prev')}
                         </Button>
-                        <span className="text-sm font-medium text-slate-900">Trang {page} / {pagination.totalPages}</span>
+                        <span className="text-sm font-medium text-slate-900">{t('coursesPage.pageOf', { page, total: pagination.totalPages })}</span>
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -206,14 +205,14 @@ const Courses = () => {
                           }}
                           disabled={isPlaceholderData || page >= pagination.totalPages}
                         >
-                          Sau <ChevronRight className="w-4 h-4 ml-2" />
+                          {t('coursesPage.next')} <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="text-center py-20 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                    <p className="text-slate-500">Không tìm thấy khóa học nào phù hợp.</p>
+                    <p className="text-slate-500">{t('coursesPage.noResults')}</p>
                   </div>
                 )}
               </div>

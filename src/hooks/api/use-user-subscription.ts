@@ -9,7 +9,12 @@ const SUBSCRIPTION_HISTORY_KEY = ["subscription-history"] as const;
 
 export const SUBSCRIPTION_CACHE_KEY = "capstone_my_subscription";
 
+function hasAccessToken(): boolean {
+  return !!localStorage.getItem("accessToken");
+}
+
 function readCachedSubscription(): UserSubscriptionStatus | null | undefined {
+  if (!hasAccessToken()) return null;
   try {
     const raw = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
     if (raw === null) return undefined;
@@ -32,6 +37,7 @@ export const useUserPlans = () => {
 };
 
 export const useMySubscription = () => {
+  const authed = hasAccessToken();
   return useQuery({
     queryKey: MY_SUBSCRIPTION_KEY,
     queryFn: async () => {
@@ -39,7 +45,10 @@ export const useMySubscription = () => {
       return res.data ?? null;
     },
     staleTime: 60 * 1000,
-    initialData: readCachedSubscription,
+    // Guests have no subscription: don't hit the API, and resolve to null
+    // instead of any cached value.
+    enabled: authed,
+    initialData: authed ? readCachedSubscription : null,
     initialDataUpdatedAt: 0,
   });
 };

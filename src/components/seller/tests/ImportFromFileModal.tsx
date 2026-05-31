@@ -8,6 +8,7 @@
 // Nothing is written to the database from this modal.
 
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -115,6 +116,7 @@ export default function ImportFromFileModal({
   onReplace,
   onAppend,
 }: Props) {
+  const { t } = useTranslation('seller');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [manualAnswerKey, setManualAnswerKey] = useState('');
@@ -138,7 +140,7 @@ export default function ImportFromFileModal({
     const name = f.name.toLowerCase();
     const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
     if (!ALLOWED_EXT.includes(ext)) {
-      toast.error('Chỉ chấp nhận file .pdf hoặc .docx');
+      toast.error(t('importFile.toastInvalidExt'));
       return;
     }
     setFile(f);
@@ -151,7 +153,7 @@ export default function ImportFromFileModal({
       onError: (err: unknown) => {
         const msg =
           (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-          ?? (err instanceof Error ? err.message : 'Phân tích file thất bại');
+          ?? (err instanceof Error ? err.message : t('importFile.toastParseFailed'));
         toast.error(msg);
       },
     });
@@ -178,14 +180,14 @@ export default function ImportFromFileModal({
   const handleReplace = () => {
     if (importedQuestions.length === 0) return;
     onReplace(importedQuestions);
-    toast.success(`Đã thay thế bằng ${importedQuestions.length} câu hỏi`);
+    toast.success(t('importFile.toastReplaced', { count: importedQuestions.length }));
     handleClose(false);
   };
 
   const handleAppend = () => {
     if (importedQuestions.length === 0) return;
     onAppend(importedQuestions);
-    toast.success(`Đã thêm ${importedQuestions.length} câu hỏi`);
+    toast.success(t('importFile.toastAppended', { count: importedQuestions.length }));
     handleClose(false);
   };
 
@@ -195,11 +197,9 @@ export default function ImportFromFileModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5 text-primary" />
-            Import câu hỏi từ file
+            {t('importFile.title')}
           </DialogTitle>
-          <DialogDescription>
-            Hỗ trợ PDF (text) và DOCX. PDF scan, file chứa câu hỏi dạng ảnh, bảng phức tạp KHÔNG hỗ trợ.
-          </DialogDescription>
+          <DialogDescription>{t('importFile.description')}</DialogDescription>
         </DialogHeader>
 
         {/* Step 1 — Upload */}
@@ -207,7 +207,7 @@ export default function ImportFromFileModal({
           <div className="space-y-4">
             <Alert>
               <FileText className="h-4 w-4" />
-              <AlertTitle>Format mẫu khuyến nghị</AlertTitle>
+              <AlertTitle>{t('importFile.sampleTitle')}</AlertTitle>
               <AlertDescription>
                 <pre className="mt-2 text-xs bg-slate-50 p-3 rounded-md overflow-x-auto whitespace-pre">
 {`Question 1: What is ...?
@@ -234,9 +234,9 @@ Answer Key:
             >
               <Upload className="h-10 w-10 text-muted-foreground mb-3" />
               <p className="text-sm font-medium">
-                {file ? file.name : 'Bấm để chọn file .pdf hoặc .docx'}
+                {file ? file.name : t('importFile.uploadPrompt')}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Tối đa 50MB</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('importFile.uploadHint')}</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -248,18 +248,18 @@ Answer Key:
 
             <DialogFooter className="gap-2 sm:gap-2">
               <Button variant="ghost" onClick={() => handleClose(false)}>
-                Hủy
+                {t('importFile.cancel')}
               </Button>
               <Button onClick={handleParse} disabled={!file || parseMutation.isPending}>
                 {parseMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    Đang phân tích...
+                    {t('importFile.parsing')}
                   </>
                 ) : (
                   <>
                     <FileText className="h-4 w-4 mr-1" />
-                    Phân tích file
+                    {t('importFile.parse')}
                   </>
                 )}
               </Button>
@@ -272,20 +272,21 @@ Answer Key:
           <div className="space-y-4">
             <Alert variant={parseResult.summary.totalParsed > 0 ? 'default' : 'destructive'}>
               <CheckCircle2 className="h-4 w-4" />
-              <AlertTitle>Kết quả phân tích</AlertTitle>
+              <AlertTitle>{t('importFile.resultTitle')}</AlertTitle>
               <AlertDescription>
-                Đã parse <strong>{parseResult.summary.totalParsed}</strong> câu —{' '}
+                {t('importFile.parsedSummaryPrefix')} <strong>{parseResult.summary.totalParsed}</strong>{' '}
+                {t('importFile.parsedSummarySuffix')}{' '}
                 <Badge variant="secondary" className="mr-1">
-                  {parseResult.summary.withAnswer} có đáp án
+                  {t('importFile.withAnswer', { count: parseResult.summary.withAnswer })}
                 </Badge>
                 {parseResult.summary.withoutAnswer > 0 && (
                   <Badge variant="outline" className="mr-1">
-                    {parseResult.summary.withoutAnswer} chưa có đáp án
+                    {t('importFile.withoutAnswer', { count: parseResult.summary.withoutAnswer })}
                   </Badge>
                 )}
                 {parseResult.summary.warningCount > 0 && (
                   <Badge variant="outline" className="text-amber-700 border-amber-300">
-                    {parseResult.summary.warningCount} cảnh báo
+                    {t('importFile.warningCount', { count: parseResult.summary.warningCount })}
                   </Badge>
                 )}
               </AlertDescription>
@@ -295,7 +296,7 @@ Answer Key:
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-1">
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  Dán answer key thủ công (tùy chọn)
+                  {t('importFile.manualKeyLabel')}
                 </label>
                 <Textarea
                   rows={4}
@@ -306,8 +307,8 @@ Answer Key:
                 />
                 <p className="text-xs text-muted-foreground">
                   {missingAnswerAfterPaste > 0
-                    ? `Còn ${missingAnswerAfterPaste} câu chưa có đáp án — bạn có thể sửa sau trong form.`
-                    : 'Tất cả câu hỏi đã có đáp án.'}
+                    ? t('importFile.manualKeyMissing', { count: missingAnswerAfterPaste })
+                    : t('importFile.manualKeyComplete')}
                 </p>
               </div>
             )}
@@ -330,12 +331,12 @@ Answer Key:
                         {q.questionText.length > 80 ? '…' : ''}
                       </div>
                       <div className="mt-0.5 text-muted-foreground">
-                        {q.options.length}/4 đáp án •{' '}
+                        {t('importFile.optionsCount', { count: q.options.length })} •{' '}
                         {q.correctAnswerIndex !== null
-                          ? `Đúng: ${String.fromCharCode(65 + q.correctAnswerIndex)}`
+                          ? t('importFile.correctAnswer', { letter: String.fromCharCode(65 + q.correctAnswerIndex) })
                           : manualKey[String(q.questionNumber)]
-                          ? `Đúng (manual): ${manualKey[String(q.questionNumber)]}`
-                          : 'Chưa có đáp án'}
+                          ? t('importFile.correctAnswerManual', { letter: manualKey[String(q.questionNumber)] })
+                          : t('importFile.noAnswer')}
                       </div>
                     </div>
                   </div>
@@ -343,20 +344,20 @@ Answer Key:
               })}
               {parseResult.questions.length > 50 && (
                 <p className="text-xs text-muted-foreground text-center py-1">
-                  …và {parseResult.questions.length - 50} câu khác
+                  {t('importFile.moreQuestions', { count: parseResult.questions.length - 50 })}
                 </p>
               )}
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button variant="ghost" onClick={resetAll} className="sm:mr-auto">
-                <X className="h-4 w-4 mr-1" /> Chọn file khác
+                <X className="h-4 w-4 mr-1" /> {t('importFile.chooseAnother')}
               </Button>
               <Button variant="outline" onClick={handleAppend} disabled={importedQuestions.length === 0}>
-                <ListPlus className="h-4 w-4 mr-1" /> Thêm vào danh sách
+                <ListPlus className="h-4 w-4 mr-1" /> {t('importFile.append')}
               </Button>
               <Button onClick={handleReplace} disabled={importedQuestions.length === 0}>
-                <RefreshCw className="h-4 w-4 mr-1" /> Thay thế danh sách
+                <RefreshCw className="h-4 w-4 mr-1" /> {t('importFile.replace')}
               </Button>
             </DialogFooter>
           </div>

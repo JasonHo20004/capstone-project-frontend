@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pause, Volume2, Check, CheckCircle2, MousePointerClick, X, PartyPopper, FileText } from "lucide-react";
 import apiClient from "@/lib/api/config";
 
@@ -46,6 +47,7 @@ const SKILL_COLORS: Record<string, string> = {
 // ─── TTS Player ─────────────────────────────────────────────────────────────────
 
 function TTSPlayer({ text }: { text: string }) {
+  const { t } = useTranslation("exam");
   const [playing, setPlaying] = useState(false);
   const [playCount, setPlayCount] = useState(0);
 
@@ -93,10 +95,16 @@ function TTSPlayer({ text }: { text: string }) {
         </button>
         <div>
           <p className="text-sm font-bold text-indigo-800">
-            {playing ? "Playing audio..." : playCount === 0 ? "Tap to listen" : "Tap to replay"}
+            {playing
+              ? t("miniQuiz.tts.playing")
+              : playCount === 0
+                ? t("miniQuiz.tts.tapToListen")
+                : t("miniQuiz.tts.tapToReplay")}
           </p>
           <p className="text-xs text-indigo-500 mt-0.5">
-            {playCount > 0 ? `Played ${playCount} time${playCount > 1 ? "s" : ""}` : "Listen carefully, then answer"}
+            {playCount > 0
+              ? t(playCount > 1 ? "miniQuiz.tts.playedMany" : "miniQuiz.tts.playedOnce", { count: playCount })
+              : t("miniQuiz.tts.listenCarefully")}
           </p>
         </div>
       </div>
@@ -115,6 +123,7 @@ function PairMatchQuestion({
   value: string | undefined;
   onChange: (encoded: string) => void;
 }) {
+  const { t } = useTranslation("exam");
   const parseMatched = (v: string | undefined): Record<number, number> => {
     if (!v) return {};
     return Object.fromEntries(
@@ -168,7 +177,7 @@ function PairMatchQuestion({
       <div className="grid grid-cols-2 gap-3">
         {/* Left column — Terms */}
         <div className="space-y-2">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Terms</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("miniQuiz.pair.terms")}</p>
           {pairs.map((pair, idx) => {
             const isMatched = matched[idx] !== undefined;
             const isSelected = selectedLeft === idx;
@@ -205,7 +214,7 @@ function PairMatchQuestion({
 
         {/* Right column — Matches (shuffled) */}
         <div className="space-y-2">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Matches</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("miniQuiz.pair.matches")}</p>
           {shuffledRight.map((origIdx, pos) => {
             const isMatched = matchedRightSet.has(origIdx);
             return (
@@ -229,10 +238,10 @@ function PairMatchQuestion({
 
       <p className="text-xs text-center text-slate-500">
         {matchCount === pairs.length
-          ? <><CheckCircle2 size={12} className="inline mr-1" />All {pairs.length} pairs matched!</>
+          ? <><CheckCircle2 size={12} className="inline mr-1" />{t("miniQuiz.pair.allMatched", { count: pairs.length })}</>
           : selectedLeft !== null
-          ? <><MousePointerClick size={12} className="inline mr-1" />Now tap the matching item on the right</>
-          : `${matchCount}/${pairs.length} matched — tap a term on the left to start`}
+          ? <><MousePointerClick size={12} className="inline mr-1" />{t("miniQuiz.pair.nowTapRight")}</>
+          : t("miniQuiz.pair.progress", { done: matchCount, total: pairs.length })}
       </p>
     </div>
   );
@@ -254,6 +263,7 @@ export default function MiniQuizDialog({
   userId,
   onQuizComplete,
 }: MiniQuizDialogProps) {
+  const { t } = useTranslation("exam");
   const [loading, setLoading] = useState(false);
   const [quizId, setQuizId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<MiniQuizQuestion[]>([]);
@@ -358,8 +368,8 @@ export default function MiniQuizDialog({
           {questions.length > 0 && !result && (
             <div className="mt-4">
               <div className="flex justify-between text-xs text-slate-500 mb-1">
-                <span>Q {currentIndex + 1} / {questions.length}</span>
-                <span>{totalAnswered} answered</span>
+                <span>{t("miniQuiz.progress.current", { current: currentIndex + 1, total: questions.length })}</span>
+                <span>{t("miniQuiz.progress.answered", { count: totalAnswered })}</span>
               </div>
               <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
@@ -377,7 +387,7 @@ export default function MiniQuizDialog({
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-              <p className="mt-4 text-sm text-slate-500">Generating questions...</p>
+              <p className="mt-4 text-sm text-slate-500">{t("miniQuiz.loading")}</p>
             </div>
           )}
 
@@ -388,7 +398,7 @@ export default function MiniQuizDialog({
                 {result.score >= 70 ? <PartyPopper size={56} /> : <FileText size={56} />}
               </div>
               <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                {result.score >= 70 ? "Excellent!" : "Keep practicing!"}
+                {result.score >= 70 ? t("miniQuiz.result.excellent") : t("miniQuiz.result.keepPracticing")}
               </h3>
               <p className="text-4xl font-black mb-2" style={{
                 color: result.score >= 70 ? "#10b981" : "#f59e0b",
@@ -396,12 +406,12 @@ export default function MiniQuizDialog({
                 {Math.round(result.score)}%
               </p>
               <p className="text-sm text-slate-500 mb-6">
-                {result.correctCount} / {result.totalQuestions} correct
+                {t("miniQuiz.result.correctOf", { correct: result.correctCount, total: result.totalQuestions })}
               </p>
 
               {result.wrongAnswers?.length > 0 && (
                 <div className="text-left bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                  <p className="font-bold text-amber-800 text-sm mb-2 flex items-center gap-1"><FileText size={14} /> Areas to improve:</p>
+                  <p className="font-bold text-amber-800 text-sm mb-2 flex items-center gap-1"><FileText size={14} /> {t("miniQuiz.result.areasToImprove")}</p>
                   {result.wrongAnswers.map((wa: any, i: number) => (
                     <div key={i} className="text-xs text-amber-700 mb-1.5 flex gap-2">
                       <span className="shrink-0 font-bold">#{i + 1}</span>
@@ -415,7 +425,7 @@ export default function MiniQuizDialog({
                 onClick={handleClose}
                 className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
               >
-                {result.wrongAnswers?.length > 0 ? "View remedial nodes" : "Continue learning"}
+                {result.wrongAnswers?.length > 0 ? t("miniQuiz.result.viewRemedial") : t("miniQuiz.result.continueLearning")}
               </button>
             </div>
           )}
@@ -479,7 +489,7 @@ export default function MiniQuizDialog({
               {currentQuestion.type === "GAP_FILL" && !currentQuestion.options && !currentQuestion.pairs && (
                 <input
                   type="text"
-                  placeholder="Type your answer..."
+                  placeholder={t("miniQuiz.input.placeholder")}
                   value={(answers[currentIndex] as string) || ""}
                   onChange={(e) => setAnswers((prev) => ({ ...prev, [currentIndex]: e.target.value }))}
                   className="w-full p-4 border-2 border-slate-200 rounded-xl text-slate-800 focus:border-indigo-500 focus:outline-none transition-colors"
@@ -507,7 +517,7 @@ export default function MiniQuizDialog({
                   disabled={currentIndex === 0}
                   className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 disabled:opacity-40 transition-colors"
                 >
-                  ← Prev
+                  {t("miniQuiz.nav.prev")}
                 </button>
 
                 <div className="flex gap-1.5">
@@ -531,7 +541,7 @@ export default function MiniQuizDialog({
                     onClick={() => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1))}
                     className="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
                   >
-                    Next →
+                    {t("miniQuiz.nav.next")}
                   </button>
                 ) : (
                   <button
@@ -539,7 +549,7 @@ export default function MiniQuizDialog({
                     disabled={submitting || totalAnswered < questions.length}
                     className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                   >
-                    {submitting ? "Grading..." : "Submit"}
+                    {submitting ? t("miniQuiz.nav.grading") : t("miniQuiz.nav.submit")}
                   </button>
                 )}
               </div>

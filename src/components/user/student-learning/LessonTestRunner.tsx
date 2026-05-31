@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Trans, useTranslation } from "react-i18next";
 import {
   AlertCircle,
   ArrowLeft,
@@ -125,6 +126,7 @@ export const LessonTestRunner = ({
   lessonTitle,
   onContinue,
 }: LessonTestRunnerProps) => {
+  const { t } = useTranslation("courses");
   const [state, setState] = useState<RunnerState>("intro");
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -175,13 +177,13 @@ export const LessonTestRunner = ({
       setTimeLeft(seconds);
       setState("active");
       if (data.resumed) {
-        toast.info("Tiếp tục phiên làm bài đang dang dở.");
+        toast.info(t("studentLearning.lessonTestRunner.resumed"));
       }
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error && err.message === "AUTH_REQUIRED"
-        ? "Vui lòng đăng nhập để làm bài kiểm tra."
-        : "Không thể bắt đầu bài kiểm tra. Vui lòng thử lại.";
+        ? t("studentLearning.lessonTestRunner.authRequired")
+        : t("studentLearning.lessonTestRunner.startFailed");
       toast.error(msg);
     },
   });
@@ -199,7 +201,7 @@ export const LessonTestRunner = ({
       setConfirmSubmitOpen(false);
     },
     onError: () => {
-      toast.error("Không thể nộp bài. Vui lòng kiểm tra kết nối và thử lại.");
+      toast.error(t("studentLearning.lessonTestRunner.submitFailed"));
     },
   });
 
@@ -213,7 +215,7 @@ export const LessonTestRunner = ({
           if (timerRef.current) window.clearInterval(timerRef.current);
           if (!submittedRef.current && !submitMutation.isPending) {
             submittedRef.current = true;
-            toast.warning("Hết thời gian! Bài làm sẽ được nộp tự động.");
+            toast.warning(t("studentLearning.lessonTestRunner.timeUp"));
             submitMutation.mutate();
           }
           return 0;
@@ -224,7 +226,7 @@ export const LessonTestRunner = ({
     return () => {
       if (timerRef.current) window.clearInterval(timerRef.current);
     };
-  }, [state, submitMutation]);
+  }, [state, submitMutation, t]);
 
   // Discourage accidental refresh while taking the test.
   useEffect(() => {
@@ -273,7 +275,7 @@ export const LessonTestRunner = ({
       <div className="rounded-3xl border bg-card p-10 shadow-sm">
         <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <p className="text-sm">Đang tải bài kiểm tra…</p>
+          <p className="text-sm">{t("studentLearning.lessonTestRunner.loadingTest")}</p>
         </div>
       </div>
     );
@@ -284,12 +286,12 @@ export const LessonTestRunner = ({
       <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-8 shadow-sm">
         <div className="flex flex-col items-center gap-3 text-center">
           <AlertCircle className="h-8 w-8 text-destructive" />
-          <h3 className="text-lg font-semibold">Không tải được bài kiểm tra</h3>
+          <h3 className="text-lg font-semibold">{t("studentLearning.lessonTestRunner.loadFailedTitle")}</h3>
           <p className="max-w-md text-sm text-muted-foreground">
-            Bài kiểm tra này chưa sẵn sàng hoặc đã xảy ra lỗi khi tải dữ liệu.
+            {t("studentLearning.lessonTestRunner.loadFailedDesc")}
           </p>
           <Button variant="outline" size="sm" onClick={() => refetchTest()} className="rounded-full">
-            <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
+            <RefreshCw className="mr-2 h-4 w-4" /> {t("studentLearning.lessonTestRunner.retry")}
           </Button>
         </div>
       </div>
@@ -300,9 +302,9 @@ export const LessonTestRunner = ({
     return (
       <div className="rounded-3xl border border-dashed bg-muted/30 p-8 text-center">
         <FileQuestion className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h3 className="mt-3 text-lg font-semibold">Bài kiểm tra chưa có câu hỏi</h3>
+        <h3 className="mt-3 text-lg font-semibold">{t("studentLearning.lessonTestRunner.noQuestionsTitle")}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Vui lòng liên hệ giảng viên để được hỗ trợ.
+          {t("studentLearning.lessonTestRunner.noQuestionsDesc")}
         </p>
       </div>
     );
@@ -317,13 +319,13 @@ export const LessonTestRunner = ({
           <div aria-hidden className="absolute -left-16 -bottom-12 h-48 w-48 rounded-full bg-secondary/20 blur-3xl" />
           <div className="relative flex flex-col gap-3">
             <Badge className="w-fit rounded-full bg-primary/15 text-primary hover:bg-primary/20">
-              <ClipboardList className="mr-1.5 h-3 w-3" /> Bài kiểm tra
+              <ClipboardList className="mr-1.5 h-3 w-3" /> {t("studentLearning.lessonTestRunner.introBadge")}
             </Badge>
             <h2 className="font-display text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
               {lessonTitle || test.title}
             </h2>
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Hoàn thành bài kiểm tra dưới đây để củng cố kiến thức bài học. Đọc kỹ hướng dẫn trước khi bắt đầu.
+              {t("studentLearning.lessonTestRunner.introDesc")}
             </p>
           </div>
         </div>
@@ -331,32 +333,42 @@ export const LessonTestRunner = ({
         <div className="grid gap-4 px-8 py-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile
             icon={<FileQuestion className="h-4 w-4" />}
-            label="Số câu hỏi"
+            label={t("studentLearning.lessonTestRunner.stats.questionCount")}
             value={`${totalQuestions}`}
           />
           <StatTile
             icon={<Clock className="h-4 w-4" />}
-            label="Thời gian"
-            value={durationMinutes > 0 ? `${durationMinutes} phút` : "Không giới hạn"}
+            label={t("studentLearning.lessonTestRunner.stats.duration")}
+            value={durationMinutes > 0
+              ? t("studentLearning.lessonTestRunner.stats.minutes", { count: durationMinutes })
+              : t("studentLearning.lessonTestRunner.stats.unlimited")}
           />
           <StatTile
             icon={<Target className="h-4 w-4" />}
-            label="Điểm đạt"
+            label={t("studentLearning.lessonTestRunner.stats.passingScore")}
             value={totalScore > 0 ? `${passingScore}/${totalScore}` : `${passingScore}`}
           />
           <StatTile
             icon={<RefreshCw className="h-4 w-4" />}
-            label="Số lần làm lại"
-            value={maxAttempts && maxAttempts > 0 ? `${maxAttempts}` : "Không giới hạn"}
+            label={t("studentLearning.lessonTestRunner.stats.maxAttempts")}
+            value={maxAttempts && maxAttempts > 0
+              ? `${maxAttempts}`
+              : t("studentLearning.lessonTestRunner.stats.unlimited")}
           />
         </div>
 
         <div className="mx-8 mb-6 rounded-2xl border border-primary/15 bg-primary/5 p-5">
-          <p className="mb-3 text-sm font-semibold text-primary">Hướng dẫn làm bài</p>
+          <p className="mb-3 text-sm font-semibold text-primary">{t("studentLearning.lessonTestRunner.instructionsTitle")}</p>
           <ul className="space-y-2 text-sm text-foreground/80">
-            <InstructionItem>Không làm mới trang trong khi làm bài — tiến trình có thể bị mất.</InstructionItem>
-            <InstructionItem>Bạn có thể chuyển qua lại giữa các câu hỏi và đánh dấu câu để xem lại.</InstructionItem>
-            <InstructionItem>Bấm <b>“Nộp bài”</b> khi hoàn thành. Hệ thống sẽ tự động nộp khi hết thời gian.</InstructionItem>
+            <InstructionItem>{t("studentLearning.lessonTestRunner.instructions.noRefresh")}</InstructionItem>
+            <InstructionItem>{t("studentLearning.lessonTestRunner.instructions.navigate")}</InstructionItem>
+            <InstructionItem>
+              <Trans
+                i18nKey="studentLearning.lessonTestRunner.instructions.submitHint"
+                ns="courses"
+                components={{ 0: <b /> }}
+              />
+            </InstructionItem>
           </ul>
         </div>
 
@@ -369,7 +381,7 @@ export const LessonTestRunner = ({
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
-            Xem hướng dẫn
+            {t("studentLearning.lessonTestRunner.viewInstructions")}
           </Button>
           <Button
             size="lg"
@@ -379,11 +391,11 @@ export const LessonTestRunner = ({
           >
             {startMutation.isPending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang khởi tạo…
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("studentLearning.lessonTestRunner.starting")}
               </>
             ) : (
               <>
-                <PlayCircle className="mr-2 h-5 w-5" /> Bắt đầu làm bài
+                <PlayCircle className="mr-2 h-5 w-5" /> {t("studentLearning.lessonTestRunner.startTest")}
               </>
             )}
           </Button>
@@ -406,7 +418,7 @@ export const LessonTestRunner = ({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Đang làm bài
+                {t("studentLearning.lessonTestRunner.inProgress")}
               </p>
               <h3 className="truncate text-base font-semibold text-foreground">
                 {lessonTitle || test.title}
@@ -436,20 +448,20 @@ export const LessonTestRunner = ({
                 {submitMutation.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Nộp bài
+                {t("studentLearning.lessonTestRunner.submit")}
               </Button>
             </div>
           </div>
           <div className="mt-3 flex items-center gap-3">
             <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-              Câu {currentIdx + 1}/{totalQuestions}
+              {t("studentLearning.lessonTestRunner.questionOf", { current: currentIdx + 1, total: totalQuestions })}
             </span>
             <Progress
               value={((currentIdx + 1) / totalQuestions) * 100}
               className="h-1.5 flex-1"
             />
             <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-              Đã trả lời {answeredCount}/{totalQuestions}
+              {t("studentLearning.lessonTestRunner.answered", { answered: answeredCount, total: totalQuestions })}
             </span>
           </div>
         </div>
@@ -460,7 +472,7 @@ export const LessonTestRunner = ({
             <div className="rounded-3xl border bg-card p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <Badge variant="outline" className="rounded-full">
-                  Câu {currentIdx + 1}
+                  {t("studentLearning.lessonTestRunner.questionLabel", { number: currentIdx + 1 })}
                 </Badge>
                 <Button
                   variant="ghost"
@@ -471,19 +483,23 @@ export const LessonTestRunner = ({
                   )}
                   onClick={() => handleToggleFlag(qId)}
                   aria-pressed={isFlagged}
-                  aria-label={isFlagged ? "Bỏ đánh dấu xem lại" : "Đánh dấu xem lại"}
+                  aria-label={isFlagged
+                    ? t("studentLearning.lessonTestRunner.flagRemove")
+                    : t("studentLearning.lessonTestRunner.flagAdd")}
                 >
                   {isFlagged ? (
                     <Bookmark className="mr-1.5 h-3.5 w-3.5 fill-current" />
                   ) : (
                     <BookmarkPlus className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {isFlagged ? "Đã đánh dấu" : "Đánh dấu xem lại"}
+                  {isFlagged
+                    ? t("studentLearning.lessonTestRunner.flagged")
+                    : t("studentLearning.lessonTestRunner.flagForReview")}
                 </Button>
               </div>
 
               <p className="whitespace-pre-line text-base leading-relaxed text-foreground">
-                {getQuestionText(currentQuestion) || "(Câu hỏi không có nội dung)"}
+                {getQuestionText(currentQuestion) || t("studentLearning.lessonTestRunner.questionEmpty")}
               </p>
 
               {currentQuestion.imageUrl && (
@@ -495,10 +511,10 @@ export const LessonTestRunner = ({
               )}
 
               <fieldset className="mt-6 space-y-3">
-                <legend className="sr-only">Chọn đáp án</legend>
+                <legend className="sr-only">{t("studentLearning.lessonTestRunner.selectAnswer")}</legend>
                 {opts.length === 0 ? (
                   <p className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-                    Câu hỏi này không có lựa chọn để hiển thị.
+                    {t("studentLearning.lessonTestRunner.noOptions")}
                   </p>
                 ) : (
                   opts.map((opt, oi) => {
@@ -554,7 +570,7 @@ export const LessonTestRunner = ({
                 onClick={() => goToQuestion(currentIdx - 1)}
                 disabled={currentIdx === 0}
               >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Câu trước
+                <ArrowLeft className="mr-2 h-4 w-4" /> {t("studentLearning.lessonTestRunner.previous")}
               </Button>
               <div className="flex gap-2">
                 {currentIdx < totalQuestions - 1 ? (
@@ -562,7 +578,7 @@ export const LessonTestRunner = ({
                     className="rounded-full"
                     onClick={() => goToQuestion(currentIdx + 1)}
                   >
-                    Câu tiếp theo <ArrowRight className="ml-2 h-4 w-4" />
+                    {t("studentLearning.lessonTestRunner.next")} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
                   <Button
@@ -570,7 +586,7 @@ export const LessonTestRunner = ({
                     onClick={() => setConfirmSubmitOpen(true)}
                     disabled={submitMutation.isPending}
                   >
-                    Nộp bài
+                    {t("studentLearning.lessonTestRunner.submit")}
                   </Button>
                 )}
               </div>
@@ -579,21 +595,31 @@ export const LessonTestRunner = ({
 
           {/* Question navigator */}
           <aside className="rounded-3xl border bg-card p-5 shadow-sm lg:sticky lg:top-44 lg:self-start">
-            <h4 className="text-sm font-semibold text-foreground">Bảng câu hỏi</h4>
+            <h4 className="text-sm font-semibold text-foreground">{t("studentLearning.lessonTestRunner.questionBoard")}</h4>
             <p className="mt-1 text-xs text-muted-foreground">
-              Bấm số để chuyển đến câu tương ứng.
+              {t("studentLearning.lessonTestRunner.questionBoardHint")}
             </p>
             <div className="mt-4 grid grid-cols-5 gap-2">
               {questions.map((q, idx) => {
                 const answered = (answers[q.id] ?? "").trim().length > 0;
                 const isCurrent = idx === currentIdx;
                 const isFlag = flagged.has(q.id);
+                const answeredText = answered
+                  ? t("studentLearning.lessonTestRunner.navAriaAnswered")
+                  : t("studentLearning.lessonTestRunner.navAriaUnanswered");
+                const flaggedText = isFlag
+                  ? `, ${t("studentLearning.lessonTestRunner.navAriaFlagged")}`
+                  : "";
                 return (
                   <button
                     key={q.id}
                     type="button"
                     onClick={() => goToQuestion(idx)}
-                    aria-label={`Câu ${idx + 1}${answered ? ", đã trả lời" : ", chưa trả lời"}${isFlag ? ", đã đánh dấu" : ""}`}
+                    aria-label={t("studentLearning.lessonTestRunner.navAriaQuestion", {
+                      number: idx + 1,
+                      answered: answeredText,
+                      flagged: flaggedText,
+                    })}
                     aria-current={isCurrent ? "true" : undefined}
                     className={cn(
                       "relative flex h-9 items-center justify-center rounded-lg border text-xs font-bold transition-all",
@@ -619,10 +645,10 @@ export const LessonTestRunner = ({
               })}
             </div>
             <div className="mt-5 space-y-2 text-xs text-muted-foreground">
-              <LegendDot className="border-primary bg-primary" label="Đang xem" />
-              <LegendDot className="border-emerald-300 bg-emerald-50" label="Đã trả lời" />
-              <LegendDot className="border-border bg-background" label="Chưa trả lời" />
-              <LegendDot className="border-amber-300 bg-amber-50" label="Đánh dấu xem lại" badge />
+              <LegendDot className="border-primary bg-primary" label={t("studentLearning.lessonTestRunner.legendViewing")} />
+              <LegendDot className="border-emerald-300 bg-emerald-50" label={t("studentLearning.lessonTestRunner.legendAnswered")} />
+              <LegendDot className="border-border bg-background" label={t("studentLearning.lessonTestRunner.legendUnanswered")} />
+              <LegendDot className="border-amber-300 bg-amber-50" label={t("studentLearning.lessonTestRunner.legendFlagged")} badge />
             </div>
           </aside>
         </div>
@@ -630,18 +656,18 @@ export const LessonTestRunner = ({
         <AlertDialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xác nhận nộp bài?</AlertDialogTitle>
+              <AlertDialogTitle>{t("studentLearning.lessonTestRunner.confirmSubmitTitle")}</AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-2 text-sm">
-                  <p>Vui lòng kiểm tra lại thông tin bài làm trước khi nộp:</p>
+                  <p>{t("studentLearning.lessonTestRunner.confirmSubmitDesc")}</p>
                   <div className="rounded-xl border bg-muted/30 p-3 text-foreground">
-                    <SubmitStatLine label="Đã trả lời" value={`${answeredCount}/${totalQuestions}`} tone="success" />
-                    <SubmitStatLine label="Chưa trả lời" value={`${unansweredCount}`} tone={unansweredCount > 0 ? "warning" : "muted"} />
-                    <SubmitStatLine label="Đánh dấu xem lại" value={`${flagged.size}`} tone={flagged.size > 0 ? "warning" : "muted"} />
+                    <SubmitStatLine label={t("studentLearning.lessonTestRunner.confirmAnswered")} value={`${answeredCount}/${totalQuestions}`} tone="success" />
+                    <SubmitStatLine label={t("studentLearning.lessonTestRunner.confirmUnanswered")} value={`${unansweredCount}`} tone={unansweredCount > 0 ? "warning" : "muted"} />
+                    <SubmitStatLine label={t("studentLearning.lessonTestRunner.confirmFlagged")} value={`${flagged.size}`} tone={flagged.size > 0 ? "warning" : "muted"} />
                   </div>
                   {unansweredCount > 0 && (
                     <p className="text-amber-600">
-                      Bạn còn {unansweredCount} câu chưa trả lời. Hãy chắc chắn bạn muốn nộp bài.
+                      {t("studentLearning.lessonTestRunner.confirmUnansweredWarn", { count: unansweredCount })}
                     </p>
                   )}
                 </div>
@@ -649,7 +675,7 @@ export const LessonTestRunner = ({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={submitMutation.isPending}>
-                Quay lại kiểm tra
+                {t("studentLearning.lessonTestRunner.confirmBack")}
               </AlertDialogCancel>
               <AlertDialogAction
                 disabled={submitMutation.isPending}
@@ -660,10 +686,10 @@ export const LessonTestRunner = ({
               >
                 {submitMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang nộp…
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("studentLearning.lessonTestRunner.confirmSubmitting")}
                   </>
                 ) : (
-                  "Nộp bài"
+                  t("studentLearning.lessonTestRunner.submit")
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -689,9 +715,14 @@ export const LessonTestRunner = ({
         >
           <div className="grid gap-6 p-8 md:grid-cols-[auto_1fr] md:items-center">
             <div className="flex flex-col items-center justify-center">
-              <ScoreRing percentage={percentage} passed={passed} />
+              <ScoreRing
+                percentage={percentage}
+                passed={passed}
+                passedLabel={t("studentLearning.lessonTestRunner.passed")}
+                notPassedLabel={t("studentLearning.lessonTestRunner.notPassed")}
+              />
               <p className="mt-3 text-sm font-medium text-muted-foreground">
-                {correct}/{total} câu đúng
+                {t("studentLearning.lessonTestRunner.correctCount", { correct, total })}
               </p>
             </div>
             <div className="space-y-4 text-center md:text-left">
@@ -701,23 +732,25 @@ export const LessonTestRunner = ({
                 ) : (
                   <Award className="h-3.5 w-3.5 text-amber-600" />
                 )}
-                Kết quả
+                {t("studentLearning.lessonTestRunner.result")}
               </div>
               <h2 className="font-display text-3xl font-extrabold tracking-tight">
-                {passed ? "Chúc mừng — Bạn đã đạt!" : "Chưa đạt yêu cầu"}
+                {passed
+                  ? t("studentLearning.lessonTestRunner.passedTitle")
+                  : t("studentLearning.lessonTestRunner.failedTitle")}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {passed
-                  ? "Bạn đã hoàn thành bài kiểm tra này. Tiếp tục với bài học tiếp theo nhé."
-                  : `Điểm đạt yêu cầu là ${passingPct}%. Hãy ôn tập và thử lại.`}
+                  ? t("studentLearning.lessonTestRunner.passedDesc")
+                  : t("studentLearning.lessonTestRunner.failedDesc", { percent: passingPct })}
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button onClick={handleRestart} variant="outline" className="rounded-full">
-                  <RefreshCw className="mr-2 h-4 w-4" /> Làm lại bài kiểm tra
+                  <RefreshCw className="mr-2 h-4 w-4" /> {t("studentLearning.lessonTestRunner.retake")}
                 </Button>
                 {onContinue && (
                   <Button onClick={onContinue} className="rounded-full">
-                    Tiếp tục bài học tiếp theo <ArrowRight className="ml-2 h-4 w-4" />
+                    {t("studentLearning.lessonTestRunner.continueLesson")} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 )}
               </div>
@@ -726,9 +759,9 @@ export const LessonTestRunner = ({
         </div>
 
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <h3 className="text-lg font-semibold">Chi tiết bài làm</h3>
+          <h3 className="text-lg font-semibold">{t("studentLearning.lessonTestRunner.detailsTitle")}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Xem lại từng câu hỏi và đáp án đúng để củng cố kiến thức.
+            {t("studentLearning.lessonTestRunner.detailsSubtitle")}
           </p>
           <div className="mt-4 space-y-3">
             {result.details.map((d, idx) => (
@@ -743,31 +776,31 @@ export const LessonTestRunner = ({
               >
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-semibold">
-                    Câu {idx + 1}. {d.questionText}
+                    {t("studentLearning.lessonTestRunner.questionPrefix", { number: idx + 1 })} {d.questionText}
                   </p>
                   {d.isCorrect ? (
                     <Badge className="rounded-full bg-emerald-600 hover:bg-emerald-700">
-                      <CheckCircle2 className="mr-1 h-3 w-3" /> Đúng
+                      <CheckCircle2 className="mr-1 h-3 w-3" /> {t("studentLearning.lessonTestRunner.correct")}
                     </Badge>
                   ) : (
                     <Badge className="rounded-full bg-rose-600 hover:bg-rose-700">
-                      <XCircle className="mr-1 h-3 w-3" /> Sai
+                      <XCircle className="mr-1 h-3 w-3" /> {t("studentLearning.lessonTestRunner.incorrect")}
                     </Badge>
                   )}
                 </div>
                 <p className="mt-2 text-sm">
-                  <span className="text-muted-foreground">Bạn chọn:</span>{" "}
+                  <span className="text-muted-foreground">{t("studentLearning.lessonTestRunner.yourAnswer")}</span>{" "}
                   <span className="font-medium">{d.userAnswer}</span>
                 </p>
                 {!d.isCorrect && (
                   <p className="mt-1 text-sm">
-                    <span className="text-muted-foreground">Đáp án đúng:</span>{" "}
+                    <span className="text-muted-foreground">{t("studentLearning.lessonTestRunner.correctAnswer")}</span>{" "}
                     <span className="font-medium text-emerald-700">{d.correctAnswer}</span>
                   </p>
                 )}
                 {d.explanation && (
                   <p className="mt-2 rounded-xl bg-background/70 p-3 text-sm text-foreground/80">
-                    <span className="font-semibold">Giải thích:</span> {d.explanation}
+                    <span className="font-semibold">{t("studentLearning.lessonTestRunner.explanation")}</span> {d.explanation}
                   </p>
                 )}
               </div>
@@ -858,7 +891,17 @@ const SubmitStatLine = ({
   </div>
 );
 
-const ScoreRing = ({ percentage, passed }: { percentage: number; passed: boolean }) => {
+const ScoreRing = ({
+  percentage,
+  passed,
+  passedLabel,
+  notPassedLabel,
+}: {
+  percentage: number;
+  passed: boolean;
+  passedLabel: string;
+  notPassedLabel: string;
+}) => {
   const size = 140;
   const stroke = 12;
   const radius = (size - stroke) / 2;
@@ -896,7 +939,7 @@ const ScoreRing = ({ percentage, passed }: { percentage: number; passed: boolean
           {percentage}%
         </span>
         <span className={cn("text-xs font-semibold uppercase tracking-wide", passed ? "text-emerald-600" : "text-amber-600")}>
-          {passed ? "Đạt" : "Chưa đạt"}
+          {passed ? passedLabel : notPassedLabel}
         </span>
       </div>
     </div>

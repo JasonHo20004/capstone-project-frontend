@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,7 @@ interface PickerTest {
 
 export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: FinalTestTabProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation('seller');
   const [existingTest, setExistingTest] = useState<ExistingTest | null>(null);
   const [loadingExisting, setLoadingExisting] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -111,9 +113,9 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
           questions: mapped,
         });
       })
-      .catch(() => toast.error('Không thể tải thông tin bài kiểm tra'))
+      .catch(() => toast.error(t('finalTestTab.toastLoadTestFailed')))
       .finally(() => setLoadingExisting(false));
-  }, [finalTestId]);
+  }, [finalTestId, t]);
 
   const openPicker = () => {
     setPickerOpen(true);
@@ -122,24 +124,24 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
     setPickerLoading(true);
     courseService.getMyTests()
       .then((res) => setPickerTests((res.data as PickerTest[]) ?? []))
-      .catch(() => toast.error('Không thể tải danh sách bài kiểm tra'))
+      .catch(() => toast.error(t('finalTestTab.toastLoadListFailed')))
       .finally(() => setPickerLoading(false));
   };
 
   const handleLinkExisting = async () => {
     if (!pickerSelectedId) {
-      toast.error('Hãy chọn 1 bài kiểm tra');
+      toast.error(t('finalTestTab.toastPickOne'));
       return;
     }
     setLinking(true);
     try {
       await courseService.setFinalTest(courseId, pickerSelectedId);
-      toast.success('Đã liên kết bài kiểm tra cuối khoá!');
+      toast.success(t('finalTestTab.toastLinked'));
       setPickerOpen(false);
       onTestLinked();
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? 'Không thể liên kết bài kiểm tra';
+        ?? t('finalTestTab.toastLinkFailed');
       toast.error(msg);
     } finally {
       setLinking(false);
@@ -158,26 +160,26 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
           console.warn('removeFinalTest succeeded but deleteTest failed:', err);
         }
       }
-      toast.success('Đã xóa bài kiểm tra cuối khóa');
+      toast.success(t('finalTestTab.toastDeleted'));
       setExistingTest(null);
       setConfirmRemoveOpen(false);
       onTestLinked();
     } catch {
-      toast.error('Lỗi khi xóa bài kiểm tra');
+      toast.error(t('finalTestTab.toastDeleteFailed'));
     } finally {
       setRemoving(false);
     }
   };
 
-  const filteredPickerTests = (pickerTests ?? []).filter((t) =>
-    !pickerSearch.trim() ? true : t.title.toLowerCase().includes(pickerSearch.trim().toLowerCase())
+  const filteredPickerTests = (pickerTests ?? []).filter((pt) =>
+    !pickerSearch.trim() ? true : pt.title.toLowerCase().includes(pickerSearch.trim().toLowerCase())
   );
 
   if (loadingExisting) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Đang tải...</span>
+        <span className="ml-2 text-muted-foreground">{t('finalTestTab.loading')}</span>
       </div>
     );
   }
@@ -191,7 +193,7 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <CardTitle>Bài kiểm tra cuối khóa</CardTitle>
+                <CardTitle>{t('finalTestTab.title')}</CardTitle>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -199,34 +201,34 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
                   size="sm"
                   onClick={() => navigate(`/seller/tests/${existingTest.id}/edit`)}
                 >
-                  <Pencil className="h-4 w-4 mr-1" /> Chỉnh sửa
+                  <Pencil className="h-4 w-4 mr-1" /> {t('finalTestTab.edit')}
                 </Button>
                 <Button variant="destructive" size="sm" onClick={() => setConfirmRemoveOpen(true)} disabled={removing}>
                   {removing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
-                  Xóa bài kiểm tra
+                  {t('finalTestTab.delete')}
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Stat label="Câu hỏi" value={existingTest.questions?.length ?? 0} />
-              <Stat label="Phút" value={existingTest.durationInMinutes} />
-              <Stat label="Tổng điểm" value={existingTest.totalScore} />
-              <Stat label="Điểm đạt" value={existingTest.passingScore} />
+              <Stat label={t('finalTestTab.questions')} value={existingTest.questions?.length ?? 0} />
+              <Stat label={t('finalTestTab.minutes')} value={existingTest.durationInMinutes} />
+              <Stat label={t('finalTestTab.totalScore')} value={existingTest.totalScore} />
+              <Stat label={t('finalTestTab.passingScore')} value={existingTest.passingScore} />
             </div>
 
             <div>
               <h3 className="font-semibold mb-2">{existingTest.title}</h3>
-              <Badge variant="secondary">Trắc nghiệm</Badge>
+              <Badge variant="secondary">{t('finalTestTab.multipleChoice')}</Badge>
             </div>
 
             {existingTest.questions && existingTest.questions.length > 0 && (
               <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Danh sách câu hỏi</h4>
+                <h4 className="font-medium text-sm text-muted-foreground">{t('finalTestTab.questionList')}</h4>
                 {existingTest.questions.map((q, i) => (
                   <div key={i} className="rounded-lg border p-3">
-                    <div className="font-medium text-sm">Câu {i + 1}: {q.questionText}</div>
+                    <div className="font-medium text-sm">{t('finalTestTab.questionLabel', { n: i + 1 })}: {q.questionText}</div>
                     <div className="mt-2 space-y-1">
                       {q.options.map((opt, oi) => (
                         <div
@@ -244,7 +246,7 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
                     </div>
                     {q.explanation && (
                       <div className="mt-2 text-xs text-muted-foreground italic">
-                        Giải thích: {q.explanation}
+                        {t('finalTestTab.explanation')}: {q.explanation}
                       </div>
                     )}
                   </div>
@@ -258,23 +260,26 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-                <Trash2 className="w-5 h-5" /> Xoá bài kiểm tra cuối khoá?
+                <Trash2 className="w-5 h-5" /> {t('finalTestTab.confirmDeleteTitle')}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Bạn sắp xoá <strong className="text-slate-900">"{existingTest.title}"</strong>.
-                Hành động này không thể hoàn tác. Toàn bộ câu hỏi sẽ bị xoá vĩnh viễn,
-                và khoá học sẽ không còn bài kiểm tra cuối khoá.
+                <Trans
+                  i18nKey="finalTestTab.confirmDeleteDesc"
+                  ns="seller"
+                  values={{ title: existingTest.title }}
+                  components={{ strong: <strong className="text-slate-900" /> }}
+                />
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={removing}>Hủy</AlertDialogCancel>
+              <AlertDialogCancel disabled={removing}>{t('finalTestTab.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-red-600 hover:bg-red-700"
                 disabled={removing}
                 onClick={(e) => { e.preventDefault(); handleRemove(); }}
               >
                 {removing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Xoá vĩnh viễn
+                {t('finalTestTab.deletePermanent')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -290,12 +295,9 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-primary" />
-            Bài kiểm tra cuối khoá
+            {t('finalTestTab.emptyTitle')}
           </CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            Bài kiểm tra cuối khoá đánh giá đầu ra của học viên. Học viên phải hoàn thành tất cả
-            bài học trước khi được làm bài kiểm tra.
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{t('finalTestTab.emptyDescription')}</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -307,10 +309,14 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
                 <div className="w-10 h-10 rounded-lg bg-blue-50 group-hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-colors">
                   <Link2 className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-slate-900">Chọn từ test có sẵn</h3>
+                <h3 className="font-semibold text-slate-900">{t('finalTestTab.linkExistingTitle')}</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Dùng bài kiểm tra bạn đã tạo trước đó trong <strong>Bài kiểm tra của tôi</strong>.
+                <Trans
+                  i18nKey="finalTestTab.linkExistingDesc"
+                  ns="seller"
+                  components={{ strong: <strong /> }}
+                />
               </p>
             </button>
 
@@ -322,11 +328,9 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
                 <div className="w-10 h-10 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors">
                   <Plus className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-slate-900">Tạo bài kiểm tra mới</h3>
+                <h3 className="font-semibold text-slate-900">{t('finalTestTab.createNewTitle')}</h3>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Mở trình soạn bài kiểm tra. Sau khi lưu sẽ tự liên kết vào khoá học.
-              </p>
+              <p className="text-sm text-muted-foreground">{t('finalTestTab.createNewDesc')}</p>
             </button>
           </div>
         </CardContent>
@@ -337,18 +341,16 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Link2 className="w-5 h-5 text-primary" />
-              Chọn bài kiểm tra làm Final Test
+              {t('finalTestTab.pickerTitle')}
             </DialogTitle>
-            <DialogDescription>
-              Liên kết một bài kiểm tra đã có trong "Bài kiểm tra của tôi" làm bài kiểm tra cuối khoá.
-            </DialogDescription>
+            <DialogDescription>{t('finalTestTab.pickerDesc')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Tìm theo tiêu đề…"
+                placeholder={t('finalTestTab.searchPlaceholder')}
                 value={pickerSearch}
                 onChange={(e) => setPickerSearch(e.target.value)}
                 className="pl-9"
@@ -365,19 +367,19 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
                 <AlertTriangle className="w-8 h-8 mb-2" />
                 <p className="text-sm">
                   {(pickerTests?.length ?? 0) === 0
-                    ? 'Bạn chưa có bài kiểm tra nào. Đóng dialog này và bấm "Tạo bài kiểm tra mới".'
-                    : 'Không tìm thấy bài kiểm tra phù hợp.'}
+                    ? t('finalTestTab.pickerEmpty')
+                    : t('finalTestTab.pickerNoMatch')}
                 </p>
               </div>
             ) : (
               <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-                {filteredPickerTests.map((t) => {
-                  const active = pickerSelectedId === t.id;
+                {filteredPickerTests.map((pt) => {
+                  const active = pickerSelectedId === pt.id;
                   return (
                     <button
-                      key={t.id}
+                      key={pt.id}
                       type="button"
-                      onClick={() => setPickerSelectedId(t.id)}
+                      onClick={() => setPickerSelectedId(pt.id)}
                       disabled={linking}
                       className={`w-full text-left rounded-lg border p-3 flex items-start gap-3 transition-colors ${
                         active ? 'border-primary bg-primary/5' : 'border-slate-200 hover:bg-slate-50'
@@ -389,22 +391,22 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
                         }`}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{t.title}</div>
+                        <div className="font-medium truncate">{pt.title}</div>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          {t.testType === 'FINAL' && (
-                            <Badge variant="secondary" className="font-normal">Final</Badge>
+                          {pt.testType === 'FINAL' && (
+                            <Badge variant="secondary" className="font-normal">{t('finalTestTab.badgeFinal')}</Badge>
                           )}
                           <Badge variant="outline" className="font-normal">
-                            {t._count?.questions ?? 0} câu
+                            {t('finalTestTab.badgeQuestionCount', { count: pt._count?.questions ?? 0 })}
                           </Badge>
-                          {t.durationInMinutes ? (
+                          {pt.durationInMinutes ? (
                             <Badge variant="outline" className="font-normal">
-                              {t.durationInMinutes} phút
+                              {t('finalTestTab.badgeMinutes', { count: pt.durationInMinutes })}
                             </Badge>
                           ) : null}
-                          {(t._count?.courseTests ?? 0) > 0 && (
+                          {(pt._count?.courseTests ?? 0) > 0 && (
                             <Badge variant="outline" className="font-normal text-amber-700 border-amber-200">
-                              Đang dùng ở {t._count?.courseTests} khoá khác
+                              {t('finalTestTab.badgeInUse', { count: pt._count?.courseTests })}
                             </Badge>
                           )}
                         </div>
@@ -418,11 +420,11 @@ export default function FinalTestTab({ courseId, finalTestId, onTestLinked }: Fi
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setPickerOpen(false)} disabled={linking}>
-              Hủy
+              {t('finalTestTab.cancel')}
             </Button>
             <Button onClick={handleLinkExisting} disabled={!pickerSelectedId || linking}>
               {linking && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Liên kết làm Final Test
+              {t('finalTestTab.linkAsFinal')}
             </Button>
           </DialogFooter>
         </DialogContent>

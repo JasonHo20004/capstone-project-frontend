@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { ragService, type ChatMessage, type ExplainPayload } from "@/lib/api/services/rag.service";
 import { tutorService, type TutorSession } from "@/lib/api/services/tutor.service";
 
@@ -86,6 +87,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 export default function AiTutorPanel({
   isOpen, onClose, passage, question, practiceSessionId, testTitle, testSkill,
 }: AiTutorPanelProps) {
+  const { t } = useTranslation("exam");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -213,7 +215,7 @@ export default function AiTutorPanel({
       // onError
       (error: string) => {
         console.error("[AI Tutor Stream] Error:", error);
-        const finalText = accumulated || `Lỗi: ${error}`;
+        const finalText = accumulated || t("aiTutor.streamError", { error });
         setMessages(prev => {
           const updated = [...prev];
           const lastIdx = updated.length - 1;
@@ -300,7 +302,7 @@ export default function AiTutorPanel({
             <div>
               <h3 className="font-bold text-slate-800 text-sm">AI Tutor</h3>
               <p className="text-[11px] text-slate-400 truncate max-w-[200px]">
-                {question ? `Câu ${question.questionOrder}` : testTitle || "Reading Tutor"}
+                {question ? t("aiTutor.questionLabel", { n: question.questionOrder }) : testTitle || "Reading Tutor"}
               </p>
             </div>
           </div>
@@ -308,19 +310,19 @@ export default function AiTutorPanel({
             {messages.length > 0 && dbSession && !isLoading && (
               <span className="text-[10px] text-green-500 font-medium mr-1 flex items-center gap-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
-                Saved
+                {t("aiTutor.saved")}
               </span>
             )}
             {isLoading && (
               <span className="text-[10px] text-amber-500 font-medium mr-1 flex items-center gap-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                Streaming
+                {t("aiTutor.streaming")}
               </span>
             )}
             <button
               onClick={handleReset}
               className="p-2 hover:bg-white/70 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
-              title="Bắt đầu lại"
+              title={t("aiTutor.restart")}
             >
               <span className="material-symbols-outlined text-[18px]">refresh</span>
             </button>
@@ -336,7 +338,7 @@ export default function AiTutorPanel({
             <div className="flex items-center justify-center h-full">
               <div className="text-center space-y-2">
                 <div className="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto" />
-                <p className="text-xs text-slate-400">Đang tải lịch sử...</p>
+                <p className="text-xs text-slate-400">{t("aiTutor.loadingHistory")}</p>
               </div>
             </div>
           )}
@@ -346,11 +348,9 @@ export default function AiTutorPanel({
               <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-indigo-600 text-[32px]">school</span>
               </div>
-              <h4 className="font-bold text-slate-700 mb-2">Chào bạn!</h4>
+              <h4 className="font-bold text-slate-700 mb-2">{t("aiTutor.greeting")}</h4>
               <p className="text-sm text-slate-400">
-                {question
-                  ? "Đang phân tích câu hỏi..."
-                  : "Chọn một câu sai, sau đó bấm 'AI Giải thích' để bắt đầu."}
+                {question ? t("aiTutor.analyzing") : t("aiTutor.selectQuestion")}
               </p>
             </div>
           )}
@@ -369,7 +369,7 @@ export default function AiTutorPanel({
                       <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                       <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
-                    <span className="text-xs text-slate-400">AI đang kết nối...</span>
+                    <span className="text-xs text-slate-400">{t("aiTutor.connecting")}</span>
                   </div>
                 ) : (
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -394,7 +394,7 @@ export default function AiTutorPanel({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder={isLoading ? "Đang stream..." : "Hỏi thêm về câu này..."}
+              placeholder={isLoading ? t("aiTutor.streamingPlaceholder") : t("aiTutor.inputPlaceholder")}
               disabled={isLoading || loadingHistory}
               className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none disabled:opacity-50"
             />
@@ -402,7 +402,7 @@ export default function AiTutorPanel({
               <button
                 onClick={handleStop}
                 className="w-8 h-8 rounded-lg bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shrink-0"
-                title="Dừng stream"
+                title={t("aiTutor.stopStream")}
               >
                 <span className="material-symbols-outlined text-[16px]">stop</span>
               </button>
@@ -417,7 +417,7 @@ export default function AiTutorPanel({
             )}
           </div>
           <p className="text-[10px] text-slate-300 text-center mt-2">
-            AI có thể sai. Kiểm tra lại passage gốc. • Cuộc trò chuyện được lưu tự động.
+            {t("aiTutor.disclaimer")}
           </p>
         </div>
       </div>

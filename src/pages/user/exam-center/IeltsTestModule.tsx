@@ -201,7 +201,7 @@ export default function IeltsTestModule() {
   // Warn before an accidental refresh / tab close while the test is in progress.
   useBeforeUnload(
     !!testData && !submitted && !loading,
-    "Bài thi đang làm dở sẽ không được nộp nếu bạn rời trang.",
+    t("ieltsTestModule.beforeUnload"),
   );
 
   // Audio refs for listening sections

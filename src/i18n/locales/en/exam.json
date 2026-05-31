@@ -1360,6 +1360,71 @@
     "practiceMore": "Keep practicing",
     "evaluationTopic": "Speaking Evaluation"
   },
+  "flashcards": {
+    "cardList": {
+      "playAudioTitle": "Listen to pronunciation",
+      "playAudioAria": "Play vocabulary audio"
+    },
+    "deckList": {
+      "public": "Public",
+      "private": "Private"
+    },
+    "studyMode": {
+      "loadingCards": "Loading flashcards...",
+      "empty": {
+        "title": "No cards to review!",
+        "subtitle": "All cards have been reviewed. See you next session."
+      },
+      "close": "Close",
+      "studying": "Studying",
+      "cancel": "Cancel",
+      "cancelTitle": "Cancel session",
+      "cancelDialog": {
+        "title": "Cancel this session?",
+        "description": "Your session progress will be lost. Already-graded cards stay saved, but unreviewed cards won't count.",
+        "keep": "Keep studying",
+        "confirm": "Cancel session"
+      },
+      "statsShort": {
+        "new": "New",
+        "learning": "Learning",
+        "review": "Review"
+      },
+      "progress": "{{current}} / {{total}} cards",
+      "status": {
+        "new": "New",
+        "learning": "Learning",
+        "review": "Review",
+        "other": "Other"
+      },
+      "tapToFlip": "Tap to flip",
+      "feedback": {
+        "again": "Will review again soon",
+        "hard": "Marked as hard",
+        "good": "Nice work",
+        "easy": "Excellent!"
+      },
+      "grade": {
+        "again": "Forgot",
+        "hard": "Hard",
+        "good": "Good",
+        "easy": "Easy"
+      },
+      "gradeHint": {
+        "again": "< 1m",
+        "hard": "~2 days",
+        "good": "~4 days",
+        "easy": "~7 days"
+      },
+      "finish": {
+        "title": "Outstanding work!",
+        "subtitle": "You finished all {{count}} cards in this session.",
+        "cardsLearned": "Cards reviewed",
+        "duration": "Duration",
+        "cta": "Finish session"
+      }
+    }
+  },
   "skillTree": {
     "header": {
       "title": "Learning Map",
@@ -1463,7 +1528,71 @@
       "level": "Level {{level}}",
       "change": "Change",
       "startQuiz": "Start Quiz"
-    }
+    },
+    "miniQuiz": {
+      "tts": {
+        "playing": "Playing audio...",
+        "tapToListen": "Tap to listen",
+        "tapToReplay": "Tap to replay",
+        "playedOnce": "Played {{count}} time",
+        "playedMany": "Played {{count}} times",
+        "listenCarefully": "Listen carefully, then answer"
+      },
+      "pair": {
+        "terms": "Terms",
+        "matches": "Matches",
+        "allMatched": "All {{count}} pairs matched!",
+        "nowTapRight": "Now tap the matching item on the right",
+        "progress": "{{done}}/{{total}} matched — tap a term on the left to start"
+      },
+      "progress": {
+        "current": "Q {{current}} / {{total}}",
+        "answered": "{{count}} answered"
+      },
+      "loading": "Generating questions...",
+      "result": {
+        "excellent": "Excellent!",
+        "keepPracticing": "Keep practicing!",
+        "correctOf": "{{correct}} / {{total}} correct",
+        "areasToImprove": "Areas to improve:",
+        "viewRemedial": "View remedial nodes",
+        "continueLearning": "Continue learning"
+      },
+      "input": {
+        "placeholder": "Type your answer..."
+      },
+      "nav": {
+        "prev": "← Prev",
+        "next": "Next →",
+        "grading": "Grading...",
+        "submit": "Submit"
+      }
+    },
+    "flow": {
+      "section": "Section {{num}}",
+      "bonusXp": "+50 Bonus XP",
+      "review": "Review: {{label}}",
+      "new": "NEW",
+      "tapToStart": "Tap to start",
+      "completedCount": "{{done}} / {{total}} completed",
+      "sections": {
+        "foundations": "Foundations",
+        "skillBuilding": "Skill Building",
+        "realConversations": "Real Conversations",
+        "mastery": "Mastery",
+        "beyond": "Beyond"
+      },
+      "aria": {
+        "completed": "completed",
+        "locked": "locked",
+        "newStart": "new, tap to start",
+        "activeContinue": "active, tap to continue"
+      }
+    },
+    "micDenied": "Microphone access denied",
+    "micDeniedDesc": "Please allow microphone access for this site in your browser and try again.",
+    "micError": "Could not access microphone",
+    "micErrorDesc": "Check your audio device or try again with a different browser."
   },
   "speakingTestLayout": {
     "submitModal": {
@@ -1685,6 +1814,81 @@
       "Green": "Green",
       "Blue": "Blue",
       "Pink": "Pink"
+    },
+    "beforeUnload": "Your test is in progress and will not be submitted if you leave the page."
+  },
+  "speakingResultStatic": {
+    "backToExamCenter": "Back to Exam Center",
+    "title": "Speaking Assessment Results",
+    "downloadReport": "Report",
+    "practiceAgain": "Practice Again",
+    "overallBand": "Overall Band",
+    "scoreBreakdown": "Score Breakdown",
+    "criteria": {
+      "fluency": "Fluency & Coherence",
+      "lexical": "Lexical Resource",
+      "grammatical": "Grammatical Range",
+      "pronunciation": "Pronunciation"
+    },
+    "yourRecording": "Your Recording",
+    "aiAnalysis": "AI Analysis & Feedback",
+    "strengths": "Strengths",
+    "areasForImprovement": "Areas for Improvement",
+    "vocabularySuggestions": "Vocabulary Suggestions"
+  },
+  "writingResultStatic": {
+    "backToExamCenter": "Back to Exam Center",
+    "title": "Writing Assessment Results",
+    "downloadReport": "PDF Report",
+    "practiceAgain": "Practice Again",
+    "estimatedBand": "Estimated Band",
+    "scoreBreakdown": "Score Breakdown",
+    "criteria": {
+      "taskResponse": "Task Response",
+      "coherence": "Coherence & Cohesion",
+      "lexical": "Lexical Resource",
+      "grammatical": "Grammatical Range"
+    },
+    "annotatedFeedback": "Annotated Essay Feedback",
+    "legend": {
+      "grammar": "Grammar",
+      "vocabulary": "Vocabulary",
+      "structure": "Structure"
+    },
+    "recommendedActions": "Recommended Actions",
+    "expandVocabulary": {
+      "title": "Expand Vocabulary",
+      "cta": "View Vocabulary List →"
+    },
+    "developIdeas": {
+      "title": "Develop Ideas Fully",
+      "cta": "View Structure Guide →"
     }
+  },
+  "aiTutor": {
+    "questionLabel": "Question {{n}}",
+    "saved": "Saved",
+    "streaming": "Streaming",
+    "restart": "Restart",
+    "loadingHistory": "Loading history...",
+    "greeting": "Hello!",
+    "analyzing": "Analyzing question...",
+    "selectQuestion": "Select a wrong answer, then click 'AI Explain' to start.",
+    "connecting": "AI connecting...",
+    "streamingPlaceholder": "Streaming...",
+    "inputPlaceholder": "Ask more about this question...",
+    "stopStream": "Stop stream",
+    "disclaimer": "AI can make mistakes. Check the original passage. • Conversation is saved automatically.",
+    "streamError": "Error: {{error}}"
+  },
+  "examPreview": {
+    "noAudio": "No audio yet",
+    "noPassage": "No passage content yet",
+    "noQuestions": "No questions yet",
+    "correctAnswer": "← correct answer",
+    "questionsContext": "Questions Context",
+    "readingPassage": "Reading Passage",
+    "transcript": "Transcript",
+    "diagramMap": "Diagram / Map"
   }
 }

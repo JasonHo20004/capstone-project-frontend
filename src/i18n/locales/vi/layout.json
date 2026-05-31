@@ -39,6 +39,20 @@
     "login": "Đăng nhập",
     "getStarted": "Bắt đầu"
   },
+  "cartDropdown": {
+    "ariaLabel": "Giỏ hàng",
+    "title": "Giỏ hàng",
+    "itemCount_one": "{{count}} khoá học",
+    "itemCount_other": "{{count}} khoá học",
+    "empty": "Giỏ hàng trống",
+    "total": "Tổng cộng",
+    "viewCart": "Xem giỏ hàng"
+  },
+  "upgradePro": {
+    "title": "Nâng cấp lên Pro",
+    "labelLong": "Nâng cấp Pro",
+    "labelShort": "Pro"
+  },
   "footer": {
     "rights": "© {{year}} SkillBoost. Bảo lưu mọi quyền.",
     "brandDescription": "Nâng tầm kỹ năng tiếng Anh với các khóa học do chuyên gia giảng dạy và trải nghiệm học tập tương tác.",

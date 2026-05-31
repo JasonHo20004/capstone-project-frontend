@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +32,8 @@ interface Comment {
 export default function LessonDetailPage() {
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('seller');
+  const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: course } = useCourse(courseId);
@@ -86,7 +89,7 @@ export default function LessonDetailPage() {
     if (!courseId || !lessonId) return;
     const trimmed = editingCommentText.trim();
     if (!trimmed) {
-      toast.error('Nội dung không được để trống');
+      toast.error(t('lessonDetail.toastEmptyContent'));
       return;
     }
     if (trimmed === originalContent) {
@@ -96,13 +99,13 @@ export default function LessonDetailPage() {
     setIsSavingCommentEdit(true);
     try {
       await courseService.editComment(courseId, lessonId, commentId, trimmed);
-      toast.success('Đã cập nhật bình luận');
+      toast.success(t('lessonDetail.toastCommentUpdated'));
       cancelEditComment();
       fetchComments();
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Lỗi khi cập nhật bình luận';
+        t('lessonDetail.toastCommentUpdateFailed');
       toast.error(msg);
     } finally {
       setIsSavingCommentEdit(false);
@@ -119,13 +122,13 @@ export default function LessonDetailPage() {
     setIsDeletingComment(true);
     try {
       await sellerService.deleteComment(pendingDeleteComment.id);
-      toast.success('Đã xoá bình luận');
+      toast.success(t('lessonDetail.toastCommentDeleted'));
       setPendingDeleteComment(null);
       fetchComments();
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Không thể xoá bình luận';
+        t('lessonDetail.toastCommentDeleteFailed');
       toast.error(msg);
     } finally {
       setIsDeletingComment(false);
@@ -172,11 +175,11 @@ export default function LessonDetailPage() {
   const handleVideoFile = (file: File) => {
     const validTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
     if (!validTypes.includes(file.type)) {
-      toast.error('Định dạng không hợp lệ. Hỗ trợ: MP4, MPEG, MOV, AVI, WEBM');
+      toast.error(t('lessonDetail.toastInvalidVideoFormat'));
       return;
     }
     if (file.size > 100 * 1024 * 1024) {
-      toast.error('File quá lớn. Tối đa 100MB.');
+      toast.error(t('lessonDetail.toastVideoTooLarge'));
       return;
     }
     setVideoFile(file);
@@ -218,7 +221,7 @@ export default function LessonDetailPage() {
           setVideoFile(null);
         },
         onError: (err: any) => {
-          toast.error(err?.response?.data?.message || 'Lỗi khi cập nhật bài học');
+          toast.error(err?.response?.data?.message || t('lessonDetail.toastUpdateLessonFailed'));
         },
       }
     );
@@ -241,22 +244,23 @@ export default function LessonDetailPage() {
     }
     setVideoFile(null);
     setIsDirty(false);
-    toast.info('Đã khôi phục dữ liệu gốc');
+    toast.info(t('lessonDetail.toastRestored'));
   };
 
-  const lesson = lessonDetail as any;
   const comments: Comment[] = fetchedComments;
 
   const formatDuration = (seconds: number) => {
-    if (!seconds) return '0 phút';
+    if (!seconds) return t('lessonDetail.duration.zero');
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return s > 0 ? `${m} phút ${s} giây` : `${m} phút`;
+    return s > 0
+      ? t('lessonDetail.duration.minutesSeconds', { m, s })
+      : t('lessonDetail.duration.minutes', { m });
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024) return t('lessonDetail.fileSizeKB', { value: (bytes / 1024).toFixed(1) });
+    return t('lessonDetail.fileSizeMB', { value: (bytes / (1024 * 1024)).toFixed(1) });
   };
 
   return (
@@ -270,7 +274,7 @@ export default function LessonDetailPage() {
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors mb-4 rounded-xl h-9 px-3 -ml-3"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Quay lại {course?.title ?? 'khóa học'}</span>
+            <span>{t('lessonDetail.backTo', { title: course?.title ?? t('lessonDetail.backFallback') })}</span>
           </Button>
 
           <div className="flex items-center justify-between">
@@ -279,10 +283,10 @@ export default function LessonDetailPage() {
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">{form.title || 'Chi tiết bài học'}</h1>
+                <h1 className="text-xl font-bold text-slate-900">{form.title || t('lessonDetail.pageTitleFallback')}</h1>
                 <div className="flex items-center gap-3 text-sm text-slate-500">
                   <span className="flex items-center gap-1">
-                    <Hash className="w-3.5 h-3.5" /> Thứ tự: {form.lessonOrder}
+                    <Hash className="w-3.5 h-3.5" /> {t('lessonDetail.orderLabel', { n: form.lessonOrder })}
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" /> {formatDuration(form.durationInSeconds)}
@@ -300,13 +304,13 @@ export default function LessonDetailPage() {
                 disabled={deleteLessonMutation.isPending}
               >
                 <Trash2 className="w-4 h-4 mr-1.5" />
-                Xóa bài học
+                {t('lessonDetail.deleteLesson')}
               </Button>
               <Button variant="outline" size="sm" className="rounded-xl" onClick={handleReset} disabled={!isDirty}>
-                <RotateCcw className="w-4 h-4 mr-1.5" /> Khôi phục
+                <RotateCcw className="w-4 h-4 mr-1.5" /> {t('lessonDetail.restore')}
               </Button>
               <Button size="sm" className="rounded-xl" onClick={handleSave} disabled={!isDirty || updateLessonMutation.isPending}>
-                <Save className="w-4 h-4 mr-1.5" /> {updateLessonMutation.isPending ? 'Đang lưu...' : 'Lưu cập nhật'}
+                <Save className="w-4 h-4 mr-1.5" /> {updateLessonMutation.isPending ? t('lessonDetail.saving') : t('lessonDetail.saveUpdate')}
               </Button>
             </div>
           </div>
@@ -320,43 +324,43 @@ export default function LessonDetailPage() {
           <CardContent className="p-6 space-y-5">
             <div className="flex items-center gap-2 text-sm font-bold text-slate-700 pb-2 border-b border-slate-100">
               <Pencil className="w-4 h-4 text-blue-500" />
-              Thông tin bài học
+              {t('lessonDetail.infoTitle')}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">Tiêu đề</Label>
+                <Label className="text-sm font-semibold text-slate-700">{t('lessonDetail.labelTitle')}</Label>
                 <Input className="rounded-xl h-11" value={form.title} onChange={(e) => handleChange('title', e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">
-                  <Hash className="w-3.5 h-3.5 inline mr-1" /> Thứ tự bài học
+                  <Hash className="w-3.5 h-3.5 inline mr-1" /> {t('lessonDetail.labelOrder')}
                 </Label>
                 <Input className="rounded-xl h-11" type="number" value={form.lessonOrder} onChange={(e) => handleChange('lessonOrder', Number(e.target.value))} min="1" />
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">
-                  <Clock className="w-3.5 h-3.5 inline mr-1" /> Thời lượng (giây)
+                  <Clock className="w-3.5 h-3.5 inline mr-1" /> {t('lessonDetail.labelDurationSec')}
                 </Label>
                 <Input className="rounded-xl h-11" type="number" value={form.durationInSeconds} onChange={(e) => handleChange('durationInSeconds', Number(e.target.value))} />
                 {form.durationInSeconds > 0 && (
-                  <p className="text-xs text-emerald-600 font-medium">≈ {formatDuration(form.durationInSeconds)}</p>
+                  <p className="text-xs text-emerald-600 font-medium">{t('lessonDetail.approxDuration', { value: formatDuration(form.durationInSeconds) })}</p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-slate-700">
-                <FileText className="w-3.5 h-3.5 inline mr-1" /> Mô tả
+                <FileText className="w-3.5 h-3.5 inline mr-1" /> {t('lessonDetail.labelDescription')}
               </Label>
-              <Textarea className="rounded-xl" rows={4} placeholder="Mô tả nội dung bài học..." value={form.description} onChange={(e) => handleChange('description', e.target.value)} />
+              <Textarea className="rounded-xl" rows={4} placeholder={t('lessonDetail.descriptionPlaceholder')} value={form.description} onChange={(e) => handleChange('description', e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-semibold text-slate-700">
                   <Link2 className="w-3.5 h-3.5 inline mr-1" />
-                  Tài liệu đính kèm ({form.materials.length})
+                  {t('lessonDetail.materialsLabel', { count: form.materials.length })}
                 </Label>
                 <Button
                   type="button"
@@ -368,11 +372,11 @@ export default function LessonDetailPage() {
                     setIsDirty(true);
                   }}
                 >
-                  <Plus className="w-3.5 h-3.5" /> Thêm link
+                  <Plus className="w-3.5 h-3.5" /> {t('lessonDetail.addLink')}
                 </Button>
               </div>
               {form.materials.length === 0 && (
-                <p className="text-xs text-slate-400 italic">Chưa có tài liệu nào. Nhấn "Thêm link" để bắt đầu.</p>
+                <p className="text-xs text-slate-400 italic">{t('lessonDetail.noMaterials')}</p>
               )}
               <div className="space-y-2">
                 {form.materials.map((mat, idx) => (
@@ -380,7 +384,7 @@ export default function LessonDetailPage() {
                     <span className="text-xs text-slate-400 font-medium w-6">{idx + 1}.</span>
                     <Input
                       className="rounded-xl h-10 flex-1"
-                      placeholder="https://example.com/tai-lieu.pdf"
+                      placeholder={t('lessonDetail.materialPlaceholder')}
                       value={mat}
                       onChange={(e) => {
                         const updated = [...form.materials];
@@ -415,7 +419,7 @@ export default function LessonDetailPage() {
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
                 <Film className="w-4 h-4 text-teal-500" />
-                Video bài giảng
+                {t('lessonDetail.videoSection')}
               </div>
               {/* Mode toggle */}
               <div className="flex bg-slate-100 rounded-lg p-0.5">
@@ -425,7 +429,7 @@ export default function LessonDetailPage() {
                     videoMode === 'url' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
-                  <Link2 className="w-3 h-3 inline mr-1" /> Đường link
+                  <Link2 className="w-3 h-3 inline mr-1" /> {t('lessonDetail.modeUrl')}
                 </button>
                 <button
                   onClick={() => setVideoMode('upload')}
@@ -433,7 +437,7 @@ export default function LessonDetailPage() {
                     videoMode === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
-                  <Upload className="w-3 h-3 inline mr-1" /> Tải lên
+                  <Upload className="w-3 h-3 inline mr-1" /> {t('lessonDetail.modeUpload')}
                 </button>
               </div>
             </div>
@@ -443,7 +447,7 @@ export default function LessonDetailPage() {
               <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-emerald-700">Video hiện tại</p>
+                  <p className="text-xs font-medium text-emerald-700">{t('lessonDetail.currentVideo')}</p>
                   <p className="text-xs text-emerald-600 truncate">{form.videoUrl}</p>
                 </div>
               </div>
@@ -452,14 +456,14 @@ export default function LessonDetailPage() {
             {/* URL mode */}
             {videoMode === 'url' && (
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">URL video</Label>
+                <Label className="text-sm font-semibold text-slate-700">{t('lessonDetail.videoUrlLabel')}</Label>
                 <Input
                   className="rounded-xl h-11"
-                  placeholder="https://s3.amazonaws.com/.../video.mp4"
+                  placeholder={t('lessonDetail.videoUrlPlaceholder')}
                   value={form.videoUrl}
                   onChange={(e) => handleChange('videoUrl', e.target.value)}
                 />
-                <p className="text-xs text-slate-400">Dán đường link video từ AWS S3, YouTube, hoặc nguồn khác.</p>
+                <p className="text-xs text-slate-400">{t('lessonDetail.videoUrlHint')}</p>
               </div>
             )}
 
@@ -484,8 +488,8 @@ export default function LessonDetailPage() {
                     <div className="w-12 h-12 rounded-full bg-blue-100 mx-auto mb-3 flex items-center justify-center">
                       <Upload className="w-6 h-6 text-blue-500" />
                     </div>
-                    <p className="text-sm font-medium text-slate-700">Kéo thả hoặc nhấn để tải lên video</p>
-                    <p className="text-xs text-slate-400 mt-1">Hỗ trợ MP4, MPEG, MOV, AVI, WEBM (Tối đa 100MB)</p>
+                    <p className="text-sm font-medium text-slate-700">{t('lessonDetail.dropPrompt')}</p>
+                    <p className="text-xs text-slate-400 mt-1">{t('lessonDetail.dropHint')}</p>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -516,8 +520,12 @@ export default function LessonDetailPage() {
                   <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
                     <Film className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                     <p className="text-xs text-amber-700">
-                      Video cũ: <span className="font-medium">{form.videoUrl.length > 60 ? form.videoUrl.slice(0, 60) + '...' : form.videoUrl}</span>
-                      {' '}— sẽ được thay thế khi tải lên file mới.
+                      <Trans
+                        i18nKey="lessonDetail.oldVideoNotice"
+                        ns="seller"
+                        values={{ url: form.videoUrl.length > 60 ? form.videoUrl.slice(0, 60) + '...' : form.videoUrl }}
+                        components={{ strong: <span className="font-medium" /> }}
+                      />
                     </p>
                   </div>
                 )}
@@ -527,7 +535,7 @@ export default function LessonDetailPage() {
             {/* Video preview */}
             {form.videoUrl && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-slate-500">Xem trước</p>
+                <p className="text-xs font-semibold text-slate-500">{t('lessonDetail.preview')}</p>
                 <div className="rounded-xl overflow-hidden bg-black aspect-video">
                   <video src={form.videoUrl} controls className="w-full h-full" preload="metadata" />
                 </div>
@@ -541,7 +549,7 @@ export default function LessonDetailPage() {
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-2 text-sm font-bold text-slate-700 pb-2 border-b border-slate-100">
               <MessageSquare className="w-4 h-4 text-amber-500" />
-              Bình luận ({comments.length})
+              {t('lessonDetail.commentsHeader', { count: comments.length })}
             </div>
 
             {comments.length > 0 ? (
@@ -563,21 +571,21 @@ export default function LessonDetailPage() {
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-700">{comment.user?.fullName ?? 'Người dùng'}</span>
+                            <span className="text-sm font-medium text-slate-700">{comment.user?.fullName ?? t('lessonDetail.userFallback')}</span>
                             {isSeller && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-100 text-teal-700 border border-teal-200">
-                                Giảng viên
+                                {t('lessonDetail.instructorBadge')}
                               </span>
                             )}
                             {comment.editedAt && (
                               <span
                                 className="text-[11px] text-slate-400 italic"
-                                title={`Đã chỉnh sửa lúc ${new Date(comment.editedAt).toLocaleString('vi-VN')}`}
+                                title={t('lessonDetail.editedTooltip', { time: new Date(comment.editedAt).toLocaleString(dateLocale) })}
                               >
-                                (đã chỉnh sửa)
+                                {t('lessonDetail.editedLabel')}
                               </span>
                             )}
-                            <span className="text-xs text-slate-400 ml-auto">{new Date(comment.createdAt).toLocaleString('vi-VN')}</span>
+                            <span className="text-xs text-slate-400 ml-auto">{new Date(comment.createdAt).toLocaleString(dateLocale)}</span>
                           </div>
                           {editingCommentId === comment.id ? (
                             <div className="mt-2 space-y-2">
@@ -595,10 +603,10 @@ export default function LessonDetailPage() {
                                   disabled={isSavingCommentEdit || !editingCommentText.trim() || editingCommentText.trim() === comment.content}
                                   onClick={() => submitEditComment(comment.id, comment.content)}
                                 >
-                                  {isSavingCommentEdit ? 'Đang lưu…' : 'Lưu'}
+                                  {isSavingCommentEdit ? t('lessonDetail.savingShort') : t('lessonDetail.save')}
                                 </Button>
                                 <Button size="sm" variant="ghost" onClick={cancelEditComment} disabled={isSavingCommentEdit}>
-                                  Huỷ
+                                  {t('lessonDetail.cancel')}
                                 </Button>
                                 <span className="text-xs text-slate-400 ml-auto">{editingCommentText.length}/2000</span>
                               </div>
@@ -612,7 +620,7 @@ export default function LessonDetailPage() {
                                 className="text-xs text-slate-400 hover:text-teal-600 font-medium transition-colors"
                                 onClick={() => setReplyingTo(replyingTo?.id === comment.id ? null : comment)}
                               >
-                                {replyingTo?.id === comment.id ? 'Hủy' : 'Trả lời'}
+                                {replyingTo?.id === comment.id ? t('lessonDetail.cancelShort') : t('lessonDetail.replyBtn')}
                               </button>
                               {/* Edit only on seller's own comments — backend
                                   rejects edits from anyone else (gaslighting). */}
@@ -621,15 +629,15 @@ export default function LessonDetailPage() {
                                   className="text-xs text-slate-400 hover:text-teal-600 font-medium transition-colors inline-flex items-center gap-1"
                                   onClick={() => startEditComment(comment)}
                                 >
-                                  <Pencil className="w-3 h-3" /> Sửa
+                                  <Pencil className="w-3 h-3" /> {t('lessonDetail.edit')}
                                 </button>
                               )}
                               <button
                                 className="text-xs text-slate-400 hover:text-red-500 font-medium transition-colors inline-flex items-center gap-1"
                                 onClick={() => setPendingDeleteComment(comment)}
-                                title={isSeller ? 'Xoá bình luận của bạn' : 'Xoá bình luận vi phạm'}
+                                title={isSeller ? t('lessonDetail.deleteOwnTitle') : t('lessonDetail.deleteViolationTitle')}
                               >
-                                <Trash2 className="w-3 h-3" /> Xoá
+                                <Trash2 className="w-3 h-3" /> {t('lessonDetail.delete')}
                               </button>
                             </div>
                           )}
@@ -652,21 +660,21 @@ export default function LessonDetailPage() {
                                 )}
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs font-medium text-slate-700">{reply.user?.fullName ?? 'Người dùng'}</span>
+                                    <span className="text-xs font-medium text-slate-700">{reply.user?.fullName ?? t('lessonDetail.userFallback')}</span>
                                     {isReplySeller && (
                                       <span className="inline-flex items-center px-1.5 py-0 rounded-full text-[9px] font-semibold bg-teal-100 text-teal-700">
-                                        Giảng viên
+                                        {t('lessonDetail.instructorBadge')}
                                       </span>
                                     )}
                                     {reply.editedAt && (
                                       <span
                                         className="text-[9px] text-slate-400 italic"
-                                        title={`Đã chỉnh sửa lúc ${new Date(reply.editedAt).toLocaleString('vi-VN')}`}
+                                        title={t('lessonDetail.editedTooltip', { time: new Date(reply.editedAt).toLocaleString(dateLocale) })}
                                       >
-                                        (đã chỉnh sửa)
+                                        {t('lessonDetail.editedLabel')}
                                       </span>
                                     )}
-                                    <span className="text-[10px] text-slate-400 ml-auto">{new Date(reply.createdAt).toLocaleString('vi-VN')}</span>
+                                    <span className="text-[10px] text-slate-400 ml-auto">{new Date(reply.createdAt).toLocaleString(dateLocale)}</span>
                                   </div>
                                   {editingCommentId === reply.id ? (
                                     <div className="mt-1 space-y-2">
@@ -685,10 +693,10 @@ export default function LessonDetailPage() {
                                           disabled={isSavingCommentEdit || !editingCommentText.trim() || editingCommentText.trim() === reply.content}
                                           onClick={() => submitEditComment(reply.id, reply.content)}
                                         >
-                                          {isSavingCommentEdit ? 'Đang lưu…' : 'Lưu'}
+                                          {isSavingCommentEdit ? t('lessonDetail.savingShort') : t('lessonDetail.save')}
                                         </Button>
                                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={cancelEditComment} disabled={isSavingCommentEdit}>
-                                          Huỷ
+                                          {t('lessonDetail.cancel')}
                                         </Button>
                                       </div>
                                     </div>
@@ -701,22 +709,22 @@ export default function LessonDetailPage() {
                                         className="text-[11px] text-slate-400 hover:text-teal-600 font-medium transition-colors"
                                         onClick={() => setReplyingTo(replyingTo?.id === reply.id ? null : reply)}
                                       >
-                                        {replyingTo?.id === reply.id ? 'Hủy' : 'Trả lời'}
+                                        {replyingTo?.id === reply.id ? t('lessonDetail.cancelShort') : t('lessonDetail.replyBtn')}
                                       </button>
                                       {isReplySeller && (
                                         <button
                                           className="text-[11px] text-slate-400 hover:text-teal-600 font-medium transition-colors inline-flex items-center gap-1"
                                           onClick={() => startEditComment(reply)}
                                         >
-                                          <Pencil className="w-3 h-3" /> Sửa
+                                          <Pencil className="w-3 h-3" /> {t('lessonDetail.edit')}
                                         </button>
                                       )}
                                       <button
                                         className="text-[11px] text-slate-400 hover:text-red-500 font-medium transition-colors inline-flex items-center gap-1"
                                         onClick={() => setPendingDeleteComment(reply)}
-                                        title={isReplySeller ? 'Xoá bình luận của bạn' : 'Xoá bình luận vi phạm'}
+                                        title={isReplySeller ? t('lessonDetail.deleteOwnTitle') : t('lessonDetail.deleteViolationTitle')}
                                       >
-                                        <Trash2 className="w-3 h-3" /> Xoá
+                                        <Trash2 className="w-3 h-3" /> {t('lessonDetail.delete')}
                                       </button>
                                     </div>
                                   )}
@@ -736,13 +744,18 @@ export default function LessonDetailPage() {
                             </div>
                             <div className="flex-1">
                               <p className="text-[11px] text-slate-500 mb-1">
-                                Trả lời <span className="font-semibold text-teal-600">@{replyingTo.user?.fullName ?? 'Người dùng'}</span>
+                                <Trans
+                                  i18nKey="lessonDetail.replyingTo"
+                                  ns="seller"
+                                  values={{ name: replyingTo.user?.fullName ?? t('lessonDetail.userFallback') }}
+                                  components={{ span: <span className="font-semibold text-teal-600" /> }}
+                                />
                                 <button className="ml-2 text-red-400 hover:text-red-500 inline-flex" onClick={() => setReplyingTo(null)}><X size={16} /></button>
                               </p>
                               <div className="flex gap-1.5">
                                 <Textarea
                                   autoFocus
-                                  placeholder="Viết câu trả lời..."
+                                  placeholder={t('lessonDetail.replyPlaceholder')}
                                   className="rounded-lg resize-none min-h-[36px] text-xs flex-1"
                                   rows={1}
                                   value={commentText}
@@ -754,8 +767,8 @@ export default function LessonDetailPage() {
                                         const parentId = replyingTo.parentCommentId ?? replyingTo.id;
                                         setIsPostingComment(true);
                                         courseService.postComment(courseId, lessonId, commentText.trim(), parentId)
-                                          .then(() => { setCommentText(''); setReplyingTo(null); toast.success('Đã gửi trả lời'); fetchComments(); })
-                                          .catch(() => toast.error('Lỗi khi gửi'))
+                                          .then(() => { setCommentText(''); setReplyingTo(null); toast.success(t('lessonDetail.toastReplySent')); fetchComments(); })
+                                          .catch(() => toast.error(t('lessonDetail.toastSendFailed')))
                                           .finally(() => setIsPostingComment(false));
                                       }
                                     }
@@ -770,8 +783,8 @@ export default function LessonDetailPage() {
                                       const parentId = replyingTo.parentCommentId ?? replyingTo.id;
                                       setIsPostingComment(true);
                                       courseService.postComment(courseId, lessonId, commentText.trim(), parentId)
-                                        .then(() => { setCommentText(''); setReplyingTo(null); toast.success('Đã gửi trả lời'); fetchComments(); })
-                                        .catch(() => toast.error('Lỗi khi gửi'))
+                                        .then(() => { setCommentText(''); setReplyingTo(null); toast.success(t('lessonDetail.toastReplySent')); fetchComments(); })
+                                        .catch(() => toast.error(t('lessonDetail.toastSendFailed')))
                                         .finally(() => setIsPostingComment(false));
                                     }
                                   }}
@@ -790,7 +803,7 @@ export default function LessonDetailPage() {
             ) : (
               <div className="text-center py-8">
                 <MessageSquare className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                <p className="text-sm text-slate-400 italic">Chưa có bình luận nào.</p>
+                <p className="text-sm text-slate-400 italic">{t('lessonDetail.noComments')}</p>
               </div>
             )}
             {/* Top-level comment input */}
@@ -801,7 +814,7 @@ export default function LessonDetailPage() {
                 </div>
                 <div className="flex-1 flex gap-2">
                   <Textarea
-                    placeholder="Viết bình luận mới..."
+                    placeholder={t('lessonDetail.newCommentPlaceholder')}
                     className="rounded-xl resize-none min-h-[44px] flex-1"
                     rows={1}
                     value={!replyingTo ? commentText : ''}
@@ -813,8 +826,8 @@ export default function LessonDetailPage() {
                         if (commentText.trim() && courseId && lessonId) {
                           setIsPostingComment(true);
                           courseService.postComment(courseId, lessonId, commentText.trim())
-                            .then(() => { setCommentText(''); toast.success('Đã gửi bình luận'); fetchComments(); })
-                            .catch(() => toast.error('Lỗi khi gửi bình luận'))
+                            .then(() => { setCommentText(''); toast.success(t('lessonDetail.toastCommentSent')); fetchComments(); })
+                            .catch(() => toast.error(t('lessonDetail.toastCommentSendFailed')))
                             .finally(() => setIsPostingComment(false));
                         }
                       }
@@ -828,8 +841,8 @@ export default function LessonDetailPage() {
                       if (commentText.trim() && courseId && lessonId && !replyingTo) {
                         setIsPostingComment(true);
                         courseService.postComment(courseId, lessonId, commentText.trim())
-                          .then(() => { setCommentText(''); toast.success('Đã gửi bình luận'); fetchComments(); })
-                          .catch(() => toast.error('Lỗi khi gửi bình luận'))
+                          .then(() => { setCommentText(''); toast.success(t('lessonDetail.toastCommentSent')); fetchComments(); })
+                          .catch(() => toast.error(t('lessonDetail.toastCommentSendFailed')))
                           .finally(() => setIsPostingComment(false));
                       }
                     }}
@@ -838,7 +851,7 @@ export default function LessonDetailPage() {
                   </Button>
                 </div>
               </div>
-              <p className="text-xs text-slate-400 mt-2 ml-12">Nhấn Enter để gửi, Shift+Enter để xuống dòng.</p>
+              <p className="text-xs text-slate-400 mt-2 ml-12">{t('lessonDetail.submitHint')}</p>
             </div>
 
           </CardContent>
@@ -848,7 +861,7 @@ export default function LessonDetailPage() {
         <div className="flex items-center justify-end pt-2 pb-8">
           {isDirty && (
             <Button className="rounded-xl px-6 shadow-sm" onClick={handleSave}>
-              <Save className="w-4 h-4 mr-2" /> Lưu cập nhật
+              <Save className="w-4 h-4 mr-2" /> {t('lessonDetail.saveUpdate')}
             </Button>
           )}
         </div>
@@ -859,25 +872,33 @@ export default function LessonDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xóa bài học?
+              {t('lessonDetail.confirmDeleteLessonTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                Bạn sắp xóa bài học <strong className="text-slate-900">"{form.title}"</strong>.
+                <Trans
+                  i18nKey="lessonDetail.confirmDeleteLessonLine1"
+                  ns="seller"
+                  values={{ title: form.title }}
+                  components={{ strong: <strong className="text-slate-900" /> }}
+                />
               </span>
               <span className="block">
-                Toàn bộ <strong>video, bình luận và tiến độ học</strong> liên quan sẽ bị xóa
-                vĩnh viễn — không thể khôi phục.
+                <Trans
+                  i18nKey="lessonDetail.confirmDeleteLessonLine2"
+                  ns="seller"
+                  components={{ strong: <strong /> }}
+                />
               </span>
               {course?.status === 'ACTIVE' && (
                 <span className="block text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 text-sm">
-                  <AlertTriangle size={14} className="inline mr-1" /> Khoá học đang ACTIVE, học viên đã mua sẽ không thấy bài học này nữa.
+                  <AlertTriangle size={14} className="inline mr-1" /> {t('lessonDetail.confirmDeleteLessonActiveWarn')}
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLessonMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLessonMutation.isPending}>{t('lessonDetail.cancelShort')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               disabled={deleteLessonMutation.isPending}
@@ -895,7 +916,7 @@ export default function LessonDetailPage() {
                 );
               }}
             >
-              {deleteLessonMutation.isPending ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
+              {deleteLessonMutation.isPending ? t('lessonDetail.deleting') : t('lessonDetail.deletePermanent')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -908,11 +929,11 @@ export default function LessonDetailPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <Trash2 className="w-5 h-5" /> Xoá bình luận?
+              <Trash2 className="w-5 h-5" /> {t('lessonDetail.confirmDeleteCommentTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                Nội dung sẽ bị xoá vĩnh viễn và không thể khôi phục.
+                {t('lessonDetail.confirmDeleteCommentDesc')}
               </span>
               {pendingDeleteComment && (
                 <span className="block text-xs text-slate-600 border-l-2 border-slate-200 pl-2 mt-2">
@@ -922,13 +943,13 @@ export default function LessonDetailPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingComment}>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeletingComment}>{t('lessonDetail.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               disabled={isDeletingComment}
               onClick={(e) => { e.preventDefault(); handleDeleteComment(); }}
             >
-              {isDeletingComment ? 'Đang xoá…' : 'Xoá'}
+              {isDeletingComment ? t('lessonDetail.deletingComment') : t('lessonDetail.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

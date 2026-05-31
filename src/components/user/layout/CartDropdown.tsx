@@ -1,4 +1,5 @@
 import { ShoppingCart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ export function CartDropdown({
   onNavigate,
 }: CartDropdownProps) {
   const { items, count, total } = useCart();
+  const { t } = useTranslation('layout');
 
   return (
     <DropdownMenu>
@@ -27,7 +29,7 @@ export function CartDropdown({
           variant="ghost"
           size="icon"
           className={`relative h-10 w-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors duration-200 cursor-pointer ${triggerClassName ?? ''}`}
-          aria-label="Giỏ hàng"
+          aria-label={t('cartDropdown.ariaLabel')}
         >
           <ShoppingCart className="h-5 w-5" />
           {count > 0 && (
@@ -43,15 +45,15 @@ export function CartDropdown({
         sideOffset={8}
       >
         <div className="p-4 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-900">Giỏ hàng</h3>
+          <h3 className="font-semibold text-slate-900">{t('cartDropdown.title')}</h3>
           {count > 0 && (
-            <p className="text-xs text-slate-500 mt-0.5">{count} khoá học</p>
+            <p className="text-xs text-slate-500 mt-0.5">{t('cartDropdown.itemCount', { count })}</p>
           )}
         </div>
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
             <ShoppingCart className="h-10 w-10 text-slate-300 mb-2" />
-            <p className="text-sm text-slate-500">Giỏ hàng trống</p>
+            <p className="text-sm text-slate-500">{t('cartDropdown.empty')}</p>
           </div>
         ) : (
           <>
@@ -83,7 +85,7 @@ export function CartDropdown({
             </div>
             <div className="p-3 border-t border-slate-100 bg-slate-50/50">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500">Tổng cộng</span>
+                <span className="text-sm text-slate-500">{t('cartDropdown.total')}</span>
                 <span className="font-semibold text-slate-900">
                   {formatVND(total)}
                 </span>
@@ -93,7 +95,7 @@ export function CartDropdown({
                 onClick={onNavigate}
                 className="flex items-center justify-center w-full h-10 rounded-lg bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors cursor-pointer"
               >
-                Xem giỏ hàng
+                {t('cartDropdown.viewCart')}
               </Link>
             </div>
           </>

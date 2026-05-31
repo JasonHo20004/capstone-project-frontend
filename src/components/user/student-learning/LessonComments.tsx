@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Send, SortAsc, SortDesc } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -14,17 +15,8 @@ type LessonCommentsProps = {
 
 type SortOrder = "newest" | "oldest";
 
-const getInitials = (name?: string) => {
-  if (!name) return "NN";
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-};
-
 export const LessonComments = ({ courseId, lessonId }: LessonCommentsProps) => {
+  const { t } = useTranslation("courses");
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
   const [content, setContent] = useState("");
 
@@ -60,9 +52,11 @@ export const LessonComments = ({ courseId, lessonId }: LessonCommentsProps) => {
     <div className="space-y-6 rounded-3xl border bg-background p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold">Q&A / Bình luận bài học</h3>
+          <h3 className="text-lg font-semibold">
+            {t("studentLearning.lessonComments.heading")}
+          </h3>
           <p className="text-xs text-muted-foreground">
-            Đặt câu hỏi hoặc thảo luận về nội dung bài học này.
+            {t("studentLearning.lessonComments.subtitle")}
           </p>
         </div>
         <Button
@@ -75,12 +69,12 @@ export const LessonComments = ({ courseId, lessonId }: LessonCommentsProps) => {
           {sortOrder === "newest" ? (
             <>
               <SortDesc className="h-4 w-4" />
-              Mới nhất
+              {t("studentLearning.lessonComments.sortNewest")}
             </>
           ) : (
             <>
               <SortAsc className="h-4 w-4" />
-              Cũ nhất
+              {t("studentLearning.lessonComments.sortOldest")}
             </>
           )}
         </Button>
@@ -88,14 +82,14 @@ export const LessonComments = ({ courseId, lessonId }: LessonCommentsProps) => {
 
       <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border bg-muted/40 p-4">
         <Textarea
-          placeholder="Đặt câu hỏi hoặc chia sẻ suy nghĩ của bạn..."
+          placeholder={t("studentLearning.lessonComments.placeholder")}
           value={content}
           onChange={(event) => setContent(event.target.value)}
           rows={3}
         />
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            Hãy giữ bình luận lịch sự và tập trung vào nội dung bài học.
+            {t("studentLearning.lessonComments.hint")}
           </p>
           <Button
             type="submit"
@@ -103,17 +97,19 @@ export const LessonComments = ({ courseId, lessonId }: LessonCommentsProps) => {
             disabled={!content.trim() || createCommentMutation.isPending || !lessonId}
           >
             <Send className="mr-1 h-4 w-4" />
-            Gửi
+            {t("studentLearning.lessonComments.send")}
           </Button>
         </div>
       </form>
 
       <div className="space-y-3">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Đang tải bình luận...</p>
+          <p className="text-sm text-muted-foreground">
+            {t("studentLearning.lessonComments.loading")}
+          </p>
         ) : comments.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Chưa có bình luận nào. Hãy là người đầu tiên đặt câu hỏi!
+            {t("studentLearning.lessonComments.empty")}
           </p>
         ) : (
           comments.map((comment) => (
@@ -133,5 +129,3 @@ export const LessonComments = ({ courseId, lessonId }: LessonCommentsProps) => {
     </div>
   );
 };
-
-

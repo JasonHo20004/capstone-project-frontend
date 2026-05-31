@@ -1,4 +1,5 @@
 import type { FlashcardDeck } from "@/domain";
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Layers, Globe, Lock } from 'lucide-react';
 
@@ -27,6 +28,7 @@ export function DeckList({
   onDeleteDeck,
   formatDate,
 }: DeckListProps) {
+  const { t } = useTranslation('exam');
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       {decks.map((deck, i) => {
@@ -75,7 +77,7 @@ export function DeckList({
                       : 'bg-slate-100 text-slate-500'
                   }`}>
                     {deck.isPublic ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                    {deck.isPublic ? 'Công khai' : 'Riêng tư'}
+                    {deck.isPublic ? t('flashcards.deckList.public') : t('flashcards.deckList.private')}
                   </span>
                   <p className="text-[10px] text-slate-400 font-medium">
                     {formatDate(deck.createdAt)}

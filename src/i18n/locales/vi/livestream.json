@@ -1,0 +1,206 @@
+{
+  "list": {
+    "title": "Lớp học trực tuyến với AI",
+    "subtitle": "Tham gia một buổi học trực tiếp hoặc tự mở phòng — AI dạy bài theo thời gian thực.",
+    "createRoom": "Tạo phòng",
+    "refresh": "Làm mới danh sách",
+    "dialog": {
+      "title": "Tạo phòng livestream",
+      "topicLabel": "Tiêu đề lớp học",
+      "topicPlaceholder": "Ví dụ: IELTS Speaking Part 2, Phrasal Verbs, Business Email…",
+      "topicHint": "Hiển thị công khai — học viên sẽ thấy tiêu đề này trên danh sách phòng.",
+      "lessonPromptLabel": "Nội dung muốn AI dạy",
+      "lessonPromptOptional": "(tuỳ chọn)",
+      "lessonPromptPlaceholder": "Ví dụ: Làm thế nào để phát triển idea trong IELTS Speaking Part 2? Tập trung vào cấu trúc câu trả lời, cách dùng linking words và các mẫu câu thông dụng.",
+      "lessonPromptHint": "AI sẽ bám sát hướng dẫn này để sinh nội dung bài giảng. Nếu để trống, AI sẽ tự thiết kế bài dựa theo tiêu đề.",
+      "levelLabel": "Trình độ học viên",
+      "level": {
+        "beginner": "Sơ cấp (A1–A2)",
+        "intermediate": "Trung cấp (B1–B2)",
+        "advanced": "Nâng cao (C1–C2)"
+      },
+      "languageLabel": "Ngôn ngữ giảng dạy",
+      "languageEn": "EN Tiếng Anh",
+      "languageVi": "VI Tiếng Việt",
+      "languageViHint": "Giảng viên AI sẽ giải thích bằng tiếng Việt — phù hợp cho người mới bắt đầu.",
+      "submit": "Bắt đầu livestream",
+      "submitError": "Không tạo được phòng. Vui lòng đăng nhập lại rồi thử lại."
+    },
+    "tabs": {
+      "live": "Phòng đang live",
+      "recordings": "Bản ghi"
+    },
+    "status": {
+      "waiting": "Đang chờ",
+      "live": "LIVE",
+      "completed": "Đã kết thúc"
+    },
+    "recordings": {
+      "empty": "Chưa có bản ghi nào",
+      "emptyHint": "Buổi học hoàn tất được lưu trong 7 ngày.",
+      "sections": "{{count}} phần",
+      "qas": "{{count}} câu hỏi",
+      "hostLabel": "Giảng viên:",
+      "watchReplay": "Xem lại"
+    },
+    "rooms": {
+      "empty": "Chưa có lớp học trực tuyến",
+      "emptyHint": "Hãy là người đầu tiên tạo phòng!",
+      "createButton": "Tạo phòng",
+      "joined": "{{count}} người tham gia",
+      "hostLabel": "Giảng viên:",
+      "ended": "Đã kết thúc",
+      "join": "Tham gia"
+    },
+    "timeAgo": {
+      "seconds": "{{n}} giây trước",
+      "minutes": "{{n}} phút trước",
+      "hours": "{{n}} giờ trước"
+    }
+  },
+  "room": {
+    "back": "Quay lại",
+    "qaTimer": "Hỏi đáp · {{time}}",
+    "endedBadge": "Đã kết thúc",
+    "teacher": "Giảng viên: {{name}}",
+    "participants": {
+      "show": "Hiện danh sách người học",
+      "hide": "Ẩn danh sách người học"
+    },
+    "mute": {
+      "mute": "Tắt âm thanh",
+      "unmute": "Bật âm thanh"
+    },
+    "playbackRate": "Tốc độ đọc của AI",
+    "reconnecting": "Đang kết nối lại…",
+    "endButton": "Kết thúc",
+    "mobileTabs": {
+      "stage": "Bài giảng",
+      "chat": "Hỏi & Đáp"
+    },
+    "unlockAudio": "Nhấn để bật tiếng AI",
+    "preparing": "Đang chuẩn bị bài giảng…",
+    "waitingHost": "Nhấn \"Bắt đầu bài học\" khi sẵn sàng",
+    "waitingStudent": "Đợi giảng viên bắt đầu bài học…",
+    "qaPeriod": "Thời gian hỏi đáp",
+    "ended": "Buổi học đã kết thúc",
+    "slideProgress": "Slide {{current}} / {{total}}",
+    "startLesson": "Bắt đầu bài học",
+    "watchReplay": "Xem lại",
+    "otherRooms": "Phòng khác",
+    "spotlight": {
+      "invited": "Bạn được mời phát biểu",
+      "hint": "Nhấn micro và nói — cả lớp sẽ thấy lời bạn, AI phản hồi khi bạn nói xong.",
+      "start": "Bắt đầu nói",
+      "submit": "Xong, gửi",
+      "cancel": "Thôi",
+      "unsupported": "Trình duyệt không hỗ trợ nói. Bạn có thể gõ câu hỏi ở khung Hỏi & Đáp."
+    },
+    "hand": {
+      "raisedLabel": "Đang giơ tay",
+      "raiseLabel": "Giơ tay",
+      "raisedTitle": "Hạ tay",
+      "raiseTitle": "Giơ tay phát biểu"
+    },
+    "transcript": {
+      "heading": "Nội dung bài học",
+      "slidesCount": "slide",
+      "empty": "Nội dung bài học sẽ hiện ở đây khi AI giảng.",
+      "activeAbove": "↑ Slide đang được trình bày ở trên",
+      "explainAgain": "Giải thích lại phần này"
+    },
+    "chat": {
+      "heading": "Hỏi & Đáp",
+      "questionsLeft": "{{left}}/{{max}} câu còn lại",
+      "empty": "Đặt câu hỏi cho AI giảng viên trong buổi học.",
+      "answerLabel": "Trả lời {{name}}",
+      "quickChips": {
+        "explainAgain": "Giải thích lại phần này",
+        "example": "Cho tôi một ví dụ",
+        "simpler": "Dùng từ đơn giản hơn",
+        "ielts": "Phần này có trong IELTS không?",
+        "memorize": "Làm sao ghi nhớ từ này?"
+      },
+      "stopMic": "Dừng ghi âm",
+      "speakEn": "Nói câu hỏi (tiếng Anh)",
+      "speakVi": "Nói câu hỏi (tiếng Việt)",
+      "recordAria": "Ghi âm câu hỏi",
+      "placeholder": {
+        "listening": "Đang nghe… nói câu hỏi của bạn",
+        "ended": "Buổi học đã kết thúc",
+        "connecting": "Đang kết nối…",
+        "noQuota": "Đã hết lượt — đợi 1 phút",
+        "default": "Đặt câu hỏi hoặc nhấn mic để nói…"
+      },
+      "footer": {
+        "withMic": "Mic · Tối đa {{max}} câu/phút · Enter để gửi",
+        "withoutMic": "Tối đa {{max}} câu/phút · Enter để gửi"
+      },
+      "reconnect": "Mất kết nối — đang kết nối lại…",
+      "send": "Gửi câu hỏi",
+      "rateLimit": "Chờ {{secs}}s — tối đa {{max}} câu/phút."
+    },
+    "system": {
+      "lessonStart": "Bài học bắt đầu!",
+      "lessonGenerating": "AI đang chuẩn bị bài học…",
+      "lessonFallback": "AI chưa tạo được bài tuỳ chỉnh — đang dùng nội dung mẫu. Bạn vẫn có thể đặt câu hỏi để được giải đáp chi tiết.",
+      "qaStart": "Bài giảng kết thúc! Còn {{mins}} phút để đặt câu hỏi.",
+      "lessonAutoComplete": "Phòng học đã tự động kết thúc.",
+      "roomEnded": "Phòng học đã kết thúc.",
+      "speakerInvitedSelf": "Giảng viên mời bạn phát biểu!",
+      "speakerInvitedOther": "Giảng viên mời {{name}} phát biểu",
+      "practiceResult": "{{icon}} {{name}} luyện nói: \"{{phrase}}\" ({{score}}/100)"
+    },
+    "explainAgainPart": "Giải thích lại phần \"{{title}}\" cho tôi"
+  },
+  "replay": {
+    "loading": "Đang tải bản ghi…",
+    "notFound": "Không tìm thấy bản ghi",
+    "back": "Quay lại",
+    "backToRooms": "Về danh sách phòng",
+    "recordedBy": "Giảng viên {{name}} • {{date}}",
+    "clickPlay": "Nhấn Play để xem lại",
+    "seekHint": "Nhấn để tua tới đoạn",
+    "qaTitle": "Hỏi đáp trong buổi học ({{count}})",
+    "noQa": "Buổi học này chưa có câu hỏi nào.",
+    "playAudio": "Phát âm thanh"
+  },
+  "participants": {
+    "heading": "Người trong phòng",
+    "handsRaised": "Đang giơ tay ({{count}})",
+    "listening": "Đang nghe",
+    "you": " (bạn)",
+    "handLabel": "giơ tay",
+    "host": "Giảng viên",
+    "inviteTitle": "Mời học viên phát biểu",
+    "invite": "Mời",
+    "handPosition": "Vị trí {{n}}"
+  },
+  "practice": {
+    "label": "Luyện nói",
+    "youSaid": "Bạn nói:",
+    "feedback": {
+      "great": "Tuyệt vời!",
+      "close": "Gần đúng — thử lại nhé",
+      "tryAgain": "Cố lên! Đọc lại lần nữa"
+    },
+    "buttons": {
+      "tryAloud": "Đọc theo",
+      "again": "Thử lại",
+      "stop": "Dừng",
+      "clear": "Xoá"
+    },
+    "unsupported": "Trình duyệt không hỗ trợ luyện nói. Hãy dùng Chrome/Edge để dùng tính năng này."
+  },
+  "translate": {
+    "loading": "Đang dịch…",
+    "pronounce": "Phát âm"
+  },
+  "slide": {
+    "vocabulary": "Từ vựng",
+    "example": "Ví dụ"
+  },
+  "reactions": {
+    "sendAria": "Gửi cảm xúc {{emoji}}"
+  }
+}

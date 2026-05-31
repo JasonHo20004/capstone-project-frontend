@@ -1,0 +1,184 @@
+{
+  "page": {
+    "title": "Flashcards",
+    "subtitle": "Create, edit, and study flashcard decks — gamified style!",
+    "deckCount": "{{count}} decks",
+    "cardCount": "{{count}} cards"
+  },
+  "tabs": {
+    "mine": "My Decks",
+    "explore": "Explore"
+  },
+  "explore": {
+    "heading": "Community Decks",
+    "searchPlaceholder": "Search decks...",
+    "loading": "Loading...",
+    "empty": "No public decks yet",
+    "emptyHint": "Create a deck and make it public to share with the community!",
+    "ownBadge": "Mine",
+    "viewAndStudy": "View & Study →"
+  },
+  "mine": {
+    "heading": "My Decks",
+    "aiGenerate": "AI Create Cards",
+    "addDeck": "Add Deck",
+    "loading": "Loading decks...",
+    "empty": "No decks yet",
+    "emptyHint": "Create your first deck to start your fun learning journey!",
+    "createNow": "Create Now"
+  },
+  "sheet": {
+    "study": "STUDY",
+    "noDesc": "No description.",
+    "queueStatus": {
+      "loading": "Calculating cards to review...",
+      "done": "All done! See you next time",
+      "newCards": "{{count}} new cards — ready for your first session",
+      "dueCards": "{{count}} cards due right now",
+      "publicDone": "All reviewed!",
+      "publicNew": "{{count}} new cards — ready to learn",
+      "publicDue": "{{count}} cards due for review"
+    },
+    "cardList": "Cards ({{count}})",
+    "readOnly": "Read only",
+    "addCard": "Add Card",
+    "resetProgress": "Reset deck progress",
+    "publicTitle": "Community Deck",
+    "loadingCards": "Loading...",
+    "emptyCards": "This deck has no cards yet.",
+    "emptyMyCards": "No cards in this deck yet",
+    "emptyMyCardsHint": "Add your first card to start studying!",
+    "addCardNow": "Add Card Now"
+  },
+  "dialogs": {
+    "createDeck": {
+      "title": "Create New Deck",
+      "desc": "Enter details for your deck",
+      "nameLabel": "Deck name *",
+      "namePlaceholder": "e.g. Business English Vocabulary",
+      "descLabel": "Description",
+      "descPlaceholder": "Short description",
+      "isPublic": "Public deck",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "editDeck": {
+      "title": "Edit Deck",
+      "desc": "Update deck information",
+      "nameLabel": "Deck name *",
+      "isPublic": "Public deck",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "deleteDeck": {
+      "title": "Are you sure you want to delete?",
+      "desc": "This action cannot be undone. This will permanently delete the deck {{name}} and all its cards.",
+      "cancel": "Cancel",
+      "confirm": "Continue delete"
+    },
+    "createCard": {
+      "title": "Add New Card",
+      "desc": "Add a card to the selected deck",
+      "frontLabel": "Front *",
+      "frontPlaceholder": "Word/phrase",
+      "backLabel": "Back *",
+      "backPlaceholder": "Definition/explanation",
+      "exampleLabel": "Example sentence",
+      "examplePlaceholder": "Example usage in a sentence",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "editCard": {
+      "title": "Edit Card",
+      "desc": "Update card content",
+      "frontLabel": "Front *",
+      "backLabel": "Back *",
+      "exampleLabel": "Example sentence",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "deleteCard": {
+      "title": "Are you sure you want to delete?",
+      "desc": "This action cannot be undone. This will permanently delete the card {{name}} from the deck.",
+      "cancel": "Cancel",
+      "confirm": "Continue delete"
+    },
+    "resetProgress": {
+      "title": "Reset all progress?",
+      "desc": "All learning progress for this deck will be deleted and you'll start from scratch. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Reset progress"
+    },
+    "ragGenerator": {
+      "title": "AI Flashcard Generator",
+      "desc": "Upload a file or enter text for AI to automatically create flashcards"
+    },
+    "studyMode": {
+      "title": "Study Mode"
+    }
+  },
+  "tags": {
+    "label": "Tags",
+    "searchPlaceholder": "Search tags...",
+    "selected": "{{count}} tags selected",
+    "selectPlaceholder": "Choose tags...",
+    "empty": "No tags found."
+  },
+  "toast": {
+    "deckNameRequired": "Please enter a deck name",
+    "selectDeckFirst": "Please select a deck first",
+    "cardFieldsRequired": "Please enter both front and back content"
+  },
+  "ragGenerator": {
+    "title": "AI Flashcard Generator",
+    "subtitle": "Upload document or enter text → Auto-create Flashcards → Q&A about content",
+    "ragBadge": "RAG-Powered",
+    "inputCard": {
+      "title": "Enter content",
+      "desc": "Choose input method: upload file or paste text directly",
+      "uploadTab": "Upload File",
+      "textTab": "Enter Text"
+    },
+    "dropzone": {
+      "hint": "Drag file here or click to select",
+      "formats": "Supports PDF, TXT (max 10MB)",
+      "deselect": "Deselect",
+      "textPlaceholder": "Paste or enter text here... (minimum 50 characters)\n\nExample: Paste an article, paragraph, lecture notes, or any learning content...",
+      "charCount": "{{count}} characters",
+      "charCountMin": "(minimum 50 required)",
+      "clearContent": "Clear content"
+    },
+    "settings": {
+      "title": "Settings",
+      "deckLabel": "Select Flashcard Deck",
+      "deckPlaceholder": "Choose an existing deck...",
+      "noDeck": "No decks yet. Please create a deck first.",
+      "generateBtn": "Create Flashcards with AI",
+      "generating": "Processing... (30-60s)"
+    },
+    "pipeline": {
+      "title": "RAG Pipeline",
+      "steps": {
+        "1file": "Upload PDF/TXT document",
+        "1text": "Enter text directly",
+        "2": "Extract & split content",
+        "3": "Embedding → Vector Store",
+        "4": "LLM auto-creates Flashcards",
+        "5": "Q&A → Retrieve → Generate"
+      }
+    },
+    "result": {
+      "successBadge": "Success",
+      "stats": "{{count}} flashcards • {{pages}} pages • {{chunks}} chunks",
+      "createNew": "Create New",
+      "openFlashcards": "Open Flashcards",
+      "chatTitle": "Q&A about document",
+      "chatBadge": "RAG",
+      "chatPlaceholder": "Ask about the document content...",
+      "hideSource": "Hide source",
+      "viewSource": "View {{count}} references",
+      "searching": "Searching in document...",
+      "send": "Send"
+    }
+  }
+}

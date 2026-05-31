@@ -214,7 +214,24 @@
       "couponFullCartOnly": "This coupon applies only to the full cart. Select all items to use it.",
       "couponApplied": "Coupon {{code}} applied",
       "couponDefaultError": "Could not apply the coupon"
+    },
+    "clearConfirm": {
+      "title": "Clear entire cart?",
+      "description": "All courses in your cart will be removed. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Remove all",
+      "clearing": "Removing…"
     }
+  },
+  "paymentDialog": {
+    "title": "Confirm payment",
+    "description": "Please review the order details before confirming.",
+    "purchaseDate": "Purchase date",
+    "total": "Total",
+    "items": "Items",
+    "empty": "No items to display.",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
   },
   "paymentResult": {
     "successTitle": "Payment successful",
@@ -230,6 +247,35 @@
     "statusFailed": "Failed",
     "goToWallet": "Go to wallet",
     "dashboard": "Dashboard"
+  },
+  "refunds": {
+    "title": "Refunds",
+    "subtitle": "Request refunds for past orders. Approved amounts are credited to your wallet.",
+    "myRequests": "My requests",
+    "myOrders": "My orders",
+    "emptyOrders": "You don't have any orders yet.",
+    "requestRefund": "Request refund",
+    "orderLabel": "Order",
+    "reasonLabel": "Reason",
+    "adminNote": "Admin reply",
+    "statusPending": "Pending review",
+    "statusApproved": "Approved",
+    "statusCompleted": "Completed — credited to wallet",
+    "statusRejected": "Rejected",
+    "toasts": {
+      "submitSuccess": "Refund request submitted; an admin will review it soon",
+      "submitError": "Failed to submit the request"
+    },
+    "dialog": {
+      "title": "Request refund",
+      "description": "Tell us why you want a refund for this order. Admins reply within 3–5 business days.",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. course content didn't match the description; the instructor never replied; video quality was poor…",
+      "counter": "{{count}}/1000 (minimum 10 characters)",
+      "cancel": "Cancel",
+      "submit": "Submit request",
+      "submitting": "Submitting…"
+    }
   },
   "notifications": {
     "title": "Notifications",
@@ -340,6 +386,51 @@
       "WITHDRAWAL_REJECTED": "Withdrawal rejected",
       "comment_report": "Comment report",
       "default": "Notification"
+    }
+  },
+  "avatarCrop": {
+    "title": "Edit profile picture",
+    "hint": "Drag to move • Scroll or use slider to zoom",
+    "reset": "Reset",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "sellerApplication": {
+    "title": "Apply to become an Instructor",
+    "description": "Please provide your expertise and certificate images for us to review.",
+    "expertiseLabel": "Expertise & Skills",
+    "expertisePlaceholder": "Enter expertise (e.g. IELTS 8.0, Business English...)",
+    "add": "Add",
+    "noExpertise": "No expertise added yet.",
+    "certLabel": "Certificate / Degree Photos",
+    "certUploadTitle": "Click to upload certificate photos",
+    "certUploadHint": "Supports JPG, PNG, WebP (max 5MB/file, 10 photos)",
+    "messageLabel": "Message for admin (optional)",
+    "messagePlaceholder": "Brief introduction about your teaching experience, why you want to become an instructor...",
+    "close": "Close",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "resubmit": "Resubmit",
+    "pending": {
+      "title": "Your application is pending review",
+      "message": "Please wait for the admin to review. You cannot submit a new application until a decision is made."
+    },
+    "approved": {
+      "title": "Your application has been approved",
+      "message": "You are already an instructor, no need to apply again."
+    },
+    "rejected": {
+      "title": "Previous application was rejected",
+      "reason": "Reason: ",
+      "canResubmit": "You can resubmit after fixing the issues above."
+    },
+    "toasts": {
+      "expertiseExists": "This expertise already exists",
+      "filesTooLarge": "Some files are too large (>5MB) and were skipped.",
+      "maxImages": "Maximum 10 photos allowed.",
+      "blocked": "You cannot submit an application at this time.",
+      "certRequired": "Please upload at least 1 certificate photo.",
+      "expertiseRequired": "Please add at least 1 expertise."
     }
   }
 }

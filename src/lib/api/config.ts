@@ -88,6 +88,10 @@ apiClient.interceptors.response.use(
 
     // Chỉ xử lý lỗi 401 (Unauthorized) và không phải là request retry
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (!localStorage.getItem("accessToken")) {
+        return Promise.reject(error);
+      }
+
       // Nếu đang trong quá trình refresh, đưa request vào hàng đợi
       if (isRefreshing) {
         return new Promise((resolve, reject) => {

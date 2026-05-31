@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { Lock, Eye, EyeOff, Loader2, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/api/use-auth";
@@ -13,6 +14,7 @@ const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { resetPassword, isResettingPassword } = useAuth();
+  const { t } = useTranslation("auth");
 
   const token = searchParams.get("token") ?? "";
 
@@ -24,11 +26,11 @@ const ResetPassword = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Mật khẩu phải có ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`);
+      setError(t("resetPassword.errors.tooShort", { min: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (password !== confirm) {
-      setError("Mật khẩu nhập lại không khớp.");
+      setError(t("resetPassword.errors.mismatch"));
       return;
     }
     setError("");
@@ -36,8 +38,8 @@ const ResetPassword = () => {
       { token, password },
       {
         onSuccess: () => {
-          toast.success("Đặt lại mật khẩu thành công!", {
-            description: "Hãy đăng nhập bằng mật khẩu mới.",
+          toast.success(t("resetPassword.successToast"), {
+            description: t("resetPassword.successDesc"),
           });
           navigate("/login", { replace: true });
         },
@@ -45,7 +47,7 @@ const ResetPassword = () => {
           const axiosError = err as AxiosError<{ error?: string }>;
           setError(
             axiosError?.response?.data?.error ??
-              "Liên kết không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu lại.",
+              t("resetPassword.errors.invalidOrExpired"),
           );
         },
       },
@@ -60,14 +62,13 @@ const ResetPassword = () => {
           <div className="flex flex-col items-center text-center space-y-4">
             <XCircle className="h-12 w-12 text-destructive" />
             <h1 className="text-xl font-semibold text-foreground">
-              Liên kết không hợp lệ
+              {t("resetPassword.invalidLink.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Liên kết đặt lại mật khẩu thiếu thông tin hoặc đã hỏng. Hãy yêu cầu
-              một liên kết mới.
+              {t("resetPassword.invalidLink.desc")}
             </p>
             <Link to="/forgot-password" className="w-full">
-              <Button className="w-full">Yêu cầu liên kết mới</Button>
+              <Button className="w-full">{t("resetPassword.invalidLink.requestNew")}</Button>
             </Link>
           </div>
         </div>
@@ -81,16 +82,16 @@ const ResetPassword = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="text-center space-y-1.5">
             <h1 className="text-xl font-semibold text-foreground">
-              Đặt lại mật khẩu
+              {t("resetPassword.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Chọn mật khẩu mới cho tài khoản của bạn.
+              {t("resetPassword.subtitle")}
             </p>
           </div>
 
           <div className="space-y-1.5">
             <label htmlFor="password" className="text-xs font-medium text-muted-foreground">
-              Mật khẩu mới
+              {t("resetPassword.newPasswordLabel")}
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -98,7 +99,7 @@ const ResetPassword = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 className="pl-10 pr-10"
-                placeholder="Tối thiểu 8 ký tự"
+                placeholder={t("resetPassword.newPasswordPlaceholder")}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -110,7 +111,7 @@ const ResetPassword = () => {
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                aria-label={showPassword ? t("resetPassword.hidePassword") : t("resetPassword.showPassword")}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -119,7 +120,7 @@ const ResetPassword = () => {
 
           <div className="space-y-1.5">
             <label htmlFor="confirm" className="text-xs font-medium text-muted-foreground">
-              Nhập lại mật khẩu
+              {t("resetPassword.confirmPasswordLabel")}
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -127,7 +128,7 @@ const ResetPassword = () => {
                 id="confirm"
                 type={showPassword ? "text" : "password"}
                 className="pl-10"
-                placeholder="Nhập lại mật khẩu mới"
+                placeholder={t("resetPassword.confirmPasswordPlaceholder")}
                 value={confirm}
                 onChange={(e) => {
                   setConfirm(e.target.value);
@@ -142,10 +143,10 @@ const ResetPassword = () => {
             {isResettingPassword ? (
               <>
                 <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                Đang đặt lại...
+                {t("resetPassword.submitting")}
               </>
             ) : (
-              "Đặt lại mật khẩu"
+              t("resetPassword.submit")
             )}
           </Button>
 
@@ -153,7 +154,7 @@ const ResetPassword = () => {
             to="/login"
             className="block text-center text-sm text-muted-foreground hover:text-foreground"
           >
-            Về trang đăng nhập
+            {t("resetPassword.backToLogin")}
           </Link>
         </form>
       </div>

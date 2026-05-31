@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect, lazy, Suspense } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,14 +45,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import type { FlashcardDeck, Flashcard, Tag } from "@/domain";
+import type { FlashcardDeck, Flashcard } from "@/domain";
 import RagGenerator from "./RagGenerator";
 import { DeckList } from "@/components/user/flashcards/DeckList";
 import CardList from "@/components/user/flashcards/CardList";
 import StudyMode from "@/components/user/flashcards/StudyMode";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { MouseParticles } from "@/components/ui/mouse-particles";
-import { formatDate, formatDateForInput } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 import {
   useGetDecks,
@@ -87,6 +88,7 @@ import {
 
 const Flashcards = () => {
   const { user } = useUser();
+  const { t } = useTranslation("flashcards");
 
   // ── Tab ────────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'mine' | 'explore'>('mine');
@@ -185,7 +187,7 @@ const Flashcards = () => {
 
   const saveCreateDeck = () => {
     if (!deckForm.title.trim()) {
-      toast.error("Vui lòng nhập tên bộ thẻ");
+      toast.error(t("toast.deckNameRequired"));
       return;
     }
     createDeckMutation.mutate(deckForm, {
@@ -209,7 +211,7 @@ const Flashcards = () => {
   const saveEditDeck = () => {
     if (!editingDeck) return;
     if (!deckForm.title.trim()) {
-      toast.error("Vui lòng nhập tên bộ thẻ");
+      toast.error(t("toast.deckNameRequired"));
       return;
     }
     updateDeckMutation.mutate(
@@ -238,7 +240,7 @@ const Flashcards = () => {
   // Card handlers
   const openCreateCard = () => {
     if (!selectedDeckId) {
-      toast.error('Hãy chọn một bộ thẻ trước');
+      toast.error(t("toast.selectDeckFirst"));
       return;
     }
     setCardForm({ frontContent: '', backContent: '', exampleSentence: '' });
@@ -248,7 +250,7 @@ const Flashcards = () => {
   const saveCreateCard = () => {
     if (!selectedDeckId) return;
     if (!cardForm.frontContent.trim() || !cardForm.backContent.trim()) {
-      toast.error('Vui lòng nhập mặt trước và mặt sau');
+      toast.error(t("toast.cardFieldsRequired"));
       return;
     }
     createCardMutation.mutate({
@@ -271,7 +273,7 @@ const Flashcards = () => {
   const saveEditCard = () => {
     if (!editingCard) return;
     if (!cardForm.frontContent.trim() || !cardForm.backContent.trim()) {
-      toast.error('Vui lòng nhập mặt trước và mặt sau');
+      toast.error(t("toast.cardFieldsRequired"));
       return;
     }
     updateCardMutation.mutate({
@@ -299,7 +301,7 @@ const Flashcards = () => {
   // Tag selector shared component
   const renderTagSelector = () => (
     <div className="space-y-2">
-      <Label className="text-slate-700 font-semibold">Tags</Label>
+      <Label className="text-slate-700 font-semibold">{t("tags.label")}</Label>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -310,16 +312,16 @@ const Flashcards = () => {
             disabled={isLoadingTags}
           >
             {deckForm.tagIds?.length ?? 0 > 0
-              ? `Đã chọn ${deckForm.tagIds?.length} tag`
-              : "Chọn tag..."}
+              ? t("tags.selected", { count: deckForm.tagIds?.length })
+              : t("tags.selectPlaceholder")}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
           <Command>
-            <CommandInput placeholder="Tìm tag..." />
+            <CommandInput placeholder={t("tags.searchPlaceholder")} />
             <CommandList>
-              <CommandEmpty>Không tìm thấy tag.</CommandEmpty>
+              <CommandEmpty>{t("tags.empty")}</CommandEmpty>
               <CommandGroup>
                 {allTags.map((tag) => (
                   <CommandItem
@@ -379,23 +381,23 @@ const Flashcards = () => {
                 <Zap className="w-5 h-5 text-amber-300" />
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                Flashcards
+                {t("page.title")}
               </h1>
             </div>
             <p className="text-indigo-100 text-base md:text-lg font-medium">
-              Tạo, chỉnh sửa, và học bộ thẻ ghi nhớ — phong cách gamified!
+              {t("page.subtitle")}
             </p>
 
             {/* Quick stats */}
             <div className="flex gap-3 mt-4">
               <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-semibold text-white">
                 <Layers className="w-3.5 h-3.5" />
-                {decks.length} bộ thẻ
+                {t("page.deckCount", { count: decks.length })}
               </div>
               {selectedDeck && (
                 <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-semibold text-white">
                   <BookOpen className="w-3.5 h-3.5" />
-                  {selectedDeckCards.length} thẻ
+                  {t("page.cardCount", { count: selectedDeckCards.length })}
                 </div>
               )}
             </div>
@@ -412,7 +414,7 @@ const Flashcards = () => {
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            <Lock className="w-4 h-4" /> Bộ thẻ của tôi
+            <Lock className="w-4 h-4" /> {t("tabs.mine")}
           </button>
           <button
             onClick={() => setActiveTab('explore')}
@@ -422,7 +424,7 @@ const Flashcards = () => {
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            <Globe className="w-4 h-4" /> Khám phá
+            <Globe className="w-4 h-4" /> {t("tabs.explore")}
           </button>
         </div>
 
@@ -433,13 +435,13 @@ const Flashcards = () => {
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                   <Globe className="w-6 h-6 text-indigo-500" />
-                  Bộ thẻ cộng đồng
+                  {t("explore.heading")}
                 </h2>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Tìm bộ thẻ..."
+                    placeholder={t("explore.searchPlaceholder")}
                     className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 bg-white"
                     value={publicSearchInput}
                     onChange={(e) => setPublicSearchInput(e.target.value)}
@@ -455,8 +457,8 @@ const Flashcards = () => {
               ) : !publicDecks || publicDecks.length === 0 ? (
                 <div className="flex flex-col items-center gap-4 py-20 text-center border-2 border-dashed border-indigo-100 rounded-3xl bg-indigo-50/30">
                   <Globe className="w-12 h-12 text-indigo-200" />
-                  <p className="font-semibold text-slate-600">Chưa có bộ thẻ công khai nào</p>
-                  <p className="text-sm text-slate-400">Tạo bộ thẻ và bật công khai để chia sẻ với cộng đồng!</p>
+                  <p className="font-semibold text-slate-600">{t("explore.empty")}</p>
+                  <p className="text-sm text-slate-400">{t("explore.emptyHint")}</p>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -476,7 +478,7 @@ const Flashcards = () => {
                             {deck.title}
                           </h3>
                           {isOwn ? (
-                            <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full shrink-0">Của tôi</span>
+                            <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full shrink-0">{t("explore.ownBadge")}</span>
                           ) : (
                             <Globe className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                           )}
@@ -498,7 +500,7 @@ const Flashcards = () => {
                             {new Date(deck.createdAt).toLocaleDateString('vi-VN')}
                           </span>
                           <span className="text-xs font-semibold text-indigo-600 group-hover:underline">
-                            Xem & Học →
+                            {t("explore.viewAndStudy")}
                           </span>
                         </div>
                       </div>
@@ -517,7 +519,7 @@ const Flashcards = () => {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                 <Layers className="w-6 h-6 text-indigo-500" />
-                Bộ thẻ của tôi
+                {t("mine.heading")}
               </h2>
               <div className="flex items-center gap-3">
                 <Button
@@ -525,13 +527,13 @@ const Flashcards = () => {
                   variant="outline"
                   className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
                 >
-                  <Brain className="w-5 h-5 mr-1" /> AI Tạo thẻ
+                  <Brain className="w-5 h-5 mr-1" /> {t("mine.aiGenerate")}
                 </Button>
                 <Button
                   onClick={openCreateDeck}
                   className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 shadow-md shadow-indigo-500/20 transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
                 >
-                  <Plus className="w-5 h-5 mr-1" /> Thêm bộ thẻ
+                  <Plus className="w-5 h-5 mr-1" /> {t("mine.addDeck")}
                 </Button>
               </div>
             </div>
@@ -539,7 +541,7 @@ const Flashcards = () => {
             {isLoadingDecks ? (
               <div className="flex flex-col items-center justify-center p-16 rounded-3xl border border-slate-200 bg-white">
                 <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-                <p className="text-slate-400 mt-4 font-medium">Đang tải danh sách bộ thẻ...</p>
+                <p className="text-slate-400 mt-4 font-medium">{t("mine.loading")}</p>
               </div>
             ) : decks.length > 0 ? (
               <DeckList
@@ -557,9 +559,9 @@ const Flashcards = () => {
             ) : (
               <div className="border-2 border-dashed border-indigo-200 rounded-3xl p-16 text-center bg-indigo-50/50 max-w-2xl mx-auto">
                 <Sparkles className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-700 mb-2">Chưa có bộ thẻ nào</h3>
-                <p className="text-slate-500 mb-6">Tạo bộ thẻ đầu tiên của bạn để bắt đầu hành trình học tập đầy thú vị!</p>
-                <Button onClick={openCreateDeck} className="rounded-xl px-8">Tạo ngay</Button>
+                <h3 className="text-xl font-bold text-slate-700 mb-2">{t("mine.empty")}</h3>
+                <p className="text-slate-500 mb-6">{t("mine.emptyHint")}</p>
+                <Button onClick={openCreateDeck} className="rounded-xl px-8">{t("mine.createNow")}</Button>
               </div>
             )}
           </div>
@@ -579,11 +581,11 @@ const Flashcards = () => {
                     <Globe className="w-6 h-6" />
                   </div>
                   <SheetTitle className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                    {selectedPublicDeck?.title || "Bộ thẻ cộng đồng"}
+                    {selectedPublicDeck?.title || t("sheet.publicTitle")}
                   </SheetTitle>
                 </div>
                 <SheetDescription className="text-base text-slate-500 mt-2 max-w-2xl text-left">
-                  {selectedPublicDeck?.description || "Không có mô tả."}
+                  {selectedPublicDeck?.description || t("sheet.noDesc")}
                 </SheetDescription>
                 {selectedPublicDeck?.deckTags?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3">
@@ -611,10 +613,10 @@ const Flashcards = () => {
                         <Clock className="w-4 h-4" />
                       )}
                       {publicQueueCount === 0
-                        ? 'Đã ôn hết!'
+                        ? t("sheet.queueStatus.publicDone")
                         : publicHasOnlyNewCards
-                        ? `${publicQueueCount} thẻ mới — sẵn sàng để học`
-                        : `${publicQueueCount} thẻ cần ôn tập`}
+                        ? t("sheet.queueStatus.publicNew", { count: publicQueueCount })
+                        : t("sheet.queueStatus.publicDue", { count: publicQueueCount })}
                     </div>
                   </div>
                 )}
@@ -626,7 +628,7 @@ const Flashcards = () => {
                   size="lg"
                   className="h-14 px-8 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 shadow-xl shadow-emerald-500/20 text-white rounded-2xl text-lg font-bold transition-all duration-300 hover:scale-105 active:scale-95"
                 >
-                  <Play className="w-6 h-6 mr-2 fill-white" /> HỌC THẺ
+                  <Play className="w-6 h-6 mr-2 fill-white" /> {t("sheet.study")}
                 </Button>
                 {publicQueueCount > 0 && (
                   <span className={`absolute -top-2 -right-2 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
@@ -643,8 +645,8 @@ const Flashcards = () => {
             <div className="max-w-5xl mx-auto space-y-6">
               <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                 <Layers className="w-5 h-5 text-indigo-500" />
-                Danh sách thẻ ({publicCards.length})
-                <span className="ml-2 text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Chỉ xem</span>
+                {t("sheet.cardList", { count: publicCards.length })}
+                <span className="ml-2 text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{t("sheet.readOnly")}</span>
               </h3>
 
               {isLoadingPublicCards ? (
@@ -654,7 +656,7 @@ const Flashcards = () => {
               ) : publicCards.length === 0 ? (
                 <div className="border border-dashed border-slate-300 rounded-2xl p-12 text-center">
                   <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">Bộ thẻ này chưa có thẻ nào.</p>
+                  <p className="text-slate-500">{t("sheet.emptyCards")}</p>
                 </div>
               ) : (
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
@@ -681,7 +683,7 @@ const Flashcards = () => {
         }
       }}>
         <DialogContent className="sm:max-w-2xl p-0 bg-transparent border-0 shadow-none" aria-describedby={undefined}>
-          <DialogTitle className="sr-only">Chế độ học thẻ</DialogTitle>
+          <DialogTitle className="sr-only">{t("dialogs.studyMode.title")}</DialogTitle>
           <StudyMode
             deckId={selectedPublicDeckId!}
             onClose={() => {
@@ -702,7 +704,7 @@ const Flashcards = () => {
              {/* Subtle gradient bloblets */}
              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-500/5 rounded-full blur-2xl" />
-             
+
              <div className="relative z-10 max-w-5xl mx-auto flex flex-col md:flex-row gap-6 md:items-end md:justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
@@ -710,20 +712,13 @@ const Flashcards = () => {
                       <BookOpen className="w-6 h-6" />
                     </div>
                     <SheetTitle className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                      {selectedDeck?.title || "Chi tiết bộ thẻ"}
+                      {selectedDeck?.title}
                     </SheetTitle>
                   </div>
                   <SheetDescription className="text-base text-slate-500 mt-2 max-w-2xl text-left truncate">
-                    {selectedDeck?.description || "Không có mô tả."}
+                    {selectedDeck?.description || t("sheet.noDesc")}
                   </SheetDescription>
-                  
-                  {/* Status Indicator inside Sheet Header.
-                      Three meaningful states (drives both copy & color):
-                       • loading           → slate / spinner
-                       • queue empty       → emerald / "Đã ôn hết"
-                       • queue all NEW     → indigo / welcoming "ready to learn"
-                                              (first-time user or freshly-added cards)
-                       • queue has due     → amber / "needs review now" */}
+
                   {selectedDeckId && selectedDeckCards.length > 0 && (
                     <div className="flex flex-wrap items-center gap-3 mt-4">
                       <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold shadow-sm transition-all duration-300 ${
@@ -747,12 +742,12 @@ const Flashcards = () => {
                         )}
                         <span>
                           {isLoadingQueue
-                            ? 'Đang tính toán thẻ cần ôn...'
+                            ? t("sheet.queueStatus.loading")
                             : reviewQueueCount === 0
-                            ? 'Đã ôn hết! Hẹn gặp lại vào lần tới'
+                            ? t("sheet.queueStatus.done")
                             : hasOnlyNewCards
-                            ? `${reviewQueueCount} thẻ mới — sẵn sàng cho buổi học đầu tiên`
-                            : `${reviewQueueCount} thẻ cần ôn tập ngay bây giờ`}
+                            ? t("sheet.queueStatus.newCards", { count: reviewQueueCount })
+                            : t("sheet.queueStatus.dueCards", { count: reviewQueueCount })}
                         </span>
                       </div>
                     </div>
@@ -767,7 +762,7 @@ const Flashcards = () => {
                           size="lg"
                           disabled={!selectedDeckId || resetProgressMutation.isPending}
                           className="h-14 w-14 md:w-14 rounded-2xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
-                          aria-label="Xóa tiến độ học bộ thẻ này"
+                          aria-label={t("sheet.resetProgress")}
                         >
                           {resetProgressMutation.isPending ? (
                             <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
@@ -778,18 +773,18 @@ const Flashcards = () => {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Xóa toàn bộ tiến độ?</AlertDialogTitle>
+                          <AlertDialogTitle>{t("dialogs.resetProgress.title")}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Toàn bộ tiến độ học của bộ thẻ này sẽ bị xóa và bạn sẽ học lại từ đầu. Hành động này không thể hoàn tác.
+                            {t("dialogs.resetProgress.desc")}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Hủy</AlertDialogCancel>
+                          <AlertDialogCancel>{t("dialogs.resetProgress.cancel")}</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => selectedDeckId && resetProgressMutation.mutate(selectedDeckId)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            Xóa tiến độ
+                            {t("dialogs.resetProgress.confirm")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -802,12 +797,10 @@ const Flashcards = () => {
                     >
                       {/* Shine effect */}
                       <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
-                      
-                      <Play className="w-6 h-6 mr-2 fill-white" /> HỌC THẺ
+
+                      <Play className="w-6 h-6 mr-2 fill-white" /> {t("sheet.study")}
                     </Button>
-                    
-                    {/* Counter badge — red urgency for due cards, indigo welcome
-                        for first-time users (queue all NEW). */}
+
                     {reviewQueueCount > 0 && (
                         <span className={`absolute -top-2 -right-2 md:-right-4 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
                           hasOnlyNewCards
@@ -826,7 +819,7 @@ const Flashcards = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                   <Layers className="w-5 h-5 text-indigo-500" />
-                  Danh sách thẻ ({selectedDeckCards.length})
+                  {t("sheet.cardList", { count: selectedDeckCards.length })}
                 </h3>
                 <Button
                   onClick={openCreateCard}
@@ -834,7 +827,7 @@ const Flashcards = () => {
                   variant="outline"
                   className="rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 font-semibold shadow-sm bg-white"
                 >
-                  <Plus className="w-4 h-4 mr-1" /> Thêm thẻ mới
+                  <Plus className="w-4 h-4 mr-1" /> {t("sheet.addCard")}
                 </Button>
               </div>
 
@@ -843,13 +836,13 @@ const Flashcards = () => {
                   <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
                 </div>
               )}
-              
+
               {!isLoadingCards && selectedDeckCards.length === 0 ? (
                 <div className="border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white shadow-sm">
                   <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-lg text-slate-600 font-bold mb-2">Chưa có thẻ nào trong bộ này</p>
-                  <p className="text-slate-400 mb-6">Thêm thẻ đầu tiên để bắt đầu học nhé!</p>
-                  <Button onClick={openCreateCard} className="rounded-xl px-6">Thêm thẻ ngay</Button>
+                  <p className="text-lg text-slate-600 font-bold mb-2">{t("sheet.emptyMyCards")}</p>
+                  <p className="text-slate-400 mb-6">{t("sheet.emptyMyCardsHint")}</p>
+                  <Button onClick={openCreateCard} className="rounded-xl px-6">{t("sheet.addCardNow")}</Button>
                 </div>
               ) : !isLoadingCards && (
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
@@ -871,26 +864,26 @@ const Flashcards = () => {
               <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
                 <Plus className="w-4 h-4 text-indigo-600" />
               </div>
-              Tạo bộ thẻ mới
+              {t("dialogs.createDeck.title")}
             </DialogTitle>
-            <DialogDescription>Nhập thông tin cho bộ thẻ của bạn</DialogDescription>
+            <DialogDescription>{t("dialogs.createDeck.desc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">Tên bộ thẻ *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.nameLabel")}</Label>
               <Input
                 value={deckForm.title}
                 onChange={(e) => setDeckForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="Ví dụ: Từ vựng Business English"
+                placeholder={t("dialogs.createDeck.namePlaceholder")}
                 className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">Mô tả</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
               <Textarea
                 value={deckForm.description}
                 onChange={(e) => setDeckForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Mô tả ngắn về bộ thẻ"
+                placeholder={t("dialogs.createDeck.descPlaceholder")}
                 className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
@@ -902,12 +895,12 @@ const Flashcards = () => {
                   setDeckForm((f) => ({ ...f, isPublic: !!checked }))
                 }
               />
-              <Label className="text-slate-600">Bộ thẻ công khai</Label>
+              <Label className="text-slate-600">{t("dialogs.createDeck.isPublic")}</Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreatingDeck(false)}>
-              Hủy
+              {t("dialogs.createDeck.cancel")}
             </Button>
             <Button
               onClick={saveCreateDeck}
@@ -917,7 +910,7 @@ const Flashcards = () => {
               {createDeckMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Tạo
+              {t("dialogs.createDeck.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -931,13 +924,13 @@ const Flashcards = () => {
               <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
                 <Edit className="w-4 h-4 text-amber-600" />
               </div>
-              Chỉnh sửa bộ thẻ
+              {t("dialogs.editDeck.title")}
             </DialogTitle>
-            <DialogDescription>Cập nhật thông tin bộ thẻ</DialogDescription>
+            <DialogDescription>{t("dialogs.editDeck.desc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">Tên bộ thẻ *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.editDeck.nameLabel")}</Label>
               <Input
                 value={deckForm.title}
                 onChange={(e) => setDeckForm((f) => ({ ...f, title: e.target.value }))}
@@ -945,7 +938,7 @@ const Flashcards = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">Mô tả</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
               <Textarea
                 value={deckForm.description}
                 onChange={(e) => setDeckForm((f) => ({ ...f, description: e.target.value }))}
@@ -960,12 +953,12 @@ const Flashcards = () => {
                   setDeckForm((f) => ({ ...f, isPublic: !!checked }))
                 }
               />
-              <Label className="text-slate-600">Bộ thẻ công khai</Label>
+              <Label className="text-slate-600">{t("dialogs.editDeck.isPublic")}</Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingDeck(null)}>
-              Hủy
+              {t("dialogs.editDeck.cancel")}
             </Button>
             <Button
               onClick={saveEditDeck}
@@ -975,7 +968,7 @@ const Flashcards = () => {
               {updateDeckMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Lưu
+              {t("dialogs.editDeck.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -992,19 +985,15 @@ const Flashcards = () => {
               <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
                 <Trash2 className="w-4 h-4 text-red-600" />
               </div>
-              Bạn có chắc chắn muốn xóa?
+              {t("dialogs.deleteDeck.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn bộ thẻ
-              <strong className="text-foreground">
-                {" "}{deletingDeck?.title}{" "}
-              </strong>
-              và tất cả các thẻ con bên trong.
+              {t("dialogs.deleteDeck.desc", { name: deletingDeck?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletingDeck(null)}>
-              Hủy
+              {t("dialogs.deleteDeck.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-bold"
@@ -1014,7 +1003,7 @@ const Flashcards = () => {
               {deleteDeckMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Tiếp tục xóa
+              {t("dialogs.deleteDeck.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1028,42 +1017,42 @@ const Flashcards = () => {
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                 <Plus className="w-4 h-4 text-emerald-600" />
               </div>
-              Thêm thẻ mới
+              {t("dialogs.createCard.title")}
             </DialogTitle>
-            <DialogDescription>Thêm thẻ vào bộ thẻ đang chọn</DialogDescription>
+            <DialogDescription>{t("dialogs.createCard.desc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">Mặt trước *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.frontLabel")}</Label>
               <Input
                 value={cardForm.frontContent}
                 onChange={(e) => setCardForm((f) => ({ ...f, frontContent: e.target.value }))}
-                placeholder="Từ/cụm từ"
+                placeholder={t("dialogs.createCard.frontPlaceholder")}
                 className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">Mặt sau *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.backLabel")}</Label>
               <Textarea
                 value={cardForm.backContent}
                 onChange={(e) => setCardForm((f) => ({ ...f, backContent: e.target.value }))}
-                placeholder="Định nghĩa/giải thích"
+                placeholder={t("dialogs.createCard.backPlaceholder")}
                 className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">Câu ví dụ</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.exampleLabel")}</Label>
               <Textarea
                 value={cardForm.exampleSentence}
                 onChange={(e) => setCardForm((f) => ({ ...f, exampleSentence: e.target.value }))}
-                placeholder="Ví dụ sử dụng trong câu"
+                placeholder={t("dialogs.createCard.examplePlaceholder")}
                 className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreatingCard(false)}>
-              Hủy
+              {t("dialogs.createCard.cancel")}
             </Button>
             <Button
               onClick={saveCreateCard}
@@ -1073,7 +1062,7 @@ const Flashcards = () => {
               {createCardMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Tạo
+              {t("dialogs.createCard.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1087,14 +1076,14 @@ const Flashcards = () => {
               <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
                 <Edit className="w-4 h-4 text-amber-600" />
               </div>
-              Chỉnh sửa thẻ
+              {t("dialogs.editCard.title")}
             </DialogTitle>
-            <DialogDescription>Cập nhật nội dung thẻ</DialogDescription>
+            <DialogDescription>{t("dialogs.editCard.desc")}</DialogDescription>
           </DialogHeader>
           {editingCard && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-slate-700 font-semibold">Mặt trước *</Label>
+                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.frontLabel")}</Label>
                 <Input
                   value={cardForm.frontContent}
                   onChange={(e) => setCardForm((f) => ({ ...f, frontContent: e.target.value }))}
@@ -1102,7 +1091,7 @@ const Flashcards = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 font-semibold">Mặt sau *</Label>
+                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.backLabel")}</Label>
                 <Textarea
                   value={cardForm.backContent}
                   onChange={(e) => setCardForm((f) => ({ ...f, backContent: e.target.value }))}
@@ -1110,7 +1099,7 @@ const Flashcards = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 font-semibold">Câu ví dụ</Label>
+                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.exampleLabel")}</Label>
                 <Textarea
                   value={cardForm.exampleSentence}
                   onChange={(e) => setCardForm((f) => ({ ...f, exampleSentence: e.target.value }))}
@@ -1121,7 +1110,7 @@ const Flashcards = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingCard(null)}>
-              Hủy
+              {t("dialogs.editCard.cancel")}
             </Button>
             <Button
               onClick={saveEditCard}
@@ -1131,7 +1120,7 @@ const Flashcards = () => {
               {updateCardMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Lưu
+              {t("dialogs.editCard.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1145,17 +1134,15 @@ const Flashcards = () => {
               <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
                 <Trash2 className="w-4 h-4 text-red-600" />
               </div>
-              Bạn có chắc chắn muốn xóa?
+              {t("dialogs.deleteCard.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn thẻ
-              <strong className="text-foreground"> {deletingCard?.frontContent} </strong>
-              khỏi bộ thẻ.
+              {t("dialogs.deleteCard.desc", { name: deletingCard?.frontContent })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletingCard(null)}>
-              Hủy
+              {t("dialogs.deleteCard.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-bold"
@@ -1165,7 +1152,7 @@ const Flashcards = () => {
               {deleteCardMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Tiếp tục xóa
+              {t("dialogs.deleteCard.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1179,9 +1166,9 @@ const Flashcards = () => {
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                 <Brain className="w-4 h-4 text-emerald-600" />
               </div>
-              AI Flashcard Generator
+              {t("dialogs.ragGenerator.title")}
             </DialogTitle>
-            <DialogDescription>Upload file hoặc nhập văn bản để AI tự động tạo flashcard</DialogDescription>
+            <DialogDescription>{t("dialogs.ragGenerator.desc")}</DialogDescription>
           </DialogHeader>
           <RagGenerator embedded />
         </DialogContent>
@@ -1191,19 +1178,17 @@ const Flashcards = () => {
       <Dialog open={studyDialogOpen} onOpenChange={(open) => {
         setStudyDialogOpen(open);
         if (!open && selectedDeckId) {
-          // Bắt buộc refetch queue khi đóng dialog để cập nhật lại số lượng thẻ
           import("@/hooks/api/use-flashcards").then(module => {
             queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedDeckId) });
           });
         }
       }}>
         <DialogContent className="sm:max-w-2xl p-0 bg-transparent border-0 shadow-none" aria-describedby={undefined}>
-          <DialogTitle className="sr-only">Chế độ học thẻ</DialogTitle>
+          <DialogTitle className="sr-only">{t("dialogs.studyMode.title")}</DialogTitle>
           <StudyMode
             deckId={selectedDeckId!}
             onClose={() => {
               setStudyDialogOpen(false);
-              // Invalidate thủ công lần nữa cho chắc nếu đóng qua nút
               import("@/hooks/api/use-flashcards").then(module => {
                 queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedDeckId!) });
               });

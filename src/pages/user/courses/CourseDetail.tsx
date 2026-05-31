@@ -210,7 +210,9 @@ const CourseDetail = () => {
 
   const handleLessonClick = () => {
     if (!user) {
-      navigate('/login');
+      toast.warning(t('courseDetail.toasts.loginRequiredLesson'), {
+        action: { label: t('courseDetail.toasts.loginAction'), onClick: () => navigate('/login') },
+      });
       return;
     }
     if (!isPurchased) {
