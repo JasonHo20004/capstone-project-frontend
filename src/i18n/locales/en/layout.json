@@ -26,6 +26,7 @@
   "publicNav": {
     "home": "Home",
     "about": "About",
+    "services": "Services",
     "courses": "Courses",
     "pricing": "Pricing",
     "workspace": "Learning Workspace",
@@ -54,7 +55,7 @@
     "labelShort": "Pro"
   },
   "footer": {
-    "rights": "© {{year}} SkillBoost. All rights reserved.",
+    "rights": "© {{year}} Alicia. All rights reserved.",
     "brandDescription": "Elevate your English skills with expert-led courses and interactive learning experiences.",
     "quickLinks": "Quick links",
     "viewCourses": "Browse courses",

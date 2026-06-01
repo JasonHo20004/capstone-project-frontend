@@ -26,12 +26,33 @@
     "floatingCard": {
       "count": "2,500+",
       "label": "Học viên đăng ký trong tuần này"
-    }
+    },
+    "aiCard": {
+      "title": "AI chấm Speaking",
+      "score": "Band 7.5",
+      "note": "Chấm trong vài giây"
+    },
+    "streak": {
+      "count": "12",
+      "label": "Ngày liên tục"
+    },
+    "skills": [
+      "IELTS",
+      "TOEIC",
+      "Speaking",
+      "Writing",
+      "Nghe",
+      "Đọc",
+      "Ngữ pháp",
+      "Từ vựng",
+      "Phát âm",
+      "Tiếng Anh thương mại"
+    ]
   },
   "features": {
     "eyebrow": "Tại sao chọn chúng tôi",
     "title": "Vì sao chọn",
-    "titleAccent": "SkillBoost",
+    "titleAccent": "Alicia",
     "subtitle": "Chúng tôi cung cấp mọi thứ bạn cần để thành thạo tiếng Anh và đạt được mục tiêu học tập",
     "items": {
       "expert": {
@@ -60,6 +81,81 @@
       }
     }
   },
+  "services": {
+    "eyebrow": "Tất cả trong một nền tảng",
+    "title": "Mọi công cụ bạn cần để",
+    "titleAccent": "chinh phục tiếng Anh",
+    "subtitle": "Từ AI chấm Speaking & Writing đến lộ trình cá nhân hóa, luyện tập có gamification và lớp học trực tiếp. Tất cả ở cùng một nơi.",
+    "items": {
+      "aiGrading": {
+        "badge": "Ứng dụng AI",
+        "title": "AI chấm Speaking & Writing",
+        "description": "Ghi âm hoặc viết bài và nhận ngay band điểm cùng nhận xét chi tiết theo từng tiêu chí, như một giám khảo thật.",
+        "overall": "Tổng",
+        "criteria": {
+          "fluency": "Trôi chảy & mạch lạc",
+          "lexical": "Vốn từ vựng",
+          "grammar": "Ngữ pháp",
+          "pronunciation": "Phát âm"
+        }
+      },
+      "placement": {
+        "title": "Bài test xếp trình độ",
+        "description": "Xác định chính xác trình độ của bạn trong vài phút với bài test thích ứng theo từng câu trả lời."
+      },
+      "learningPath": {
+        "title": "Lộ trình học cá nhân hóa",
+        "description": "Nhận lộ trình từng bước được thiết kế riêng theo mục tiêu, trình độ và thời gian của bạn."
+      },
+      "skillTree": {
+        "title": "Cây kỹ năng gamification",
+        "description": "Mở khóa từng kỹ năng và biến quá trình tiến bộ thành một trò chơi cuốn hút."
+      },
+      "flashcards": {
+        "title": "Flashcard thông minh (SRS)",
+        "description": "Ghi nhớ từ vựng lâu dài với bộ thẻ lặp lại ngắt quãng, nhắc lại đúng lúc bạn sắp quên."
+      },
+      "dictation": {
+        "title": "Luyện nghe chép (Dictation)",
+        "description": "Rèn kỹ năng nghe và chính tả với các bài chép ngắn cùng sửa lỗi tức thì."
+      },
+      "mockExams": {
+        "title": "Thi thử IELTS & TOEIC",
+        "description": "Làm bài thi thử đầy đủ, tính giờ như thật, rồi xem lại từng câu trả lời."
+      },
+      "live": {
+        "title": "Lớp trực tiếp & AI avatar",
+        "description": "Tham gia phòng học tương tác hoặc luyện tập mọi lúc với gia sư AI sống động."
+      },
+      "analytics": {
+        "title": "Phân tích tiến độ",
+        "description": "Theo dõi điểm số, chuỗi ngày học và điểm mạnh theo thời gian, biết ngay nên học gì tiếp theo."
+      }
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "Cách hoạt động",
+    "title": "Hành trình của bạn trong bốn bước",
+    "subtitle": "Từ bài test đầu tiên đến chứng chỉ, một lộ trình rõ ràng suốt chặng đường.",
+    "steps": {
+      "assess": {
+        "title": "Làm bài test xếp trình độ",
+        "description": "Bài test thích ứng nhanh xác định đúng trình độ khởi điểm của bạn ở mọi kỹ năng."
+      },
+      "plan": {
+        "title": "Nhận lộ trình học từ AI",
+        "description": "Nhận lộ trình cá nhân hóa xây dựng quanh mục tiêu và điểm yếu của bạn."
+      },
+      "practice": {
+        "title": "Luyện tập với phản hồi AI",
+        "description": "Học qua khóa học, flashcard, dictation và AI chấm Speaking & Writing."
+      },
+      "achieve": {
+        "title": "Theo dõi & đạt mục tiêu",
+        "description": "Chứng kiến điểm số tăng lên và nhận chứng chỉ hoàn thành được công nhận."
+      }
+    }
+  },
   "pricing": {
     "eyebrow": "Gói học tập",
     "title": "Chọn gói phù hợp với",
@@ -74,7 +170,17 @@
     "goToDashboard": "Vào khu vực học",
     "startFree": "Bắt đầu miễn phí",
     "upgradeToPro": "Nâng cấp lên Pro",
-    "footnote": "Hủy bất cứ lúc nào · Hoàn tiền theo số ngày còn lại · Thanh toán an toàn qua ví SkillBoost",
+    "footnote": "Hủy bất cứ lúc nào · Hoàn tiền theo số ngày còn lại · Thanh toán an toàn qua ví Alicia",
+    "confirm": {
+      "title": "Xác nhận đăng ký gói {{plan}}",
+      "description": "Thanh toán sẽ được trừ trực tiếp từ ví Alicia của bạn.",
+      "planRow": "Gói {{plan}}",
+      "walletBalance": "Số dư ví hiện tại",
+      "insufficient": "Số dư không đủ. Vui lòng nạp thêm tiền vào ví.",
+      "topUp": "Nạp tiền vào ví",
+      "cancel": "Hủy",
+      "submit": "Xác nhận"
+    },
     "features": {
       "course_access": "Truy cập khóa học",
       "flashcards": "Flashcard học từ vựng",
@@ -90,10 +196,10 @@
     "eyebrow": "Câu chuyện",
     "title": "Sinh ra từ một tầm nhìn đơn giản",
     "titleAccent": "nhưng mạnh mẽ",
-    "p1": "Được thành lập năm 2020, SkillBoost ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.",
+    "p1": "Được thành lập năm 2020, Alicia ra đời từ một tầm nhìn đơn giản nhưng mạnh mẽ: mang giáo dục tiếng Anh chất lượng cao đến với mọi người, bất kể địa điểm hay hoàn cảnh.",
     "p2": "Bắt đầu từ một đội ngũ nhỏ đầy nhiệt huyết, chúng tôi đã phát triển thành nền tảng toàn cầu phục vụ hàng nghìn học viên tại hơn 50 quốc gia.",
     "p3": "Ngày nay, chúng tôi tiếp tục đổi mới và cải tiến khoá học để đảm bảo mỗi học viên nhận được trải nghiệm học tập tốt nhất.",
-    "imgAlt": "Câu chuyện SkillBoost"
+    "imgAlt": "Câu chuyện Alicia"
   },
   "values": {
     "title": "Giá trị cốt lõi",

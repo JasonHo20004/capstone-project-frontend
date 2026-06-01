@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "SkillBoost",
+    "name": "Alicia",
     "tagline": "Learning Workspace"
   },
   "actions": {
@@ -95,6 +95,28 @@
     "title": "404",
     "message": "Oops! Page not found",
     "backHome": "Back to Home"
+  },
+  "error": {
+    "backHome": "Back to home",
+    "goBack": "Go back",
+    "signIn": "Sign in",
+    "tryAgain": "Try again",
+    "needHelp": "Need help? Contact support",
+    "unauthorized": {
+      "status": "Unauthorized",
+      "title": "Please sign in to continue",
+      "message": "This page is for signed-in members. Sign in and we'll take you right back to where you were."
+    },
+    "forbidden": {
+      "status": "Forbidden",
+      "title": "You don't have access to this page",
+      "message": "Your account doesn't have permission for this area. Contact an admin if you think this is a mistake."
+    },
+    "serverError": {
+      "status": "Server error",
+      "title": "Something went wrong on our end",
+      "message": "This one is on us, not you. Try again in a moment, or head back to the homepage."
+    }
   },
   "backToTop": "Back to top",
   "relativeTime": {

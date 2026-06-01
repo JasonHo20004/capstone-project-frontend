@@ -23,6 +23,10 @@ const buttonVariants = cva(
           "rounded-xl text-foreground hover:bg-surface-container",
         glass:
           "glass rounded-xl text-foreground hover:bg-surface-lowest/95",
+        accent:
+          "rounded-xl bg-[hsl(33_100%_50%)] text-[hsl(30_100%_19%)] shadow-glow-orange hover:bg-[hsl(33_100%_45%)] hover:-translate-y-0.5",
+        onDark:
+          "rounded-xl border-2 border-white/80 bg-white/5 text-white backdrop-blur-glass hover:bg-white hover:text-primary hover:-translate-y-0.5",
         link:
           "text-primary underline-offset-4 hover:underline",
       },

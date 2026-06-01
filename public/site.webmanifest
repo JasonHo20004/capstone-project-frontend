@@ -1,0 +1,12 @@
+{
+  "name": "Alicia - Master English & IELTS Online",
+  "short_name": "Alicia",
+  "description": "Learn English and prepare for IELTS with expert-led courses, AI-graded speaking and writing, and a personalised study path.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f9fb",
+  "theme_color": "#0058bc",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}

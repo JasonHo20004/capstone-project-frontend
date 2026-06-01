@@ -26,12 +26,33 @@
     "floatingCard": {
       "count": "2,500+",
       "label": "Learners enrolled this week"
-    }
+    },
+    "aiCard": {
+      "title": "AI Speaking",
+      "score": "Band 7.5",
+      "note": "Graded in seconds"
+    },
+    "streak": {
+      "count": "12",
+      "label": "Day streak"
+    },
+    "skills": [
+      "IELTS",
+      "TOEIC",
+      "Speaking",
+      "Writing",
+      "Listening",
+      "Reading",
+      "Grammar",
+      "Vocabulary",
+      "Pronunciation",
+      "Business English"
+    ]
   },
   "features": {
     "eyebrow": "Why choose us",
     "title": "Why",
-    "titleAccent": "SkillBoost",
+    "titleAccent": "Alicia",
     "subtitle": "We provide everything you need to master English and reach your learning goals",
     "items": {
       "expert": {
@@ -60,6 +81,81 @@
       }
     }
   },
+  "services": {
+    "eyebrow": "Everything in one platform",
+    "title": "Every tool you need to",
+    "titleAccent": "master English",
+    "subtitle": "From AI-graded Speaking & Writing to a personalized path, gamified practice and live classes. One place for the entire journey.",
+    "items": {
+      "aiGrading": {
+        "badge": "AI-powered",
+        "title": "AI Speaking & Writing grading",
+        "description": "Record or write, and get an instant band score with detailed feedback on every criterion, just like a real examiner.",
+        "overall": "Overall",
+        "criteria": {
+          "fluency": "Fluency & coherence",
+          "lexical": "Lexical resource",
+          "grammar": "Grammar range",
+          "pronunciation": "Pronunciation"
+        }
+      },
+      "placement": {
+        "title": "Adaptive placement test",
+        "description": "Pinpoint your exact level in minutes with a smart test that adapts to every answer."
+      },
+      "learningPath": {
+        "title": "Personalized learning path",
+        "description": "Get a step-by-step roadmap tailored to your goals, level, and schedule."
+      },
+      "skillTree": {
+        "title": "Gamified skill tree",
+        "description": "Unlock skills node by node and turn steady progress into a game you want to keep playing."
+      },
+      "flashcards": {
+        "title": "Smart flashcards (SRS)",
+        "description": "Lock in vocabulary for good with spaced-repetition decks that resurface words right before you forget."
+      },
+      "dictation": {
+        "title": "Dictation practice",
+        "description": "Sharpen listening and spelling with bite-sized dictation drills and instant correction."
+      },
+      "mockExams": {
+        "title": "Mock IELTS & TOEIC exams",
+        "description": "Sit full, timed practice tests that mirror the real thing, then review every answer."
+      },
+      "live": {
+        "title": "Live classes & AI avatar",
+        "description": "Join interactive live rooms or practice anytime with a lifelike AI conversation tutor."
+      },
+      "analytics": {
+        "title": "Progress analytics",
+        "description": "Track scores, streaks, and strengths over time with a dashboard that shows what to study next."
+      }
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "How it works",
+    "title": "Your journey in four steps",
+    "subtitle": "From your first test to a certificate, with a clear path the whole way.",
+    "steps": {
+      "assess": {
+        "title": "Take the placement test",
+        "description": "A quick adaptive test finds your true starting level across every skill."
+      },
+      "plan": {
+        "title": "Get your AI learning path",
+        "description": "Receive a personalized roadmap built around your goals and weak spots."
+      },
+      "practice": {
+        "title": "Practice with AI feedback",
+        "description": "Learn through courses, flashcards, dictation and AI-graded Speaking & Writing."
+      },
+      "achieve": {
+        "title": "Track progress & achieve",
+        "description": "Watch your scores climb and earn a recognized completion certificate."
+      }
+    }
+  },
   "pricing": {
     "eyebrow": "Learning plans",
     "title": "Pick the plan that fits your",
@@ -74,7 +170,17 @@
     "goToDashboard": "Go to dashboard",
     "startFree": "Start for free",
     "upgradeToPro": "Upgrade to Pro",
-    "footnote": "Cancel anytime · Prorated refunds · Secure payment via SkillBoost wallet",
+    "footnote": "Cancel anytime · Prorated refunds · Secure payment via Alicia wallet",
+    "confirm": {
+      "title": "Confirm {{plan}} subscription",
+      "description": "Payment will be deducted directly from your Alicia wallet.",
+      "planRow": "{{plan}} plan",
+      "walletBalance": "Current wallet balance",
+      "insufficient": "Insufficient balance. Please top up your wallet.",
+      "topUp": "Top up wallet",
+      "cancel": "Cancel",
+      "submit": "Confirm"
+    },
     "features": {
       "course_access": "Course access",
       "flashcards": "Vocabulary flashcards",
@@ -90,10 +196,10 @@
     "eyebrow": "Our story",
     "title": "Born from a simple",
     "titleAccent": "but powerful vision",
-    "p1": "Founded in 2020, SkillBoost was born from a simple yet powerful vision: deliver high-quality English education to anyone, regardless of location or circumstance.",
+    "p1": "Founded in 2020, Alicia was born from a simple yet powerful vision: deliver high-quality English education to anyone, regardless of location or circumstance.",
     "p2": "Starting from a small, passionate team, we have grown into a global platform serving thousands of learners across more than 50 countries.",
     "p3": "Today, we continue to innovate and refine our courses to ensure every learner gets the best possible learning experience.",
-    "imgAlt": "The SkillBoost story"
+    "imgAlt": "The Alicia story"
   },
   "values": {
     "title": "Core values",

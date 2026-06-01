@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Replace https://www.alicia.com with the production origin before deploy.
+     Dynamic routes (/courses/:id) are not listed here; generate them at build/deploy time. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.alicia.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://www.alicia.com/courses</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.alicia.com/blog</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.alicia.com/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://www.alicia.com/login</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://www.alicia.com/register</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+</urlset>

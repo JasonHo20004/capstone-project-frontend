@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
-import { Play, Star, Users, BookOpen, TrendingUp, CheckCircle } from "lucide-react";
+import { ArrowRight, Star, Users, BookOpen, TrendingUp, CheckCircle, Mic, Flame } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 const Hero = () => {
   const reduce = useReducedMotion();
-  const { t } = useTranslation("landing");
+  const { t } = useTranslation(["landing", "layout"]);
 
   const stats = [
     { value: "50K+", label: t("hero.stats.learners") },
@@ -20,6 +20,9 @@ const Hero = () => {
     t("hero.bullets.certificate"),
   ];
 
+  const skills = t("hero.skills", { returnObjects: true }) as unknown as string[];
+  const skillTrack = Array.isArray(skills) ? [...skills, ...skills] : [];
+
   return (
     <section className="relative isolate overflow-hidden bg-hero-gradient text-white">
       {/* Dot-grid background */}
@@ -32,10 +35,10 @@ const Hero = () => {
         }}
       />
 
-      {/* Ambient blooms */}
-      <div aria-hidden className="pointer-events-none absolute -right-24 top-10 h-[420px] w-[420px] rounded-full bg-secondary/25 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -left-32 bottom-0 h-[480px] w-[480px] rounded-full bg-primary-light/35 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute left-1/3 top-1/4 h-[500px] w-[500px] rounded-full bg-white/5 blur-[120px]" />
+      {/* Animated aurora blooms */}
+      <div aria-hidden className="pointer-events-none absolute -right-24 top-10 h-[420px] w-[420px] animate-aurora rounded-full bg-secondary/25 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -left-32 bottom-0 h-[480px] w-[480px] animate-float-slow rounded-full bg-primary-light/35 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute left-1/3 top-1/4 h-[500px] w-[500px] animate-aurora rounded-full bg-white/5 blur-[120px]" />
 
       <div className="relative z-10 mx-auto grid min-h-[88vh] max-w-7xl items-center gap-12 px-4 py-24 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
         {/* Left — editorial copy */}
@@ -77,17 +80,19 @@ const Hero = () => {
           </ul>
 
           {/* CTAs */}
-          <div className="flex flex-wrap gap-4 pt-2">
-            <Link to="/#courses">
-              <Button variant="default" size="xl">
+          <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:flex-wrap">
+            <Link to="/login?register=1" className="w-full sm:w-auto">
+              <Button variant="accent" size="xl" className="w-full sm:w-auto">
+                {t("publicNav.getStarted", { ns: "layout" })}
+                <ArrowRight className="ml-1 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/#courses" className="w-full sm:w-auto">
+              <Button variant="onDark" size="xl" className="w-full sm:w-auto">
                 <BookOpen className="mr-1 h-5 w-5" />
                 {t("hero.exploreCourses")}
               </Button>
             </Link>
-            <Button variant="glass" size="xl" className="text-white hover:text-foreground">
-              <Play className="mr-1 h-5 w-5 fill-current" />
-              {t("hero.watchDemo")}
-            </Button>
           </div>
 
           {/* Stats row — inline, divided */}
@@ -110,7 +115,7 @@ const Hero = () => {
           </div>
         </motion.div>
 
-        {/* Right — image + floating stat card + Pingo peek */}
+        {/* Right — image + floating product cards */}
         <motion.div
           initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -147,11 +152,68 @@ const Hero = () => {
             </div>
           </div>
 
-{/* Decorative glows */}
+          {/* Floating AI score card — top left */}
+          <motion.div
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14, x: -10 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="glass absolute -left-4 top-10 hidden rounded-2xl p-4 shadow-lg sm:block lg:-left-10 motion-safe:animate-float"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light text-white shadow-accent">
+                <Mic className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="text-[11px] font-medium text-muted-foreground">{t("hero.aiCard.title")}</div>
+                <div className="font-display text-lg font-extrabold text-foreground">{t("hero.aiCard.score")}</div>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
+              <CheckCircle className="h-3 w-3" />
+              {t("hero.aiCard.note")}
+            </div>
+          </motion.div>
+
+          {/* Floating streak chip — bottom right, above image */}
+          <motion.div
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14, x: 10 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="glass absolute -right-3 top-1/2 hidden items-center gap-2.5 rounded-2xl p-3.5 shadow-lg lg:-right-8 lg:flex motion-safe:animate-float-slow"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-glow-orange">
+              <Flame className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="font-display text-lg font-extrabold leading-none text-foreground">{t("hero.streak.count")}</div>
+              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">{t("hero.streak.label")}</div>
+            </div>
+          </motion.div>
+
+          {/* Decorative glows */}
           <div aria-hidden className="pointer-events-none absolute -top-8 -right-8 h-36 w-36 rounded-full bg-secondary/30 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-8 -left-8 h-44 w-44 rounded-full bg-primary-light/25 blur-3xl" />
         </motion.div>
       </div>
+
+      {/* Skill / exam marquee — instant signal of breadth */}
+      {skillTrack.length > 0 && (
+        <div className="relative z-10 border-t border-white/10 py-5">
+          <div className="group flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+            <div className="flex shrink-0 items-center gap-3 pr-3 motion-safe:animate-marquee motion-reduce:animate-none group-hover:[animation-play-state:paused]">
+              {skillTrack.map((skill, i) => (
+                <span
+                  key={`${skill}-${i}`}
+                  className="flex items-center gap-2 whitespace-nowrap rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/85 ring-1 ring-white/10 backdrop-blur-glass"
+                >
+                  <Star className="h-3 w-3 fill-secondary text-secondary" />
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

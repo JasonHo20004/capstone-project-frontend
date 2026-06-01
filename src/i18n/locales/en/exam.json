@@ -560,7 +560,7 @@
       "titleFull": "Create Your Personalized Learning Path",
       "titleCompact": "Your Learning Path",
       "aiBadge": "AI-powered",
-      "tagline": "SkillBoost AI uses your placement level, goals and study habits to build a roadmap that fits you — not a generic learner.",
+      "tagline": "Alicia AI uses your placement level, goals and study habits to build a roadmap that fits you — not a generic learner.",
       "backToDashboard": "← Back to dashboard"
     },
     "error": {
@@ -597,7 +597,7 @@
     },
     "generating": {
       "title": "Building your personalized roadmap…",
-      "subtitle": "SkillBoost AI is reasoning across your level, goal, schedule, and preferences.",
+      "subtitle": "Alicia AI is reasoning across your level, goal, schedule, and preferences.",
       "steps": {
         "1": "Analyzing your CEFR level",
         "2": "Understanding your goal",
@@ -619,7 +619,7 @@
       },
       "noPlacement": {
         "title": "No placement result on record",
-        "body": "Take a quick placement test so SkillBoost can pinpoint your CEFR level. You can still continue manually below — accuracy will be limited.",
+        "body": "Take a quick placement test so Alicia can pinpoint your CEFR level. You can still continue manually below — accuracy will be limited.",
         "takeTest": "Take placement test"
       },
       "levelField": {
@@ -650,7 +650,7 @@
     },
     "step2": {
       "title": "Set your target",
-      "description": "Tell SkillBoost what you're working toward. We'll check feasibility against your level and timeline.",
+      "description": "Tell Alicia what you're working toward. We'll check feasibility against your level and timeline.",
       "badge": "Step 2 of 4",
       "fields": {
         "exam": "Exam type",
@@ -924,13 +924,13 @@
       "generate": "Generate Personalized Learning Path",
       "preview": {
         "title": "Ready to generate",
-        "description": "SkillBoost AI will combine everything you've told us into a roadmap with weekly milestones and recommended lessons.",
+        "description": "Alicia AI will combine everything you've told us into a roadmap with weekly milestones and recommended lessons.",
         "listHeading": "What you'll get:",
         "list1": "Goal-gap analysis and feasibility check",
         "list2": "Skill priority ranking with reasons",
         "list3": "Phased roadmap (Foundation → Skill building → Simulation)",
         "list4": "Weekly schedule mapped to your free days",
-        "list5": "Real lessons, flashcards, and practice tests inside SkillBoost"
+        "list5": "Real lessons, flashcards, and practice tests inside Alicia"
       }
     },
     "result": {
@@ -1011,7 +1011,7 @@
         },
         "quizzes": {
           "title": "Quizzes & practice tests",
-          "description": "Measure progress with real SkillBoost assessments."
+          "description": "Measure progress with real Alicia assessments."
         }
       },
       "types": {
@@ -1529,45 +1529,6 @@
       "change": "Change",
       "startQuiz": "Start Quiz"
     },
-    "miniQuiz": {
-      "tts": {
-        "playing": "Playing audio...",
-        "tapToListen": "Tap to listen",
-        "tapToReplay": "Tap to replay",
-        "playedOnce": "Played {{count}} time",
-        "playedMany": "Played {{count}} times",
-        "listenCarefully": "Listen carefully, then answer"
-      },
-      "pair": {
-        "terms": "Terms",
-        "matches": "Matches",
-        "allMatched": "All {{count}} pairs matched!",
-        "nowTapRight": "Now tap the matching item on the right",
-        "progress": "{{done}}/{{total}} matched — tap a term on the left to start"
-      },
-      "progress": {
-        "current": "Q {{current}} / {{total}}",
-        "answered": "{{count}} answered"
-      },
-      "loading": "Generating questions...",
-      "result": {
-        "excellent": "Excellent!",
-        "keepPracticing": "Keep practicing!",
-        "correctOf": "{{correct}} / {{total}} correct",
-        "areasToImprove": "Areas to improve:",
-        "viewRemedial": "View remedial nodes",
-        "continueLearning": "Continue learning"
-      },
-      "input": {
-        "placeholder": "Type your answer..."
-      },
-      "nav": {
-        "prev": "← Prev",
-        "next": "Next →",
-        "grading": "Grading...",
-        "submit": "Submit"
-      }
-    },
     "flow": {
       "section": "Section {{num}}",
       "bonusXp": "+50 Bonus XP",
@@ -1593,6 +1554,45 @@
     "micDeniedDesc": "Please allow microphone access for this site in your browser and try again.",
     "micError": "Could not access microphone",
     "micErrorDesc": "Check your audio device or try again with a different browser."
+  },
+  "miniQuiz": {
+    "tts": {
+      "playing": "Playing audio...",
+      "tapToListen": "Tap to listen",
+      "tapToReplay": "Tap to replay",
+      "playedOnce": "Played {{count}} time",
+      "playedMany": "Played {{count}} times",
+      "listenCarefully": "Listen carefully, then answer"
+    },
+    "pair": {
+      "terms": "Terms",
+      "matches": "Matches",
+      "allMatched": "All {{count}} pairs matched!",
+      "nowTapRight": "Now tap the matching item on the right",
+      "progress": "{{done}}/{{total}} matched — tap a term on the left to start"
+    },
+    "progress": {
+      "current": "Q {{current}} / {{total}}",
+      "answered": "{{count}} answered"
+    },
+    "loading": "Generating questions...",
+    "result": {
+      "excellent": "Excellent!",
+      "keepPracticing": "Keep practicing!",
+      "correctOf": "{{correct}} / {{total}} correct",
+      "areasToImprove": "Areas to improve:",
+      "viewRemedial": "View remedial nodes",
+      "continueLearning": "Continue learning"
+    },
+    "input": {
+      "placeholder": "Type your answer..."
+    },
+    "nav": {
+      "prev": "← Prev",
+      "next": "Next →",
+      "grading": "Grading...",
+      "submit": "Submit"
+    }
   },
   "speakingTestLayout": {
     "submitModal": {

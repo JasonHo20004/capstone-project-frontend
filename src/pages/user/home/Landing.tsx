@@ -5,9 +5,13 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/user/layout/Navbar';
 import Footer from '@/components/user/layout/Footer';
 import { BackToTopButton } from '@/components/user/layout/BackToTopButton';
+import Seo from '@/components/seo/Seo';
 import Hero from '@/components/user/home/Hero';
 import Features from '@/components/user/home/Features';
 import Pricing from '@/components/user/home/Pricing';
+import ServicesBento from '@/components/user/home/ServicesBento';
+import HowItWorks from '@/components/user/home/HowItWorks';
+import StatCounter from '@/components/user/home/StatCounter';
 import CourseCard from '@/components/user/course/CourseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
@@ -85,13 +89,18 @@ export default function Landing() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="Alicia - Master English & IELTS Online | Learning Platform"
+        description="Learn English and prepare for IELTS with Alicia. Expert-led courses, AI-graded speaking and writing, a personalised study path, and live classes. Start free today."
+        canonicalPath="/"
+      />
       <Navbar />
 
       <main className="flex-grow">
         <Hero />
 
         {/* Stats */}
-        <section id="about" className="scroll-mt-24 bg-surface-low py-20">
+        <section id="about" className="scroll-mt-24 bg-surface-low py-24">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
               {stats.map((stat, i) => (
@@ -100,13 +109,19 @@ export default function Landing() {
                   {...reveal(i)}
                   className="rounded-2xl bg-surface-lowest p-6 text-center shadow-md ring-1 ring-border/10 transition-all duration-300 ease-soft hover:-translate-y-1 hover:shadow-card-hover"
                 >
-                  <div className="font-display text-4xl font-extrabold text-primary md:text-5xl">{stat.value}</div>
+                  <StatCounter value={stat.value} className="font-display text-4xl font-extrabold text-primary md:text-5xl" />
                   <div className="mt-2 text-sm text-muted-foreground">{stat.label}</div>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
+
+        {/* Services — the core "what we offer" showcase */}
+        <ServicesBento />
+
+        {/* How it works — the learner journey */}
+        <HowItWorks />
 
         <Features />
 
@@ -115,9 +130,6 @@ export default function Landing() {
           <div className="container mx-auto px-4">
             <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
               <motion.div {...reveal()} className="space-y-5">
-                <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">
-                  {t('story.eyebrow')}
-                </span>
                 <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">
                   {t('story.title')} <span className="text-secondary">{t('story.titleAccent')}</span>
                 </h2>
@@ -152,7 +164,7 @@ export default function Landing() {
                   key={value.title}
                   {...reveal(i)}
                   whileHover={reduce ? undefined : { y: -4 }}
-                  className="group rounded-2xl bg-surface-lowest p-7 shadow-md ring-1 ring-border/10 transition-shadow duration-300 ease-soft hover:shadow-card-hover"
+                  className="group rounded-2xl bg-surface-lowest p-8 shadow-md ring-1 ring-border/10 transition-shadow duration-300 ease-soft hover:shadow-card-hover"
                 >
                   <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-accent transition-transform duration-300 group-hover:rotate-[-6deg]">
                     <value.icon className="h-7 w-7" />
@@ -174,8 +186,7 @@ export default function Landing() {
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-dark via-primary/80 to-transparent" />
               </div>
               <div className="relative z-10 max-w-2xl">
-                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white backdrop-blur-glass ring-1 ring-white/20">{t('catalog.eyebrow')}</span>
-                <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight md:text-5xl">{t('catalog.title')}</h2>
+                <h2 className="font-display text-3xl font-extrabold tracking-tight md:text-5xl">{t('catalog.title')}</h2>
                 <p className="mt-3 text-white/85">{t('catalog.subtitle')}</p>
               </div>
             </motion.div>
@@ -299,7 +310,7 @@ export default function Landing() {
               <h2 className="font-display text-4xl font-bold md:text-5xl">{t('cta.title')}</h2>
               <p className="text-lg text-white/80 md:text-xl">{t('cta.subtitle')}</p>
               <Link to="/#courses">
-                <Button variant="default" size="xl">
+                <Button variant="accent" size="xl">
                   {t('cta.button')} <ArrowRight className="ml-1 h-5 w-5" />
                 </Button>
               </Link>
