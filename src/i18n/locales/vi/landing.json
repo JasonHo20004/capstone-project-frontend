@@ -171,6 +171,16 @@
     "startFree": "Bắt đầu miễn phí",
     "upgradeToPro": "Nâng cấp lên Pro",
     "footnote": "Hủy bất cứ lúc nào · Hoàn tiền theo số ngày còn lại · Thanh toán an toàn qua ví Alicia",
+    "confirm": {
+      "title": "Xác nhận đăng ký gói {{plan}}",
+      "description": "Thanh toán sẽ được trừ trực tiếp từ ví Alicia của bạn.",
+      "planRow": "Gói {{plan}}",
+      "walletBalance": "Số dư ví hiện tại",
+      "insufficient": "Số dư không đủ. Vui lòng nạp thêm tiền vào ví.",
+      "topUp": "Nạp tiền vào ví",
+      "cancel": "Hủy",
+      "submit": "Xác nhận"
+    },
     "features": {
       "course_access": "Truy cập khóa học",
       "flashcards": "Flashcard học từ vựng",

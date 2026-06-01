@@ -171,6 +171,16 @@
     "startFree": "Start for free",
     "upgradeToPro": "Upgrade to Pro",
     "footnote": "Cancel anytime · Prorated refunds · Secure payment via Alicia wallet",
+    "confirm": {
+      "title": "Confirm {{plan}} subscription",
+      "description": "Payment will be deducted directly from your Alicia wallet.",
+      "planRow": "{{plan}} plan",
+      "walletBalance": "Current wallet balance",
+      "insufficient": "Insufficient balance. Please top up your wallet.",
+      "topUp": "Top up wallet",
+      "cancel": "Cancel",
+      "submit": "Confirm"
+    },
     "features": {
       "course_access": "Course access",
       "flashcards": "Vocabulary flashcards",
