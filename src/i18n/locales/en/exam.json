@@ -1529,45 +1529,6 @@
       "change": "Change",
       "startQuiz": "Start Quiz"
     },
-    "miniQuiz": {
-      "tts": {
-        "playing": "Playing audio...",
-        "tapToListen": "Tap to listen",
-        "tapToReplay": "Tap to replay",
-        "playedOnce": "Played {{count}} time",
-        "playedMany": "Played {{count}} times",
-        "listenCarefully": "Listen carefully, then answer"
-      },
-      "pair": {
-        "terms": "Terms",
-        "matches": "Matches",
-        "allMatched": "All {{count}} pairs matched!",
-        "nowTapRight": "Now tap the matching item on the right",
-        "progress": "{{done}}/{{total}} matched — tap a term on the left to start"
-      },
-      "progress": {
-        "current": "Q {{current}} / {{total}}",
-        "answered": "{{count}} answered"
-      },
-      "loading": "Generating questions...",
-      "result": {
-        "excellent": "Excellent!",
-        "keepPracticing": "Keep practicing!",
-        "correctOf": "{{correct}} / {{total}} correct",
-        "areasToImprove": "Areas to improve:",
-        "viewRemedial": "View remedial nodes",
-        "continueLearning": "Continue learning"
-      },
-      "input": {
-        "placeholder": "Type your answer..."
-      },
-      "nav": {
-        "prev": "← Prev",
-        "next": "Next →",
-        "grading": "Grading...",
-        "submit": "Submit"
-      }
-    },
     "flow": {
       "section": "Section {{num}}",
       "bonusXp": "+50 Bonus XP",
@@ -1593,6 +1554,45 @@
     "micDeniedDesc": "Please allow microphone access for this site in your browser and try again.",
     "micError": "Could not access microphone",
     "micErrorDesc": "Check your audio device or try again with a different browser."
+  },
+  "miniQuiz": {
+    "tts": {
+      "playing": "Playing audio...",
+      "tapToListen": "Tap to listen",
+      "tapToReplay": "Tap to replay",
+      "playedOnce": "Played {{count}} time",
+      "playedMany": "Played {{count}} times",
+      "listenCarefully": "Listen carefully, then answer"
+    },
+    "pair": {
+      "terms": "Terms",
+      "matches": "Matches",
+      "allMatched": "All {{count}} pairs matched!",
+      "nowTapRight": "Now tap the matching item on the right",
+      "progress": "{{done}}/{{total}} matched — tap a term on the left to start"
+    },
+    "progress": {
+      "current": "Q {{current}} / {{total}}",
+      "answered": "{{count}} answered"
+    },
+    "loading": "Generating questions...",
+    "result": {
+      "excellent": "Excellent!",
+      "keepPracticing": "Keep practicing!",
+      "correctOf": "{{correct}} / {{total}} correct",
+      "areasToImprove": "Areas to improve:",
+      "viewRemedial": "View remedial nodes",
+      "continueLearning": "Continue learning"
+    },
+    "input": {
+      "placeholder": "Type your answer..."
+    },
+    "nav": {
+      "prev": "← Prev",
+      "next": "Next →",
+      "grading": "Grading...",
+      "submit": "Submit"
+    }
   },
   "speakingTestLayout": {
     "submitModal": {

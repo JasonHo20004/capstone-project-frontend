@@ -1529,45 +1529,6 @@
       "change": "Đổi",
       "startQuiz": "Bắt đầu Quiz"
     },
-    "miniQuiz": {
-      "tts": {
-        "playing": "Đang phát audio...",
-        "tapToListen": "Chạm để nghe",
-        "tapToReplay": "Chạm để nghe lại",
-        "playedOnce": "Đã nghe {{count}} lần",
-        "playedMany": "Đã nghe {{count}} lần",
-        "listenCarefully": "Nghe kỹ rồi trả lời"
-      },
-      "pair": {
-        "terms": "Thuật ngữ",
-        "matches": "Tương ứng",
-        "allMatched": "Đã ghép xong {{count}} cặp!",
-        "nowTapRight": "Bây giờ chạm vào mục tương ứng bên phải",
-        "progress": "{{done}}/{{total}} đã ghép — chạm vào một mục bên trái để bắt đầu"
-      },
-      "progress": {
-        "current": "Câu {{current}} / {{total}}",
-        "answered": "Đã trả lời {{count}}"
-      },
-      "loading": "Đang tạo câu hỏi...",
-      "result": {
-        "excellent": "Xuất sắc!",
-        "keepPracticing": "Hãy luyện tập thêm!",
-        "correctOf": "Đúng {{correct}} / {{total}}",
-        "areasToImprove": "Phần cần cải thiện:",
-        "viewRemedial": "Xem các nút ôn tập",
-        "continueLearning": "Tiếp tục học"
-      },
-      "input": {
-        "placeholder": "Nhập câu trả lời..."
-      },
-      "nav": {
-        "prev": "← Trước",
-        "next": "Tiếp →",
-        "grading": "Đang chấm...",
-        "submit": "Nộp"
-      }
-    },
     "flow": {
       "section": "Chặng {{num}}",
       "bonusXp": "+50 XP thưởng",
@@ -1593,6 +1554,45 @@
     "micDeniedDesc": "Hãy cho phép quyền micro cho trang này trong trình duyệt rồi thử lại.",
     "micError": "Không truy cập được micro",
     "micErrorDesc": "Kiểm tra thiết bị thu âm hoặc thử lại với trình duyệt khác."
+  },
+  "miniQuiz": {
+    "tts": {
+      "playing": "Đang phát audio...",
+      "tapToListen": "Chạm để nghe",
+      "tapToReplay": "Chạm để nghe lại",
+      "playedOnce": "Đã nghe {{count}} lần",
+      "playedMany": "Đã nghe {{count}} lần",
+      "listenCarefully": "Nghe kỹ rồi trả lời"
+    },
+    "pair": {
+      "terms": "Thuật ngữ",
+      "matches": "Tương ứng",
+      "allMatched": "Đã ghép xong {{count}} cặp!",
+      "nowTapRight": "Bây giờ chạm vào mục tương ứng bên phải",
+      "progress": "{{done}}/{{total}} đã ghép — chạm vào một mục bên trái để bắt đầu"
+    },
+    "progress": {
+      "current": "Câu {{current}} / {{total}}",
+      "answered": "Đã trả lời {{count}}"
+    },
+    "loading": "Đang tạo câu hỏi...",
+    "result": {
+      "excellent": "Xuất sắc!",
+      "keepPracticing": "Hãy luyện tập thêm!",
+      "correctOf": "Đúng {{correct}} / {{total}}",
+      "areasToImprove": "Phần cần cải thiện:",
+      "viewRemedial": "Xem các nút ôn tập",
+      "continueLearning": "Tiếp tục học"
+    },
+    "input": {
+      "placeholder": "Nhập câu trả lời..."
+    },
+    "nav": {
+      "prev": "← Trước",
+      "next": "Tiếp →",
+      "grading": "Đang chấm...",
+      "submit": "Nộp"
+    }
   },
   "speakingTestLayout": {
     "submitModal": {
