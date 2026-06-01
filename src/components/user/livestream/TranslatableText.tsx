@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Volume2, X } from 'lucide-react';
 
@@ -21,6 +22,21 @@ const TOKEN_RE = /([A-Za-z][A-Za-z'-]*)/g;
 
 // In-memory translation cache shared across mounts (per page load).
 const translationCache = new Map<string, TranslationResult>();
+
+/**
+ * Normalise an IPA string for display. The LLM frequently returns the
+ * transcription already wrapped in slashes (`/həˈloʊ/`) or brackets (`[həˈloʊ]`),
+ * sometimes with an "IPA:" label — wrapping that again produced `//həˈloʊ//`.
+ * Strip any surrounding delimiters/label and whitespace so the caller can wrap
+ * it in `/…/` exactly once. Returns '' when nothing usable remains.
+ */
+function normalizeIpa(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^ipa\s*[:：]?\s*/i, '')        // drop a leading "IPA:" label
+    .replace(/^[\s/[\]]+|[\s/[\]]+$/g, '')   // drop surrounding / [ ] and spaces
+    .trim();
+}
 
 /**
  * Renders plain text where each English word can be clicked to open a
@@ -123,7 +139,12 @@ function TranslationPopover({
   const top = Math.min(popover.rect.bottom + 6, window.innerHeight - 180);
   const left = Math.min(Math.max(popover.rect.left - 20, 8), window.innerWidth - 280);
 
-  return (
+  // Portal to <body>: the popover is `position: fixed`, but a `LessonSlide`
+  // ancestor animates `transform` (animate-slide-in / ken-burns), which makes
+  // that ancestor the containing block + stacking context for fixed children —
+  // trapping the popover (wrong position AND covered by z-10/z-30 siblings).
+  // Rendering into <body> escapes the transformed ancestor entirely.
+  return createPortal(
     <div
       ref={ref}
       className="fixed z-50 w-72 bg-white border border-slate-200 rounded-xl shadow-xl p-3 animate-in fade-in zoom-in-95"
@@ -142,8 +163,8 @@ function TranslationPopover({
               <Volume2 className="w-3.5 h-3.5" />
             </button>
           </div>
-          {popover.result?.pronunciation && (
-            <p className="text-[11px] text-slate-400 mt-0.5">/{popover.result.pronunciation}/</p>
+          {popover.result?.pronunciation && normalizeIpa(popover.result.pronunciation) && (
+            <p className="text-[11px] text-slate-400 mt-0.5">/{normalizeIpa(popover.result.pronunciation)}/</p>
           )}
         </div>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-700 -mt-0.5 -mr-1">
@@ -169,6 +190,7 @@ function TranslationPopover({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
