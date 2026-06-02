@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useTranslation, Trans } from "react-i18next";
 import { BarChart2, Lightbulb, Lock } from 'lucide-react';
@@ -6,6 +7,16 @@ import apiClient from "@/lib/api/config";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
 import { useBeforeUnload } from "@/hooks/use-before-unload";
 import SpeakingTestLayout from "./SpeakingTestLayout";
+
+// ─── Dictionary lookup (word double-click → translate via rag-service) ────────
+const RAG_BASE = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:3000';
+
+interface DictResult {
+  word: string;
+  meaning: string;
+  pronunciation: string;
+  example: string;
+}
 
 // ─── Section-level instructions (Cambridge IELTS format) ─────────────────────
 const SECTION_INSTRUCTIONS: Record<string, string> = {
@@ -285,6 +296,25 @@ export default function IeltsTestModule() {
     if (!el) return;
     (el as any)._lastTime = el.currentTime;
   }, []);
+
+  // ─── Dictionary lookup state ────────────────────────────────────────────────
+  const [dictPopover, setDictPopover] = useState<{
+    word: string; x: number; y: number; result?: DictResult; loading: boolean;
+  } | null>(null);
+  const dictCacheRef = useRef<Map<string, DictResult>>(new Map());
+
+  // Close dictionary popover when clicking outside it
+  useEffect(() => {
+    if (!dictPopover) return;
+    const onDown = (e: MouseEvent) => {
+      const el = document.querySelector('[data-dict-popover]');
+      if (el && !el.contains(e.target as Node)) setDictPopover(null);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setDictPopover(null); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [dictPopover]);
 
   // ─── Highlight State ────────────────────────────────────────────────────────
   const [highlightPopover, setHighlightPopover] = useState<{ x: number; y: number; range: Range } | null>(null);
@@ -652,6 +682,37 @@ export default function IeltsTestModule() {
     const rect = range.getBoundingClientRect();
     setHighlightPopover({ x: rect.left + rect.width / 2, y: rect.top - 10, range: range.cloneRange() });
   }, [highlightMode]);
+
+  const handleWordLookup = useCallback((e: React.MouseEvent) => {
+    // Only run on double-click inside the passage area
+    const word = window.getSelection()?.toString().trim().replace(/[^A-Za-z'-]/g, '') ?? '';
+    if (!word || word.length > 60) return;
+
+    const target = e.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const x = Math.min(Math.max(e.clientX - 20, 8), window.innerWidth - 290);
+    const y = Math.min(e.clientY + 12, window.innerHeight - 200);
+
+    const cached = dictCacheRef.current.get(word.toLowerCase());
+    if (cached) { setDictPopover({ word, x, y, result: cached, loading: false }); return; }
+
+    setDictPopover({ word, x, y, loading: true });
+    fetch(`${RAG_BASE}/api/livestream/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word, target: 'vi' }),
+    })
+      .then(r => r.json())
+      .then((data: DictResult) => {
+        dictCacheRef.current.set(word.toLowerCase(), data);
+        setDictPopover(p => p?.word === word ? { ...p, result: data, loading: false } : p);
+      })
+      .catch(() => {
+        setDictPopover(p => p?.word === word
+          ? { ...p, loading: false, result: { word, meaning: '—', pronunciation: '', example: '' } }
+          : p);
+      });
+  }, []);
 
   const applyHighlight = useCallback((color: string) => {
     if (!highlightPopover?.range) return;
@@ -1284,6 +1345,13 @@ export default function IeltsTestModule() {
                   <span className="material-symbols-outlined text-[16px]">text_increase</span>
                 </button>
               </div>
+              <span
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] text-indigo-500 bg-indigo-50 border border-indigo-100 select-none"
+                title="Double-click any word in the passage to look up its Vietnamese meaning"
+              >
+                <span className="material-symbols-outlined text-[14px]">book_2</span>
+                <span className="hidden sm:inline">Double-click a word</span>
+              </span>
               <button
                 onClick={() => { setHighlightMode(!highlightMode); setHighlightPopover(null); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -1323,7 +1391,7 @@ export default function IeltsTestModule() {
             </div>
           )}
 
-          <div ref={passageRef} onMouseUp={handleTextSelect}
+          <div ref={passageRef} onMouseUp={handleTextSelect} onDoubleClick={handleWordLookup}
             className={highlightMode ? 'cursor-text select-text' : ''}
             style={{ fontSize: `${(0.875 * passageFontScale).toFixed(3)}rem`, ...(highlightMode ? { userSelect: 'text' as const } : {}) }}
           >
@@ -1389,6 +1457,77 @@ export default function IeltsTestModule() {
               {/* Arrow */}
               <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 bg-white border-r border-b border-slate-200 rotate-45" />
             </div>
+          )}
+
+          {/* Dictionary Popover — portal to body to escape transform ancestors */}
+          {dictPopover && createPortal(
+            <div
+              data-dict-popover
+              className="fixed z-[60] w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 animate-in fade-in zoom-in-95 duration-150"
+              style={{ top: dictPopover.y, left: dictPopover.x }}
+              onMouseDown={e => e.stopPropagation()}
+            >
+              {/* Header: word + speaker + close */}
+              <div className="flex items-start gap-2 mb-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-bold text-slate-900">{dictPopover.word}</p>
+                  {dictPopover.result?.pronunciation && (() => {
+                    const ipa = dictPopover.result!.pronunciation
+                      .trim()
+                      .replace(/^ipa\s*[:：]?\s*/i, '')
+                      .replace(/^[\s/[\]]+|[\s/[\]]+$/g, '')
+                      .trim();
+                    return ipa ? <p className="text-[11px] text-slate-400 mt-0.5">/{ipa}/</p> : null;
+                  })()}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => {
+                      if (!('speechSynthesis' in window)) return;
+                      const u = new SpeechSynthesisUtterance(dictPopover.word);
+                      u.lang = 'en-US'; u.rate = 0.9;
+                      window.speechSynthesis.cancel();
+                      window.speechSynthesis.speak(u);
+                    }}
+                    className="p-1 rounded text-slate-400 hover:text-indigo-500 transition-colors"
+                    title="Pronounce"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">volume_up</span>
+                  </button>
+                  <button
+                    onClick={() => setDictPopover(null)}
+                    className="p-1 rounded text-slate-400 hover:text-slate-700 transition-colors"
+                    title="Close"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="min-h-[36px]">
+                {dictPopover.loading && (
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <span className="inline-block w-3 h-3 border-2 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
+                    Đang tra…
+                  </div>
+                )}
+                {!dictPopover.loading && dictPopover.result && (
+                  <>
+                    <div className="flex items-start gap-1.5 mb-1.5">
+                      <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded shrink-0 mt-0.5">VI</span>
+                      <p className="text-sm text-slate-800 leading-snug font-medium">{dictPopover.result.meaning}</p>
+                    </div>
+                    {dictPopover.result.example && (
+                      <p className="text-[11px] text-slate-400 italic leading-snug border-t border-slate-100 pt-1.5">
+                        "{dictPopover.result.example}"
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>,
+            document.body,
           )}
 
           {/* Section Image (Maps, Diagrams) */}
