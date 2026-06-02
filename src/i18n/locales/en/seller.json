@@ -802,6 +802,10 @@
       "adminReject": "Admin rejected",
       "sellerCancel": "Seller cancelled submission",
       "inactive": "Course suspended",
+      "qualityFlagOpen": "Flagged: not meeting requirements",
+      "qualityFlagConfirmed": "Admin recorded seller's fix confirmation",
+      "qualityFlagCleared": "Admin removed the flag – course meets requirements",
+      "qualityFlagAutoDraft": "Auto-reverted to Draft (no confirmation within 48h)",
       "statusChange": "Status change: {{from}} → {{to}}"
     }
   },

@@ -49,6 +49,9 @@ export default function AdminCourseDetail() {
   const [rejectReason, setRejectReason] = useState("");
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [ratingToDelete, setRatingToDelete] = useState<string | null>(null);
+  // Quality flag ("Chưa đạt yêu cầu") — flag dialog + required reason.
+  const [showFlagDialog, setShowFlagDialog] = useState(false);
+  const [flagReason, setFlagReason] = useState("");
 
   const { data: courseDetailResp } = useQuery({
     queryKey: ["adminCourseDetail", id],
@@ -148,6 +151,49 @@ export default function AdminCourseDetail() {
     },
   });
 
+  const invalidateCourse = () => {
+    queryClient.invalidateQueries({ queryKey: ["adminCourseDetail", id] });
+    queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+  };
+
+  const flagCourseMutation = useMutation({
+    mutationFn: (reason: string) => courseManagementService.flagCourse(id!, reason),
+    onSuccess: () => {
+      invalidateCourse();
+      setShowFlagDialog(false);
+      setFlagReason("");
+      toast.success("Đã đánh dấu khoá học là 'Chưa đạt yêu cầu'");
+    },
+    onError: (err) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Đánh cờ thất bại";
+      toast.error(msg);
+    },
+  });
+
+  const confirmFlagMutation = useMutation({
+    mutationFn: () => courseManagementService.confirmCourseFlagFix(id!),
+    onSuccess: () => {
+      invalidateCourse();
+      toast.success("Đã ghi nhận xác nhận chỉnh sửa — sẽ không tự động chuyển Draft");
+    },
+    onError: (err) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Thao tác thất bại";
+      toast.error(msg);
+    },
+  });
+
+  const removeFlagMutation = useMutation({
+    mutationFn: () => courseManagementService.removeCourseFlag(id!),
+    onSuccess: () => {
+      invalidateCourse();
+      toast.success("Đã gỡ cờ 'Chưa đạt yêu cầu'");
+    },
+    onError: (err) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Thao tác thất bại";
+      toast.error(msg);
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ACTIVE":
@@ -158,6 +204,8 @@ export default function AdminCourseDetail() {
         return <Badge variant="destructive">Từ chối</Badge>;
       case "INACTIVE":
         return <Badge variant="outline">Không hoạt động</Badge>;
+      case "DRAFT":
+        return <Badge variant="outline">Bản nháp</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -254,6 +302,59 @@ export default function AdminCourseDetail() {
                   )}
                 </div>
               )}
+              {course.qualityFlag && (
+                <div className="rounded border border-amber-300 bg-amber-50 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold text-amber-800">
+                      🚩 Chưa đạt yêu cầu
+                    </div>
+                    <Badge variant={course.qualityFlag.confirmed ? "secondary" : "destructive"}>
+                      {course.qualityFlag.confirmed ? "Đã nhận xác nhận" : "Chờ xác nhận chỉnh sửa"}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-slate-700 whitespace-pre-wrap">
+                    Lý do / yêu cầu: {course.qualityFlag.reason}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Đánh cờ lúc: {new Date(course.qualityFlag.flaggedAt).toLocaleString("vi-VN")}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Hạn chót (48h): {new Date(course.qualityFlag.deadlineAt).toLocaleString("vi-VN")}
+                  </div>
+                  {course.qualityFlag.confirmed ? (
+                    <div className="text-xs text-emerald-700">
+                      Đã ghi nhận xác nhận — khoá học sẽ không tự động chuyển Draft. Hãy review lại
+                      và gỡ cờ nếu đã đạt yêu cầu.
+                    </div>
+                  ) : (
+                    <div className="text-xs text-amber-700">
+                      Nếu không ghi nhận xác nhận trước hạn chót, khoá học sẽ tự động chuyển về Draft
+                      (ngừng bán cho học viên mới; học viên đã mua vẫn học bình thường).
+                    </div>
+                  )}
+                  <div className="flex gap-2 flex-wrap pt-1">
+                    {!course.qualityFlag.confirmed && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={confirmFlagMutation.isPending}
+                        onClick={() => confirmFlagMutation.mutate()}
+                      >
+                        <Check className="mr-2 h-4 w-4" />
+                        Đã nhận xác nhận chỉnh sửa từ seller
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={removeFlagMutation.isPending}
+                      onClick={() => removeFlagMutation.mutate()}
+                    >
+                      Gỡ cờ (đã đạt yêu cầu)
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className="flex space-x-2 flex-wrap gap-y-2">
                 <Button
                   variant="destructive"
@@ -261,6 +362,18 @@ export default function AdminCourseDetail() {
                 >
                   Xóa khóa học
                 </Button>
+                {course.status === CourseStatus.ACTIVE && !course.qualityFlag && (
+                  <Button
+                    variant="outline"
+                    className="border-amber-400 text-amber-700 hover:bg-amber-50"
+                    onClick={() => {
+                      setFlagReason("");
+                      setShowFlagDialog(true);
+                    }}
+                  >
+                    🚩 Đánh dấu chưa đạt yêu cầu
+                  </Button>
+                )}
                 {course.status === CourseStatus.PENDING && (
                   <>
                     <Button onClick={() => setShowApproveDialog(true)}>
@@ -570,6 +683,53 @@ export default function AdminCourseDetail() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {updateCourseMutation.isPending ? "Đang gửi…" : "Xác nhận từ chối"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showFlagDialog}
+        onOpenChange={(open) => {
+          setShowFlagDialog(open);
+          if (!open) setFlagReason("");
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Đánh dấu khoá học chưa đạt yêu cầu</AlertDialogTitle>
+            <AlertDialogDescription>
+              Nhập lý do / nội dung cần chỉnh sửa (ít nhất 10 ký tự). Khoá học vẫn ở trạng thái
+              Hoạt động, seller được thông báo qua email + in-app và có 48 giờ để gửi email xác nhận
+              đã sửa. Nếu bạn không tick "Đã nhận xác nhận chỉnh sửa" trong 48 giờ, khoá học sẽ tự
+              động chuyển về Bản nháp.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="flagReason">Lý do / yêu cầu chỉnh sửa</Label>
+            <Textarea
+              id="flagReason"
+              rows={5}
+              value={flagReason}
+              onChange={(e) => setFlagReason(e.target.value)}
+              placeholder="Ví dụ: phát hiện nội dung bài 3 sai kiến thức, cần chỉnh sửa và bổ sung nguồn..."
+            />
+            <p className="text-xs text-muted-foreground">
+              {flagReason.trim().length} ký tự
+              {flagReason.trim().length < 10 && " (chưa đủ)"}
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={flagCourseMutation.isPending}>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={flagReason.trim().length < 10 || flagCourseMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                flagCourseMutation.mutate(flagReason.trim());
+              }}
+              className="bg-amber-600 text-white hover:bg-amber-600/90"
+            >
+              {flagCourseMutation.isPending ? "Đang xử lý…" : "Xác nhận đánh cờ"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -802,6 +802,10 @@
       "adminReject": "Admin từ chối",
       "sellerCancel": "Seller huỷ gửi",
       "inactive": "Tạm ngưng khoá học",
+      "qualityFlagOpen": "Bị đánh dấu chưa đạt yêu cầu",
+      "qualityFlagConfirmed": "Admin đã nhận xác nhận chỉnh sửa từ seller",
+      "qualityFlagCleared": "Admin đã gỡ cờ – khoá học đạt yêu cầu",
+      "qualityFlagAutoDraft": "Tự động chuyển về Bản nháp (quá 48h không có xác nhận)",
       "statusChange": "Đổi trạng thái: {{from}} → {{to}}"
     }
   },

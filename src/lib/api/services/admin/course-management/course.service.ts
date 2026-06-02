@@ -53,6 +53,29 @@ class CourseManagementService {
     return response.data;
   }
 
+  // ─── Quality flag ("Chưa đạt yêu cầu") ──────────────────────────────────
+  async flagCourse(id: string, reason: string): Promise<ApiResponse<unknown>> {
+    const response = await apiClient.post<ApiResponse<unknown>>(
+      `/admin/courses/${id}/quality-flag`,
+      { reason }
+    );
+    return response.data;
+  }
+
+  async confirmCourseFlagFix(id: string): Promise<ApiResponse<unknown>> {
+    const response = await apiClient.post<ApiResponse<unknown>>(
+      `/admin/courses/${id}/quality-flag/confirm`
+    );
+    return response.data;
+  }
+
+  async removeCourseFlag(id: string): Promise<ApiResponse<unknown>> {
+    const response = await apiClient.delete<ApiResponse<unknown>>(
+      `/admin/courses/${id}/quality-flag`
+    );
+    return response.data;
+  }
+
   async getLessons(courseId: string): Promise<ApiResponse<Lesson[]>> {
     const response = await apiClient.get<ApiResponse<Lesson[]>>(
       `/admin/courses/${courseId}/lessons`
