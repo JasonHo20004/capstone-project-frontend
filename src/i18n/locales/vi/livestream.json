@@ -73,6 +73,7 @@
     },
     "playbackRate": "Tốc độ đọc của AI",
     "reconnecting": "Đang kết nối lại…",
+    "connectionLost": "Mất kết nối — đang tự động kết nối lại…",
     "endButton": "Kết thúc",
     "mobileTabs": {
       "stage": "Bài giảng",
@@ -138,7 +139,10 @@
       },
       "reconnect": "Mất kết nối — đang kết nối lại…",
       "send": "Gửi câu hỏi",
-      "rateLimit": "Chờ {{secs}}s — tối đa {{max}} câu/phút."
+      "rateLimit": "Chờ {{secs}}s — tối đa {{max}} câu/phút.",
+      "aiTyping": "AI đang soạn câu trả lời…",
+      "unread": "{{count}} mới",
+      "rateLimitWait": "Chờ {{secs}}s"
     },
     "system": {
       "lessonStart": "Bài học bắt đầu!",
@@ -151,7 +155,8 @@
       "speakerInvitedOther": "Giảng viên mời {{name}} phát biểu",
       "practiceResult": "{{icon}} {{name}} luyện nói: \"{{phrase}}\" ({{score}}/100)"
     },
-    "explainAgainPart": "Giải thích lại phần \"{{title}}\" cho tôi"
+    "explainAgainPart": "Giải thích lại phần \"{{title}}\" cho tôi",
+    "practiceAvailable": "Có bài luyện nói ↓"
   },
   "replay": {
     "loading": "Đang tải bản ghi…",

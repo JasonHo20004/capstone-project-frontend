@@ -73,6 +73,7 @@
     },
     "playbackRate": "AI reading speed",
     "reconnecting": "Reconnecting…",
+    "connectionLost": "Connection lost — reconnecting…",
     "endButton": "End",
     "mobileTabs": {
       "stage": "Lesson",
@@ -138,7 +139,10 @@
       },
       "reconnect": "Connection lost — reconnecting…",
       "send": "Send question",
-      "rateLimit": "Wait {{secs}}s — max {{max}} questions/minute."
+      "rateLimit": "Wait {{secs}}s — max {{max}} questions/minute.",
+      "aiTyping": "AI is writing a response…",
+      "unread": "{{count}} new",
+      "rateLimitWait": "Wait {{secs}}s"
     },
     "system": {
       "lessonStart": "The lesson has started!",
@@ -151,7 +155,8 @@
       "speakerInvitedOther": "The teacher invited {{name}} to speak",
       "practiceResult": "{{icon}} {{name}} practiced: \"{{phrase}}\" ({{score}}/100)"
     },
-    "explainAgainPart": "Explain the \"{{title}}\" part again for me"
+    "explainAgainPart": "Explain the \"{{title}}\" part again for me",
+    "practiceAvailable": "Practice speaking available ↓"
   },
   "replay": {
     "loading": "Loading recording…",

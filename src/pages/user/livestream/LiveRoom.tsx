@@ -30,13 +30,15 @@ const MAX_QUESTION_LENGTH = 200;
 const QUESTIONS_PER_MIN = 6;
 const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5] as const;
 
-// Quick-reply chip translation keys (resolved at render time via i18n).
-const QUICK_CHIP_KEYS = [
-  'explainAgain',
-  'example',
-  'simpler',
-  'ielts',
-  'memorize',
+// Quick-reply chips: `value` is always English (sent to AI), `key` resolves the
+// translated display label via i18n. Keeping them separate prevents Vietnamese
+// labels from being forwarded to an English-prompt AI and confusing it.
+const QUICK_CHIPS = [
+  { key: 'explainAgain', value: 'Explain this part again' },
+  { key: 'example',      value: 'Give me an example' },
+  { key: 'simpler',      value: 'Use simpler words' },
+  { key: 'ielts',        value: 'Does this appear in IELTS?' },
+  { key: 'memorize',     value: 'How do I memorize this word?' },
 ] as const;
 
 // Minimal type shim for Web Speech API (Chrome)
@@ -261,6 +263,11 @@ export default function LiveRoom() {
   const [isSpotlight, setIsSpotlight]       = useState(false);   // I was invited to speak
   const [speaking, setSpeaking]             = useState(false);   // my mic is live
   const [spotlight, setSpotlight]           = useState<{ user_name: string; text: string } | null>(null); // live caption for the room
+  const [aiTyping, setAiTyping]             = useState(false);
+  const [unreadChat, setUnreadChat]         = useState(0);
+  const [rateLimitSecs, setRateLimitSecs]   = useState(0);
+  const rateLimitTimerRef                   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const spotlightPanelRef                   = useRef<HTMLDivElement>(null);
   const reactionIdRef = useRef(0);
   const currentUserIdRef = useRef<string>('');
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
@@ -364,7 +371,14 @@ export default function LiveRoom() {
         const name = msg.target_user_name as string;
         const isMe = msg.target_user_id === currentUserIdRef.current;
         setChat(p => [...p, { type: 'system', text: isMe ? t('room.system.speakerInvitedSelf') : t('room.system.speakerInvitedOther', { name }) }]);
-        if (isMe) { setHandRaised(false); setIsSpotlight(true); }
+        if (isMe) {
+          setHandRaised(false);
+          setIsSpotlight(true);
+          // Switch to stage tab on mobile so the spotlight panel is immediately visible,
+          // then scroll it into view after the panel has rendered.
+          setMobileTab('stage');
+          setTimeout(() => spotlightPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+        }
         break;
       }
       case 'speaker_transcript': {
@@ -442,11 +456,15 @@ export default function LiveRoom() {
       case 'question_asked':
         setChat(p => [...p, { type: 'question', user_name: msg.user_name as string, question: msg.question as string }]);
         setIsThinking(true);
+        setAiTyping(true);
         break;
       case 'ai_answer':
         setIsThinking(false);
+        setAiTyping(false);
         setChat(p => [...p, { type: 'answer', user_name: msg.user_name as string, answer: msg.answer as string }]);
         if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string);
+        // Increment unread counter when user is watching the stage tab on mobile
+        setUnreadChat(n => n + 1);
         break;
       case 'error':
         setChat(p => [...p, { type: 'error', text: msg.message as string }]);
@@ -606,16 +624,30 @@ export default function LiveRoom() {
     wsRef.current?.send(JSON.stringify({ type: 'end_speaking' }));
   }, []);
 
+  const startRateLimitCountdown = useCallback((secsLeft: number) => {
+    if (rateLimitTimerRef.current) clearInterval(rateLimitTimerRef.current);
+    setRateLimitSecs(secsLeft);
+    rateLimitTimerRef.current = setInterval(() => {
+      setRateLimitSecs(s => {
+        if (s <= 1) { clearInterval(rateLimitTimerRef.current!); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+  }, []);
+
   const sendChip = useCallback((text: string) => {
-    if (wsRef.current?.readyState !== WebSocket.OPEN || questionsLeft === 0) return;
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
     const now = Date.now();
     const rl = rateLimitRef.current;
-    if (now < rl.resetAt && rl.count >= QUESTIONS_PER_MIN) return;
+    if (now < rl.resetAt && rl.count >= QUESTIONS_PER_MIN) {
+      startRateLimitCountdown(Math.ceil((rl.resetAt - now) / 1000));
+      return;
+    }
     if (now >= rl.resetAt) rateLimitRef.current = { count: 1, resetAt: now + 60_000 };
     else rateLimitRef.current.count += 1;
     setQuestionsLeft(Math.max(0, QUESTIONS_PER_MIN - rateLimitRef.current.count));
     wsRef.current.send(JSON.stringify({ type: 'ask_question', question: text }));
-  }, [questionsLeft]);
+  }, [startRateLimitCountdown]);
 
   const sendReaction = useCallback((emoji: string) => {
     if (wsRef.current?.readyState !== WebSocket.OPEN) return;
@@ -649,8 +681,7 @@ export default function LiveRoom() {
     const now = Date.now();
     const rl = rateLimitRef.current;
     if (now < rl.resetAt && rl.count >= QUESTIONS_PER_MIN) {
-      const secsLeft = Math.ceil((rl.resetAt - now) / 1000);
-      setChat(p => [...p, { type: 'error', text: t('room.chat.rateLimit', { secs: secsLeft, max: QUESTIONS_PER_MIN }) }]);
+      startRateLimitCountdown(Math.ceil((rl.resetAt - now) / 1000));
       return;
     }
     if (now >= rl.resetAt) {
@@ -800,11 +831,16 @@ export default function LiveRoom() {
           <BookOpen className="w-3.5 h-3.5" /> {t('room.mobileTabs.stage')}
         </button>
         <button
-          onClick={() => setMobileTab('chat')}
-          className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors',
+          onClick={() => { setMobileTab('chat'); setUnreadChat(0); }}
+          className={cn('flex-1 relative flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors',
             mobileTab === 'chat' ? 'text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-400')}
         >
           <MessageSquare className="w-3.5 h-3.5" /> {t('room.mobileTabs.chat')}
+          {unreadChat > 0 && mobileTab !== 'chat' && (
+            <span className="absolute top-1 right-[calc(50%-24px)] min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+              {unreadChat}
+            </span>
+          )}
         </button>
       </div>
 
@@ -812,23 +848,26 @@ export default function LiveRoom() {
       {reconnecting && (
         <div className="flex items-center justify-center gap-2 shrink-0 px-4 py-1.5 bg-amber-50 border-b border-amber-200 text-xs font-medium text-amber-700">
           <WifiOff className="w-3.5 h-3.5 animate-pulse" />
-          Mất kết nối — đang tự động kết nối lại…
+          {t('room.connectionLost')}
+        </div>
+      )}
+
+      {/* Audio unlock banner — shown only when the browser blocked autoplay */}
+      {audioBlocked && !muted && (
+        <div className="flex items-center justify-center gap-3 shrink-0 px-4 py-2 bg-indigo-600 text-white">
+          <Volume2 className="w-4 h-4 shrink-0" />
+          <span className="text-sm font-medium">{t('room.unlockAudio')}</span>
+          <button
+            onClick={enableAudio}
+            className="ml-2 px-3 py-1 rounded-full bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 active:scale-95 transition-all"
+          >
+            Tap here
+          </button>
         </div>
       )}
 
       {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Audio unlock gate — shown only when the browser blocked autoplay */}
-        {audioBlocked && !muted && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-            <button
-              onClick={enableAudio}
-              className="flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white font-semibold shadow-xl hover:bg-indigo-700 active:scale-95 transition-all"
-            >
-              <Volume2 className="w-5 h-5" /> {t('room.unlockAudio')}
-            </button>
-          </div>
-        )}
 
         {/* Left: stage (slide + avatar) + transcript — single scrollable column */}
         <div className={cn(
@@ -947,7 +986,7 @@ export default function LiveRoom() {
 
               {/* Invited to speak: spotlight speaking panel */}
               {isSpotlight && !isEnded && (
-                <div className="w-full max-w-md flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-indigo-300 bg-indigo-50">
+                <div ref={spotlightPanelRef} className="w-full max-w-md flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-indigo-300 bg-indigo-50">
                   <p className="text-sm font-semibold text-indigo-700 flex items-center gap-1.5">
                     <Mic2 className="w-4 h-4" /> {t('room.spotlight.invited')}
                   </p>
@@ -977,6 +1016,17 @@ export default function LiveRoom() {
                     </p>
                   )}
                 </div>
+              )}
+
+              {/* Practice-available nudge — only when the active slide has a phrase */}
+              {hasActiveSlide && activeChunk?.practice_phrase && (
+                <button
+                  onClick={() => activeChunkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+                  className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors animate-bounce"
+                  style={{ animationDuration: '2s' }}
+                >
+                  <Mic className="w-3 h-3" /> {t('room.practiceAvailable')}
+                </button>
               )}
 
               {/* Reaction bar + hand-raise */}
@@ -1191,6 +1241,22 @@ export default function LiveRoom() {
                     )}
                   </div>
                 ))}
+                {aiTyping && (
+                  <div className="flex gap-2 items-start">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-white text-[9px] font-bold">AI</span>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
+                      <p className="text-xs text-slate-400 animate-pulse">{t('room.chat.aiTyping')}</p>
+                      <div className="flex gap-1 mt-1">
+                        {[0,1,2].map(i => (
+                          <span key={i} className="w-1.5 h-1.5 rounded-full bg-slate-300"
+                            style={{ animation: `bounce 1s ease-in-out ${i * 0.15}s infinite` }} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div ref={chatEndRef} />
               </div>
             )}
@@ -1201,21 +1267,18 @@ export default function LiveRoom() {
             {/* Quick chips */}
             {!isEnded && connected && (
               <div className="flex gap-1.5 flex-wrap">
-                {QUICK_CHIP_KEYS.map(key => {
-                  const label = t(`room.chat.quickChips.${key}`);
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => sendChip(label)}
-                      disabled={questionsLeft === 0}
-                      className="text-[11px] px-2 py-0.5 rounded-full border border-indigo-200 text-indigo-600
-                                 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed
-                                 transition-colors whitespace-nowrap"
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+                {QUICK_CHIPS.map(({ key, value }) => (
+                  <button
+                    key={key}
+                    onClick={() => sendChip(value)}
+                    disabled={questionsLeft === 0 || rateLimitSecs > 0}
+                    className="text-[11px] px-2 py-0.5 rounded-full border border-indigo-200 text-indigo-600
+                               bg-indigo-50 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed
+                               transition-colors whitespace-nowrap"
+                  >
+                    {t(`room.chat.quickChips.${key}`)}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -1242,23 +1305,24 @@ export default function LiveRoom() {
 
               <Input
                 placeholder={
-                  isListening       ? t('room.chat.placeholder.listening')
-                  : isEnded         ? t('room.chat.placeholder.ended')
-                  : !connected      ? t('room.chat.placeholder.connecting')
-                  : questionsLeft === 0 ? t('room.chat.placeholder.noQuota')
+                  isListening            ? t('room.chat.placeholder.listening')
+                  : isEnded              ? t('room.chat.placeholder.ended')
+                  : !connected           ? t('room.chat.placeholder.connecting')
+                  : rateLimitSecs > 0    ? t('room.chat.rateLimitWait', { secs: rateLimitSecs })
+                  : questionsLeft === 0  ? t('room.chat.placeholder.noQuota')
                   : t('room.chat.placeholder.default')
                 }
                 value={question}
                 onChange={e => setQuestion(e.target.value.slice(0, MAX_QUESTION_LENGTH))}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendQuestion()}
-                disabled={isEnded || !connected || questionsLeft === 0}
+                disabled={isEnded || !connected || questionsLeft === 0 || rateLimitSecs > 0}
                 className={cn('text-sm', isListening && 'border-red-300 ring-1 ring-red-200')}
               />
               <Button
                 size="icon"
                 className="bg-indigo-600 hover:bg-indigo-700 shrink-0"
                 onClick={sendQuestion}
-                disabled={!question.trim() || isEnded || !connected || questionsLeft === 0}
+                disabled={!question.trim() || isEnded || !connected || questionsLeft === 0 || rateLimitSecs > 0}
                 aria-label={t('room.chat.send')}
               >
                 <Send className="w-4 h-4" />
@@ -1266,19 +1330,21 @@ export default function LiveRoom() {
             </div>
 
             <div className="flex items-center justify-between px-0.5">
-              <p className="text-[11px] text-slate-400">
-                {voiceSupported
-                  ? t('room.chat.footer.withMic', { max: QUESTIONS_PER_MIN })
-                  : t('room.chat.footer.withoutMic', { max: QUESTIONS_PER_MIN })}
-              </p>
+              {rateLimitSecs > 0 ? (
+                <p className="text-[11px] text-amber-600 font-medium animate-pulse">
+                  {t('room.chat.rateLimitWait', { secs: rateLimitSecs })}
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-400">
+                  {voiceSupported
+                    ? t('room.chat.footer.withMic', { max: QUESTIONS_PER_MIN })
+                    : t('room.chat.footer.withoutMic', { max: QUESTIONS_PER_MIN })}
+                </p>
+              )}
               <span className={cn('text-[11px]', charsLeft < 30 ? 'text-amber-500' : 'text-slate-300')}>
                 {charsLeft}
               </span>
             </div>
-
-            {reconnecting && (
-              <p className="text-xs text-amber-500 text-center">{t('room.chat.reconnect')}</p>
-            )}
           </div>
         </div>
 
@@ -1300,11 +1366,15 @@ export default function LiveRoom() {
         )}
       </div>
 
-      {/* Inline keyframes for speaking bar animation */}
+      {/* Inline keyframes for speaking bar + typing dot animations */}
       <style>{`
         @keyframes speaking-bar {
           from { transform: scaleY(.3); }
           to   { transform: scaleY(1); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); opacity: 0.4; }
+          50%       { transform: translateY(-4px); opacity: 1; }
         }
       `}</style>
     </div>
