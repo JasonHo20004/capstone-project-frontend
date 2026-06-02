@@ -39,7 +39,8 @@ import type { Test, Section } from '@/types/type';
 import { useGetCourseDetail, useGetMyCourses, useModules, useSellerCourses } from '@/hooks/api/use-courses';
 import { useAddToCart, useDirectBuy, useIsInCart } from '@/hooks/api/use-cart';
 import { useUser } from '@/hooks/api/use-user';
-import { useCourseContext, useCourseRatings } from '@/hooks/api/use-student-learning';
+import { useCourseContext, useCourseRatings, useCertificate, useIssueCertificate } from '@/hooks/api/use-student-learning';
+import { CertificateModal } from '@/components/user/certificate/CertificateModal';
 
 const CourseDetail = () => {
   const { t, i18n } = useTranslation('courses');
@@ -62,6 +63,12 @@ const CourseDetail = () => {
 
   // ── Ratings (for hero average display) ────────────────────────────────────
   const { data: ratingsData } = useCourseRatings(id);
+
+  // ── Certificate ────────────────────────────────────────────────────────────
+  const isPurchasedCourse = (myCoursesData?.courses ?? []).some((c: { id: string }) => c.id === course?.id);
+  const { data: certificate } = useCertificate(isPurchasedCourse ? course?.id : undefined);
+  const issueCertMutation = useIssueCertificate(course?.id);
+  const [showCertificate, setShowCertificate] = useState(false);
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [buyOpen, setBuyOpen] = useState(false);
@@ -705,18 +712,42 @@ const CourseDetail = () => {
                               totalLessons > 0 && completedLessons >= totalLessons;
                             if (allCompleted) {
                               return (
-                                <div className="flex items-center gap-3">
-                                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                  <span className="text-sm font-medium text-green-700">
-                                    {t('courseDetail.finalTest.allComplete')}
-                                  </span>
-                                  <Button
-                                    className="ml-auto rounded-xl shadow-lg shadow-amber-200/50"
-                                    onClick={() => navigate(`/practice/${course.finalTestId}`)}
-                                  >
-                                    <FileText className="w-4 h-4 mr-1.5" />
-                                    {t('courseDetail.finalTest.doTestBtn')}
-                                  </Button>
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-3">
+                                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <span className="text-sm font-medium text-green-700">
+                                      {t('courseDetail.finalTest.allComplete')}
+                                    </span>
+                                    <Button
+                                      className="ml-auto rounded-xl shadow-lg shadow-amber-200/50"
+                                      onClick={() => navigate(`/practice/${course.finalTestId}`)}
+                                    >
+                                      <FileText className="w-4 h-4 mr-1.5" />
+                                      {t('courseDetail.finalTest.doTestBtn')}
+                                    </Button>
+                                  </div>
+                                  {/* Certificate: issue after passing final test */}
+                                  {certificate ? (
+                                    <button
+                                      onClick={() => setShowCertificate(true)}
+                                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                                    >
+                                      <Award className="w-5 h-5 text-amber-500 shrink-0" />
+                                      <span className="text-sm font-semibold text-amber-800">Xem chứng chỉ của bạn</span>
+                                      <ChevronRight className="w-4 h-4 text-amber-400 ml-auto" />
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => issueCertMutation.mutate(undefined, { onSuccess: () => setShowCertificate(true) })}
+                                      disabled={issueCertMutation.isPending}
+                                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 hover:bg-violet-100 transition-colors disabled:opacity-60"
+                                    >
+                                      <Award className="w-5 h-5 text-violet-500 shrink-0" />
+                                      <span className="text-sm font-semibold text-violet-800">
+                                        {issueCertMutation.isPending ? 'Đang cấp chứng chỉ…' : 'Nhận chứng chỉ hoàn thành'}
+                                      </span>
+                                    </button>
+                                  )}
                                 </div>
                               );
                             }
@@ -747,6 +778,43 @@ const CourseDetail = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Certificate section — shown for courses WITHOUT a finalTest */}
+                    {!course.finalTestId && (() => {
+                      const totalLessons = courseLessons.length;
+                      const completedLessons = courseContext?.progress?.completedLessons ?? 0;
+                      const allDone = totalLessons > 0 && completedLessons >= totalLessons;
+                      if (!allDone) return null;
+                      return (
+                        <div className="mt-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200 shadow-sm">
+                          <h3 className="text-lg font-bold mb-3 text-slate-900 flex items-center gap-2">
+                            <Award className="w-5 h-5 text-amber-500" />
+                            Chứng chỉ hoàn thành
+                          </h3>
+                          {certificate ? (
+                            <button
+                              onClick={() => setShowCertificate(true)}
+                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-amber-200 hover:bg-amber-50 transition-colors"
+                            >
+                              <Award className="w-5 h-5 text-amber-500 shrink-0" />
+                              <span className="text-sm font-semibold text-amber-800">Xem chứng chỉ của bạn</span>
+                              <ChevronRight className="w-4 h-4 text-amber-400 ml-auto" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => issueCertMutation.mutate(undefined, { onSuccess: () => setShowCertificate(true) })}
+                              disabled={issueCertMutation.isPending}
+                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-amber-200 hover:bg-amber-50 transition-colors disabled:opacity-60"
+                            >
+                              <Award className="w-5 h-5 text-amber-500 shrink-0" />
+                              <span className="text-sm font-semibold text-amber-800">
+                                {issueCertMutation.isPending ? 'Đang cấp chứng chỉ…' : 'Nhận chứng chỉ hoàn thành'}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                 </TabsContent>
               </Tabs>
 
@@ -966,6 +1034,10 @@ const CourseDetail = () => {
           courseId={id}
           courseName={course.title}
         />
+      )}
+
+      {showCertificate && certificate && (
+        <CertificateModal certificate={certificate} onClose={() => setShowCertificate(false)} />
       )}
 
       <Footer />

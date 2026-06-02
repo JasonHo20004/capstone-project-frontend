@@ -97,11 +97,39 @@ class StudentLearningService {
   }
 
   async markLessonComplete(courseId: string, lessonId: string) {
-    const response = await apiClient.post<ApiResponse<{ success: boolean; message: string }>>(
+    const response = await apiClient.post<ApiResponse<{
+      certificateIssued: boolean;
+      certificate: Certificate | null;
+    }>>(
       `/student/courses/${courseId}/lessons/${lessonId}/complete`
     );
     return response.data;
   }
+
+  async getCertificate(courseId: string) {
+    const response = await apiClient.get<ApiResponse<Certificate>>(
+      `/student/courses/${courseId}/certificate`
+    );
+    return response.data;
+  }
+
+  async issueCertificate(courseId: string) {
+    const response = await apiClient.post<ApiResponse<Certificate>>(
+      `/student/courses/${courseId}/certificate/issue`
+    );
+    return response.data;
+  }
+}
+
+export interface Certificate {
+  id: string;
+  certificateNumber: string;
+  userId: string;
+  courseId: string;
+  userName: string;
+  courseName: string;
+  courseLevel: string | null;
+  issuedAt: string;
 }
 
 export const studentLearningService = new StudentLearningService();

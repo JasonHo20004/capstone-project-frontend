@@ -5,6 +5,7 @@ import { studentLearningService } from "@/lib/api/services/user";
 import type {
   CreateLessonCommentRequest,
   StudentPaginatedParams,
+  Certificate,
 } from "@/lib/api/services/user";
 import type {
   CourseContext,
@@ -27,6 +28,7 @@ export const learningKeys = {
     params?: StudentPaginatedParams
   ) => ["student-learning", "comments", courseId, lessonId, params] as const,
   ratings: (courseId?: string) => ["student-learning", "ratings", courseId] as const,
+  certificate: (courseId?: string) => ["student-learning", "certificate", courseId] as const,
 };
 
 export const useCourseContext = (courseId: string | undefined) => {
@@ -144,6 +146,30 @@ export const useMarkLessonComplete = (
     onSuccess: () => {
       if (courseId) {
         queryClient.invalidateQueries({ queryKey: learningKeys.context(courseId) });
+        // Refresh certificate in case this was the last lesson
+        queryClient.invalidateQueries({ queryKey: learningKeys.certificate(courseId) });
+      }
+    },
+  });
+};
+
+export const useCertificate = (courseId: string | undefined) => {
+  return useQuery({
+    queryKey: learningKeys.certificate(courseId),
+    queryFn: () => studentLearningService.getCertificate(courseId!),
+    enabled: Boolean(courseId),
+    select: (response) => response.data as Certificate,
+    retry: false,
+  });
+};
+
+export const useIssueCertificate = (courseId: string | undefined) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => studentLearningService.issueCertificate(courseId!),
+    onSuccess: () => {
+      if (courseId) {
+        queryClient.invalidateQueries({ queryKey: learningKeys.certificate(courseId) });
       }
     },
   });

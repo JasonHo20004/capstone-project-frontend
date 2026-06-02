@@ -26,8 +26,10 @@ import {
   useCourseRatings,
   useLessonPlayer,
   useMarkLessonComplete,
+  useCertificate,
   isForbiddenError,
 } from "@/hooks/api/use-student-learning";
+import { CertificateModal } from "@/components/user/certificate/CertificateModal";
 import { studentLearningService } from "@/lib/api/services/user/learning/student-learning.service";
 
 const DEFAULT_TAB: LearningTabId = "overview";
@@ -81,6 +83,8 @@ const StudentLearningPage = () => {
 
   const { data: ratings } = useCourseRatings(courseId, { page: 1, limit: 50 });
   const markCompleteMutation = useMarkLessonComplete(courseId, effectiveLessonId);
+  const { data: certificate } = useCertificate(courseId);
+  const [showCertificate, setShowCertificate] = useState(false);
 
   const handleTabChange = (tab: LearningTabId) => {
     searchParams.set("tab", tab);
@@ -179,7 +183,23 @@ const StudentLearningPage = () => {
 
                 <LearningTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
-                {activeTab === "overview" && <CourseOverview context={context} />}
+                {activeTab === "overview" && (
+                  <>
+                    <CourseOverview context={context} />
+                    {context && context.progress.progressPercentage === 100 && certificate && (
+                      <div className="mt-4 px-1">
+                        <button
+                          onClick={() => setShowCertificate(true)}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                        >
+                          <span className="text-xl">🏅</span>
+                          <span className="text-sm font-semibold text-amber-800">Xem chứng chỉ hoàn thành</span>
+                          <span className="ml-auto text-amber-400">›</span>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
                 {activeTab === "comments" && courseId && effectiveLessonId && (
                   <DiscussionSection
                     fetchComments={async (page, limit) => {
@@ -214,6 +234,10 @@ const StudentLearningPage = () => {
           </div>
         </section>
       </main>
+
+      {showCertificate && certificate && (
+        <CertificateModal certificate={certificate} onClose={() => setShowCertificate(false)} />
+      )}
 
       <Footer />
     </div>
