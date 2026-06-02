@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,13 +31,24 @@ export default function CreateLessonPage() {
     return mod?.title ?? null;
   }, [moduleId, modules]);
 
+  // Lessons already in the target scope. When adding into a module, the module
+  // list (`useModules`) carries each module's lessons; the course detail
+  // endpoint only returns a count, not the lessons themselves.
   const existingLessons = useMemo(() => {
+    if (moduleId) {
+      const mod = (modules as any[]).find((m) => m.id === moduleId);
+      return ((mod?.lessons as any[]) ?? []).filter(
+        (l: any) => !!l && typeof l.id === 'string'
+      );
+    }
     if (!course?.lessons) return [];
     return (course.lessons as any[])
       .map((item: any) => item.lesson ?? item)
-      .filter((l: any) => !!l && typeof l.id === 'string');
-  }, [course]);
+      .filter((l: any) => !!l && typeof l.id === 'string' && !l.moduleId);
+  }, [modules, moduleId, course]);
 
+  // Next free order within that scope (orders are unique per module, or
+  // per-course for standalone lessons).
   const nextLessonOrder = useMemo(() => {
     if (existingLessons.length === 0) return 1;
     const maxOrder = Math.max(...existingLessons.map((l: any) => l.lessonOrder ?? 0));
@@ -54,6 +65,16 @@ export default function CreateLessonPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
   const [uploadPercent, setUploadPercent] = useState(0);
+
+  // The course (and thus existingLessons) loads asynchronously, so the initial
+  // useState value is stale. Sync the suggested order into the form once it's
+  // known — but stop overriding as soon as the seller edits it manually.
+  const orderTouchedRef = useRef(false);
+  useEffect(() => {
+    if (!orderTouchedRef.current) {
+      setFormData((prev) => ({ ...prev, lessonOrder: nextLessonOrder }));
+    }
+  }, [nextLessonOrder]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -237,8 +258,11 @@ export default function CreateLessonPage() {
                   id="lessonOrder"
                   className="rounded-xl h-11 max-w-[200px]"
                   type="number"
-                  value={formData.lessonOrder || nextLessonOrder}
-                  onChange={(e) => handleChange('lessonOrder', parseInt(e.target.value) || 1)}
+                  value={formData.lessonOrder}
+                  onChange={(e) => {
+                    orderTouchedRef.current = true;
+                    handleChange('lessonOrder', parseInt(e.target.value) || 1);
+                  }}
                   disabled={isUploading}
                   min="1"
                 />

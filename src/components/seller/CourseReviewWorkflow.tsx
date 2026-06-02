@@ -320,10 +320,30 @@ interface HistoryEntry {
   createdAt: string;
 }
 
+// Quality-flag lifecycle markers stored in the history `reason` column.
+// Format is either "MARKER" or "MARKER|<human text>".
+const QF_MARKERS = ['QF_OPEN', 'QF_CONFIRMED', 'QF_CLEARED', 'QF_AUTODRAFT'] as const;
+type QfMarker = (typeof QF_MARKERS)[number];
+
+function parseQualityFlag(reason: string | null): { marker: QfMarker; text: string } | null {
+  if (!reason) return null;
+  for (const marker of QF_MARKERS) {
+    if (reason === marker || reason.startsWith(`${marker}|`)) {
+      const idx = reason.indexOf('|');
+      return { marker, text: idx >= 0 ? reason.slice(idx + 1).trim() : '' };
+    }
+  }
+  return null;
+}
+
 function TimelineRow({ entry }: { entry: HistoryEntry }) {
   const { t, i18n } = useTranslation('seller');
   const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-GB';
   const meta = describeTransition(entry, t);
+  // Strip the QF marker prefix so the seller sees clean text (or nothing for
+  // marker-only rows like QF_CONFIRMED / QF_CLEARED).
+  const qf = parseQualityFlag(entry.reason);
+  const displayReason = qf ? qf.text : entry.reason;
   return (
     <li className="ms-4">
       <span
@@ -333,9 +353,9 @@ function TimelineRow({ entry }: { entry: HistoryEntry }) {
         {new Date(entry.createdAt).toLocaleString(dateLocale)}
       </div>
       <div className={`text-sm font-medium ${meta.tone}`}>{meta.label}</div>
-      {entry.reason && (
+      {displayReason && (
         <div className="mt-1 text-xs text-slate-600 bg-slate-50 border rounded-md p-2 whitespace-pre-wrap">
-          {entry.reason}
+          {displayReason}
         </div>
       )}
     </li>
@@ -343,6 +363,21 @@ function TimelineRow({ entry }: { entry: HistoryEntry }) {
 }
 
 function describeTransition(e: HistoryEntry, t: TFunction): { label: string; dot: string; tone: string } {
+  // Quality-flag rows ride on ACTIVE→ACTIVE (or ACTIVE→DRAFT for auto-draft)
+  // transitions — detect them first so they aren't mislabelled "Admin approved".
+  const qf = parseQualityFlag(e.reason);
+  if (qf) {
+    switch (qf.marker) {
+      case 'QF_OPEN':
+        return { label: t('reviewWorkflow.transition.qualityFlagOpen'), dot: 'bg-orange-500', tone: 'text-orange-700' };
+      case 'QF_CONFIRMED':
+        return { label: t('reviewWorkflow.transition.qualityFlagConfirmed'), dot: 'bg-sky-500', tone: 'text-sky-700' };
+      case 'QF_CLEARED':
+        return { label: t('reviewWorkflow.transition.qualityFlagCleared'), dot: 'bg-teal-500', tone: 'text-teal-700' };
+      case 'QF_AUTODRAFT':
+        return { label: t('reviewWorkflow.transition.qualityFlagAutoDraft'), dot: 'bg-red-500', tone: 'text-red-700' };
+    }
+  }
   if (e.toStatus === 'PENDING' && e.actorRole === 'seller') {
     return { label: t('reviewWorkflow.transition.sellerSubmit'), dot: 'bg-amber-500', tone: 'text-amber-700' };
   }

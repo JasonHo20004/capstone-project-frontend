@@ -45,10 +45,22 @@ export interface Course {
   rejectedAt?: string | null;
   rejectionReason?: string | null;
   reviewedById?: string | null;
+  /**
+   * Active "Chưa đạt yêu cầu" quality flag (admin view only), or null. Derived
+   * server-side from the review history; not a stored column.
+   */
+  qualityFlag?: QualityFlag | null;
   /** Optional relations - populated by API when requested */
   lessons?: Lesson[];
   user?: Pick<User, 'fullName' | 'id'>;
   courseSeller?: Pick<User, 'fullName' | 'id'>;
+}
+
+export interface QualityFlag {
+  reason: string;
+  flaggedAt: string;
+  deadlineAt: string;
+  confirmed: boolean;
 }
 
 export interface CourseLesson {
