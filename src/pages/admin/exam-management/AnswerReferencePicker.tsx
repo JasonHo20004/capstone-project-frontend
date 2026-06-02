@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Highlighter, Sparkles, X, Loader2, Quote } from 'lucide-react';
 
@@ -61,6 +61,51 @@ function formatTime(sec?: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+/**
+ * Find where `snippet` sits inside `text`, returning [start, end] char offsets.
+ * Tries the stored offsets first, then an exact match, then a whitespace-tolerant
+ * match (AI snippets often differ from the passage only by spaces / line breaks).
+ * Returns null when the snippet can't be located at all.
+ */
+function locateSnippet(
+  text: string,
+  snippet: string,
+  hintStart?: number,
+  hintEnd?: number,
+): [number, number] | null {
+  if (!text || !snippet) return null;
+
+  // 1. Trust the stored offsets only if they still point at the snippet.
+  if (
+    typeof hintStart === 'number' &&
+    typeof hintEnd === 'number' &&
+    hintStart >= 0 &&
+    hintEnd <= text.length &&
+    hintStart < hintEnd &&
+    text.slice(hintStart, hintEnd) === snippet
+  ) {
+    return [hintStart, hintEnd];
+  }
+
+  // 2. Exact substring match.
+  const exact = text.indexOf(snippet);
+  if (exact >= 0) return [exact, exact + snippet.length];
+
+  // 3. Whitespace-tolerant match: collapse runs of whitespace to \s+.
+  const trimmed = snippet.trim();
+  if (!trimmed) return null;
+  const pattern = trimmed
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\s+/g, '\\s+');
+  try {
+    const m = new RegExp(pattern).exec(text);
+    if (m) return [m.index, m.index + m[0].length];
+  } catch {
+    /* malformed regex — give up gracefully */
+  }
+  return null;
+}
+
 interface Props {
   /** Reading passage text, or listening transcript. */
   sourceText: string;
@@ -88,6 +133,15 @@ export function AnswerReferencePicker({
   aiLoading,
 }: Props) {
   const boxRef = useRef<HTMLDivElement>(null);
+  const markRef = useRef<HTMLElement>(null);
+
+  // When the reference changes (e.g. AI just suggested one), scroll the
+  // highlighted text into view inside the passage box so the author sees it.
+  useEffect(() => {
+    if (value?.snippet && markRef.current) {
+      markRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [value?.snippet]);
 
   const handleMouseUp = () => {
     const sel = window.getSelection();
@@ -97,15 +151,19 @@ export function AnswerReferencePicker({
     const box = boxRef.current;
     if (!box || !box.contains(sel.anchorNode)) return;
 
-    // The box renders sourceText as a single text node, so anchor/focus
-    // offsets are character indexes into the content. Fall back to indexOf
-    // when the selection somehow spans multiple nodes.
+    // The box may render the passage as several nodes (the highlighted snippet
+    // is wrapped in <mark>), so compute the absolute char offset by measuring
+    // the text from the box start up to the selection start.
     let start: number | undefined;
     let end: number | undefined;
-    if (sel.anchorNode === sel.focusNode) {
-      start = Math.min(sel.anchorOffset, sel.focusOffset);
-      end = Math.max(sel.anchorOffset, sel.focusOffset);
-    } else {
+    try {
+      const range = sel.getRangeAt(0);
+      const pre = document.createRange();
+      pre.selectNodeContents(box);
+      pre.setEnd(range.startContainer, range.startOffset);
+      start = pre.toString().length;
+      end = start + snippet.length;
+    } catch {
       const idx = sourceText.indexOf(snippet);
       if (idx >= 0) {
         start = idx;
@@ -124,6 +182,26 @@ export function AnswerReferencePicker({
   };
 
   const hasSource = !!sourceText && sourceText.trim().length > 0;
+
+  // Render the passage with the justifying snippet wrapped in <mark> so it
+  // shows up highlighted in yellow inline within the reading text.
+  const located = value?.snippet
+    ? locateSnippet(sourceText, value.snippet, value.start, value.end)
+    : null;
+  const passageBody = located ? (
+    <>
+      {sourceText.slice(0, located[0])}
+      <mark
+        ref={markRef}
+        className="rounded bg-amber-200 px-0.5 text-amber-900"
+      >
+        {sourceText.slice(located[0], located[1])}
+      </mark>
+      {sourceText.slice(located[1])}
+    </>
+  ) : (
+    sourceText
+  );
 
   return (
     <div>
@@ -166,8 +244,13 @@ export function AnswerReferencePicker({
               isListening ? 'font-mono' : 'font-serif'
             }`}
           >
-            {sourceText}
+            {passageBody}
           </div>
+          {value?.snippet && !located && (
+            <p className="mt-1 text-[11px] text-amber-600">
+              ⚠ Không tìm thấy dẫn chứng này trong bài đọc — có thể AI diễn đạt lại. Hãy bôi đen lại đoạn đúng.
+            </p>
+          )}
         </>
       )}
 

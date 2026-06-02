@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Trash2, Upload, MoreHorizontal, FileJson, Music, Eye, Plus, Pencil, Save, Link, Loader2, Diamond } from 'lucide-react';
+import { Trash2, Upload, MoreHorizontal, Music, Plus, Pencil, Save, Link, Loader2, Diamond, Wand2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DataTable from '@/components/admin/DataTable';
@@ -68,77 +68,18 @@ interface WhisperSentence {
   endTime: number;
 }
 
-interface WhisperJSON {
-  title: string;
-  description?: string;
-  level?: string;
-  category?: string;
-  audioFileName?: string;
-  totalSentences?: number;
-  sentences: WhisperSentence[];
+// Stats returned by the rag-service split/clean pipeline.
+interface TranscribeReport {
+  rawChunks?: number;
+  hallucinationsRemoved?: number;
+  introSkipped?: number;
+  duplicateExampleRemoved?: number;
+  instructionsRemoved?: number;
+  finalSentences?: number;
 }
 
-// ─── Instruction keywords for auto-cleaning ──────────────────────────────────
 
-const INSTRUCTION_KEYWORDS = [
-  'questions', 'look at', 'you will hear', 'listen carefully',
-  'now turn to', 'that is the end', 'before you hear',
-  'you have some time', 'now listen', 'section',
-  'part one', 'part two', 'part three', 'part four',
-  'example', 'answer the questions', 'read the questions',
-  'first you have', 'complete the', 'choose the correct',
-  'write no more than', 'label the',
-  'has been written', 'now we shall begin', 'we shall begin',
-  'the answer is', 'so the answer', 'you can see',
-  'in the space', 'on the form', 'on your answer sheet',
-  'end of section', 'end of part',
-];
-
-const NON_LATIN = /[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/;
-
-function cleanSentences(sentences: WhisperSentence[]): { cleaned: WhisperSentence[]; removed: number } {
-  let result = [...sentences];
-  const originalCount = result.length;
-
-  // Remove hallucinations
-  result = result.filter((s) => {
-    const duration = s.endTime - s.startTime;
-    return !NON_LATIN.test(s.text) && !(duration < 0.5 && s.text.split(' ').length > 3);
-  });
-
-  // Remove instructions
-  result = result.filter((s) => {
-    const lower = s.text.toLowerCase();
-    return !INSTRUCTION_KEYWORDS.some((kw) => lower.includes(kw));
-  });
-
-  // Remove duplicate intro
-  if (result.length > 10) {
-    const firstText = result[0]?.text.toLowerCase().trim().slice(0, 40) || '';
-    for (let i = 3; i < Math.min(15, result.length); i++) {
-      if (result[i].text.toLowerCase().trim().slice(0, 40) === firstText) {
-        result = result.slice(i);
-        break;
-      }
-    }
-  }
-
-  // Merge short segments
-  const merged: WhisperSentence[] = [];
-  for (const s of result) {
-    if (merged.length > 0 && s.text.split(' ').length < 3) {
-      merged[merged.length - 1].text += ' ' + s.text;
-      merged[merged.length - 1].endTime = s.endTime;
-    } else {
-      merged.push({ ...s });
-    }
-  }
-
-  // Re-index
-  merged.forEach((s, i) => { s.index = i; });
-
-  return { cleaned: merged, removed: originalCount - merged.length };
-}
+// Cleaning now happens server-side in the rag-service pipeline.
 
 // ─── API Functions ───────────────────────────────────────────────────────────
 
@@ -183,24 +124,44 @@ const uploadAudioApi = async (file: File): Promise<string> => {
   return resp.data?.data?.url || '';
 };
 
+// Upload audio → Whisper (CPU) auto-generates + cleans timestamps server-side.
+// The audio is also stored on S3, so the returned audioUrl is ready to use.
+// Long timeout: CPU transcription of a few-minute clip can take several minutes.
+const transcribeAudioApi = async (
+  file: File
+): Promise<{ audioUrl: string; sentences: WhisperSentence[]; report: TranscribeReport }> => {
+  const formData = new FormData();
+  formData.append('audio', file);
+  const resp = await apiClient.post('/dictation/transcribe', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 600000,
+  });
+  const data = resp.data?.data || {};
+  return {
+    audioUrl: data.audioUrl || '',
+    sentences: data.sentences || [],
+    report: data.report || {},
+  };
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function DictationManagement() {
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<DictationExercise | null>(null);
   const [showUpload, setShowUpload] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
 
-  // Upload form state
-  const [jsonData, setJsonData] = useState<WhisperJSON | null>(null);
-  const [cleanedSentences, setCleanedSentences] = useState<WhisperSentence[]>([]);
-  const [removedCount, setRemovedCount] = useState(0);
+  // Upload form state — audio file → auto-transcribe → preview → create
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [transcribing, setTranscribing] = useState(false);
+  const [hasTranscribed, setHasTranscribed] = useState(false);
+  const [sentences, setSentences] = useState<WhisperSentence[]>([]);
+  const [report, setReport] = useState<TranscribeReport | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [level, setLevel] = useState('B2');
   const [category, setCategory] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
-  const [audioUploading, setAudioUploading] = useState(false);
 
   // Edit form state
   const [editTarget, setEditTarget] = useState<DictationExercise | null>(null);
@@ -249,69 +210,89 @@ export default function DictationManagement() {
 
   const resetUploadForm = () => {
     setShowUpload(false);
-    setJsonData(null);
-    setCleanedSentences([]);
-    setRemovedCount(0);
+    setAudioFile(null);
+    setTranscribing(false);
+    setHasTranscribed(false);
+    setSentences([]);
+    setReport(null);
     setTitle('');
     setDescription('');
     setLevel('B2');
     setCategory('');
     setAudioUrl('');
-    setAudioUploading(false);
   };
 
-  const handleAudioFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, mode: 'create' | 'edit') => {
+  // Audio upload in the EDIT dialog (replace audio without re-transcribing).
+  const handleEditAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const setUploading = mode === 'create' ? setAudioUploading : setEditAudioUploading;
-    const setUrl = mode === 'create' ? setAudioUrl : setEditAudioUrl;
-    setUploading(true);
+    setEditAudioUploading(true);
     try {
       const url = await uploadAudioApi(file);
-      setUrl(url);
+      setEditAudioUrl(url);
     } catch {
       toast.error('Upload thất bại', { description: 'Kiểm tra kết nối S3 và thử lại.' });
     }
-    setUploading(false);
+    setEditAudioUploading(false);
   };
 
-  // Handle JSON file drop/upload
-  const handleJsonUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Admin picks an audio file in the create dialog.
+  const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setAudioFile(file);
+    setHasTranscribed(false);
+    setSentences([]);
+    setReport(null);
+    setAudioUrl('');
+    // Auto-fill title from the file name (admin can edit).
+    if (file && !title) {
+      setTitle(file.name.replace(/\.[^.]+$/, ''));
+    }
+  };
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target?.result as string) as WhisperJSON;
-        setJsonData(data);
-
-        // Auto-clean
-        const { cleaned, removed } = cleanSentences(data.sentences);
-        setCleanedSentences(cleaned);
-        setRemovedCount(removed);
-
-        // Auto-fill metadata
-        setTitle(data.title || '');
-        setDescription(data.description || '');
-        setLevel(data.level || 'B2');
-        setCategory(data.category || '');
-      } catch {
-        toast.error('File JSON không hợp lệ', { description: 'Vui lòng kiểm tra cú pháp file và thử lại.' });
+  // Run Whisper on the selected audio (CPU, server-side) and load the sentences.
+  const handleTranscribe = async () => {
+    if (!audioFile) return;
+    setTranscribing(true);
+    try {
+      const result = await transcribeAudioApi(audioFile);
+      setSentences(result.sentences);
+      setReport(result.report);
+      setAudioUrl(result.audioUrl);
+      setHasTranscribed(true);
+      if (result.sentences.length === 0) {
+        toast.warning('Không tách được câu nào', { description: 'Thử file audio khác hoặc kiểm tra chất lượng âm thanh.' });
+      } else {
+        toast.success(`Đã tách ${result.sentences.length} câu`, { description: 'Kiểm tra và chỉnh sửa trước khi tạo bài.' });
       }
-    };
-    reader.readAsText(file);
-  }, []);
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error('Tách timestamp thất bại', {
+        description: detail || 'Whisper service (rag-service) có đang chạy không? Quá trình trên CPU có thể mất vài phút.',
+      });
+    }
+    setTranscribing(false);
+  };
+
+  const updateUploadSentenceText = (index: number, text: string) => {
+    setSentences((prev) => prev.map((s) => (s.index === index ? { ...s, text } : s)));
+  };
+
+  const deleteUploadSentence = (index: number) => {
+    setSentences((prev) => prev.filter((s) => s.index !== index));
+  };
 
   const handleCreate = () => {
-    if (!title || cleanedSentences.length === 0) return;
+    if (!title || sentences.length === 0) return;
+    // Re-index after any inline edits/deletes.
+    const reindexed = sentences.map((s, i) => ({ ...s, index: i }));
     createMutation.mutate({
       title,
       description,
-      audioUrl: audioUrl || `placeholder://${jsonData?.audioFileName || 'audio.mp3'}`,
+      audioUrl: audioUrl || `placeholder://${audioFile?.name || 'audio.mp3'}`,
       level,
       category,
-      sentences: cleanedSentences,
+      sentences: reindexed,
     });
   };
 
@@ -485,7 +466,7 @@ export default function DictationManagement() {
         </div>
         <Button className="gap-2" onClick={() => setShowUpload(true)}>
           <Plus className="h-4 w-4" />
-          Import từ Whisper
+          Tạo bài từ Audio
         </Button>
       </div>
 
@@ -502,65 +483,63 @@ export default function DictationManagement() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Import bài Dictation từ Whisper JSON
+              <Music className="h-5 w-5" />
+              Tạo bài Dictation từ file Audio
             </DialogTitle>
             <DialogDescription>
-              Upload file JSON từ Kaggle notebook, hệ thống sẽ tự động clean data.
+              Upload file audio, hệ thống tự chạy Whisper trên CPU để tách câu + timestamp và lọc dữ liệu. Không cần Kaggle hay file JSON.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* JSON Upload */}
+            {/* Audio Upload */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <FileJson className="h-4 w-4" />
-                File JSON (Whisper output)
+                <Upload className="h-4 w-4" />
+                File Audio (mp3, wav, m4a...)
               </Label>
               <Input
                 type="file"
-                accept=".json"
-                onChange={handleJsonUpload}
+                accept="audio/*"
+                onChange={handleAudioSelect}
+                disabled={transcribing}
                 className="cursor-pointer"
               />
+              <Button
+                type="button"
+                onClick={handleTranscribe}
+                disabled={!audioFile || transcribing}
+                className="gap-2 w-full"
+              >
+                {transcribing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Đang tách timestamp trên CPU... (có thể mất vài phút)
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-4 w-4" />
+                    {hasTranscribed ? 'Tách lại timestamp' : 'Tách timestamp tự động'}
+                  </>
+                )}
+              </Button>
             </div>
 
-            {/* Show results if JSON loaded */}
-            {jsonData && (
+            {/* Show results once transcribed */}
+            {hasTranscribed && (
               <>
-                {/* Clean stats */}
-                <div className="rounded-lg border bg-muted/50 p-4 space-y-1">
-                  <div className="text-sm font-medium">📊 Kết quả clean tự động:</div>
-                  <div className="text-sm text-muted-foreground">
-                    Raw: {jsonData.sentences.length} câu → Clean: {cleanedSentences.length} câu
-                    {removedCount > 0 && (
-                      <span className="text-red-500"> (loại bỏ {removedCount} câu: hallucination/intro/instructions)</span>
-                    )}
-                  </div>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="p-0 h-auto text-xs"
-                    onClick={() => setShowPreview(!showPreview)}
-                  >
-                    <Eye className="mr-1 h-3 w-3" />
-                    {showPreview ? 'Ẩn preview' : 'Xem preview câu'}
-                  </Button>
-
-                  {showPreview && (
-                    <div className="mt-2 max-h-48 overflow-y-auto rounded border bg-background p-2 text-xs space-y-1">
-                      {cleanedSentences.map((s) => (
-                        <div key={s.index} className="flex gap-2">
-                          <span className="text-muted-foreground w-6 shrink-0">{s.index}</span>
-                          <span className="text-muted-foreground w-16 shrink-0">
-                            {s.startTime.toFixed(1)}s-{s.endTime.toFixed(1)}s
-                          </span>
-                          <span>{s.text.slice(0, 80)}</span>
-                        </div>
-                      ))}
+                {/* Pipeline stats */}
+                {report && (
+                  <div className="rounded-lg border bg-muted/50 p-4 space-y-1">
+                    <div className="text-sm font-medium">📊 Kết quả tách tự động:</div>
+                    <div className="text-sm text-muted-foreground">
+                      Raw: {report.rawChunks ?? '—'} đoạn → Sạch: {report.finalSentences ?? sentences.length} câu
                     </div>
-                  )}
-                </div>
+                    <div className="text-xs text-muted-foreground">
+                      Loại bỏ: {report.hallucinationsRemoved ?? 0} hallucination · {report.instructionsRemoved ?? 0} câu hướng dẫn · {report.duplicateExampleRemoved ?? 0} intro lặp · {report.introSkipped ?? 0} bỏ đầu
+                    </div>
+                  </div>
+                )}
 
                 {/* Metadata */}
                 <div className="grid grid-cols-2 gap-4">
@@ -592,47 +571,43 @@ export default function DictationManagement() {
                   </div>
                 </div>
 
-                {/* Audio — Upload or URL */}
+                {/* Editable sentence list */}
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Music className="h-4 w-4" />
-                    Audio
-                    {audioUrl && <Badge variant="default" className="text-xs ml-2">{audioUrl.startsWith('http') ? 'Đã có URL' : 'Đã upload'}</Badge>}
-                  </Label>
-                  <Tabs defaultValue="upload" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 h-8">
-                      <TabsTrigger value="upload" className="text-xs gap-1">
-                        <Upload className="h-3 w-3" /> Upload file
-                      </TabsTrigger>
-                      <TabsTrigger value="url" className="text-xs gap-1">
-                        <Link className="h-3 w-3" /> Paste URL
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="upload" className="mt-2">
-                      <Input
-                        type="file"
-                        accept="audio/*"
-                        onChange={(e) => handleAudioFileUpload(e, 'create')}
-                        disabled={audioUploading}
-                        className="cursor-pointer"
-                      />
-                      {audioUploading && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                          <Loader2 className="h-3 w-3 animate-spin" /> Đang upload lên S3...
-                        </div>
-                      )}
-                    </TabsContent>
-                    <TabsContent value="url" className="mt-2">
-                      <Input
-                        value={audioUrl}
-                        onChange={(e) => setAudioUrl(e.target.value)}
-                        placeholder="https://example.com/audio.mp3"
-                      />
-                    </TabsContent>
-                  </Tabs>
-                  <p className="text-xs text-muted-foreground">
-                    Để trống nếu chưa có audio. Có thể cập nhật sau trong phần chỉnh sửa.
-                  </p>
+                  <Label className="text-base font-semibold">Danh sách câu ({sentences.length}) — kiểm tra & chỉnh sửa</Label>
+                  <div className="max-h-72 overflow-y-auto space-y-2 rounded border p-3">
+                    {sentences.map((s, idx) => (
+                      <div key={s.index} className="flex gap-2 items-start">
+                        <span className="text-xs text-muted-foreground w-6 pt-2 shrink-0">{idx}</span>
+                        <span className="text-xs text-muted-foreground w-20 pt-2 shrink-0">
+                          {s.startTime.toFixed(1)}s-{s.endTime.toFixed(1)}s
+                        </span>
+                        <Textarea
+                          value={s.text}
+                          onChange={(e) => updateUploadSentenceText(s.index, e.target.value)}
+                          className="text-sm min-h-[36px] h-9 py-1.5 resize-none"
+                          rows={1}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-9 p-0 shrink-0 text-red-500 hover:text-red-700"
+                          onClick={() => deleteUploadSentence(s.index)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Audio status */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Music className="h-4 w-4" />
+                  {audioUrl && !audioUrl.startsWith('placeholder') ? (
+                    <span>Audio đã được lưu trữ. <Badge variant="default" className="text-xs ml-1">Sẵn sàng</Badge></span>
+                  ) : (
+                    <span className="text-amber-600">Chưa lưu được audio — có thể cập nhật sau trong phần chỉnh sửa.</span>
+                  )}
                 </div>
               </>
             )}
@@ -644,9 +619,9 @@ export default function DictationManagement() {
             </Button>
             <Button
               onClick={handleCreate}
-              disabled={!jsonData || !title || cleanedSentences.length === 0 || createMutation.isPending}
+              disabled={!hasTranscribed || !title || sentences.length === 0 || createMutation.isPending}
             >
-              {createMutation.isPending ? 'Đang tạo...' : `Tạo bài (${cleanedSentences.length} câu)`}
+              {createMutation.isPending ? 'Đang tạo...' : `Tạo bài (${sentences.length} câu)`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -717,7 +692,7 @@ export default function DictationManagement() {
                   <Input
                     type="file"
                     accept="audio/*"
-                    onChange={(e) => handleAudioFileUpload(e, 'edit')}
+                    onChange={handleEditAudioUpload}
                     disabled={editAudioUploading}
                     className="cursor-pointer"
                   />

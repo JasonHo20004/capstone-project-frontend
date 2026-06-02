@@ -1089,6 +1089,7 @@
       },
       "noAnswer": "(không trả lời)",
       "defaultQuestion": "Câu {{n}}",
+      "viewEvidence": "Xem dẫn chứng",
       "types": {
         "MCQ": "MCQ",
         "MCQMulti": "MCQ (Nhiều)",

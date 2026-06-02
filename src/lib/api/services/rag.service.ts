@@ -36,6 +36,8 @@ export interface ExplainPayload {
   user_answer: string;
   test_skill?: string;
   conversation_history?: ChatMessage[];
+  /** UI language code (i18n), e.g. "vi" | "en" — the tutor replies in this language. */
+  language?: string;
 }
 
 export interface ExplainResponse {
@@ -234,7 +236,8 @@ class RagService {
     num_questions?: number;
     difficulty?: string;
   }): Promise<ReadingGenResponse> {
-    const resp = await apiClient.post("/rag/reading/generate", payload);
+    // LLM generation can take well over the default 30s — give it room.
+    const resp = await apiClient.post("/rag/reading/generate", payload, { timeout: 300000 });
     return resp.data;
   }
 
@@ -291,6 +294,13 @@ export interface GeneratedQuestion {
   answer: Record<string, any>;
   explanation: string;
   questionOrder: number;
+  /** Study4-style answer location: exact passage sentence justifying the answer. */
+  answerReference?: {
+    snippet: string;
+    start?: number;
+    end?: number;
+    source?: "manual" | "ai";
+  };
 }
 
 export interface ReadingGenResponse {

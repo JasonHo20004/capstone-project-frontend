@@ -1603,8 +1603,11 @@ export default function IeltsTestModule() {
                     ? 'border-amber-400 ring-1 ring-amber-200'
                     : questionAnswered(q) ? 'border-indigo-300 shadow-sm' : 'border-slate-200'
                 }`}>
-                  {/* Instruction banner (for Summary Completion, Matching, etc.) */}
-                  {qInstruction && (
+                  {/* Per-question instruction banner — only when the group-level
+                      section instruction isn't already covering it, so the same
+                      "Choose NO MORE THAN TWO WORDS..." text doesn't repeat on
+                      every question. */}
+                  {qInstruction && !(SECTION_INSTRUCTIONS[qType] && !isListeningTest) && (
                     <div className="mb-3 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
                       <p className="text-xs text-indigo-700 font-medium italic">{qInstruction}</p>
                     </div>
@@ -1640,13 +1643,19 @@ export default function IeltsTestModule() {
                   {/* Summary inline view for GAP_FILL with summaryText */}
                   {qType === 'GAP_FILL' && qSummaryText && (
                     <div className="mb-3 p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm leading-relaxed">
-                      {qSummaryText.split(/(\{\{\d+\}\})/).map((part: string, i: number) => {
+                      {(() => {
+                        // Only label gaps with their number when there are several;
+                        // a lone "1" next to a single blank just looks confusing.
+                        const gapCount = (qSummaryText.match(/\{\{\d+\}\}/g) || []).length;
+                        return qSummaryText.split(/(\{\{\d+\}\})/).map((part: string, i: number) => {
                         const match = part.match(/^\{\{(\d+)\}\}$/);
                         if (match) {
                           const gapNum = match[1];
                           return (
                             <span key={i} className="inline-flex items-center mx-0.5">
-                              <span className="text-[10px] font-bold text-indigo-600 mr-0.5">{gapNum}</span>
+                              {gapCount > 1 && (
+                                <span className="text-[10px] font-bold text-indigo-600 mr-0.5">{gapNum}</span>
+                              )}
                               <input
                                 type="text"
                                 // Each gap is stored under a composite key `${q.id}::${gapNum}`.
@@ -1662,7 +1671,8 @@ export default function IeltsTestModule() {
                           );
                         }
                         return <span key={i}>{part}</span>;
-                      })}
+                        });
+                      })()}
                     </div>
                   )}
 

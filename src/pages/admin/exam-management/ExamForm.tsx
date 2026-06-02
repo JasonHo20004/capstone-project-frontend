@@ -410,6 +410,7 @@ export default function ExamFormPage() {
             explanation: q.explanation || '',
             questionOrder: existingCount + i + 1,
             imageUrl: '',
+            answerReference: q.answerReference || undefined,
           }));
           sections[sIdx] = { ...sections[sIdx], questions: [...sections[sIdx].questions, ...newQuestions] };
           return { ...prev, sections };
@@ -451,6 +452,7 @@ export default function ExamFormPage() {
           explanation: q.explanation || '',
           questionOrder: existingCount + i + 1,
           imageUrl: '',
+          answerReference: q.answerReference || undefined,
         }));
         setForm(prev => {
           const sections = [...prev.sections];
@@ -502,6 +504,7 @@ export default function ExamFormPage() {
             explanation: q.explanation || '',
             questionOrder: existingCount + i + 1,
             imageUrl: '',
+            answerReference: q.answerReference || undefined,
           }));
           sections[sIdx] = {
             ...sections[sIdx],

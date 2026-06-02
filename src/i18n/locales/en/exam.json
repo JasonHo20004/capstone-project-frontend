@@ -1089,6 +1089,7 @@
       },
       "noAnswer": "(no answer)",
       "defaultQuestion": "Question {{n}}",
+      "viewEvidence": "View evidence",
       "types": {
         "MCQ": "MCQ",
         "MCQMulti": "MCQ (Multi)",

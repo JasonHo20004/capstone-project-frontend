@@ -158,6 +158,7 @@ export default function TestDetailPage() {
         correctAnswer = answerData?.correctAnswer || "";
       }
       return {
+        questionId: q.id,
         questionOrder: q.questionOrder,
         questionText: contentData?.text || q.questionText || "",
         questionType: q.questionType,
@@ -291,7 +292,16 @@ export default function TestDetailPage() {
                           <td className="px-4 py-3 font-bold text-indigo-600">{d.questionOrder || i + 1}</td>
                           <td className="px-4 py-3 text-slate-700 max-w-xs">
                             <span className="line-clamp-2">{d.questionText || t("testDetail.review.defaultQuestion", { n: i + 1 })}</span>
-                            {d.explanation && <p className="text-xs text-slate-400 mt-1 italic line-clamp-1 flex items-center gap-1"><Lightbulb size={10} className="shrink-0" />{d.explanation}</p>}
+                            {sessionId && d.questionId && (
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/exam/result/${sessionId}`, { state: { focusQuestionId: d.questionId } })}
+                                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline"
+                              >
+                                <Lightbulb size={12} className="shrink-0" />
+                                {t("testDetail.review.viewEvidence")}
+                              </button>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${

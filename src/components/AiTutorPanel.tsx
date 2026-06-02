@@ -87,7 +87,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 export default function AiTutorPanel({
   isOpen, onClose, passage, question, practiceSessionId, testTitle, testSkill,
 }: AiTutorPanelProps) {
-  const { t } = useTranslation("exam");
+  const { t, i18n } = useTranslation("exam");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -177,6 +177,7 @@ export default function AiTutorPanel({
       user_answer: question.userAnswer,
       test_skill: testSkill,
       conversation_history: conversationHistory,
+      language: i18n.language,
     };
 
     let accumulated = "";
@@ -288,8 +289,8 @@ export default function AiTutorPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6 pointer-events-none">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
+      {/* Backdrop — transparent (no dim/blur); still closes the panel on click. */}
+      <div className="fixed inset-0 pointer-events-auto" onClick={onClose} />
 
       {/* Panel */}
       <div className="relative w-full max-w-lg h-[80vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col pointer-events-auto animate-in slide-in-from-bottom-4 duration-300">

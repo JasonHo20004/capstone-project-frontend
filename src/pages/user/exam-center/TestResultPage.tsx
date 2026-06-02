@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { useTranslation, Trans } from "react-i18next";
 import apiClient from "@/lib/api/config";
 import DiscussionSection from "@/components/DiscussionSection";
@@ -138,6 +138,15 @@ function buildCorrectAnswer(q: RawQuestion): { display: string; raw: CorrectAnsw
     return { display: parts.join(", "), raw: { indices, texts: indices.map(i => options[i] || "") } };
   }
   if (q.questionType === "GAP_FILL" || q.questionType === "SHORT_ANSWER") {
+    // Multi-gap Summary Completion stores answers as { gaps: { "1": ["word"] } }.
+    const gaps = (answerData as { gaps?: Record<string, unknown> })?.gaps;
+    if (gaps && typeof gaps === "object" && Object.keys(gaps).length > 0) {
+      const texts = Object.keys(gaps).map(k => {
+        const v = (gaps as Record<string, unknown>)[k];
+        return Array.isArray(v) ? v.join(" / ") : String(v ?? "");
+      });
+      return { display: texts.join("  •  "), raw: { text: texts.join("  •  "), texts } };
+    }
     const text: string = Array.isArray(answerData?.text)
       ? answerData.text.join(" / ")
       : (answerData?.text as string) || answerData?.correctAnswer || "";
@@ -170,8 +179,13 @@ function collectEvidenceTerms(q: ReviewQuestion | undefined): string[] {
   };
 
   if (q.questionType === "GAP_FILL" || q.questionType === "SHORT_ANSWER") {
-    const raw = q.correctAnswerRaw?.text;
-    if (typeof raw === "string") raw.split(/\s*\/\s*/).forEach(push);
+    // Prefer per-gap values; fall back to the slash-joined display string.
+    if (q.correctAnswerRaw?.texts?.length) {
+      q.correctAnswerRaw.texts.forEach(v => v.split(/\s*\/\s*/).forEach(push));
+    } else {
+      const raw = q.correctAnswerRaw?.text;
+      if (typeof raw === "string") raw.split(/\s*[/•]\s*/).forEach(push);
+    }
   } else if (q.questionType === "MULTIPLE_CHOICE") {
     push(q.correctAnswerRaw?.text);
   } else if (q.questionType === "MULTIPLE_CHOICE_MULTI_ANSWER") {
@@ -180,6 +194,22 @@ function collectEvidenceTerms(q: ReviewQuestion | undefined): string[] {
     push(q.correctAnswerRaw?.text);
   }
   return Array.from(new Set(terms));
+}
+
+/**
+ * Fallback answer location for tests without an authored answerReference
+ * (imported tests, or AI tests generated before the evidence feature): pull the
+ * quoted passage phrase out of the explanation, e.g.
+ *   "Gap 1: The passage states ... cut into 'the earth of English hillsides'."
+ * → "the earth of English hillsides". HighlightedPassage then fuzzy-matches it.
+ */
+function evidenceFromExplanation(explanation?: string | null): string {
+  if (!explanation) return "";
+  const quotes = Array.from(
+    explanation.matchAll(/['"“”‘’]([^'"“”‘’]{6,200}?)['"“”‘’]/g)
+  ).map(m => m[1].trim()).filter(Boolean);
+  if (!quotes.length) return "";
+  return quotes.sort((a, b) => b.length - a.length)[0];
 }
 
 function HighlightedPassage({
@@ -303,6 +333,11 @@ export default function TestResultPage() {
   const { t, i18n } = useTranslation("exam");
   const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-GB";
   const { sessionId } = useParams<{ sessionId: string }>();
+  const location = useLocation();
+  // A question to auto-highlight, passed in when arriving from the review table's
+  // "View evidence" button (navigate(..., { state: { focusQuestionId } })).
+  const pendingFocusId = (location.state as { focusQuestionId?: string } | null)?.focusQuestionId;
+  const [appliedFocus, setAppliedFocus] = useState(false);
   const [result, setResult] = useState<ResultPayload | null>(null);
   const [test, setTest] = useState<RawTest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -401,6 +436,17 @@ export default function TestResultPage() {
     }
   }, [sections, activeSectionId]);
 
+  // Arriving with a focusQuestionId (from the review table): switch to that
+  // question's section and highlight it. The effect below then scrolls to it.
+  useEffect(() => {
+    if (appliedFocus || !pendingFocusId || !sections.length) return;
+    const sec = sections.find(s => s.questions.some(q => q.questionId === pendingFocusId));
+    if (!sec) return;
+    setActiveSectionId(sec.id);
+    setFocusedQuestionId(pendingFocusId);
+    setAppliedFocus(true);
+  }, [pendingFocusId, sections, appliedFocus]);
+
   // When a question is focused, scroll the passage/transcript to the exact answer
   // location, and (for listening) seek the audio player to the answer moment.
   useEffect(() => {
@@ -408,7 +454,10 @@ export default function TestResultPage() {
     const section = sections.find(s => s.id === activeSectionId) || sections[0];
     const fq = section?.questions.find(q => q.questionId === focusedQuestionId);
     const ref = fq?.answerReference;
-    if (!ref?.snippet) return;
+    // Scroll to the highlight whether it comes from the authored reference or
+    // the explanation-quote fallback (both render the #answer-evidence anchor).
+    const hasEvidence = !!ref?.snippet || !!evidenceFromExplanation(fq?.explanation);
+    if (!hasEvidence) return;
 
     const raf = requestAnimationFrame(() => {
       const el = document.getElementById("answer-evidence");
@@ -416,7 +465,7 @@ export default function TestResultPage() {
     });
 
     let timer: ReturnType<typeof setTimeout> | undefined;
-    if (typeof ref.audioStart === "number" && section?.mediaUrl) {
+    if (typeof ref?.audioStart === "number" && section?.mediaUrl) {
       setShowAudioReplay(prev => ({ ...prev, [section.id]: true }));
       const applySeek = () => {
         const audio = document.getElementById("result-audio") as HTMLAudioElement | null;
@@ -518,6 +567,10 @@ export default function TestResultPage() {
     ? activeSection?.questions.find(q => q.questionId === focusedQuestionId)
     : undefined;
   const activeTerms = collectEvidenceTerms(focusedQuestion);
+  // The exact span to highlight: prefer the authored answer location, else fall
+  // back to the quoted phrase inside the explanation.
+  const focusedReference =
+    focusedQuestion?.answerReference?.snippet || evidenceFromExplanation(focusedQuestion?.explanation);
   // For Listening sections use the transcript as context (same role as the reading passage).
   const tutorPassage = activeSection?.audioTranscript || activeSection?.passage || "";
 
@@ -892,7 +945,7 @@ export default function TestResultPage() {
                   )}
                 </div>
 
-                {focusedQuestion && (activeTerms.length > 0 || !!focusedQuestion.answerReference?.snippet) && (
+                {focusedQuestion && (activeTerms.length > 0 || !!focusedReference) && (
                   <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-500 text-[14px]">ink_highlighter</span>
                     <Trans
@@ -933,14 +986,14 @@ export default function TestResultPage() {
                     <HighlightedPassage
                       passage={activeSection.audioTranscript}
                       activeTerms={activeTerms}
-                      referenceSnippet={focusedQuestion?.answerReference?.snippet}
+                      referenceSnippet={focusedReference}
                     />
                   </>
                 ) : (
                   <HighlightedPassage
                     passage={activeSection.passage}
                     activeTerms={activeTerms}
-                    referenceSnippet={focusedQuestion?.answerReference?.snippet}
+                    referenceSnippet={focusedReference}
                   />
                 )}
 
