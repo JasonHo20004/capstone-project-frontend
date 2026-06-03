@@ -249,6 +249,8 @@ class RagService {
     difficulty?: string;
     language?: string;
     level?: string;
+    /** false = questions only, skip TTS (audio already uploaded). */
+    with_audio?: boolean;
   }): Promise<ListeningGenResponse> {
     // TTS + LLM can take a while for a long script.
     const resp = await apiClient.post("/rag/listening/generate", payload, { timeout: 300000 });

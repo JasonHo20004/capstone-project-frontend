@@ -191,6 +191,8 @@ const App = () => (
             <Route path="moderation" element={<CommentReports />} />
             <Route path="exams" element={<ExamManagement />} />
             <Route path="exams/new" element={<ExamFormPage />} />
+            <Route path="exams/new/reading" element={<ExamFormPage lockedSkill="READING" />} />
+            <Route path="exams/new/listening" element={<ExamFormPage lockedSkill="LISTENING" />} />
             <Route path="exams/new/writing" element={<WritingTestForm />} />
             <Route path="exams/new/speaking" element={<SpeakingTestForm />} />
             <Route path="exams/:id/edit" element={<ExamFormPage />} />

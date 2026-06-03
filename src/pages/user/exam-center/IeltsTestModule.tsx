@@ -445,6 +445,14 @@ export default function IeltsTestModule() {
   const sections = useMemo(() => testData?.sections || [], [testData]);
   const currentSection = sections[currentSectionIdx];
   const allQuestions = sections.flatMap(s => s.questions);
+  // Continuous question numbering across sections (S1: 1–10, S2: 11–20, …) instead
+  // of each section restarting at 1. Maps every question id to its global 1-based number.
+  const questionNumber = useMemo(() => {
+    const map: Record<string, number> = {};
+    let n = 0;
+    for (const s of sections) for (const q of s.questions) map[q.id] = ++n;
+    return map;
+  }, [sections]);
   const isListeningTest = testData?.testSkills?.some((s: any) => s.skill === 'LISTENING')
     || sections.some(s => s.skill === 'LISTENING')
     || sections.some(s => s.mediaUrl);
@@ -1318,10 +1326,14 @@ export default function IeltsTestModule() {
             );
           })()}
 
+          {/* Reading passage panel — hidden for Listening. The audio player + the
+              on-demand "show transcript" toggle above are the listening UI; showing
+              the full transcript here during the test would defeat the listening. */}
+          {!isListeningTest && (<>
           {/* Highlight Toolbar */}
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              {isListeningTest ? t("ieltsTestModule.test.questionsContext") : t("ieltsTestModule.test.readingPassage")}
+              {t("ieltsTestModule.test.readingPassage")}
             </h3>
             <div className="flex items-center gap-2">
               {/* Font size controls */}
@@ -1433,6 +1445,7 @@ export default function IeltsTestModule() {
               );
             })()}
           </div>
+          </>)}
 
           {/* Highlight Color Popover */}
           {highlightPopover && (
@@ -1574,28 +1587,37 @@ export default function IeltsTestModule() {
               return groups.map((group) => {
                 const first = group.questions[0];
                 const last = group.questions[group.questions.length - 1];
-                const rangeLabel = first.questionOrder === last.questionOrder
-                  ? t("ieltsTestModule.test.rangeSingle", { n: first.questionOrder })
-                  : t("ieltsTestModule.test.rangeMulti", { from: first.questionOrder, to: last.questionOrder });
-                const instruction = SECTION_INSTRUCTIONS[group.type];
+                const firstNo = questionNumber[first.id] ?? first.questionOrder;
+                const lastNo = questionNumber[last.id] ?? last.questionOrder;
+                const rangeLabel = firstNo === lastNo
+                  ? t("ieltsTestModule.test.rangeSingle", { n: firstNo })
+                  : t("ieltsTestModule.test.rangeMulti", { from: firstNo, to: lastNo });
+                // Group heading: prefer the model's own instruction (listening
+                // form/note-completion carries one), else the generic per-type text.
+                // Shown for BOTH skills so every group has a title (Questions X–Y + how to answer).
+                let groupInstruction = (first.content as any)?.instruction || SECTION_INSTRUCTIONS[group.type] || '';
+                if (isListeningTest) groupInstruction = groupInstruction.replace(/from the passage/gi, 'as you listen');
 
                 return (
                   <div key={`group-${first.id}`} className="space-y-4">
-                    {/* Cambridge-style section instruction block (reading only) */}
-                    {instruction && !isListeningTest && (
+                    {/* Cambridge-style group heading: range label + how-to-answer instruction */}
+                    {groupInstruction && (
                       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{rangeLabel}</p>
-                        <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{instruction}</p>
+                        <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{groupInstruction}</p>
                       </div>
                     )}
 
                     {group.questions.map((q) => {
-              const qText = q.content?.text || q.questionText || "";
-              const qOptions = q.content?.options || [];
               const qType = q.questionType;
+              const qOptions = q.content?.options || [];
               const qImage = q.imageUrl;
-              const qInstruction = (q.content as any)?.instruction || '';
               const qSummaryText = (q.content as any)?.summaryText || '';
+              // The stem usually lives in content.text or questionText. Some generated
+              // SHORT_ANSWER / MATCHING items put it only in content.summaryText, so fall
+              // back to that too (GAP_FILL renders summaryText separately below, so skip it there).
+              const qText = q.content?.text || q.questionText
+                || (qType !== 'GAP_FILL' ? qSummaryText : '') || "";
 
               return (
                 <div key={q.id} id={`question-${q.id}`} className={`bg-white rounded-xl border p-5 transition-colors relative ${
@@ -1603,19 +1625,9 @@ export default function IeltsTestModule() {
                     ? 'border-amber-400 ring-1 ring-amber-200'
                     : questionAnswered(q) ? 'border-indigo-300 shadow-sm' : 'border-slate-200'
                 }`}>
-                  {/* Per-question instruction banner — only when the group-level
-                      section instruction isn't already covering it, so the same
-                      "Choose NO MORE THAN TWO WORDS..." text doesn't repeat on
-                      every question. */}
-                  {qInstruction && !(SECTION_INSTRUCTIONS[qType] && !isListeningTest) && (
-                    <div className="mb-3 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
-                      <p className="text-xs text-indigo-700 font-medium italic">{qInstruction}</p>
-                    </div>
-                  )}
-
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <p className="font-medium text-sm text-slate-800">
-                      <span className="text-slate-500 font-bold mr-2">{q.questionOrder}.</span>
+                      <span className="text-slate-500 font-bold mr-2">{questionNumber[q.id] ?? q.questionOrder}.</span>
                       {qText}
                     </p>
                     <button
@@ -1636,7 +1648,7 @@ export default function IeltsTestModule() {
                   {/* Question Image (Maps, Diagrams) */}
                   {qImage && (
                     <div className="mb-3">
-                      <img src={qImage} alt={t("ieltsTestModule.test.questionImageAlt", { n: q.questionOrder })} className="max-w-full rounded-lg border border-slate-200 shadow-sm" />
+                      <img src={qImage} alt={t("ieltsTestModule.test.questionImageAlt", { n: questionNumber[q.id] ?? q.questionOrder })} className="max-w-full rounded-lg border border-slate-200 shadow-sm" />
                     </div>
                   )}
 
@@ -1724,7 +1736,7 @@ export default function IeltsTestModule() {
                   )}
 
                   {(qType === "TRUE_FALSE_NOT_GIVEN" || qType === "YES_NO_NOT_GIVEN") && (
-                    <div className="flex gap-3" role="radiogroup" aria-label={t("ieltsTestModule.test.questionAria", { n: q.questionOrder })}>
+                    <div className="flex gap-3" role="radiogroup" aria-label={t("ieltsTestModule.test.questionAria", { n: questionNumber[q.id] ?? q.questionOrder })}>
                       {(qType === "TRUE_FALSE_NOT_GIVEN" ? ["TRUE", "FALSE", "NOT GIVEN"] : ["YES", "NO", "NOT GIVEN"]).map(opt => (
                         <button key={opt} onClick={() => setAnswer(q.id, opt)}
                           role="radio" aria-checked={answers[q.id] === opt}
@@ -1831,9 +1843,9 @@ export default function IeltsTestModule() {
                               }
                               ${isFlagged ? 'ring-2 ring-amber-400' : ''}
                             `}
-                            title={`Q${q.questionOrder}${isAnswered ? ' ' + t('ieltsTestModule.test.navOk') : ''}${isFlagged ? ' ' + t('ieltsTestModule.test.navFlagged') : ''}`}
+                            title={`Q${questionNumber[q.id] ?? q.questionOrder}${isAnswered ? ' ' + t('ieltsTestModule.test.navOk') : ''}${isFlagged ? ' ' + t('ieltsTestModule.test.navFlagged') : ''}`}
                           >
-                            {q.questionOrder}
+                            {questionNumber[q.id] ?? q.questionOrder}
                             {isFlagged && (
                               <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full flex items-center justify-center">
                                 <span className="block w-1.5 h-1.5 bg-white rounded-full" />

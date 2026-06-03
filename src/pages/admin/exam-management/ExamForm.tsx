@@ -96,6 +96,11 @@ const QUESTION_TYPES: { label: string; value: QuestionType; desc: string }[] = [
   { label: 'Nối (Matching)', value: 'MATCHING', desc: 'Matching Headings / Information' },
 ];
 
+// True/False/Not Given & Yes/No/Not Given are IELTS Reading-only question types —
+// they don't exist in IELTS Listening, so we hide them for Listening sections.
+const READING_ONLY_TYPES: QuestionType[] = ['TRUE_FALSE_NOT_GIVEN', 'YES_NO_NOT_GIVEN'];
+const isReadingOnlyType = (t: string) => READING_ONLY_TYPES.includes(t as QuestionType);
+
 /** Parse {{N}} placeholders from summary text */
 const parseGapPlaceholders = (text: string): number[] => {
   const matches = text.match(/\{\{(\d+)\}\}/g) || [];
@@ -146,14 +151,40 @@ const emptySection = (idx: number): SectionData => ({
   collapsed: false,
 });
 
-export default function ExamFormPage() {
+// A GAP_FILL question is only usable if it has a gapped summary (or some prompt
+// text). The AI sometimes returns an empty GAP_FILL (answer hidden in the
+// explanation, no summaryText) which renders as a blank input with no question.
+// Drop those at save time so a broken question never reaches a live test.
+const isUsableQuestion = (q: QuestionData): boolean => {
+  if (q.questionType !== 'GAP_FILL') return true;
+  const c = (q.content as any) || {};
+  const summaryReal = String(c.summaryText || '').replace(/\{\{\s*\d+\s*\}\}/g, '').replace(/[\s.,:;\-]/g, '');
+  const text = String(c.text || q.questionText || '').trim();
+  return summaryReal.length > 0 || text.length > 0;
+};
+
+// The DB stores a multi-gap GAP_FILL answer UNWRAPPED ({ "9": ["x"], "10": ["y"] }),
+// but the Summary Builder + submit expect it under `.gaps`. Re-wrap on edit-load so
+// editing a test and re-saving doesn't read `answer.gaps` as undefined and silently
+// wipe every GAP_FILL's summary/answers.
+const wrapGapAnswerForForm = (qt: string, answer: any): any => {
+  if (qt !== 'GAP_FILL' || !answer || typeof answer !== 'object' || Array.isArray(answer)) return answer || {};
+  if ('gaps' in answer || 'text' in answer) return answer; // already wrapped / single-gap legacy
+  const isGapMap = Object.keys(answer).length > 0 && Object.values(answer).every((v: any) => Array.isArray(v));
+  return isGapMap ? { gaps: answer } : answer;
+};
+
+export default function ExamFormPage({ lockedSkill }: { lockedSkill?: SkillType } = {}) {
   const navigate = useNavigate();
   const { id: editId } = useParams();
   const isEditing = !!editId;
+  // When opened from a skill-specific entry ("Tạo test Reading" / "Listening"),
+  // the skill is fixed for the whole form and the picker is hidden.
+  const skillLocked = !!lockedSkill && !editId;
 
   const [step, setStep] = useState(1);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [selectedSkill, setSelectedSkill] = useState<SkillType | ''>('');
+  const [selectedSkill, setSelectedSkill] = useState<SkillType | ''>(lockedSkill || '');
   const [uploading, setUploading] = useState(false);
   const [uploadingSectionIdx, setUploadingSectionIdx] = useState<number | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -180,7 +211,7 @@ export default function ExamFormPage() {
     durationInMinutes: 60,
     status: 'DRAFT',
     englishTestTypeId: '',
-    testSkills: [],
+    testSkills: lockedSkill ? [lockedSkill] : [],
     sections: [emptySection(0)],
   });
 
@@ -228,7 +259,7 @@ export default function ExamFormPage() {
                 questionType: q.questionType,
                 options: q.options || ['', '', '', ''],
                 content: q.content || {},
-                answer: q.answer || {},
+                answer: wrapGapAnswerForForm(q.questionType, q.answer),
                 answerReference: q.answerReference || undefined,
                 explanation: q.explanation || '',
                 questionOrder: q.questionOrder || i + 1,
@@ -250,6 +281,16 @@ export default function ExamFormPage() {
 
   const isListening = selectedSkill === 'LISTENING';
   const totalQuestions = form.sections.reduce((sum, s) => sum + s.questions.length, 0);
+
+  // Listening has no True/False/Not Given or Yes/No/Not Given — drop them from the
+  // selected AI types so the generator never produces a Reading-only type for Listening.
+  useEffect(() => {
+    if (!isListening) return;
+    setAiTypes(prev => {
+      const filtered = prev.filter(t => !isReadingOnlyType(t));
+      return filtered.length ? filtered : ['MULTIPLE_CHOICE'];
+    });
+  }, [isListening]);
 
   const queryClient = useQueryClient();
 
@@ -303,6 +344,15 @@ export default function ExamFormPage() {
     });
   };
 
+  // Delete every question in a section at once (admin convenience for re-generating).
+  const clearAllQuestions = (sIdx: number) => {
+    setForm((prev) => {
+      const sections = [...prev.sections];
+      sections[sIdx] = { ...sections[sIdx], questions: [] };
+      return { ...prev, sections };
+    });
+  };
+
   const updateQuestion = (sIdx: number, qIdx: number, key: keyof QuestionData, value: any) => {
     setForm((prev) => {
       const sections = [...prev.sections];
@@ -344,10 +394,9 @@ export default function ExamFormPage() {
           const sections = [...prev.sections];
           sections[sIdx] = {
             ...sections[sIdx],
-            // Student-facing "show script", and also the AI-Tutor/question source.
+            // Single source of truth: student-facing "show script", AI-Tutor cite, and question source.
             audioTranscript: transcript,
             audioSegments: segments,
-            passageContent: sections[sIdx].passageContent || transcript,
           };
           return { ...prev, sections };
         });
@@ -391,20 +440,25 @@ export default function ExamFormPage() {
     setAiGenerating(sIdx);
     setAiError(null);
     try {
-      const resp = await ragService.generateReadingQuestions({
-        passage: transcript,
+      // Listening section: use the listening generator (its own prompt + allocation
+      // that honors every selected type, incl. SHORT_ANSWER), questions only since
+      // the audio already exists.
+      const resp = await ragService.generateListening({
+        transcript,
         question_types: aiTypes,
         num_questions: aiNumQuestions,
         difficulty: aiDifficulty,
+        with_audio: false,
       });
       if (resp.success && resp.questions.length > 0) {
         setForm(prev => {
           const sections = [...prev.sections];
           const existingCount = sections[sIdx].questions.length;
           const newQuestions: QuestionData[] = resp.questions.map((q, i) => ({
-            questionText: q.questionText,
+            // Some local models leave top-level questionText empty and put the stem in content.text — backfill it.
+            questionText: q.questionText || (q.content as any)?.text || '',
             questionType: (q.questionType as QuestionType) || 'MULTIPLE_CHOICE',
-            options: q.options || [],
+            options: q.options && q.options.length ? q.options : ((q.content as any)?.options || []),
             content: q.content || {},
             answer: q.answer || {},
             explanation: q.explanation || '',
@@ -427,26 +481,42 @@ export default function ExamFormPage() {
 
   // ── AI Question Generation Handler ──────────────────────────────────────
   const handleAiGenerate = async (sIdx: number) => {
-    const passage = form.sections[sIdx]?.passageContent;
+    // Listening uses the transcript as the source; reading uses the passage.
+    const passage = isListening
+      ? (form.sections[sIdx]?.audioTranscript || form.sections[sIdx]?.passageContent)
+      : form.sections[sIdx]?.passageContent;
     if (!passage || passage.length < 50) {
-      setAiError('Passage quá ngắn. Vui lòng nhập đoạn văn ở Step 2 trước (tối thiểu 50 ký tự).');
+      setAiError(isListening
+        ? 'Transcript quá ngắn. Hãy tạo/nhập transcript ở Step 2 trước (tối thiểu 50 ký tự).'
+        : 'Passage quá ngắn. Vui lòng nhập đoạn văn ở Step 2 trước (tối thiểu 50 ký tự).');
       return;
     }
     setAiGenerating(sIdx);
     setAiError(null);
     try {
-      const resp = await ragService.generateReadingQuestions({
-        passage,
-        question_types: aiTypes,
-        num_questions: aiNumQuestions,
-        difficulty: aiDifficulty,
-      });
+      // Listening uses the listening generator (honors every selected type, no
+      // Reading-only types); Reading uses the reading generator.
+      const resp = isListening
+        ? await ragService.generateListening({
+            transcript: passage,
+            question_types: aiTypes,
+            num_questions: aiNumQuestions,
+            difficulty: aiDifficulty,
+            with_audio: false,
+          })
+        : await ragService.generateReadingQuestions({
+            passage,
+            question_types: aiTypes,
+            num_questions: aiNumQuestions,
+            difficulty: aiDifficulty,
+          });
       if (resp.success && resp.questions.length > 0) {
         const existingCount = form.sections[sIdx].questions.length;
         const newQuestions: QuestionData[] = resp.questions.map((q, i) => ({
-          questionText: q.questionText,
+          // Backfill the stem from content.text when the model left questionText empty.
+          questionText: q.questionText || (q.content as any)?.text || '',
           questionType: (q.questionType as QuestionType) || 'MULTIPLE_CHOICE',
-          options: q.options || [],
+          options: q.options && q.options.length ? q.options : ((q.content as any)?.options || []),
           content: q.content || {},
           answer: q.answer || {},
           explanation: q.explanation || '',
@@ -476,7 +546,7 @@ export default function ExamFormPage() {
 
   // ── AI Listening: synthesize audio + generate questions from the script ──
   const handleGenerateListening = async (sIdx: number) => {
-    const script = form.sections[sIdx]?.passageContent;
+    const script = form.sections[sIdx]?.audioTranscript;
     if (!script || script.trim().length < 30) {
       setAiError('Cần nhập script/transcript (tối thiểu 30 ký tự) để AI tạo audio + câu hỏi.');
       return;
@@ -496,9 +566,10 @@ export default function ExamFormPage() {
           const sections = [...prev.sections];
           const existingCount = sections[sIdx].questions.length;
           const newQuestions: QuestionData[] = (resp.questions || []).map((q, i) => ({
-            questionText: q.questionText,
+            // Backfill the stem from content.text when the model left questionText empty.
+            questionText: q.questionText || (q.content as any)?.text || '',
             questionType: (q.questionType as QuestionType) || 'MULTIPLE_CHOICE',
-            options: q.options || [],
+            options: q.options && q.options.length ? q.options : ((q.content as any)?.options || []),
             content: q.content || {},
             answer: q.answer || {},
             explanation: q.explanation || '',
@@ -617,8 +688,10 @@ export default function ExamFormPage() {
         audioTranscript: section.audioTranscript || undefined,
         audioSegments: (section.audioSegments && section.audioSegments.length > 0) ? section.audioSegments : undefined,
         imageUrl: section.imageUrl || undefined,
-        passageContent: section.passageContent || undefined,
-        questions: section.questions.map((q) => {
+        // Listening now uses a single transcript field (audioTranscript); mirror it into
+        // passageContent so the backend still stores the passage record as before.
+        passageContent: (isListening ? section.audioTranscript : section.passageContent) || undefined,
+        questions: section.questions.filter(isUsableQuestion).map((q) => {
           const item: any = {
             questionText: q.questionText, questionType: q.questionType,
             options: q.options.filter(Boolean), explanation: q.explanation || undefined,
@@ -637,10 +710,11 @@ export default function ExamFormPage() {
             const summaryText = (q.content as any)?.summaryText || '';
             const instruction = (q.content as any)?.instruction || '';
             const gapAnswers = (q.answer as any)?.gaps || {};
-            if (summaryText && Object.keys(gapAnswers).length > 0) {
-              // Multi-gap Summary Completion
+            if (summaryText) {
+              // Summary Completion — keep the summary whenever it exists so editing
+              // other questions never wipes a GAP_FILL. answer stays unwrapped in DB.
               item.content = { text: q.questionText, summaryText, instruction };
-              item.answer = gapAnswers; // { "9": ["Ridgeway"], "10": ["manuscript"] }
+              item.answer = Object.keys(gapAnswers).length > 0 ? gapAnswers : {};
             } else {
               // Single gap (legacy / simple fill-in)
               item.content = { text: q.questionText };
@@ -699,6 +773,7 @@ export default function ExamFormPage() {
             <div>
               <h1 className="text-lg font-semibold">
                 {isEditing ? 'Chỉnh sửa bài thi' : 'Tạo bài thi mới'}
+                {selectedSkill ? ` · ${selectedSkill === 'LISTENING' ? 'Listening' : 'Reading'}` : ''}
               </h1>
               <p className="text-xs text-muted-foreground">
                 {form.title || 'Chưa đặt tên'} · {totalQuestions} câu hỏi
@@ -780,23 +855,29 @@ export default function ExamFormPage() {
                     {([
                       { skill: 'READING' as SkillType, icon: BookOpen, label: 'Reading', color: 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300' },
                       { skill: 'LISTENING' as SkillType, icon: Headphones, label: 'Listening', color: 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300' },
-                    ]).map(({ skill, icon: Icon, label, color }) => (
+                    ])
+                      // Skill-specific entry: only show (and lock) the chosen skill.
+                      .filter(({ skill }) => !skillLocked || skill === lockedSkill)
+                      .map(({ skill, icon: Icon, label, color }) => {
+                        const locked = !!editId || skillLocked;
+                        return (
                       <button key={skill}
-                        disabled={!!editId}
-                        onClick={() => { if (!editId) { setSelectedSkill(skill); setForm(prev => ({ ...prev, testSkills: [skill] })); } }}
+                        disabled={locked}
+                        onClick={() => { if (!locked) { setSelectedSkill(skill); setForm(prev => ({ ...prev, testSkills: [skill] })); } }}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                           selectedSkill === skill
                             ? `${color} border-current shadow-sm`
                             : 'border-border hover:border-muted-foreground/30'
-                        } ${editId ? 'cursor-not-allowed opacity-60' : ''}`}
+                        } ${locked ? 'cursor-not-allowed opacity-60' : ''}`}
                       >
                         <Icon className="h-6 w-6" />
                         <span className="text-sm font-medium">{label}</span>
-                        {editId && selectedSkill === skill && (
+                        {locked && selectedSkill === skill && (
                           <span className="text-[10px] text-muted-foreground">Không thể thay đổi</span>
                         )}
                       </button>
-                    ))}
+                        );
+                      })}
                   </div>
                 </div>
 
@@ -889,53 +970,6 @@ export default function ExamFormPage() {
                             <audio controls className="w-full h-9" src={section.mediaUrl} preload="metadata">
                               Your browser does not support audio.
                             </audio>
-
-                            {/* Audio transcript — auto-filled by Whisper; student can reveal it on demand */}
-                            <div className="mt-3 pt-3 border-t border-primary/10">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                                  <FileText className="h-3.5 w-3.5" />
-                                  Transcript / script (học viên có thể bấm "Hiện script")
-                                </Label>
-                                {section.audioTranscript && (
-                                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                    Đã có
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-2 mb-2">
-                                <Button
-                                  type="button" size="sm" variant="outline" className="gap-1.5"
-                                  disabled={transcribing !== null || !section.mediaUrl}
-                                  onClick={() => transcribeAudioUrl(sIdx, section.mediaUrl)}
-                                >
-                                  {transcribing === sIdx
-                                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang nhận dạng giọng nói…</>
-                                    : <><FileText className="h-4 w-4" /> Tạo transcript từ audio (Whisper)</>}
-                                </Button>
-                                <Button
-                                  type="button" size="sm" variant="outline" className="gap-1.5"
-                                  disabled={aiGenerating !== null || !section.audioTranscript || section.audioTranscript.trim().length < 30}
-                                  onClick={() => handleQuestionsFromTranscript(sIdx)}
-                                >
-                                  {aiGenerating === sIdx
-                                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tạo câu hỏi…</>
-                                    : <><BookOpen className="h-4 w-4" /> Tạo câu hỏi từ transcript</>}
-                                </Button>
-                              </div>
-                              <Textarea
-                                placeholder="Tự động điền từ Whisper sau khi upload audio. Bạn có thể chỉnh tay. Học viên có thể bấm 'Hiện script' để xem khi làm bài."
-                                value={section.audioTranscript}
-                                onChange={(e) => updateSection(sIdx, 'audioTranscript', e.target.value)}
-                                className="min-h-[120px] text-sm resize-y font-mono"
-                              />
-                              {aiError && (transcribing === sIdx || aiGenerating === sIdx) && (
-                                <p className="text-xs text-destructive mt-1">❌ {aiError}</p>
-                              )}
-                              <p className="text-[11px] text-muted-foreground mt-1.5">
-                                💡 Upload audio xong AI tự tạo transcript (Groq Whisper). Có thể chỉnh lại trước khi tạo câu hỏi.
-                              </p>
-                            </div>
                           </div>
                         ) : (
                           <div className="mt-1">
@@ -1022,37 +1056,69 @@ export default function ExamFormPage() {
                           </div>
                         )}
 
-                        {/* Transcript / script */}
-                        <div className="mt-4">
-                          <div className="flex items-center justify-between mb-1">
-                            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                              Transcript (script audio)
+                        {/* Transcript / script — single source: Whisper fills it from audio,
+                            or paste a script to TTS-generate audio. Students reveal it via "Hiện script". */}
+                        <div className="mt-4 pt-4 border-t border-primary/10">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                              <FileText className="h-3.5 w-3.5" />
+                              Transcript / script (học viên có thể bấm "Hiện script")
                             </Label>
-                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                              Tuỳ chọn — dùng cho AI Tutor giải thích
-                            </span>
+                            {section.audioTranscript && (
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                Đã có
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {section.mediaUrl ? (
+                              /* Đã có audio → transcribe (Whisper) + tạo câu hỏi từ transcript */
+                              <>
+                                <Button
+                                  type="button" size="sm" variant="outline" className="gap-1.5"
+                                  disabled={transcribing !== null}
+                                  onClick={() => transcribeAudioUrl(sIdx, section.mediaUrl)}
+                                >
+                                  {transcribing === sIdx
+                                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang nhận dạng giọng nói…</>
+                                    : <><FileText className="h-4 w-4" /> Tạo transcript từ audio (Whisper)</>}
+                                </Button>
+                                <Button
+                                  type="button" size="sm" variant="outline" className="gap-1.5"
+                                  disabled={aiGenerating !== null || !section.audioTranscript || section.audioTranscript.trim().length < 30}
+                                  onClick={() => handleQuestionsFromTranscript(sIdx)}
+                                >
+                                  {aiGenerating === sIdx
+                                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tạo câu hỏi…</>
+                                    : <><BookOpen className="h-4 w-4" /> Tạo câu hỏi từ transcript</>}
+                                </Button>
+                              </>
+                            ) : (
+                              /* Chưa có audio → dán script, AI đọc thành audio (TTS) + tạo câu hỏi */
+                              <Button
+                                type="button" size="sm" variant="outline" className="gap-1.5"
+                                disabled={listeningGenerating !== null || !section.audioTranscript || section.audioTranscript.trim().length < 30}
+                                onClick={() => handleGenerateListening(sIdx)}
+                              >
+                                {listeningGenerating === sIdx
+                                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tạo audio + câu hỏi…</>
+                                  : <><Headphones className="h-4 w-4" /> Tạo audio + câu hỏi từ script (AI)</>}
+                              </Button>
+                            )}
                           </div>
                           <Textarea
-                            className="mt-1 min-h-[140px] font-serif leading-relaxed text-sm"
-                            placeholder="Dán nội dung transcript / script audio vào đây để AI Tutor có thể cite cụ thể câu trong audio khi giải thích cho học sinh..."
-                            value={section.passageContent}
-                            onChange={(e) => updateSection(sIdx, 'passageContent', e.target.value)}
+                            className="min-h-[140px] text-sm resize-y font-mono"
+                            placeholder="Tự động điền từ Whisper sau khi upload audio, hoặc dán script để AI đọc thành audio (TTS). Học viên có thể bấm 'Hiện script' khi làm bài. Dùng luôn cho AI Tutor giải thích."
+                            value={section.audioTranscript}
+                            onChange={(e) => updateSection(sIdx, 'audioTranscript', e.target.value)}
                           />
-                          {/* AI: synthesize audio + generate questions straight from this script */}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="mt-2 gap-1.5"
-                            disabled={listeningGenerating !== null || !section.passageContent || section.passageContent.trim().length < 30}
-                            onClick={() => handleGenerateListening(sIdx)}
-                          >
-                            {listeningGenerating === sIdx
-                              ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tạo audio + câu hỏi…</>
-                              : <><Headphones className="h-4 w-4" /> Tạo audio + câu hỏi từ script (AI)</>}
-                          </Button>
-                          <p className="text-[11px] text-muted-foreground mt-1">
-                            AI đọc script thành audio (TTS) và tạo {aiNumQuestions} câu hỏi từ nội dung. Audio tạo ra sẽ thay cho file phía trên.
+                          {aiError && (transcribing === sIdx || aiGenerating === sIdx || listeningGenerating === sIdx) && (
+                            <p className="text-xs text-destructive mt-1">❌ {aiError}</p>
+                          )}
+                          <p className="text-[11px] text-muted-foreground mt-1.5">
+                            {section.mediaUrl
+                              ? '💡 Đã có audio — bấm "Tạo transcript từ audio" để Whisper điền tự động, rồi chỉnh tay nếu cần. Học viên xem được khi bấm "Hiện script".'
+                              : '💡 Chưa có audio — dán script rồi bấm "Tạo audio + câu hỏi từ script": AI sẽ đọc thành audio (TTS) và tạo câu hỏi.'}
                           </p>
                         </div>
                       </div>
@@ -1145,6 +1211,18 @@ export default function ExamFormPage() {
                         <><span className="text-base">🤖</span> AI Tạo câu hỏi</>
                       )}
                     </Button>
+                    {section.questions.length > 0 && (
+                      <Button variant="outline" size="sm"
+                        onClick={() => {
+                          const name = section.title || `Section ${sIdx + 1}`;
+                          if (window.confirm(`Xóa tất cả ${section.questions.length} câu hỏi trong "${name}"? Hành động này không hoàn tác được.`)) {
+                            clearAllQuestions(sIdx);
+                          }
+                        }}
+                        className="gap-1.5 h-8 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300">
+                        <Trash2 className="h-3.5 w-3.5" /> Xóa tất cả
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => addQuestion(sIdx)} className="gap-1.5 h-8">
                       <Plus className="h-3.5 w-3.5" /> Thêm câu
                     </Button>
@@ -1156,11 +1234,15 @@ export default function ExamFormPage() {
                   <div className="px-5 py-4 border-b bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-lg">🤖</span>
-                      <h4 className="font-semibold text-sm text-indigo-800 dark:text-indigo-300">AI Tự động tạo câu hỏi từ Passage</h4>
+                      <h4 className="font-semibold text-sm text-indigo-800 dark:text-indigo-300">
+                        {isListening ? 'AI Tự động tạo câu hỏi từ transcript' : 'AI Tự động tạo câu hỏi từ Passage'}
+                      </h4>
                     </div>
-                    {!form.sections[sIdx]?.passageContent && (
+                    {!(isListening ? section.audioTranscript : section.passageContent) && (
                       <div className="mb-3 px-3 py-2 bg-amber-100 border border-amber-200 rounded-lg text-xs text-amber-800">
-                        ⚠️ Vui lòng nhập nội dung passage ở Step 2 trước khi dùng AI.
+                        {isListening
+                          ? '⚠️ Chưa có transcript. Hãy tạo transcript từ audio (hoặc dán script) ở bước "Nội dung" trước khi dùng AI.'
+                          : '⚠️ Vui lòng nhập nội dung passage ở Step 2 trước khi dùng AI.'}
                       </div>
                     )}
                     <div className="grid grid-cols-3 gap-3 mb-3">
@@ -1184,7 +1266,10 @@ export default function ExamFormPage() {
                       <div>
                         <Label className="text-xs text-muted-foreground">Loại câu</Label>
                         <div className="mt-1 flex flex-wrap gap-1">
-                          {['MULTIPLE_CHOICE', 'TRUE_FALSE_NOT_GIVEN', 'GAP_FILL', 'MATCHING', 'SHORT_ANSWER'].map(t => (
+                          {(isListening
+                            ? ['MULTIPLE_CHOICE', 'GAP_FILL', 'MATCHING', 'SHORT_ANSWER']
+                            : ['MULTIPLE_CHOICE', 'TRUE_FALSE_NOT_GIVEN', 'GAP_FILL', 'MATCHING', 'SHORT_ANSWER']
+                          ).map(t => (
                             <button key={t}
                               onClick={() => setAiTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}
                               className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
@@ -1205,7 +1290,7 @@ export default function ExamFormPage() {
                     )}
                     <div className="flex items-center gap-2">
                       <Button size="sm" className="gap-1.5 bg-indigo-600 hover:bg-indigo-700"
-                        disabled={aiGenerating !== null || !form.sections[sIdx]?.passageContent}
+                        disabled={aiGenerating !== null || !(isListening ? section.audioTranscript : section.passageContent)}
                         onClick={() => handleAiGenerate(sIdx)}>
                         {aiGenerating === sIdx
                           ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang tạo... (có thể mất 30-60s)</>
@@ -1232,9 +1317,17 @@ export default function ExamFormPage() {
 
                         <CardContent className="flex-1 py-4 pr-4 pl-4 space-y-3">
                           {/* Question text */}
-                          <Input placeholder="Nội dung câu hỏi..."
+                          <Input
+                            placeholder={q.questionType === 'GAP_FILL'
+                              ? 'Đề bài chung (tuỳ chọn) — nội dung chính nằm ở "Summary Text" bên dưới'
+                              : 'Nội dung câu hỏi...'}
                             value={q.questionText}
                             onChange={(e) => updateQuestion(sIdx, qIdx, 'questionText', e.target.value)} />
+                          {q.questionType === 'GAP_FILL' && !q.questionText && (
+                            <p className="text-[11px] text-muted-foreground -mt-1">
+                              ℹ️ Dạng Gap Fill không cần ô này — nội dung câu hỏi là đoạn "Summary Text" có chỗ trống {'{{N}}'} bên dưới.
+                            </p>
+                          )}
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {/* Question type */}
@@ -1251,7 +1344,7 @@ export default function ExamFormPage() {
                                 }}>
                                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                  {QUESTION_TYPES.map((qt) => (
+                                  {(isListening ? QUESTION_TYPES.filter(qt => !isReadingOnlyType(qt.value)) : QUESTION_TYPES).map((qt) => (
                                     <SelectItem key={qt.value} value={qt.value}>
                                       <div>
                                         <div className="font-medium">{qt.label}</div>

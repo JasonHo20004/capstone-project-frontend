@@ -558,11 +558,6 @@ export default function TestResultPage() {
   const circumference = 2 * Math.PI * 32;
   const dashOffset = circumference - (ringPct / 100) * circumference;
 
-  const wrongCountTotal = sections.reduce(
-    (sum, s) => sum + s.questions.filter(q => !q.isCorrect).length,
-    0
-  );
-
   const focusedQuestion = focusedQuestionId
     ? activeSection?.questions.find(q => q.questionId === focusedQuestionId)
     : undefined;
@@ -773,7 +768,7 @@ export default function TestResultPage() {
               </button>
             )}
           </div>
-          {!q.isCorrect && tutorPassage && (
+          {tutorPassage && (
             <button
               onClick={e => {
                 e.stopPropagation();
@@ -1072,23 +1067,6 @@ export default function TestResultPage() {
           </Link>
         </div>
       </div>
-
-      {/* Floating AI Tutor Button */}
-      {tutorPassage && wrongCountTotal > 0 && !tutorOpen && (
-        <button
-          onClick={() => {
-            setSelectedQuestion(null);
-            setTutorOpen(true);
-          }}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-sky-600 text-white rounded-2xl font-bold shadow-2xl shadow-indigo-300 hover:shadow-xl hover:scale-105 transition-all duration-200 group"
-        >
-          <span className="material-symbols-outlined text-[22px] group-hover:animate-pulse">psychology</span>
-          <span className="text-sm">{t("testResultPage.aiTutor")}</span>
-          <span className="w-5 h-5 rounded-full bg-white/20 text-[11px] font-bold flex items-center justify-center">
-            {wrongCountTotal}
-          </span>
-        </button>
-      )}
 
       <AiTutorPanel
         isOpen={tutorOpen}

@@ -168,6 +168,23 @@ export default function TestDetailPage() {
         explanation: q.explanation || null,
       };
     });
+
+    // Order the rows by the test's canonical sequence (sections by orderIndex, then
+    // questionOrder) so they read continuously 1→N instead of being interleaved /
+    // restarting per section. test.sections already comes back in that order.
+    const orderById = new Map<string, number>();
+    (test?.sections || []).forEach((s) =>
+      (s.questions || []).forEach((q: any) => {
+        if (q?.id != null && !orderById.has(q.id)) orderById.set(q.id, orderById.size);
+      })
+    );
+    if (orderById.size > 0) {
+      details.sort((a, b) => {
+        const ia = orderById.has(a.questionId) ? (orderById.get(a.questionId) as number) : Number.MAX_SAFE_INTEGER;
+        const ib = orderById.has(b.questionId) ? (orderById.get(b.questionId) as number) : Number.MAX_SAFE_INTEGER;
+        return ia - ib;
+      });
+    }
   }
 
   const circumference = 2 * Math.PI * 54;
@@ -289,7 +306,7 @@ export default function TestDetailPage() {
                     <tbody>
                       {details.map((d: any, i: number) => (
                         <tr key={i} className={`border-b border-slate-100 transition-colors ${d.isCorrect ? "hover:bg-green-50/50" : "hover:bg-red-50/50"}`}>
-                          <td className="px-4 py-3 font-bold text-indigo-600">{d.questionOrder || i + 1}</td>
+                          <td className="px-4 py-3 font-bold text-indigo-600">{i + 1}</td>
                           <td className="px-4 py-3 text-slate-700 max-w-xs">
                             <span className="line-clamp-2">{d.questionText || t("testDetail.review.defaultQuestion", { n: i + 1 })}</span>
                             {sessionId && d.questionId && (

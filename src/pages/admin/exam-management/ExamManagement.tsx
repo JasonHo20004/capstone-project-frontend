@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MoreHorizontal, Pencil, Trash2, Plus, CheckCircle, XCircle, PenTool, Mic, BookOpen } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Plus, CheckCircle, XCircle, PenTool, Mic, BookOpen, Headphones } from 'lucide-react';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -253,9 +253,13 @@ export default function ExamManagement() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Chọn loại bài thi</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/admin/exams/new')}>
+            <DropdownMenuItem onClick={() => navigate('/admin/exams/new/reading')}>
               <BookOpen className="mr-2 h-4 w-4 text-blue-600" />
-              Reading / Listening
+              Reading Test
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/exams/new/listening')}>
+              <Headphones className="mr-2 h-4 w-4 text-purple-600" />
+              Listening Test
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/admin/exams/new/writing')}>
               <PenTool className="mr-2 h-4 w-4 text-orange-600" />
