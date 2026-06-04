@@ -10,6 +10,8 @@ export interface WithdrawalRequest {
   bankName: string;
   accountName: string;
   accountNumber: string;
+  /** NAPAS bank BIN (6 digits) — used to render the admin VietQR. */
+  bankBin?: string | null;
   status: WithdrawalRequestStatus;
   proofImageUrl: string | null;
   adminNote: string | null;
@@ -32,6 +34,8 @@ export interface WithdrawalRequestPayload {
   bankName: string;
   accountName: string;
   accountNumber: string;
+  /** NAPAS bank BIN (6 digits) of the selected bank. */
+  bankBin?: string;
 }
 
 export interface WithdrawalSummary {

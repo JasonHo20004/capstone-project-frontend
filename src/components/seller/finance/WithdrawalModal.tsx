@@ -11,10 +11,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatVND } from '@/lib/utils';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { formatVND, cn } from '@/lib/utils';
+import { VIETNAM_BANKS, findBankByBin, findBankByName } from '@/lib/constants/vietnam-banks';
 import { useRequestWithdrawal, useSellerWithdrawalHistory } from '@/hooks/api';
 import { toast } from 'sonner';
-import { Info, Clock, ShieldCheck } from 'lucide-react';
+import { Info, Clock, ShieldCheck, ChevronsUpDown, Check } from 'lucide-react';
 
 interface WithdrawalModalProps {
   open: boolean;
@@ -34,6 +43,8 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
 
   const [amount, setAmount] = useState('');
   const [bankName, setBankName] = useState('');
+  const [bankBin, setBankBin] = useState('');
+  const [bankPickerOpen, setBankPickerOpen] = useState(false);
   const [accountName, setAccountName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   // Two-step confirmation: form → preview → submit. Prevents typos from
@@ -52,20 +63,26 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
 
   useEffect(() => {
     if (!open) return;
-    if (latestSavedAccount && !bankName && !accountName && !accountNumber) {
-      setBankName(latestSavedAccount.bankName);
+    if (latestSavedAccount && !bankBin && !accountName && !accountNumber) {
+      // Recover the BIN from the saved request (new rows store it; older rows
+      // only have a free-text bank name we map back to a known bank).
+      const matched =
+        findBankByBin(latestSavedAccount.bankBin) ?? findBankByName(latestSavedAccount.bankName);
+      setBankBin(matched?.bin ?? '');
+      setBankName(matched?.shortName ?? latestSavedAccount.bankName);
       setAccountName(latestSavedAccount.accountName);
       setAccountNumber(latestSavedAccount.accountNumber);
     }
-  }, [open, latestSavedAccount, bankName, accountName, accountNumber]);
+  }, [open, latestSavedAccount, bankBin, accountName, accountNumber]);
 
   const amountNum = parseFloat(amount);
   const amountValid =
     !isNaN(amountNum) &&
     amountNum >= MIN_WITHDRAW &&
     amountNum <= Math.min(MAX_WITHDRAW, availableBalance);
+  const selectedBank = findBankByBin(bankBin);
   const detailsValid =
-    bankName.trim().length >= 2 &&
+    /^\d{6}$/.test(bankBin) &&
     accountName.trim().length >= 2 &&
     /^\d{6,20}$/.test(accountNumber.trim());
 
@@ -102,6 +119,7 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
         bankName: bankName.trim(),
         accountName: accountName.trim(),
         accountNumber: accountNumber.trim(),
+        bankBin,
       });
       const requestId = res?.data?.id ?? '';
       const shortId = requestId ? requestId.slice(0, 8).toUpperCase() : '';
@@ -134,7 +152,7 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
         onOpenChange(o);
       }}
     >
-      <DialogContent className="sm:max-w-[460px]">
+      <DialogContent className="sm:max-w-[460px] max-h-[90vh] overflow-y-auto">
         {!showPreview ? (
           <form onSubmit={handleNext}>
             <DialogHeader>
@@ -193,14 +211,62 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance }: Withdr
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="bankName">{t('withdrawalModal.bankNameLabel')}</Label>
-                <Input
-                  id="bankName"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder={t('withdrawalModal.bankNamePlaceholder')}
-                  required
-                />
+                <Label>{t('withdrawalModal.bankNameLabel')}</Label>
+                {/* Inline picker (not a Popover): a portaled Popover lands
+                    outside the Dialog and the Dialog's scroll-lock blocks the
+                    mouse wheel on its list. Rendering inline keeps it scrollable. */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={bankPickerOpen}
+                  className="justify-between font-normal"
+                  onClick={() => setBankPickerOpen((o) => !o)}
+                >
+                  {selectedBank ? (
+                    <span className="truncate">
+                      {selectedBank.shortName}
+                      <span className="ml-1.5 text-xs text-muted-foreground">
+                        ({selectedBank.code})
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {t('withdrawalModal.bankSelectPlaceholder')}
+                    </span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+                {bankPickerOpen && (
+                  <Command className="rounded-md border shadow-sm">
+                    <CommandInput placeholder={t('withdrawalModal.bankSearchPlaceholder')} />
+                    <CommandList className="max-h-52">
+                      <CommandEmpty>{t('withdrawalModal.bankSearchEmpty')}</CommandEmpty>
+                      <CommandGroup>
+                        {VIETNAM_BANKS.map((bank) => (
+                          <CommandItem
+                            key={bank.bin}
+                            value={`${bank.shortName} ${bank.code} ${bank.name}`}
+                            onSelect={() => {
+                              setBankBin(bank.bin);
+                              setBankName(bank.shortName);
+                              setBankPickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                bankBin === bank.bin ? 'opacity-100' : 'opacity-0'
+                              )}
+                            />
+                            <span className="flex-1 truncate">{bank.shortName}</span>
+                            <span className="ml-2 text-xs text-muted-foreground">{bank.code}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                )}
               </div>
 
               <div className="grid gap-2">

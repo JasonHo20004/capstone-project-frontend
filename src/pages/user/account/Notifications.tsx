@@ -484,7 +484,9 @@ export default function Notifications() {
                         <span
                           className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${typeConfig.bgColor} ${typeConfig.color}`}
                         >
-                          {typeConfig.label}
+                          {t(`notifications.dropdownTypes.${typeConfig.labelKey}`, {
+                            defaultValue: t('notifications.dropdownTypes.default'),
+                          })}
                         </span>
                         <span className="text-xs text-slate-400">
                           {formatDate(n.createdAt)}

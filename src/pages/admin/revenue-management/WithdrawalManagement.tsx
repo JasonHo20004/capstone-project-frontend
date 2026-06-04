@@ -9,8 +9,10 @@ import {
   useApproveWithdrawal,
   useRejectWithdrawal,
 } from '@/hooks/api';
-import type { WithdrawalRequest } from '@/lib/api/services/withdrawal.service';
+import type { WithdrawalRequest, WithdrawalRequestStatus } from '@/lib/api/services/withdrawal.service';
 import { withdrawalService } from '@/lib/api/services/withdrawal.service';
+import { findBankByBin, findBankByName } from '@/lib/constants/vietnam-banks';
+import { buildVietQrImageUrl } from '@/lib/vietqr';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import DataTable from '@/components/admin/DataTable';
@@ -38,6 +40,7 @@ import {
   ImageIcon,
   Loader2,
   Trash2,
+  QrCode,
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -55,7 +58,7 @@ export default function WithdrawalManagement() {
   const { data: requestsData, isLoading, error } = useAdminWithdrawalRequests({
     page,
     limit: 10,
-    status: statusFilter !== 'ALL' ? (statusFilter as any) : undefined,
+    status: statusFilter !== 'ALL' ? (statusFilter as WithdrawalRequestStatus) : undefined,
   });
 
   const { data: summary } = useAdminWithdrawalSummary();
@@ -145,14 +148,10 @@ export default function WithdrawalManagement() {
 
   const handleApprove = async () => {
     if (!selectedRequest) return;
-    if (!proofUrl) {
-      toast.error('Vui lòng tải lên ảnh biên lai chuyển khoản');
-      return;
-    }
     try {
       await approveWithdrawal.mutateAsync({
         id: selectedRequest.id,
-        proofImageUrl: proofUrl,
+        proofImageUrl: proofUrl || undefined,
         adminNote: adminNote || undefined,
       });
       auditLogService
@@ -204,6 +203,23 @@ export default function WithdrawalManagement() {
       toast.error('Có lỗi xảy ra khi từ chối');
     }
   };
+
+  // Resolve the receiving bank for the VietQR. New requests carry the BIN
+  // directly; legacy ones only have a free-text bank name we map back.
+  const qrBank = selectedRequest
+    ? findBankByBin(selectedRequest.bankBin) ?? findBankByName(selectedRequest.bankName)
+    : undefined;
+  const qrShortId = selectedRequest ? selectedRequest.id.slice(0, 8).toUpperCase() : '';
+  const qrUrl =
+    selectedRequest && qrBank
+      ? buildVietQrImageUrl({
+          bankBin: qrBank.bin,
+          accountNumber: selectedRequest.accountNumber,
+          amount: selectedRequest.amount,
+          accountName: selectedRequest.accountName,
+          addInfo: `RUT TIEN ${qrShortId}`,
+        })
+      : null;
 
   const statCards = [
     {
@@ -471,7 +487,7 @@ export default function WithdrawalManagement() {
 
       {/* ─── Approve Dialog ──────────────────────────────────────────────── */}
       <Dialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -511,10 +527,41 @@ export default function WithdrawalManagement() {
                 </CardContent>
               </Card>
 
+              {/* VietQR — admin quét mã này thay vì nhập tay STK + số tiền */}
+              {qrUrl ? (
+                <div className="flex flex-col items-center gap-2 rounded-lg border border-blue-500/20 bg-blue-500/5 p-4">
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-blue-700 dark:text-blue-400">
+                    <QrCode className="h-4 w-4" />
+                    Quét VietQR để chuyển khoản
+                  </div>
+                  <img
+                    src={qrUrl}
+                    alt={`VietQR chuyển khoản ${qrBank?.shortName ?? ''}`}
+                    className="h-48 w-48 max-w-full rounded-md bg-white object-contain p-1 shadow-sm sm:h-60 sm:w-60"
+                    loading="lazy"
+                  />
+                  <p className="text-center text-xs text-muted-foreground">
+                    Mở app ngân hàng → quét mã → đối chiếu số tiền &amp; tài khoản → xác nhận chuyển.
+                  </p>
+                  <p className="text-center text-xs text-muted-foreground">
+                    Nội dung CK:{' '}
+                    <span className="font-mono font-medium text-foreground">RUT TIEN {qrShortId}</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400">
+                  <Ban className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <span>
+                    Không xác định được mã ngân hàng cho “{selectedRequest.bankName}” — vui lòng chuyển
+                    khoản thủ công theo thông tin ở trên.
+                  </span>
+                </div>
+              )}
+
               <div className="grid gap-2">
                 <Label htmlFor="proofFile" className="flex items-center gap-1">
                   Ảnh biên lai chuyển khoản
-                  <span className="text-red-500">*</span>
+                  <span className="text-xs font-normal text-muted-foreground">(Tùy chọn)</span>
                 </Label>
                 <input
                   ref={fileInputRef}
@@ -572,7 +619,7 @@ export default function WithdrawalManagement() {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Bắt buộc — đây là bằng chứng duy nhất chứng minh đã chuyển khoản nếu seller khiếu nại.
+                  Khuyến nghị tải lên để làm bằng chứng đã chuyển khoản nếu seller khiếu nại — nhưng không bắt buộc.
                 </p>
               </div>
               <div className="grid gap-2">
@@ -591,7 +638,7 @@ export default function WithdrawalManagement() {
             <Button variant="outline" onClick={() => setIsApproveOpen(false)}>Hủy</Button>
             <Button
               onClick={handleApprove}
-              disabled={approveWithdrawal.isPending || isUploadingProof || !proofUrl}
+              disabled={approveWithdrawal.isPending || isUploadingProof}
               className="bg-emerald-600 hover:bg-emerald-700 gap-1.5"
             >
               <CheckCircle2 className="h-4 w-4" />
@@ -607,7 +654,7 @@ export default function WithdrawalManagement() {
 
       {/* ─── Reject Dialog ───────────────────────────────────────────────── */}
       <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <XCircle className="h-5 w-5 text-red-500" />
