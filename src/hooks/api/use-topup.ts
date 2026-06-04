@@ -1,30 +1,38 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { topupService, type CreateTopupRequest, type ConfirmPaymentRequest } from '@/lib/api/services/user';
 import { toast } from 'sonner';
+import { topupService, type CreateTopupRequest } from '@/lib/api/services/user';
 
 export const useCreateTopupOrder = () => {
   return useMutation({
     mutationFn: (data: CreateTopupRequest) => topupService.createOrder(data),
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Không thể tạo đơn nạp tiền');
-    },
   });
 };
 
-export const useConfirmTopup = () => {
+export const useTopupOrderStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // mutationFn giờ nhận vào object params phức tạp từ MoMo
-    mutationFn: (data: ConfirmPaymentRequest) => topupService.confirmPayment(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
-      queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
-      toast.success('Nạp tiền thành công! Số dư đã được cập nhật.');
+    mutationFn: async (orderId: string) => {
+      const response = await topupService.getOrderStatus(orderId);
+      return response.data;
     },
-    onError: (error: any) => {
-      // Backend throw Error thì sẽ hiện toast ở đây
-      toast.error(error.response?.data?.message || 'Xác nhận thanh toán thất bại');
+    onSuccess: (data) => {
+      if (!data) {
+        return;
+      }
+
+      if (data.status === 'SUCCESS') {
+        queryClient.invalidateQueries({ queryKey: ['wallet'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet', 'summary'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+        queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
+        toast.success('Nạp tiền thành công! Số dư đã được cập nhật.');
+      }
+
+      if (data.status === 'FAILED') {
+        toast.error('Thanh toán không thành công. Vui lòng thử lại.');
+      }
     },
   });
 };

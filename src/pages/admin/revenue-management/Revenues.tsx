@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { TrendingUp, DollarSign, CreditCard, Calendar } from "lucide-react";
 import { revenueManagementService } from "@/lib/api/services/admin";
-import { Transaction } from "@/types/type";
+import type { Transaction } from "@/domain";
 import type { RevenueFilters } from "@/lib/api/types/revenue.types";
 import StatCard from "@/components/admin/StatCard";
 import ChartCard from "@/components/admin/ChartCard";
@@ -65,7 +65,6 @@ export default function RevenueManagement() {
     const typeMap = {
       DEPOSIT: { label: "Nạp tiền", variant: "default" as const },
       PAYMENT: { label: "Thanh toán", variant: "secondary" as const },
-      MONTHLYFEE: { label: "Phí hàng tháng", variant: "outline" as const },
       WITHDRAW: { label: "Rút tiền", variant: "destructive" as const },
     };
 
@@ -140,7 +139,6 @@ export default function RevenueManagement() {
     { value: "all", label: "Tất cả loại" },
     { value: "DEPOSIT", label: "Nạp tiền" },
     { value: "PAYMENT", label: "Thanh toán" },
-    { value: "MONTHLYFEE", label: "Phí hàng tháng" },
     { value: "WITHDRAW", label: "Rút tiền" },
   ];
 

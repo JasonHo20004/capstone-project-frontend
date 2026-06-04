@@ -1,0 +1,211 @@
+{
+  "list": {
+    "title": "AI Live Classroom",
+    "subtitle": "Join a live session or create your own — AI teaches the lesson in real time.",
+    "createRoom": "Create Room",
+    "refresh": "Refresh list",
+    "dialog": {
+      "title": "Create a livestream room",
+      "topicLabel": "Class title",
+      "topicPlaceholder": "e.g. IELTS Speaking Part 2, Phrasal Verbs, Business Email…",
+      "topicHint": "Shown publicly — students will see this on the room list.",
+      "lessonPromptLabel": "What you want the AI to teach",
+      "lessonPromptOptional": "(optional)",
+      "lessonPromptPlaceholder": "e.g. How to develop ideas in IELTS Speaking Part 2? Focus on answer structure, linking words, and common patterns.",
+      "lessonPromptHint": "The AI will follow this guidance when generating the lesson. Leave blank to let the AI design it from the title.",
+      "levelLabel": "Student level",
+      "level": {
+        "beginner": "Beginner (A1–A2)",
+        "intermediate": "Intermediate (B1–B2)",
+        "advanced": "Advanced (C1–C2)"
+      },
+      "languageLabel": "Teaching language",
+      "languageEn": "EN English",
+      "languageVi": "VI Vietnamese",
+      "languageViHint": "The AI teacher will explain in Vietnamese — best for beginners.",
+      "submit": "Start livestream",
+      "submitError": "Couldn't create the room. Please sign in again and retry."
+    },
+    "tabs": {
+      "live": "Live Rooms",
+      "recordings": "Recordings"
+    },
+    "status": {
+      "waiting": "Waiting",
+      "live": "LIVE",
+      "completed": "Ended"
+    },
+    "recordings": {
+      "empty": "No recordings yet",
+      "emptyHint": "Completed sessions are saved for 7 days.",
+      "sections": "{{count}} sections",
+      "qas": "{{count}} Q&As",
+      "hostLabel": "Host:",
+      "watchReplay": "Watch Replay"
+    },
+    "rooms": {
+      "empty": "No live classrooms yet",
+      "emptyHint": "Be the first to create one!",
+      "createButton": "Create a Room",
+      "joined": "{{count}} joined",
+      "hostLabel": "Host:",
+      "ended": "Ended",
+      "join": "Join"
+    },
+    "timeAgo": {
+      "seconds": "{{n}}s ago",
+      "minutes": "{{n}}m ago",
+      "hours": "{{n}}h ago"
+    }
+  },
+  "room": {
+    "back": "Back",
+    "qaTimer": "Q&A · {{time}}",
+    "endedBadge": "Ended",
+    "teacher": "Teacher: {{name}}",
+    "participants": {
+      "show": "Show participants",
+      "hide": "Hide participants"
+    },
+    "mute": {
+      "mute": "Mute audio",
+      "unmute": "Unmute audio"
+    },
+    "playbackRate": "AI reading speed",
+    "reconnecting": "Reconnecting…",
+    "connectionLost": "Connection lost — reconnecting…",
+    "endButton": "End",
+    "mobileTabs": {
+      "stage": "Lesson",
+      "chat": "Q&A"
+    },
+    "unlockAudio": "Tap to enable AI audio",
+    "preparing": "Preparing the lesson…",
+    "waitingHost": "Press \"Start lesson\" when ready",
+    "waitingStudent": "Waiting for the teacher to start the lesson…",
+    "qaPeriod": "Q&A time",
+    "ended": "This session has ended",
+    "slideProgress": "Slide {{current}} / {{total}}",
+    "startLesson": "Start lesson",
+    "watchReplay": "Watch replay",
+    "otherRooms": "Other rooms",
+    "spotlight": {
+      "invited": "You've been invited to speak",
+      "hint": "Tap the mic and speak — the class will see your words and the AI will respond when you finish.",
+      "start": "Start speaking",
+      "submit": "Done, send",
+      "cancel": "Cancel",
+      "unsupported": "Your browser doesn't support speaking. You can still type in the Q&A panel."
+    },
+    "hand": {
+      "raisedLabel": "Hand raised",
+      "raiseLabel": "Raise hand",
+      "raisedTitle": "Lower hand",
+      "raiseTitle": "Raise hand to speak"
+    },
+    "transcript": {
+      "heading": "Lesson content",
+      "slidesCount": "slides",
+      "empty": "The lesson content will appear here as the AI teaches.",
+      "activeAbove": "↑ This slide is currently on stage",
+      "explainAgain": "Explain this part again"
+    },
+    "chat": {
+      "heading": "Q&A",
+      "questionsLeft": "{{left}}/{{max}} questions left",
+      "empty": "Ask the AI teacher a question during the lesson.",
+      "answerLabel": "Reply to {{name}}",
+      "quickChips": {
+        "explainAgain": "Explain this part again",
+        "example": "Give me an example",
+        "simpler": "Use simpler words",
+        "ielts": "Does this appear in IELTS?",
+        "memorize": "How do I memorize this word?"
+      },
+      "stopMic": "Stop recording",
+      "speakEn": "Speak your question (English)",
+      "speakVi": "Speak your question (Vietnamese)",
+      "recordAria": "Record question",
+      "placeholder": {
+        "listening": "Listening… speak your question",
+        "ended": "Session ended",
+        "connecting": "Connecting…",
+        "noQuota": "Out of quota — wait 1 minute",
+        "default": "Ask a question or tap the mic to speak…"
+      },
+      "footer": {
+        "withMic": "Mic · Up to {{max}} questions/min · Enter to send",
+        "withoutMic": "Up to {{max}} questions/min · Enter to send"
+      },
+      "reconnect": "Connection lost — reconnecting…",
+      "send": "Send question",
+      "rateLimit": "Wait {{secs}}s — max {{max}} questions/minute.",
+      "aiTyping": "AI is writing a response…",
+      "unread": "{{count}} new",
+      "rateLimitWait": "Wait {{secs}}s"
+    },
+    "system": {
+      "lessonStart": "The lesson has started!",
+      "lessonGenerating": "The AI is preparing the lesson…",
+      "lessonFallback": "The AI couldn't create a custom lesson — using a sample. You can still ask questions for detail.",
+      "qaStart": "Lesson complete! {{mins}} minute(s) left for questions.",
+      "lessonAutoComplete": "The session has ended automatically.",
+      "roomEnded": "The classroom has ended.",
+      "speakerInvitedSelf": "The teacher invited you to speak!",
+      "speakerInvitedOther": "The teacher invited {{name}} to speak",
+      "practiceResult": "{{icon}} {{name}} practiced: \"{{phrase}}\" ({{score}}/100)"
+    },
+    "explainAgainPart": "Explain the \"{{title}}\" part again for me",
+    "practiceAvailable": "Practice speaking available ↓"
+  },
+  "replay": {
+    "loading": "Loading recording…",
+    "notFound": "Recording not found",
+    "back": "Back",
+    "backToRooms": "Back to Live Rooms",
+    "recordedBy": "Recorded by {{name}} • {{date}}",
+    "clickPlay": "Click Play to start replay",
+    "seekHint": "Click to seek to a section",
+    "qaTitle": "Q&A from this session ({{count}})",
+    "noQa": "No questions were asked in this session.",
+    "playAudio": "Play audio"
+  },
+  "participants": {
+    "heading": "People in the room",
+    "handsRaised": "Hands raised ({{count}})",
+    "listening": "Listening",
+    "you": " (you)",
+    "handLabel": "hand raised",
+    "host": "Host",
+    "inviteTitle": "Invite this student to speak",
+    "invite": "Invite",
+    "handPosition": "Position {{n}}"
+  },
+  "practice": {
+    "label": "Practice speaking",
+    "youSaid": "You said:",
+    "feedback": {
+      "great": "Excellent!",
+      "close": "Close — try again",
+      "tryAgain": "Keep going! Try once more"
+    },
+    "buttons": {
+      "tryAloud": "Read aloud",
+      "again": "Try again",
+      "stop": "Stop",
+      "clear": "Clear"
+    },
+    "unsupported": "This browser doesn't support speech practice. Please use Chrome or Edge."
+  },
+  "translate": {
+    "loading": "Translating…",
+    "pronounce": "Pronounce"
+  },
+  "slide": {
+    "vocabulary": "Vocabulary",
+    "example": "Example"
+  },
+  "reactions": {
+    "sendAria": "Send {{emoji}} reaction"
+  }
+}

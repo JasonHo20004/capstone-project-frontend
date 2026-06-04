@@ -1,14 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 import {
   authService,
   type LoginRequest,
   type RegisterRequest,
   type LoginResponse,
 } from "@/lib/api/services/user";
-// import { AxiosError } from "axios";
-// import type { ApiError } from "@/lib/api/types";
+import type { VerifyEmailResponse } from "@/lib/api/types/auth.types";
+import { SUBSCRIPTION_CACHE_KEY } from "@/hooks/api/use-user-subscription";
 
 /**
  * Custom hook cho Authentication với React Query
@@ -24,71 +25,129 @@ export const useAuth = () => {
     mutationFn: (data: LoginRequest) => authService.login(data),
     onSuccess: (response) => {
       const data =
-        typeof (response as any)?.data !== "undefined"
+        typeof (response as { data?: LoginResponse })?.data !== "undefined"
           ? (response as { data: LoginResponse }).data
           : (response as unknown as LoginResponse);
 
       const { accessToken, user } = data;
-      // Lưu tokens vào localStorage
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
       queryClient.setQueryData(["user", "me"], user);
-      navigate("/");
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
+      // Notify PurchasesContext to re-fetch enrolled courses
+      window.dispatchEvent(new Event('auth-change'));
+      navigate("/dashboard");
     },
   });
 
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
-
-    onSuccess: (_response) => {
-      // Response bây giờ chỉ chứa thông tin user, KHÔNG có token
-      // const user = response.data;
-
-      // 1. Thông báo thành công
+    onSuccess: (_response, variables) => {
       toast.success("Đăng ký thành công!", {
         description: "Vui lòng kiểm tra email để xác thực tài khoản.",
       });
-
-      // 2. Chuyển hướng về trang xác nhận email
-      navigate("/auth/verify?pending=true");
-    },
-
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
+      const params = new URLSearchParams({
+        pending: "true",
+        email: variables.email,
+      });
+      navigate(`/auth/verify?${params.toString()}`);
     },
   });
-  // Logout mutation
+
+  // Logout mutation - onSettled ensures local cleanup even when API fails
   const logoutMutation = useMutation({
     mutationFn: () => authService.logout(),
     onSuccess: () => {
-      // Xóa tokens
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
-      // Clear query cache
+      localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
       queryClient.clear();
-
+      window.dispatchEvent(new Event('auth-change'));
       toast.success("Đăng xuất thành công!");
       navigate("/login");
     },
-    onError: (error) => {
-      // Ngay cả khi API fail, vẫn logout local
-      localStorage.removeItem("accessToken");
-      // localStorage.removeItem('refreshToken');
-      queryClient.clear();
-      navigate("/login");
+    onSettled: (_data, error) => {
+      if (error) {
+        // When API fails, still clear local state and redirect
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
+        queryClient.clear();
+        window.dispatchEvent(new Event('auth-change'));
+        navigate("/login");
+      }
     },
+  });
+
+  // Verify email mutation — backend returns a session, so we auto-login
+  const verifyEmailMutation = useMutation({
+    mutationFn: (token: string) => authService.verifyEmail(token),
+    onSuccess: (response) => {
+      const data = (response as { data?: VerifyEmailResponse })?.data;
+      if (!data) return;
+
+      const user = {
+        id: data.userId,
+        email: data.email,
+        fullName: data.fullName,
+        role: data.role ?? "",
+      };
+
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(user));
+      queryClient.setQueryData(["user", "me"], user);
+      window.dispatchEvent(new Event("auth-change"));
+    },
+  });
+
+  // Resend verification mutation — surface 429 cooldown to the caller
+  const resendVerificationMutation = useMutation({
+    mutationFn: (email: string) => authService.resendVerification({ email }),
+    onSuccess: () => {
+      toast.success("Verification email sent", {
+        description: "Please check your inbox.",
+      });
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<{ error?: string; retryAfterSeconds?: number }>;
+      if (axiosError?.response?.status === 429) {
+        const seconds = axiosError.response.data?.retryAfterSeconds;
+        toast.error("Please wait before trying again", {
+          description: seconds ? `You can request another email in ${seconds}s.` : undefined,
+        });
+        return;
+      }
+      const message = axiosError?.response?.data?.error ?? "Failed to send verification email.";
+      toast.error(message);
+    },
+  });
+
+  // Forgot password — request a reset link by email
+  const forgotPasswordMutation = useMutation({
+    mutationFn: (email: string) => authService.forgotPassword({ email }),
+  });
+
+  // Reset password — set a new password using the emailed token
+  const resetPasswordMutation = useMutation({
+    mutationFn: (data: { token: string; password: string }) =>
+      authService.resetPassword(data),
   });
 
   return {
     login: loginMutation.mutate,
     register: registerMutation.mutate,
     logout: logoutMutation.mutate,
+    verifyEmail: verifyEmailMutation.mutateAsync,
+    resendVerification: resendVerificationMutation.mutate,
+    forgotPassword: forgotPasswordMutation.mutate,
+    resetPassword: resetPasswordMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     isRegistering: registerMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
+    isVerifying: verifyEmailMutation.isPending,
+    isResending: resendVerificationMutation.isPending,
+    isRequestingReset: forgotPasswordMutation.isPending,
+    isResettingPassword: resetPasswordMutation.isPending,
+    registerError: registerMutation.error,
   };
 };

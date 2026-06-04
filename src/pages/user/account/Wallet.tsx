@@ -1,249 +1,540 @@
-import { useState, useEffect } from "react";
-import Navbar from "@/components/user/layout/Navbar";
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import Footer from "@/components/user/layout/Footer";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Wallet, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
-import { formatVND } from "@/lib/utils";
+  AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ChevronRight,
+  CreditCard,
+  ExternalLink,
+  History,
+  Loader2,
+  ShieldCheck,
+  Sparkles,
+  Wallet,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
-// Hooks
-import { useProfile } from "@/hooks/api/use-user"; // Hook lấy thông tin user & ví
-import { useCreateTopupOrder, useConfirmTopup } from "@/hooks/api/use-topup"; // Hooks nạp tiền
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useProfile } from '@/hooks/api/use-user';
+import { useCreateTopupOrder } from '@/hooks/api/use-topup';
+import { useWallet, useWalletSummary, useWalletTransactions } from '@/hooks/api/use-wallet';
+import type { Transaction } from '@/domain';
+import { formatVND } from '@/lib/utils';
 
-type PaymentMethod = "MOMO" | "ZALOPAY" | "BANKING" | "APPLEPAY";
+const MINIMUM_TOPUP_AMOUNT = 10000;
+const QUICK_TOPUP_AMOUNTS = [10000, 50000, 100000, 200000];
+const TRANSACTIONS_PAGE_SIZE = 6;
 
-const paymentMethods: { value: PaymentMethod; label: string }[] = [
-  { value: "MOMO", label: "MOMO" },
-  { value: "ZALOPAY", label: "ZaloPay" },
-  { value: "BANKING", label: "Chuyển khoản ngân hàng" },
-  { value: "APPLEPAY", label: "Apple Pay" },
-];
+interface BalanceCardProps {
+  currentBalance: number;
+  monthlyTopupAmount: number;
+  monthlySuccessfulTransactions: number;
+}
+
+function BalanceCard({ currentBalance, monthlyTopupAmount, monthlySuccessfulTransactions }: BalanceCardProps) {
+  const { t } = useTranslation('account');
+  return (
+    <Card className="group relative overflow-hidden rounded-[32px] border border-slate-200/70 bg-[linear-gradient(145deg,hsl(224_71%_18%)_0%,hsl(214_78%_25%)_48%,hsl(196_79%_34%)_100%)] p-6 text-white shadow-[0_28px_90px_-36px_rgba(15,23,42,0.7)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_36px_110px_-42px_rgba(15,23,42,0.76)] animate-in fade-in slide-in-from-bottom-3">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_30%)]" />
+      <div className="absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl transition-transform duration-700 group-hover:scale-110" />
+      <div className="relative space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.28em] text-white/65">{t('wallet.balance.available')}</p>
+            <p className="mt-4 text-4xl font-semibold tracking-tight sm:text-[2.75rem]">{formatVND(currentBalance)}</p>
+          </div>
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-3 shadow-lg shadow-slate-950/20 backdrop-blur-md">
+            <Wallet className="h-6 w-6 text-white" />
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/14">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/65">{t('wallet.balance.monthlyTopup')}</p>
+            <p className="mt-3 text-2xl font-semibold">{formatVND(monthlyTopupAmount)}</p>
+          </div>
+          <div className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/14">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/65">{t('wallet.balance.monthlyTransactions')}</p>
+            <p className="mt-3 text-2xl font-semibold">{monthlySuccessfulTransactions}</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-3xl border border-white/15 bg-slate-950/15 p-4 text-sm text-white/85 backdrop-blur-md">
+          <ShieldCheck className="mt-0.5 h-5 w-5 text-sky-100" />
+          <div>
+            <p className="font-medium text-white">{t('wallet.balance.security.title')}</p>
+            <p className="mt-1 text-white/70">
+              {t('wallet.balance.security.desc')}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+interface WalletHeroProps {
+  currentBalance: number;
+}
+
+function WalletHero({ currentBalance }: WalletHeroProps) {
+  const { t } = useTranslation('account');
+  return (
+    <section className="group relative overflow-hidden rounded-[36px] border border-slate-200/70 bg-[linear-gradient(135deg,hsl(0_0%_100%)_0%,hsl(210_40%_98%)_38%,hsl(201_100%_97%)_100%)] px-6 py-8 shadow-[0_30px_90px_-50px_rgba(15,23,42,0.4)] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_36px_100px_-48px_rgba(15,23,42,0.45)] sm:px-8 lg:px-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(37,99,235,0.12),transparent_30%)]" />
+      <div className="absolute inset-x-16 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent" />
+      <div className="relative grid gap-8 lg:grid-cols-[1.18fr_0.82fr] lg:items-end">
+        <div className="space-y-5">
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/80 px-4 py-2 text-sm font-medium text-sky-700 shadow-sm backdrop-blur-sm">
+            <Sparkles className="h-4 w-4" />
+            {t('wallet.hero.badge')}
+          </div>
+          <div className="space-y-3">
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+              {t('wallet.hero.title')}
+            </h1>
+            <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              {t('wallet.hero.subtitle')}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+            <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:text-slate-900">
+              {t('wallet.hero.chips.unified')}
+            </div>
+            <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:text-slate-900">
+              {t('wallet.hero.chips.realtime')}
+            </div>
+            <div className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:text-slate-900">
+              {t('wallet.hero.chips.faster')}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[30px] border border-slate-900/80 bg-slate-950 p-6 text-white shadow-[0_24px_80px_-36px_rgba(15,23,42,0.75)] transition-all duration-500 group-hover:-translate-y-1">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">{t('wallet.hero.overview.eyebrow')}</p>
+          <p className="mt-5 text-4xl font-semibold tracking-tight">{formatVND(currentBalance)}</p>
+          <div className="mt-6 grid gap-3 text-sm text-slate-300">
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <span>{t('wallet.hero.overview.useCase')}</span>
+              <span className="font-medium text-white">{t('wallet.hero.overview.useCaseValue')}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <span>{t('wallet.hero.overview.gateway')}</span>
+              <span className="font-medium text-white">Stripe</span>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <span>{t('wallet.hero.overview.minTopup')}</span>
+              <span className="font-medium text-white">{formatVND(MINIMUM_TOPUP_AMOUNT)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+interface CreatePaymentCardProps {
+  amount: string;
+  isCreating: boolean;
+  onAmountChange: (value: string) => void;
+  onStartPayment: () => Promise<void>;
+}
+
+function CreatePaymentCard({ amount, isCreating, onAmountChange, onStartPayment }: CreatePaymentCardProps) {
+  const { t } = useTranslation('account');
+  return (
+    <Card className="group rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_26px_80px_-48px_rgba(15,23,42,0.38)] backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_36px_96px_-48px_rgba(15,23,42,0.42)] animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 transition-colors duration-300 group-hover:bg-slate-900 group-hover:text-white">
+            <CreditCard className="h-4 w-4" />
+            {t('wallet.topup.eyebrow')}
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">{t('wallet.topup.title')}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            {t('wallet.topup.subtitle')}
+          </p>
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700 shadow-sm">
+          <p className="font-medium text-slate-950">{t('wallet.topup.quickStart.title')}</p>
+          <p className="mt-1 text-slate-600">{t('wallet.topup.quickStart.desc')}</p>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="amount">{t('wallet.topup.amountLabel')}</Label>
+            <Input
+              id="amount"
+              type="number"
+              min={MINIMUM_TOPUP_AMOUNT}
+              step={1000}
+              placeholder={t('wallet.topup.amountPlaceholder')}
+              value={amount}
+              onChange={(event) => onAmountChange(event.target.value)}
+              disabled={isCreating}
+              className="h-14 rounded-2xl border-slate-200 text-lg shadow-sm transition-all duration-300 focus-visible:ring-slate-900/20"
+            />
+            <p className="text-xs text-slate-500">{t('wallet.topup.minNote', { amount: formatVND(MINIMUM_TOPUP_AMOUNT) })}</p>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-slate-700">{t('wallet.topup.quickAmounts')}</p>
+            <div className="flex flex-wrap gap-3">
+              {QUICK_TOPUP_AMOUNTS.map((presetAmount) => {
+                const isActive = Number(amount) === presetAmount;
+                return (
+                  <Button
+                    key={presetAmount}
+                    type="button"
+                    variant={isActive ? 'default' : 'outline'}
+                    className="h-11 min-w-[128px] rounded-full border-slate-200 transition-all duration-300 hover:-translate-y-0.5"
+                    onClick={() => onAmountChange(String(presetAmount))}
+                    disabled={isCreating}
+                  >
+                    {formatVND(presetAmount)}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.96))] p-5 shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md">
+          <p className="text-sm font-medium text-slate-700">{t('wallet.topup.summary.title')}</p>
+          <div className="mt-5 space-y-4 text-sm text-slate-600">
+            <div className="flex items-center justify-between">
+              <span>{t('wallet.topup.summary.amount')}</span>
+              <span className="font-semibold text-slate-950">{formatVND(Number(amount) || 0)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>{t('wallet.topup.summary.method')}</span>
+              <span className="font-medium text-slate-950">Stripe</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>{t('wallet.topup.summary.status')}</span>
+              <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">{t('wallet.topup.summary.statusValue')}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-sky-100 bg-sky-50/80 p-4 text-sm text-sky-950">
+            <p className="font-medium">{t('wallet.topup.summary.redirect.title')}</p>
+            <p className="mt-1 leading-6 text-sky-900/80">
+              {t('wallet.topup.summary.redirect.desc')}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button
+          type="button"
+          onClick={onStartPayment}
+          disabled={isCreating || Number(amount) < MINIMUM_TOPUP_AMOUNT}
+          className="h-12 min-w-[220px] rounded-full bg-slate-950 px-6 text-white shadow-lg shadow-slate-950/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
+        >
+          {isCreating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t('wallet.topup.creating')}
+            </>
+          ) : (
+            <>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {t('wallet.topup.payNow')}
+            </>
+          )}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function TransactionRow({ transaction }: { transaction: Transaction }) {
+  const { t, i18n } = useTranslation('account');
+  const isDeposit = transaction.transactionType === 'DEPOSIT';
+  const statusTone =
+    transaction.status === 'SUCCESS'
+      ? 'bg-emerald-100 text-emerald-700'
+      : transaction.status === 'FAILED'
+        ? 'bg-rose-100 text-rose-700'
+        : 'bg-amber-100 text-amber-700';
+
+  const localeForDate = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-GB';
+
+  return (
+    <div className="group flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-white/90 px-5 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md sm:flex-row sm:items-center sm:justify-between animate-in fade-in slide-in-from-bottom-2">
+      <div className="flex items-start gap-4">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105 ${
+            isDeposit ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
+          }`}
+        >
+          {isDeposit ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
+        </div>
+        <div>
+          <p className="font-medium text-slate-950">{transaction.description || t(isDeposit ? 'wallet.transactions.walletTopup' : 'wallet.transactions.coursePayment')}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+            <span>{new Date(transaction.createdAt).toLocaleString(localeForDate)}</span>
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${statusTone}`}>
+              {t(`wallet.transactions.statuses.${transaction.status}`, { defaultValue: transaction.status })}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+        <p className={`text-lg font-semibold ${isDeposit ? 'text-emerald-600' : 'text-slate-900'}`}>
+          {isDeposit ? '+' : '-'}{formatVND(Number(transaction.amount) || 0)}
+        </p>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+          {t(isDeposit ? 'wallet.transactions.deposit' : 'wallet.transactions.payment')}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function TransactionsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 px-5 py-4">
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-slate-200" />
+              <div className="space-y-3">
+                <div className="h-4 w-48 rounded-full bg-slate-200" />
+                <div className="h-3 w-36 rounded-full bg-slate-200" />
+              </div>
+            </div>
+            <div className="space-y-3 sm:flex sm:flex-col sm:items-end sm:space-y-2">
+              <div className="h-4 w-24 rounded-full bg-slate-200" />
+              <div className="h-3 w-16 rounded-full bg-slate-200" />
+            </div>
+            <div className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(110deg,transparent_0%,rgba(255,255,255,0.7)_48%,transparent_100%)] animate-[shimmer_1.6s_infinite]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+interface RecentTransactionsCardProps {
+  isLoading: boolean;
+  transactions: Transaction[];
+  activeFilter: 'ALL' | 'DEPOSIT' | 'PAYMENT';
+  onFilterChange: (value: 'ALL' | 'DEPOSIT' | 'PAYMENT') => void;
+  onLoadMore: () => void;
+  canLoadMore: boolean;
+}
+
+function RecentTransactionsCard({
+  isLoading,
+  transactions,
+  activeFilter,
+  onFilterChange,
+  onLoadMore,
+  canLoadMore,
+}: RecentTransactionsCardProps) {
+  const { t } = useTranslation('account');
+  return (
+    <Card className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_26px_80px_-48px_rgba(15,23,42,0.28)] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
+            <History className="h-4 w-4" />
+            {t('wallet.transactions.eyebrow')}
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">{t('wallet.transactions.title')}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            {t('wallet.transactions.subtitle')}
+          </p>
+        </div>
+
+        <Tabs value={activeFilter} onValueChange={(value) => onFilterChange(value as 'ALL' | 'DEPOSIT' | 'PAYMENT')}>
+          <TabsList className="h-auto rounded-full border border-slate-200 bg-slate-100/90 p-1">
+            <TabsTrigger value="ALL" className="rounded-full px-4 py-2 data-[state=active]:bg-white">{t('wallet.transactions.filters.all')}</TabsTrigger>
+            <TabsTrigger value="DEPOSIT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">{t('wallet.transactions.filters.deposit')}</TabsTrigger>
+            <TabsTrigger value="PAYMENT" className="rounded-full px-4 py-2 data-[state=active]:bg-white">{t('wallet.transactions.filters.payment')}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="mt-8 space-y-3">
+        {isLoading ? (
+          <TransactionsSkeleton />
+        ) : transactions.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center text-sm text-slate-500">
+            {t('wallet.transactions.empty')}
+          </div>
+        ) : (
+          transactions.map((transaction) => <TransactionRow key={transaction.id} transaction={transaction} />)
+        )}
+      </div>
+
+      {!isLoading && canLoadMore && transactions.length > 0 ? (
+        <div className="mt-6 flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onLoadMore}
+            className="h-12 rounded-full border-slate-200 px-5 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+          >
+            {t('wallet.transactions.viewMore')}
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+function LoginRequiredCard() {
+  const { t } = useTranslation('account');
+  return (
+    <Card className="rounded-[28px] border border-amber-200 bg-[linear-gradient(135deg,rgba(255,251,235,0.95),rgba(255,247,237,0.95))] p-6 shadow-[0_24px_60px_-42px_rgba(180,83,9,0.35)]">
+      <div className="flex items-start gap-4 text-amber-950">
+        <div className="rounded-2xl bg-amber-100 p-3">
+          <AlertCircle className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">{t('wallet.loginRequired.title')}</h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-amber-900/80">
+            {t('wallet.loginRequired.desc')}
+          </p>
+          <Button type="button" onClick={() => (window.location.href = '/login')} className="mt-6 h-12 rounded-full px-6">
+            {t('wallet.loginRequired.signIn')}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function WalletPage() {
+  const { t } = useTranslation('account');
+  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   const { user, isLoading: isLoadingProfile } = useProfile();
-  
+  const { data: wallet, isLoading: isLoadingWallet } = useWallet();
+  const { data: walletSummary, isLoading: isLoadingSummary } = useWalletSummary();
+  const [transactionLimit, setTransactionLimit] = useState(TRANSACTIONS_PAGE_SIZE);
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'DEPOSIT' | 'PAYMENT'>('ALL');
+  const { data: transactionsResponse, isLoading: isLoadingTransactions } = useWalletTransactions({
+    page: 1,
+    limit: transactionLimit,
+  });
   const createOrderMutation = useCreateTopupOrder();
-  const confirmPaymentMutation = useConfirmTopup();
+  const [amount, setAmount] = useState(String(QUICK_TOPUP_AMOUNTS[1]));
 
-  const [amount, setAmount] = useState<string>('');
-  const [method, setMethod] = useState<PaymentMethod>('MOMO');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const currentBalance = Number(wallet?.balance ?? user?.wallet?.allowance) || 0;
+  const monthlyTopupAmount = Number(walletSummary?.monthlyTopupAmount ?? 0);
+  const monthlySuccessfulTransactions = Number(walletSummary?.monthlySuccessfulTransactions ?? 0);
+  const allTransactions = transactionsResponse?.data ?? [];
+  const pagination = transactionsResponse?.pagination;
+  const filteredTransactions = allTransactions.filter((transaction) => {
+    if (activeFilter === 'ALL') return true;
+    if (activeFilter === 'DEPOSIT') return transaction.transactionType === 'DEPOSIT';
+    return transaction.transactionType !== 'DEPOSIT';
+  });
+  const canLoadMore = (pagination?.total ?? 0) > transactionLimit;
 
-  // [THAY ĐỔI]: Sử dụng hooks của React Router DOM
-  // useSearchParams trả về mảng [params, setParams]
-  const [searchParams] = useSearchParams(); 
-  const navigate = useNavigate(); // Thay thế cho router
-
-  // Số dư hiện tại
-  const currentBalance = Number(user?.wallet?.allowance) || 0;
-
-  // 1. Xử lý khi user vừa thanh toán xong và được redirect về đây
-  useEffect(() => {
-    const checkPaymentStatus = async () => {
-      // searchParams trong react-router-dom hoạt động giống URLSearchParams chuẩn
-      if (searchParams.get('resultCode') && searchParams.get('orderId')) {
-        setIsProcessing(true);
-        
-        // Gom tất cả params từ URL lại thành object
-        const params: any = {};
-        for (const [key, value] of searchParams.entries()) {
-            params[key] = value;
-        }
-
-        try {
-          // Gọi API confirmPayment với toàn bộ params từ MoMo
-          await confirmPaymentMutation.mutateAsync(params);
-          
-          // [THAY ĐỔI]: Xóa query params trên URL để user không bị submit lại khi F5
-          // replace: true giúp không lưu lịch sử duyệt web bước này
-          navigate('/wallet', { replace: true }); 
-        } catch (error) {
-          console.error("Payment verification failed", error);
-        } finally {
-          setIsProcessing(false);
-        }
-      }
-    };
-
-    checkPaymentStatus();
-  }, [searchParams, navigate]); // Thêm dependencies
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleCreateOrder = async () => {
+    if (createOrderMutation.isPending) return;
     const realMoney = Number(amount);
-    if (Number.isNaN(realMoney) || realMoney < 1000) {
-      alert('Vui lòng nhập số tiền hợp lệ (tối thiểu 1000 VND).');
+
+    if (!accessToken) {
+      toast.error(t('wallet.toasts.needLogin'));
       return;
     }
 
-    setIsProcessing(true);
+    if (Number.isNaN(realMoney) || realMoney < MINIMUM_TOPUP_AMOUNT) {
+      toast.error(t('wallet.toasts.invalidAmount', { amount: formatVND(MINIMUM_TOPUP_AMOUNT) }));
+      return;
+    }
 
     try {
-      // BƯỚC 1: Gọi API tạo Order (Backend)
-      const createRes = await createOrderMutation.mutateAsync({ realMoney });
-      const { payUrl } = createRes.data; 
+      const response = await createOrderMutation.mutateAsync({ realMoney });
+      const data = response.data;
 
-      if (payUrl) {
-         // BƯỚC 2: Redirect sang MoMo
-         // window.location là chuẩn JS thuần, dùng được cho mọi framework
-         window.location.href = payUrl; 
-      } else {
-        alert("Không nhận được link thanh toán");
+      if (!data?.paymentUrl) {
+        throw new Error(t('wallet.toasts.missingPaymentUrl'));
       }
-      
+
+      toast.success(t('wallet.toasts.redirecting'));
+      window.location.href = data.paymentUrl;
     } catch (error) {
-      console.error(error);
-    } finally {
-      // Lưu ý: Nếu redirect thành công thì dòng này có thể không chạy kịp (không sao cả)
-      setIsProcessing(false);
+      const apiMessage =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.message ||
+            (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.error
+          : undefined;
+      const message = error instanceof Error ? apiMessage || error.message : apiMessage || t('wallet.toasts.defaultError');
+      toast.error(message);
     }
   };
 
-  if (isLoadingProfile) {
+  const handleLoadMoreTransactions = () => {
+    setTransactionLimit((currentLimit) => currentLimit + TRANSACTIONS_PAGE_SIZE);
+  };
+
+  if (!accessToken) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex justify-center items-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        </div>
-        <Footer />
+      <div className="space-y-6 pb-10">
+        <main className="space-y-6">
+          <WalletHero currentBalance={0} />
+          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <BalanceCard currentBalance={0} monthlyTopupAmount={0} monthlySuccessfulTransactions={0} />
+            <LoginRequiredCard />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isLoadingProfile || isLoadingWallet || isLoadingSummary) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
+    <div className="space-y-6 pb-10 [@keyframes_shimmer]{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}">
+      <main className="space-y-6">
+        <WalletHero currentBalance={currentBalance} />
 
-      <main className="pt-20">
-        <section className="bg-gradient-hero text-primary-foreground py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-4">
-              <Wallet className="h-8 w-8" />
-              <div>
-                <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">
-                  Ví của bạn
-                </h1>
-                <p className="text-primary-foreground/80">
-                  Nạp tiền để thanh toán khóa học nhanh chóng
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+          <BalanceCard
+            currentBalance={currentBalance}
+            monthlyTopupAmount={monthlyTopupAmount}
+            monthlySuccessfulTransactions={monthlySuccessfulTransactions}
+          />
+          <CreatePaymentCard
+            amount={amount}
+            isCreating={createOrderMutation.isPending}
+            onAmountChange={setAmount}
+            onStartPayment={handleCreateOrder}
+          />
+        </div>
 
-        <section className="py-12">
-          <div className="container mx-auto px-4 grid lg:grid-cols-3 gap-8">
-            {/* Card Số dư */}
-            <Card className="p-6 lg:col-span-1 h-fit">
-              <h2 className="text-xl font-semibold mb-4">Số dư hiện tại</h2>
-              <p className="text-4xl font-bold text-primary mb-2">
-                {formatVND(currentBalance)}
-              </p>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                <AlertCircle className="w-4 h-4" />
-                <span>Sử dụng số dư để mua khóa học ngay lập tức.</span>
-              </div>
-            </Card>
-
-            {/* Form Nạp tiền */}
-            <Card className="p-6 lg:col-span-2">
-              <h2 className="text-xl font-semibold mb-6">Nạp tiền vào ví</h2>
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Số tiền muốn nạp (VND)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      min={1000}
-                      step={1000}
-                      placeholder="Ví dụ: 200000"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      disabled={isProcessing}
-                      className="text-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phương thức thanh toán</Label>
-                    <Select
-                      value={method}
-                      onValueChange={(v) => setMethod(v as PaymentMethod)}
-                      disabled={isProcessing}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn phương thức" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {paymentMethods.map((m) => (
-                          <SelectItem key={m.value} value={m.value}>
-                            {m.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Thông báo giả lập */}
-                <div className="rounded-md border border-green-200 bg-green-50 p-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-green-800">
-                        Mô phỏng thanh toán
-                      </p>
-                      <p className="text-sm text-green-700">
-                        Hệ thống sẽ tự động xác nhận thanh toán sau 2 giây để
-                        cộng tiền vào ví.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    type="submit"
-                    disabled={isProcessing || !amount}
-                    className="w-full md:w-auto min-w-[150px] bg-primary"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Đang xử lý...
-                      </>
-                    ) : (
-                      "Nạp tiền ngay"
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setAmount("")}
-                    disabled={isProcessing}
-                  >
-                    Làm mới
-                  </Button>
-                </div>
-              </form>
-            </Card>
-          </div>
-        </section>
+        <RecentTransactionsCard
+          isLoading={isLoadingTransactions}
+          transactions={filteredTransactions}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          onLoadMore={handleLoadMoreTransactions}
+          canLoadMore={canLoadMore}
+        />
       </main>
-
-      <Footer />
     </div>
   );
 }

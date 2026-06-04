@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "myCourses": "My Courses",
+    "flashcards": "Flashcards",
+    "cart": "Cart",
+    "wallet": "Wallet",
+    "notifications": "Notifications",
+    "examCenter": "Exam Center",
+    "myProgress": "My Progress",
+    "skillTree": "Skill Tree",
+    "dictation": "Dictation",
+    "learningPath": "Learning Path",
+    "liveClassroom": "Live Classroom",
+    "aiFeatures": "AI Features"
+  },
+  "header": {
+    "pageDefault": "Learning Workspace",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "learner": "Learner"
+  },
+  "auth": {
+    "logout": "Sign out"
+  },
+  "publicNav": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services",
+    "courses": "Courses",
+    "pricing": "Pricing",
+    "workspace": "Learning Workspace",
+    "flashcards": "Flashcards",
+    "sectionHome": "Home",
+    "sectionSystem": "System",
+    "wallet": "Wallet",
+    "cart": "Cart",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "login": "Sign in",
+    "getStarted": "Get started"
+  },
+  "cartDropdown": {
+    "ariaLabel": "Cart",
+    "title": "Cart",
+    "itemCount_one": "{{count}} course",
+    "itemCount_other": "{{count}} courses",
+    "empty": "Your cart is empty",
+    "total": "Total",
+    "viewCart": "View cart"
+  },
+  "upgradePro": {
+    "title": "Upgrade to Pro",
+    "labelLong": "Upgrade Pro",
+    "labelShort": "Pro"
+  },
+  "footer": {
+    "rights": "© {{year}} Alicia. All rights reserved.",
+    "brandDescription": "Elevate your English skills with expert-led courses and interactive learning experiences.",
+    "quickLinks": "Quick links",
+    "viewCourses": "Browse courses",
+    "about": "About",
+    "blog": "Blog",
+    "contact": "Contact",
+    "support": "Support",
+    "helpCenter": "Help center",
+    "terms": "Terms of service",
+    "privacy": "Privacy policy",
+    "faq": "FAQ"
+  }
+}

@@ -1,4 +1,5 @@
 import { AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -9,20 +10,17 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-/**
- * Error Message Component
- * Hiển thị thông báo lỗi với khả năng retry
- */
 export const ErrorMessage = ({
-  title = 'Đã xảy ra lỗi',
+  title,
   message,
   onRetry,
   className,
 }: ErrorMessageProps) => {
+  const { t } = useTranslation('common');
   return (
     <Alert variant="destructive" className={className}>
       <AlertCircle className="h-4 w-4" />
-      <AlertTitle>{title}</AlertTitle>
+      <AlertTitle>{title ?? t('errors.title')}</AlertTitle>
       <AlertDescription className="flex items-center justify-between">
         <span>{message}</span>
         {onRetry && (
@@ -32,7 +30,7 @@ export const ErrorMessage = ({
             onClick={onRetry}
             className="ml-4"
           >
-            Thử lại
+            {t('actions.retry')}
           </Button>
         )}
       </AlertDescription>

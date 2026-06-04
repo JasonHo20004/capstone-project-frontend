@@ -4,7 +4,7 @@ import type {
   FlashcardDeck,
   Flashcard,
   UserFlashcardProgress,
-} from "@/types/type";
+} from "@/domain";
 
 export type ReviewQuality = 1 | 3 | 4 | 5; // Dựa theo backend service
 
@@ -98,6 +98,26 @@ class FlashcardService {
       data
     );
     return response.data;
+  }
+  async resetProgress(deckId: string): Promise<ApiResponse<EmptyResponse>> {
+    const response = await apiClient.delete<ApiResponse<EmptyResponse>>(
+      `/flashcard-review/reset/${deckId}`
+    );
+    return response.data;
+  }
+
+  async getPublicDecks(params?: {
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: FlashcardDeck[]; total: number; totalPages: number }> {
+    const query = new URLSearchParams({ isPublic: 'true' });
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', String(params.page));
+    query.set('limit', String(params?.limit ?? 20));
+    const response = await apiClient.get(`/flashcard-decks?${query.toString()}`);
+    const { data, total, totalPages } = response.data;
+    return { data: data ?? [], total: total ?? 0, totalPages: totalPages ?? 1 };
   }
 }
 

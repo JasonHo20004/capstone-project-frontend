@@ -8,94 +8,240 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 26% 15%;
+    /* ===== Penguin Guided E-Learning — Editorial Learning Architecture =====
+       Palette derived from Stitch design system. Surface-container scale
+       replaces hard borders; orange is a precision tool for primary CTAs. */
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 26% 15%;
+    --background: 210 20% 98%;          /* #f7f9fb — surface */
+    --foreground: 200 8% 11%;           /* #191c1e — on-surface (never pure black) */
+
+    --card: 0 0% 100%;                  /* surface-container-lowest */
+    --card-foreground: 200 8% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 26% 15%;
+    --popover-foreground: 200 8% 11%;
 
-    /* Deep Navy Primary */
-    --primary: 243 75% 15%;
+    --primary: 212 100% 37%;            /* #0058bc */
     --primary-foreground: 0 0% 100%;
-    --primary-light: 243 60% 25%;
-    --primary-dark: 243 80% 10%;
+    --primary-light: 211 100% 46%;      /* #0070eb — hover glow */
+    --primary-dark: 214 100% 29%;       /* #004493 */
 
-    /* Purple Accent */
-    --secondary: 262 83% 58%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-light: 262 83% 68%;
+    --secondary: 33 100% 50%;           /* #fe9400 — accent orange */
+    --secondary-foreground: 30 100% 19%;/* #633700 */
+    --secondary-light: 32 100% 72%;     /* #ffb874 */
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 210 14% 96%;               /* surface-container-low */
+    --muted-foreground: 222 14% 30%;    /* #414755 on-surface-variant */
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 33 100% 50%;              /* orange accent (sparingly) */
+    --accent-foreground: 30 100% 19%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 73% 42%;           /* #ba1a1a */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 262 83% 58%;
+    /* Ghost borders — use at ~15% opacity via /15 in Tailwind */
+    --border: 225 23% 80%;              /* #c1c6d7 outline-variant */
+    --input: 210 4% 89%;                /* surface-container-highest for field bg */
+    --ring: 212 100% 37%;               /* focus — primary */
 
-    --radius: 0.75rem;
+    --radius: 1rem;                     /* cards — 16px */
+    --radius-xl: 1.5rem;                /* buttons — soft-shell 24px */
+
+    /* Surface container tonal scale */
+    --surface: 210 20% 98%;             /* #f7f9fb */
+    --surface-lowest: 0 0% 100%;        /* #ffffff */
+    --surface-low: 210 14% 96%;         /* #f2f4f6 */
+    --surface-container: 210 8% 93%;    /* #eceef0 */
+    --surface-high: 210 6% 91%;         /* #e6e8ea */
+    --surface-highest: 210 4% 89%;      /* #e0e3e5 */
+    --surface-dim: 210 3% 85%;          /* #d8dadc — footer ground */
 
     /* Custom gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(243 75% 15%), hsl(262 83% 58%));
-    --gradient-secondary: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 83% 60%));
-    --gradient-hero: linear-gradient(180deg, hsl(243 75% 15%) 0%, hsl(243 60% 25%) 100%);
-    
-    /* Shadows */
-    --shadow-sm: 0 2px 8px hsl(243 75% 15% / 0.08);
-    --shadow-md: 0 4px 16px hsl(243 75% 15% / 0.12);
-    --shadow-lg: 0 8px 32px hsl(243 75% 15% / 0.16);
-    --shadow-accent: 0 8px 24px hsl(262 83% 58% / 0.25);
-    
-    /* Transitions */
-    --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    --gradient-primary: linear-gradient(135deg, hsl(212 100% 37%), hsl(211 100% 46%));
+    --gradient-secondary: linear-gradient(135deg, hsl(33 100% 50%), hsl(32 100% 72%));
+    --gradient-hero: linear-gradient(135deg, hsl(212 100% 37%) 0%, hsl(211 100% 46%) 100%);
+
+    /* Shadows — ambient tonal lifts, not directional drop shadows */
+    --shadow-sm: 0 2px 8px hsl(200 8% 11% / 0.04);
+    --shadow-md: 0 8px 24px hsl(200 8% 11% / 0.06);
+    --shadow-lg: 0 20px 40px hsl(200 8% 11% / 0.06);
+    --shadow-accent: 0 12px 32px hsl(212 100% 37% / 0.18);
+    --shadow-card-hover: 0 16px 40px hsl(212 100% 37% / 0.14);
+    --shadow-glow-orange: 0 10px 28px hsl(33 100% 50% / 0.28);
+
+    /* Motion */
+    --transition-base: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-smooth: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .dark {
-    --background: 243 75% 8%;
+    --background: 230 36% 10%;
     --foreground: 0 0% 98%;
 
-    --card: 243 60% 12%;
+    --card: 230 30% 14%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 243 60% 12%;
+    --popover: 230 30% 14%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 230 89% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 262 83% 68%;
-    --primary-dark: 262 83% 48%;
+    --primary-light: 230 89% 70%;
+    --primary-dark: 230 85% 49%;
 
-    --secondary: 243 75% 20%;
+    --secondary: 230 30% 22%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 243 50% 15%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 230 25% 17%;
+    --muted-foreground: 215 16% 65%;
 
-    --accent: 262 83% 58%;
+    --accent: 230 89% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 243 40% 18%;
-    --input: 243 40% 18%;
-    --ring: 262 83% 58%;
+    --border: 230 20% 20%;
+    --input: 230 20% 20%;
+    --ring: 230 89% 60%;
   }
 }
 
+/* ===== KAHOOT-STYLE FLASHCARD SYSTEM ===== */
+
+/* Bounce-in entrance animation */
+@keyframes kahoot-bounce-in {
+  0% { opacity: 0; transform: scale(0.3) translateY(40px); }
+  50% { opacity: 1; transform: scale(1.05) translateY(-8px); }
+  70% { transform: scale(0.95) translateY(2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+/* Screen-shake for wrong/hard answers */
+@keyframes kahoot-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px) rotate(-1deg); }
+  20% { transform: translateX(8px) rotate(1deg); }
+  30% { transform: translateX(-6px) rotate(-0.5deg); }
+  40% { transform: translateX(6px) rotate(0.5deg); }
+  50% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+/* Confetti-burst for correct answers */
+@keyframes kahoot-confetti-particle {
+  0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(-120px) scale(0) rotate(720deg); }
+}
+
+/* Pulse glow on correct */
+@keyframes kahoot-glow-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+  50% { box-shadow: 0 0 30px 10px rgba(34, 197, 94, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* Score pop animation */
+@keyframes kahoot-score-pop {
+  0% { opacity: 0; transform: scale(0) translateY(20px); }
+  60% { opacity: 1; transform: scale(1.3) translateY(-10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Float-up fade for feedback text */
+@keyframes kahoot-float-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+}
+
+@keyframes kahoot-feedback-chip {
+  0%   { opacity: 0; transform: translate(-50%, calc(-50% + 14px)) scale(0.7); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, calc(-50% - 18px)) scale(0.95); }
+}
+
+/* Slide-in for cards from bottom */
+@keyframes kahoot-slide-up {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Subtle breathing glow */
+@keyframes kahoot-breathe {
+  0%, 100% { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15); }
+  50% { box-shadow: 0 4px 30px rgba(99, 102, 241, 0.3); }
+}
+
+/* Trophy bounce */
+@keyframes kahoot-trophy {
+  0% { transform: scale(0) rotate(-30deg); }
+  60% { transform: scale(1.2) rotate(10deg); }
+  80% { transform: scale(0.9) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Utility classes */
+.kahoot-bounce-in {
+  animation: kahoot-bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kahoot-shake {
+  animation: kahoot-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.kahoot-glow-correct {
+  animation: kahoot-glow-pulse 0.8s ease-out;
+}
+
+.kahoot-score-pop {
+  animation: kahoot-score-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kahoot-float-up {
+  animation: kahoot-float-up 1.2s ease-out forwards;
+}
+
+.kahoot-feedback-chip {
+  /* Anchor: chip is absolutely positioned at its band line; the keyframes carry
+     translate(-50%,-50%) so it stays centered while it rises and fades. */
+  transform: translate(-50%, -50%);
+  animation: kahoot-feedback-chip 0.65s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.kahoot-slide-up {
+  animation: kahoot-slide-up 0.4s ease-out both;
+}
+
+.kahoot-trophy {
+  animation: kahoot-trophy 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Staggered slide-up for lists */
+.kahoot-slide-up-1 { animation: kahoot-slide-up 0.4s ease-out 0.05s both; }
+.kahoot-slide-up-2 { animation: kahoot-slide-up 0.4s ease-out 0.1s both; }
+.kahoot-slide-up-3 { animation: kahoot-slide-up 0.4s ease-out 0.15s both; }
+.kahoot-slide-up-4 { animation: kahoot-slide-up 0.4s ease-out 0.2s both; }
+
+/* Confetti particle (used via JS-injected elements) */
+.kahoot-confetti-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: kahoot-confetti-particle 1s ease-out forwards;
+  pointer-events: none;
+}
+
+/* ===== ENHANCED FLIP CARD ===== */
 .flip-card {
   background-color: transparent;
-  perspective: 1000px; /* Tạo chiều sâu 3D */
-  height: 400px; /* Chiều cao cố định cho thẻ */
+  perspective: 1200px;
+  height: 380px;
 }
 
 .flip-card-inner {
@@ -103,11 +249,10 @@ All colors MUST be HSL.
   width: 100%;
   height: 100%;
   text-align: center;
-  transition: transform 0.6s;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   transform-style: preserve-3d;
 }
 
-/* Class để kích hoạt lật */
 .flip-card-inner.flipped {
   transform: rotateY(180deg);
 }
@@ -122,17 +267,41 @@ All colors MUST be HSL.
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem; /* rounded-2xl */
-  border: 1px solid hsl(var(--border));
-  background-color: hsl(var(--card));
-  color: hsl(var(--card-foreground));
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  border-radius: 1.25rem;
+  border: none;
   padding: 2rem;
+  overflow: hidden;
 }
 
-/* Mặt sau xoay sẵn 180 độ */
+.flip-card-front {
+  background: linear-gradient(145deg, hsl(250 60% 28%), hsl(260 65% 22%));
+  color: white;
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 .flip-card-back {
   transform: rotateY(180deg);
+  background: linear-gradient(145deg, hsl(230 50% 18%), hsl(240 45% 14%));
+  color: white;
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Geometric pattern overlay for cards */
+.flip-card-front::before,
+.flip-card-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
+  pointer-events: none;
 }
 @layer base {
   * {
@@ -140,6 +309,92 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Manrope", "Inter", system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    line-height: 1.6;
   }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: "Plus Jakarta Sans", "Lexend", sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ===== Editorial Learning Architecture — helpers ===== */
+
+/* Glassmorphic surfaces (nav, tip bubbles) */
+.glass {
+  background: hsl(var(--surface-lowest) / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--surface-lowest) / 0.5);
+}
+
+.glass-dark {
+  background: hsl(var(--foreground) / 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+}
+
+/* Ghost border (feel it, don't see it) */
+.ghost-border {
+  border: 1px solid hsl(var(--border) / 0.15);
+}
+
+/* Hero gradient at 135deg — "liquid" depth */
+.bg-hero-gradient {
+  background: var(--gradient-hero);
+}
+
+/* Tonal layering helpers */
+.surface-lowest { background-color: hsl(var(--surface-lowest)); }
+.surface-low    { background-color: hsl(var(--surface-low)); }
+.surface-container { background-color: hsl(var(--surface-container)); }
+.surface-high   { background-color: hsl(var(--surface-high)); }
+.surface-dim    { background-color: hsl(var(--surface-dim)); }
+
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.icon-fill {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Dark scrollbar for dark-themed pages (e.g. skill tree) */
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #020617; /* slate-950 */
+}
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #1e293b; /* slate-800 */
+  border-radius: 4px;
+}
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #334155; /* slate-700 */
+}
+.dark-scrollbar {
+  scrollbar-color: #1e293b #020617; /* Firefox */
+  scrollbar-width: thin;
 }

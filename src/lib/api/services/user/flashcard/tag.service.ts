@@ -1,6 +1,6 @@
 import apiClient from '@/lib/api/config';
 import type { ApiResponse } from '@/lib/api/types';
-import type { Tag } from '@/types/type';
+import type { Tag } from "@/domain";
 
 export interface CreateTagDTO {
   name: string;
@@ -32,6 +32,14 @@ class TagService {
    */
   async updateTag(tagId: string, data: UpdateTagDTO): Promise<ApiResponse<Tag>> {
     const response = await apiClient.post<ApiResponse<Tag>>(`/tags/update/${tagId}`, data);
+    return response.data;
+  }
+
+  /**
+   * Xóa tag (Admin only)
+   */
+  async deleteTag(tagId: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.delete<ApiResponse<null>>(`/tags/${tagId}`);
     return response.data;
   }
 }

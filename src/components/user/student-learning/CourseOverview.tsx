@@ -1,24 +1,22 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTranslation } from "react-i18next";
+
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { formatDate } from "@/lib/utils";
 import type { CourseContext } from "@/types/student-learning";
 
 type CourseOverviewProps = {
   context?: CourseContext;
 };
 
-const levelLabels: Record<string, string> = {
-  BEGINNER: "Beginner",
-  INTERMEDIATE: "Intermediate",
-  ADVANCED: "Advanced",
-};
-
 export const CourseOverview = ({ context }: CourseOverviewProps) => {
+  const { t, i18n } = useTranslation("courses");
+  const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-GB";
+
   if (!context) {
     return (
       <div className="rounded-3xl border bg-background p-6 text-sm text-muted-foreground">
-        Chọn một khóa học và bài học để xem thông tin tổng quan.
+        {t("studentLearning.courseOverview.emptyState")}
       </div>
     );
   }
@@ -30,6 +28,24 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
     0
   );
   const totalMinutes = Math.round(totalDuration / 60);
+
+  const levelLabel = course.courseLevel
+    ? t(`studentLearning.courseOverview.levels.${course.courseLevel}`, {
+        defaultValue: course.courseLevel,
+      })
+    : null;
+
+  const formattedDate = (() => {
+    try {
+      return new Date().toLocaleDateString(dateLocale, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    } catch {
+      return "";
+    }
+  })();
 
   return (
     <div className="space-y-6 rounded-3xl border bg-background p-6 shadow-sm">
@@ -49,14 +65,18 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
             )}
             {course.courseLevel && (
               <Badge variant="secondary" className="rounded-full">
-                {levelLabels[course.courseLevel] ?? course.courseLevel}
+                {levelLabel}
               </Badge>
             )}
             <Badge variant="outline" className="rounded-full">
-              {course.totalLessons} bài học
+              {t("studentLearning.courseOverview.lessonsBadge", {
+                count: course.totalLessons,
+              })}
             </Badge>
             <Badge variant="outline" className="rounded-full">
-              ~{totalMinutes || 0} phút nội dung
+              {t("studentLearning.courseOverview.minutesBadge", {
+                count: totalMinutes || 0,
+              })}
             </Badge>
           </div>
         </div>
@@ -65,55 +85,52 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
       <div className="grid gap-4 md:grid-cols-[2fr,1fr]">
         <div className="space-y-3 rounded-2xl border bg-muted/40 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">Tiến độ khóa học</p>
+            <p className="text-sm font-semibold">
+              {t("studentLearning.courseOverview.progressTitle")}
+            </p>
             <span className="text-xs text-muted-foreground">
-              {progress.completedLessons}/{progress.totalLessons} bài học
+              {t("studentLearning.courseOverview.progressOfTotal", {
+                completed: progress.completedLessons,
+                total: progress.totalLessons,
+              })}
             </span>
           </div>
           <Progress value={progress.progressPercentage} />
           <p className="text-xs text-muted-foreground">
-            Bạn đã hoàn thành {progress.progressPercentage}% khóa học này.
+            {t("studentLearning.courseOverview.progressPercentDone", {
+              percent: progress.progressPercentage,
+            })}
           </p>
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border bg-muted/40 p-4">
-          <Avatar className="h-12 w-12 border">
-            {course.instructor.profilePicture && (
-              <AvatarImage src={course.instructor.profilePicture} alt={course.instructor.fullName} />
-            )}
-            <AvatarFallback>
-              {course.instructor.fullName
-                .split(" ")
-                .map((part) => part[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar src={course.instructor.profilePicture} name={course.instructor.fullName} className="h-12 w-12 border" />
           <div className="space-y-1">
-            <p className="text-sm font-semibold">Giảng viên</p>
+            <p className="text-sm font-semibold">
+              {t("studentLearning.courseOverview.instructor")}
+            </p>
             <p className="text-sm leading-tight">{course.instructor.fullName}</p>
             <p className="text-xs text-muted-foreground">
-              {course.totalRatings} đánh giá từ học viên
+              {t("studentLearning.courseOverview.ratingsFromLearners", {
+                count: course.totalRatings,
+              })}
             </p>
           </div>
         </div>
       </div>
 
       <div className="rounded-2xl border bg-muted/30 p-4">
-        <p className="text-sm font-semibold">Bạn sẽ học được gì?</p>
+        <p className="text-sm font-semibold">
+          {t("studentLearning.courseOverview.whatYouLearnTitle")}
+        </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Sử dụng danh sách bài học ở bên phải để điều hướng qua từng nội dung
-          chi tiết. Mỗi bài học có thể bao gồm video, tài liệu đính kèm và khu vực
-          hỏi đáp để bạn tương tác với cộng đồng.
+          {t("studentLearning.courseOverview.whatYouLearnDesc")}
         </p>
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Cập nhật lần cuối: {formatDate(new Date().toISOString())}
+        {t("studentLearning.courseOverview.lastUpdated", { date: formattedDate })}
       </p>
     </div>
   );
 };
-
-

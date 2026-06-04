@@ -1,6 +1,6 @@
 import apiClient from "@/lib/api/config";
 import type { ApiResponse } from "@/lib/api/types";
-import type { User, CourseSellerApplication } from "@/types/type";
+import type { User, CourseSellerApplication, CourseSellerProfile } from "@/domain";
 
 export interface UpdateProfileDTO {
   fullName?: string;
@@ -22,8 +22,8 @@ class UserService {
   ): Promise<ApiResponse<User>> {
     // Dùng PATCH để chỉ update những trường thay đổi
     const isFormData = data instanceof FormData;
-    const response = await apiClient.put<ApiResponse<User>>(
-      "/users/me/update",
+    const response = await apiClient.patch<ApiResponse<User>>(
+      "/users/profile",
       data,
       {
         headers: {
@@ -36,26 +36,53 @@ class UserService {
     return response.data;
   }
   async getProfile(): Promise<ApiResponse<User>> {
-    const response = await apiClient.get<ApiResponse<User>>("/users/me");
+    const response = await apiClient.get<ApiResponse<User>>("/users/profile");
     return response.data;
   }
   async getMe(): Promise<ApiResponse<User>> {
     // Endpoint-này-bạn-cần-có-ở-backend
     // Nó-sẽ-đọc-token-từ-header-và-trả-về-user-tương-ứng
-    const response = await apiClient.get<ApiResponse<User>>("/users/me");
+    const response = await apiClient.get<ApiResponse<User>>("/users/profile");
     return response.data;
   }
 
-  async createCourseSellerApplication(formData: FormData): Promise<ApiResponse<any>> {
-    // Axios tự động set Content-Type là multipart/form-data khi data là FormData
-    // NHƯNG cần lưu ý: Đừng set thủ công Content-Type: application/json
-    const response = await apiClient.post<ApiResponse<any>>(
-      '/users/me/course-seller-application',
+  async createCourseSellerApplication(formData: FormData): Promise<ApiResponse<CourseSellerApplication>> {
+    const response = await apiClient.post<ApiResponse<CourseSellerApplication>>(
+      '/seller/apply',
       formData,
       {
         headers: {
-          // Để undefined để browser tự set boundary
-          'Content-Type': undefined, 
+          'Content-Type': undefined,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  /**
+   * Fetch the current seller's own profile (certification + expertise + isActive).
+   * Separate from /users/profile because UserResponse does not include the
+   * CourseSellerProfile relation.
+   */
+  async getSellerOwnProfile(): Promise<ApiResponse<CourseSellerProfile>> {
+    const response = await apiClient.get<ApiResponse<CourseSellerProfile>>('/seller/profile');
+    return response.data;
+  }
+
+  /**
+   * Update the current seller's profile (certifications + expertise).
+   * `formData` MUST be multipart with:
+   *   - `images[]`        optional File entries for newly added certificates
+   *   - `certification[]` optional URL strings to keep
+   *   - `expertise[]`     optional list of expertise tags
+   */
+  async updateSellerProfile(formData: FormData): Promise<ApiResponse<CourseSellerProfile>> {
+    const response = await apiClient.put<ApiResponse<CourseSellerProfile>>(
+      '/seller/profile',
+      formData,
+      {
+        headers: {
+          'Content-Type': undefined,
         },
       }
     );

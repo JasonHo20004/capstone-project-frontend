@@ -1,4 +1,6 @@
-import { CheckCircle2, Clock, ListChecks, PlayCircle } from "lucide-react";
+import { CheckCircle2, Clock, ListChecks, PlayCircle, MessageCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -11,10 +13,10 @@ type SyllabusSidebarProps = {
   isLoading?: boolean;
 };
 
-const formatDuration = (seconds?: number | null) => {
+const formatDuration = (seconds: number | null | undefined, t: TFunction) => {
   if (!seconds) return "--";
   const mins = Math.floor(seconds / 60);
-  return `${mins} phút`;
+  return t("studentLearning.syllabusSidebar.minutes", { count: mins });
 };
 
 export const SyllabusSidebar = ({
@@ -23,14 +25,17 @@ export const SyllabusSidebar = ({
   onSelectLesson,
   isLoading,
 }: SyllabusSidebarProps) => {
+  const { t } = useTranslation("courses");
   return (
     <div className="flex h-full flex-col rounded-3xl border bg-background p-4 shadow-lg">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Danh sách bài học
+            {t("studentLearning.syllabusSidebar.lessonsLabel")}
           </p>
-          <h3 className="text-xl font-bold">List of Lessons</h3>
+          <h3 className="text-xl font-bold">
+            {t("studentLearning.syllabusSidebar.title")}
+          </h3>
         </div>
         <ListChecks className="h-6 w-6 text-primary" />
       </div>
@@ -50,7 +55,7 @@ export const SyllabusSidebar = ({
 
           {!isLoading && lessons?.length === 0 && (
             <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-              Khóa học chưa có bài học nào.
+              {t("studentLearning.syllabusSidebar.empty")}
             </div>
           )}
 
@@ -74,7 +79,7 @@ export const SyllabusSidebar = ({
                     <div className="flex-1">
                       <p className="font-semibold text-foreground">{lesson.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {lesson.description ?? "Không có mô tả"}
+                        {lesson.description ?? t("studentLearning.syllabusSidebar.noDescription")}
                       </p>
                     </div>
                     {lesson.isCompleted ? (
@@ -86,10 +91,13 @@ export const SyllabusSidebar = ({
                   <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-1">
                       <Clock className="h-3 w-3" />
-                      {formatDuration(lesson.durationInSeconds)}
+                      {formatDuration(lesson.durationInSeconds, t)}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-1">
-                      💬 {lesson.commentCount ?? 0} bình luận
+                      <MessageCircle size={14} />{" "}
+                      {t("studentLearning.syllabusSidebar.comments", {
+                        count: lesson.commentCount ?? 0,
+                      })}
                     </span>
                   </div>
                 </button>
@@ -100,4 +108,3 @@ export const SyllabusSidebar = ({
     </div>
   );
 };
-

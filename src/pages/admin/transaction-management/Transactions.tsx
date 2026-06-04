@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,36 +27,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   MoreHorizontal,
   Eye,
   Download,
   CreditCard,
   Wallet,
+  Search as SearchIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { transactionManagementService } from "@/lib/api/services/admin";
 import type {
   TransactionFilters,
   TransactionWithRelations,
 } from "@/lib/api/types/transaction.types";
+import type { TransactionStatus } from "@/domain";
 import DataTable from "@/components/admin/DataTable";
 
 export default function TransactionsManagement() {
-  // UI state (immediate updates)
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] =
-    useState<TransactionFilters["transactionType"]>("all");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Applied state (only updates on search button click)
-  const [appliedSearch, setAppliedSearch] = useState("");
-  const [appliedStatus, setAppliedStatus] = useState("all");
-  const [appliedType, setAppliedType] =
-    useState<TransactionFilters["transactionType"]>("all");
-  const [appliedStartDate, setAppliedStartDate] = useState("");
-  const [appliedEndDate, setAppliedEndDate] = useState("");
+  // UI state (immediate updates) — seeded from URL so refresh restores filters.
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
+  const [typeFilter, setTypeFilter] = useState<TransactionFilters["transactionType"]>(
+    (searchParams.get("type") as TransactionFilters["transactionType"]) ?? "all"
+  );
+  const [startDate, setStartDate] = useState(searchParams.get("startDate") ?? "");
+  const [endDate, setEndDate] = useState(searchParams.get("endDate") ?? "");
+
+  // Applied state (only updates on search button click) — also seeded from URL
+  // so the initial query honors the URL filters.
+  const [appliedSearch, setAppliedSearch] = useState(searchParams.get("q") ?? "");
+  const [appliedStatus, setAppliedStatus] = useState(searchParams.get("status") ?? "all");
+  const [appliedType, setAppliedType] = useState<TransactionFilters["transactionType"]>(
+    (searchParams.get("type") as TransactionFilters["transactionType"]) ?? "all"
+  );
+  const [appliedStartDate, setAppliedStartDate] = useState(searchParams.get("startDate") ?? "");
+  const [appliedEndDate, setAppliedEndDate] = useState(searchParams.get("endDate") ?? "");
 
   const [selectedTransaction, setSelectedTransaction] =
     useState<TransactionWithRelations | null>(null);
@@ -63,6 +83,23 @@ export default function TransactionsManagement() {
     setPage(1);
   };
 
+  // Mirror applied filters into the URL (after Search is pressed) — keeps URL
+  // tied to what's actually being queried, not draft UI state.
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (appliedSearch) next.set("q", appliedSearch); else next.delete("q");
+    if (appliedStatus && appliedStatus !== "all") next.set("status", appliedStatus);
+    else next.delete("status");
+    if (appliedType && appliedType !== "all") next.set("type", appliedType);
+    else next.delete("type");
+    if (appliedStartDate) next.set("startDate", appliedStartDate); else next.delete("startDate");
+    if (appliedEndDate) next.set("endDate", appliedEndDate); else next.delete("endDate");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedSearch, appliedStatus, appliedType, appliedStartDate, appliedEndDate]);
+
   // Handle Enter key in search input
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -73,7 +110,7 @@ export default function TransactionsManagement() {
   // Build filters using applied values
   const filters: TransactionFilters = {
     search: appliedSearch || undefined,
-    status: appliedStatus === "all" ? undefined : (appliedStatus as any),
+    status: appliedStatus === "all" ? undefined : appliedStatus as TransactionStatus,
     transactionType: appliedType,
     startDate: appliedStartDate || undefined,
     endDate: appliedEndDate || undefined,
@@ -89,8 +126,12 @@ export default function TransactionsManagement() {
   } = useQuery({
     queryKey: ["adminTransactions", filters],
     queryFn: () => transactionManagementService.getTransactions(filters),
-    refetchInterval: 30000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+    staleTime: 15_000,
   });
+
+  const [isExporting, setIsExporting] = useState(false);
 
   const transactions = transactionsResp?.data?.transactions || [];
   const pagination = transactionsResp?.data?.pagination;
@@ -119,7 +160,6 @@ export default function TransactionsManagement() {
     const typeMap = {
       DEPOSIT: { label: "Nạp tiền", variant: "default" as const },
       PAYMENT: { label: "Thanh toán", variant: "secondary" as const },
-      MONTHLYFEE: { label: "Phí hàng tháng", variant: "outline" as const },
       WITHDRAW: { label: "Rút tiền", variant: "destructive" as const },
     };
 
@@ -136,8 +176,6 @@ export default function TransactionsManagement() {
         return <Wallet className="h-4 w-4 text-green-600" />;
       case "PAYMENT":
         return <CreditCard className="h-4 w-4 text-blue-600" />;
-      case "MONTHLYFEE":
-        return <CreditCard className="h-4 w-4 text-orange-600" />;
       case "WITHDRAW":
         return <Wallet className="h-4 w-4 text-red-600" />;
       default:
@@ -145,11 +183,81 @@ export default function TransactionsManagement() {
     }
   };
 
+  const escapeCsv = (val: unknown) => {
+    const s = String(val ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const buildCsv = (rows: TransactionWithRelations[]) => {
+    const headers = ["ID", "Loại", "Mô tả", "Người dùng", "Email", "Số tiền", "Trạng thái", "Thời gian"];
+    const body = rows.map((t) => [
+      t.id,
+      t.transactionType,
+      t.description ?? "",
+      t.wallet?.user?.fullName ?? "",
+      t.wallet?.user?.email ?? "",
+      String(t.amount),
+      t.status,
+      new Date(t.createdAt).toISOString(),
+    ]);
+    return [headers, ...body].map((r) => r.map(escapeCsv).join(",")).join("\n");
+  };
+
+  const downloadCsv = (csv: string, suffix: string) => {
+    // BOM ensures Excel reads UTF-8 (Vietnamese) correctly.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions-${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCurrentPage = () => {
+    if (transactions.length === 0) {
+      toast.info("Không có giao dịch nào để xuất");
+      return;
+    }
+    downloadCsv(buildCsv(transactions), `page-${page}`);
+    toast.success(`Đã xuất ${transactions.length} giao dịch (trang ${page})`);
+  };
+
+  const handleExportAll = async () => {
+    if ((pagination?.total ?? 0) === 0) {
+      toast.info("Không có giao dịch nào để xuất");
+      return;
+    }
+    setIsExporting(true);
+    try {
+      // Pull the full filtered set in one request. Backend already caps via limit.
+      const all = await transactionManagementService.getTransactions({
+        ...filters,
+        page: 1,
+        limit: Math.max(pagination?.total ?? 0, 10_000),
+      });
+      const rows = all?.data?.transactions ?? [];
+      if (rows.length === 0) {
+        toast.info("Không có giao dịch nào để xuất");
+        return;
+      }
+      downloadCsv(buildCsv(rows), "all");
+      toast.success(`Đã xuất ${rows.length} giao dịch (toàn bộ filter)`);
+    } catch (err) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        (err instanceof Error ? err.message : "Xuất CSV thất bại");
+      toast.error(msg);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleViewTransaction = async (transactionId: string) => {
     try {
       const response = await transactionManagementService.getTransactionById(transactionId);
       if (response.data?.transaction) {
-        setSelectedTransaction(response.data.transaction as any);
+        setSelectedTransaction(response.data.transaction);
       }
     } catch (error) {
       console.error('Failed to fetch transaction details:', error);
@@ -193,6 +301,7 @@ export default function TransactionsManagement() {
     {
       key: "amount",
       header: "Số tiền",
+      sortValue: (t: TransactionWithRelations) => Number(t.amount),
       render: (transaction: TransactionWithRelations) => (
         <div className="text-right">
           <div className="font-medium">
@@ -204,18 +313,21 @@ export default function TransactionsManagement() {
     {
       key: "type",
       header: "Loại",
+      sortValue: (t: TransactionWithRelations) => t.transactionType,
       render: (transaction: TransactionWithRelations) =>
         getTypeBadge(transaction.transactionType),
     },
     {
       key: "status",
       header: "Trạng thái",
+      sortValue: (t: TransactionWithRelations) => t.status,
       render: (transaction: TransactionWithRelations) =>
         getStatusBadge(transaction.status),
     },
     {
       key: "createdAt",
       header: "Ngày tạo",
+      sortValue: (t: TransactionWithRelations) => new Date(t.createdAt),
       render: (transaction: TransactionWithRelations) =>
         new Date(transaction.createdAt).toLocaleString("vi-VN"),
     },
@@ -238,11 +350,6 @@ export default function TransactionsManagement() {
               <Eye className="mr-2 h-4 w-4" />
               Xem chi tiết
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Download className="mr-2 h-4 w-4" />
-              Xuất báo cáo
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -260,16 +367,41 @@ export default function TransactionsManagement() {
     { value: "all", label: "Tất cả loại" },
     { value: "DEPOSIT", label: "Nạp tiền" },
     { value: "PAYMENT", label: "Thanh toán" },
-    { value: "MONTHLYFEE", label: "Phí hàng tháng" },
     { value: "WITHDRAW", label: "Rút tiền" },
   ];
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-muted-foreground">
-          Đang tải dữ liệu giao dịch...
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-72" />
         </div>
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex flex-wrap items-end gap-3">
+              <Skeleton className="h-9 flex-1 min-w-[260px]" />
+              <Skeleton className="h-9 w-[180px]" />
+              <Skeleton className="h-9 w-[180px]" />
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
+              <Skeleton className="h-9 w-[180px]" />
+              <Skeleton className="h-9 w-[180px]" />
+              <Skeleton className="h-9 w-28 ml-auto" />
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-32" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-72" />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -294,90 +426,128 @@ export default function TransactionsManagement() {
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 rounded-lg border bg-card p-4">
         {/* Row 1: Search and Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo mô tả hoặc ID giao dịch..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            className="flex h-10 w-[400px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label="Lọc theo trạng thái"
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={typeFilter || "all"}
-            onChange={(e) =>
-              setTypeFilter(
-                e.target.value as TransactionFilters["transactionType"]
-              )
-            }
-            aria-label="Lọc theo loại giao dịch"
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          >
-            {typeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[260px] max-w-md space-y-1">
+            <Label htmlFor="txSearch" className="text-xs text-muted-foreground">
+              Tìm kiếm
+            </Label>
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="txSearch"
+                placeholder="Mô tả hoặc ID giao dịch..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Trạng thái</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Loại</Label>
+            <Select
+              value={typeFilter || "all"}
+              onValueChange={(value) =>
+                setTypeFilter(value as TransactionFilters["transactionType"])
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {typeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Row 2: Date Range and Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="startDate" className="text-sm font-medium">
-            Từ ngày:
-          </label>
-          <input
-            id="startDate"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          />
-          <label htmlFor="endDate" className="text-sm font-medium">
-            Đến ngày:
-          </label>
-          <input
-            id="endDate"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md text-sm h-10"
-          />
-          <Button onClick={handleSearch}>Tìm kiếm</Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              // Clear UI state
-              setSearchTerm("");
-              setStatusFilter("all");
-              setTypeFilter("all");
-              setStartDate("");
-              setEndDate("");
-              // Clear applied state
-              setAppliedSearch("");
-              setAppliedStatus("all");
-              setAppliedType("all");
-              setAppliedStartDate("");
-              setAppliedEndDate("");
-              setPage(1);
-            }}
-          >
-            Xóa tất cả bộ lọc
-          </Button>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="startDate" className="text-xs text-muted-foreground">
+              Từ ngày
+            </Label>
+            <Input
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-[180px]"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="endDate" className="text-xs text-muted-foreground">
+              Đến ngày
+            </Label>
+            <Input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-[180px]"
+            />
+          </div>
+          <div className="flex gap-2 ml-auto">
+            <Button onClick={handleSearch}>
+              <SearchIcon className="mr-2 h-4 w-4" />
+              Tìm kiếm
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchTerm("");
+                setStatusFilter("all");
+                setTypeFilter("all");
+                setStartDate("");
+                setEndDate("");
+                setAppliedSearch("");
+                setAppliedStatus("all");
+                setAppliedType("all");
+                setAppliedStartDate("");
+                setAppliedEndDate("");
+                setPage(1);
+              }}
+            >
+              Xóa lọc
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={isExporting}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {isExporting ? "Đang xuất..." : "Xuất CSV"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportCurrentPage}>
+                  Trang hiện tại ({transactions.length} giao dịch)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportAll}>
+                  Toàn bộ kết quả lọc ({pagination?.total ?? 0} giao dịch)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -389,6 +559,7 @@ export default function TransactionsManagement() {
         data={transactions}
         columns={columns}
         emptyMessage="Không tìm thấy giao dịch nào"
+        enablePagination={false}
       />
 
       {/* Pagination */}
@@ -542,7 +713,7 @@ export default function TransactionsManagement() {
                         Trạng thái
                       </label>
                       <div className="mt-1">
-                        {getStatusBadge((selectedTransaction.topupOrder as any).status)}
+                        {getStatusBadge((selectedTransaction.topupOrder as { status?: string })?.status ?? '')}
                       </div>
                     </div>
                   </div>

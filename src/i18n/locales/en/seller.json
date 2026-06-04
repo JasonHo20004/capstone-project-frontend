@@ -1,0 +1,1328 @@
+{
+  "sidebar": {
+    "brand": {
+      "title": "Instructor",
+      "subtitle": "Course management"
+    },
+    "nav": {
+      "dashboard": "Overview",
+      "courses": "My courses",
+      "tests": "Tests",
+      "earnings": "Revenue",
+      "monthlyReport": "Monthly report",
+      "learners": "Learners",
+      "comments": "Comments",
+      "profile": "Profile"
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Search courses, learners...",
+    "backHome": "Back to home",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications",
+    "viewAll": "View all"
+  },
+  "upload": {
+    "success": "Upload successful",
+    "failed": "Upload failed",
+    "uploading": "Uploading... {{percent}}%",
+    "retry": "Retry"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Good morning",
+      "noon": "Good day",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "defaultInstructor": "Instructor",
+    "subtitle": "Manage your courses and track your performance",
+    "createCourse": "Create new course",
+    "viewDetails": "View details",
+    "errors": {
+      "load": "Could not load dashboard data. Please try again later.",
+      "noData": "No dashboard data available."
+    },
+    "stats": {
+      "courses": {
+        "label": "Courses",
+        "description": "Total number of your courses"
+      },
+      "learners": {
+        "label": "Learners",
+        "description": "Learners who purchased your courses"
+      },
+      "comments": {
+        "label": "Comments",
+        "description": "Comments on lessons"
+      }
+    },
+    "earnings": {
+      "label": "Withdrawable balance",
+      "locked": "{{amount}} locked",
+      "pendingWithdrawals": "{{count}} withdrawal(s) pending",
+      "totalReceived": "Total received {{amount}}"
+    },
+    "chartMonthLabel": "Month {{label}}",
+    "revenueChart": {
+      "title": "Monthly revenue",
+      "description": "Amount received after platform fees — {{year}}",
+      "empty": "No revenue yet in {{year}}",
+      "amount": "Amount"
+    },
+    "learnerChart": {
+      "title": "Learner activity",
+      "description": "New learners purchasing courses per month (last 12 months)",
+      "newLearners": "New learners",
+      "seriesName": "Learners",
+      "empty": "No learners yet"
+    },
+    "topCourses": {
+      "title": "Top selling courses",
+      "description": "The 3 courses with the most learners",
+      "empty": "No courses have learners yet."
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "description": "Quickly navigate to management sections",
+      "manageCourses": "Manage courses",
+      "viewLearners": "View learners",
+      "newComments": "New comments",
+      "instructorProfile": "Instructor profile"
+    }
+  },
+  "courses": {
+    "title": "My courses",
+    "notLoggedIn": "User information not found. Please log in again.",
+    "loading": "Loading courses...",
+    "loadError": "Could not load the course list.",
+    "sortPlaceholder": "Sort",
+    "sort": {
+      "createdAt": "Recently created",
+      "price": "Price high → low",
+      "rating": "Most reviews"
+    },
+    "create": "Create new course",
+    "status": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending review",
+      "REFUSE": "Rejected",
+      "INACTIVE": "Paused",
+      "DRAFT": "Draft"
+    },
+    "deleted": "Course deleted",
+    "genericError": "An error occurred",
+    "ratingCount": "{{count}} reviews",
+    "viewDetail": "View details",
+    "deleteAction": "Delete course",
+    "empty": "You don't have any courses yet.",
+    "table": {
+      "title": "Courses",
+      "loadingSuffix": " • loading...",
+      "filtering": "Filtering by \"{{search}}\" — clear the search box and press Enter to remove the filter",
+      "description": "Your list of courses",
+      "headerTitle": "Title",
+      "headerLevel": "Level",
+      "headerPrice": "Price",
+      "headerRating": "Reviews",
+      "headerStatus": "Status",
+      "headerActions": "Actions"
+    },
+    "deleteDialog": {
+      "title": "Delete course?",
+      "subject": "You are about to delete the course <strong>{{title}}</strong>.",
+      "warning": "⚠️ This course may already have buyers. The system will <strong>automatically refund</strong> the buyers and <strong>revoke their access</strong>. This action cannot be undone.",
+      "irreversible": "This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "deletePermanent": "Delete permanently"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by course title...",
+      "enter": "Enter",
+      "clearSearchAria": "Clear search",
+      "statusPlaceholder": "Status",
+      "levelPlaceholder": "Level",
+      "allLevels": "All levels",
+      "allStatuses": "All statuses",
+      "filteringLabel": "Filtering:",
+      "searchChip": "Search: \"{{search}}\"",
+      "levelChip": "Level {{level}}",
+      "clearAll": "Clear all",
+      "removeAria": "Remove {{label}}"
+    }
+  },
+  "tests": {
+    "loadError": "Could not load the test list. Please try again.",
+    "deleted": "Test deleted",
+    "deleteFailedLinked": "Could not delete. The test may be in use as a Final Test for a course.",
+    "title": "My tests",
+    "subtitle": "All tests you have created. Use them as Final Tests for courses.",
+    "reload": "Reload",
+    "create": "Create test",
+    "searchPlaceholder": "Search by title…",
+    "emptyNone": "You haven't created any tests yet. Click \"Create test\" to start.",
+    "emptyFiltered": "No tests match your search.",
+    "finalBadge": "Final",
+    "questionCount": "{{count}} questions",
+    "minutes": "{{count}} min",
+    "passPercent": "{{percent}}% to pass",
+    "typeLabel": "Type:",
+    "linkedTo": "Used by {{count}} course(s)",
+    "notLinked": "Not linked to any course",
+    "statusLabel": "Status:",
+    "createdLabel": "Created: {{date}}",
+    "view": "View",
+    "deleteLinkedTitle": "Must unlink from courses before deleting",
+    "deleteTitle": "Delete test",
+    "deleteDialog": {
+      "title": "Delete test?",
+      "body": "You are about to delete <strong>\"{{title}}\"</strong>. This action cannot be undone. All questions and practice history will be lost.",
+      "cancel": "Cancel",
+      "confirm": "Delete permanently"
+    }
+  },
+  "testDetail": {
+    "notFound": "Test not found.",
+    "loadError": "Could not load the test.",
+    "backToList": "Back to list",
+    "list": "List",
+    "finalBadge": "Final",
+    "deleteAction": "Delete test",
+    "stats": {
+      "questions": "Questions",
+      "minutes": "Minutes",
+      "totalScore": "Total score",
+      "passScore": "Pass score"
+    },
+    "generalInfo": "General information",
+    "typeLabel": "Type:",
+    "createdLabel": "Created:",
+    "updatedLabel": "Last updated:",
+    "questionListTitle": "Question list ({{count}})",
+    "emptyQuestions": "This test has no questions yet.",
+    "questionLabel": "Q{{n}}:",
+    "noContent": "(no content)",
+    "explanationLabel": "Explanation:",
+    "deleteSuccess": "Test deleted",
+    "deleteError": "Could not delete. The test may be in use by a course.",
+    "deleteDialog": {
+      "title": "Delete test?",
+      "body": "You are about to delete <strong>\"{{title}}\"</strong>. This action cannot be undone. If this test is in use as a course's Final Test, the system will refuse — unlink it first in that course's Final Test tab.",
+      "cancel": "Cancel",
+      "confirm": "Delete permanently"
+    }
+  },
+  "createTest": {
+    "loading": "Loading test…",
+    "header": {
+      "titleEdit": "Edit test",
+      "titleFinal": "Create final test",
+      "titleNew": "Create new test",
+      "descEdit": "Update the content. Learners' existing answers are not affected.",
+      "descFinal": "Once created, it will be automatically linked as the final test of the selected course.",
+      "descNew": "This test can be used as a mid-module or final test. Attach it to a course after creating it."
+    },
+    "save": {
+      "edit": "Save changes",
+      "link": "Create and link",
+      "create": "Create test",
+      "saving": "Saving..."
+    },
+    "backToList": "Back to list",
+    "backToCourse": "Back to course",
+    "fields": {
+      "title": "Test title",
+      "titlePlaceholder": "e.g. Module 1 Test - Vocabulary",
+      "duration": "Duration (minutes)",
+      "passingScore": "Pass score (%)",
+      "totalScore": "Total score",
+      "totalScoreValue": "{{count}} questions × 10 = {{score}} points"
+    },
+    "questionsHeading": "Question list",
+    "importFromFile": "Import from file",
+    "addSection": "Add section",
+    "sectionLabel": "Section {{n}}",
+    "sectionInstructionPlaceholder": "Instruction for this section (optional)...",
+    "removeSectionTitle": "Remove this section",
+    "noContent": "(no content)",
+    "optionSummary": "{{filled}}/4 options • Correct: {{letter}}",
+    "questionContentLabel": "Question content",
+    "questionContentPlaceholder": "Enter the question content...",
+    "optionPlaceholder": "Option {{letter}}",
+    "explanationLabel": "Explanation (optional)",
+    "explanationPlaceholder": "Explain why the answer is correct...",
+    "addQuestion": "Add a question to this section",
+    "cancel": "Cancel",
+    "existingFinalDialog": {
+      "title": "Course already has a final test",
+      "body": "Each course has only one final test. Do you want to edit the existing one? Learners who took the old test keep their results.",
+      "back": "Back to course",
+      "edit": "Edit existing test"
+    },
+    "toasts": {
+      "notFound": "Test not found",
+      "loadError": "Could not load the test",
+      "titleRequired": "Please enter a test title",
+      "questionEmpty": "Q{{n}}: question content is empty",
+      "optionsRequired": "Q{{n}}: fill in all 4 options",
+      "noTestType": "Test type not found",
+      "updated": "Test updated!",
+      "createFailed": "Failed to create test",
+      "createdLinked": "Created and linked as the course's final test!",
+      "created": "Test created successfully!",
+      "saveError": "Error saving the test",
+      "minQuestion": "There must be at least 1 question",
+      "minSection": "There must be at least 1 section"
+    }
+  },
+  "earningsPage": {
+    "loadError": "Could not load revenue data. Please try again later.",
+    "header": {
+      "title": "Finance & Withdrawals",
+      "subtitle": "Track income, payment fees and manage withdrawals"
+    },
+    "withdraw": "Withdraw to bank",
+    "withdrawDisabled": {
+      "pending": "You have a pending withdrawal — wait for admin to process it first",
+      "belowMin": "Available balance must be ≥ {{amount}}"
+    },
+    "stats": {
+      "available": "Available (withdrawable)",
+      "availablePending": "Locked by {{count}} pending withdrawal(s)",
+      "availableBelowMin": "Minimum {{amount}} required to withdraw",
+      "availableDefault": "Pending withdrawals already deducted",
+      "pending": "Pending unlock ({{days}} days)",
+      "pendingDesc": "Funds unlock automatically after the holding period",
+      "sold": "Sold (total paid by learners)",
+      "soldDesc": "Gateway fees deducted: {{amount}}",
+      "split": "Revenue split with platform",
+      "splitDesc": "Platform keeps {{percent}}%",
+      "splitLoading": "Loading…"
+    },
+    "example": {
+      "title": "How income is calculated on one order",
+      "coursePrice": "Course price",
+      "gatewayFee": "Gateway fee ({{percent}}% + {{fixed}})",
+      "netRevenue": "Net Revenue",
+      "platformFee": "Platform fee",
+      "platformFeeWithPercent": "Platform fee ({{percent}}%)",
+      "youReceive": "You receive",
+      "note": "After a learner pays, funds enter <strong>Locked for {{days}} days</strong> status to handle refunds/disputes, then move to <strong>Ready to withdraw</strong>."
+    },
+    "growth": {
+      "title": "This month vs last month growth",
+      "detail": "This month: <strong>{{amount}}</strong> • Last month: {{last}}",
+      "needData": "Need at least 2 months of data."
+    },
+    "ytd": {
+      "title": "Total YTD income (for tax filing)",
+      "note": "Year {{year}} — gateway & platform fees deducted. Use \"Export CSV\" for per-order detail for tax records.",
+      "empty": "No data this year."
+    },
+    "tabs": {
+      "earnings": "Revenue history",
+      "byCourse": "By course",
+      "withdrawals": "Withdrawal history"
+    },
+    "chart": {
+      "title": "Monthly income (last 12 months)",
+      "description": "Net income after gateway + platform fees — refunds excluded",
+      "tooltipLabel": "Income",
+      "tooltipMonth": "Month {{label}}",
+      "emptyTitle": "No revenue yet",
+      "emptyHint": "When learners buy courses, the chart will appear here."
+    },
+    "filters": {
+      "allStatuses": "All statuses",
+      "pending": "Locked",
+      "available": "Ready to withdraw",
+      "released": "Withdrawn",
+      "refunded": "Refunded",
+      "allCourses": "All courses",
+      "exportCsv": "Export CSV"
+    },
+    "table": {
+      "title": "Sales detail",
+      "description": "Revenue history from each course purchase",
+      "date": "Date",
+      "course": "Course",
+      "learnerPaid": "Learner paid",
+      "gatewayFee": "Gateway fee",
+      "platformFee": "Platform fee",
+      "youReceive": "You receive",
+      "status": "Status"
+    },
+    "emptyTx": {
+      "title": "No transactions",
+      "hintFiltered": "No transactions match the filter.",
+      "hintDefault": "When learners buy courses, transactions will appear here."
+    },
+    "byCourse": {
+      "title": "Revenue by course",
+      "description": "Total you received per course (refunds excluded). Sorted descending.",
+      "emptyTitle": "No revenue by course yet",
+      "emptyHint": "Create and publish a course to get started.",
+      "salesGross": "{{count}} sales • Gross: {{amount}}"
+    },
+    "statusBadge": {
+      "almostReady": "Almost ready",
+      "locked": "Locked ({{days}}d)",
+      "available": "Ready to withdraw",
+      "released": "Withdrawn",
+      "refunded": "Refunded"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "page": "Page {{page}} / {{total}}"
+    },
+    "csv": {
+      "date": "Date",
+      "course": "Course",
+      "gross": "Gross (VND)",
+      "gatewayFee": "Gateway fee (VND)",
+      "platformFee": "Platform fee (VND)",
+      "sellerReceives": "Seller receives (VND)",
+      "status": "Status",
+      "unlockDate": "Unlock date",
+      "amount": "Amount (VND)",
+      "bank": "Bank",
+      "accountName": "Account name",
+      "accountNumber": "Account number",
+      "adminNote": "Admin note"
+    }
+  },
+  "monthlyFees": {
+    "title": "Monthly revenue",
+    "subtitle": "Summary of revenue, gateway + platform fees and amount received per month.",
+    "exportCsv": "Export CSV",
+    "summary": {
+      "totalRevenue": "Total revenue {{year}}",
+      "salesCount": "{{count}} sales",
+      "fees": "Gateway + platform fees",
+      "feesBreakdown": "Gateway: {{gateway}} • Platform: {{platform}}",
+      "netReceived": "Amount received",
+      "yoy": "{{pct}}% vs {{year}}",
+      "available": "Available (withdrawable)",
+      "locked": "Locked: {{amount}}"
+    },
+    "chart": {
+      "title": "Revenue chart {{year}}",
+      "description": "Amount received after gateway + platform fees per month",
+      "net": "Amount received",
+      "gross": "Gross revenue",
+      "emptyTitle": "No revenue in {{year}}",
+      "emptyHint": "When learners buy courses, the chart will appear here."
+    },
+    "table": {
+      "title": "Monthly detail — {{year}}",
+      "description": "Click a month to see per-order detail",
+      "month": "Month",
+      "monthLabel": "Month {{month}}",
+      "gross": "Gross revenue",
+      "gatewayFee": "Gateway fee",
+      "platformFee": "Platform fee",
+      "net": "Amount received",
+      "sales": "Orders",
+      "monthNoSales": "No orders this month",
+      "monthView": "View detail"
+    },
+    "empty": {
+      "title": "No revenue in {{year}}",
+      "hintPast": "You had no transactions in {{year}}. Click \"{{current}} →\" to view the current year.",
+      "hintCurrent": "Revenue will appear when learners buy your courses."
+    },
+    "drill": {
+      "title": "Detail for {{month}}/{{year}}",
+      "description": "Each sale and the amount the seller receives after fees.",
+      "empty": "No sales in this month.",
+      "date": "Date",
+      "course": "Course",
+      "learnerPaid": "Learner paid",
+      "youReceive": "You receive",
+      "status": "Status",
+      "totalOrders": "Total {{count}} orders"
+    },
+    "status": {
+      "PENDING": "Locked",
+      "AVAILABLE": "Ready to withdraw",
+      "RELEASED": "Withdrawn",
+      "REFUNDED": "Refunded"
+    },
+    "csv": {
+      "month": "Month",
+      "year": "Year",
+      "gross": "Gross revenue",
+      "gatewayFee": "Gateway fee",
+      "platformFee": "Platform fee",
+      "netReceived": "Amount received",
+      "sales": "Orders"
+    }
+  },
+  "learners": {
+    "title": "Manage learners",
+    "subtitle": "Track and manage learners across your courses",
+    "stats": {
+      "totalEnrollments": "Total enrollments",
+      "coursesWithLearners": "Courses with learners",
+      "newThisWeek": "Enrolled in last 7 days"
+    },
+    "searchPlaceholder": "Search by learner name or email...",
+    "courseFilterPlaceholder": "Filter by course",
+    "allCourses": "All courses",
+    "sortPlaceholder": "Sort",
+    "sort": {
+      "dateDesc": "Enrolled: newest",
+      "dateAsc": "Enrolled: oldest",
+      "courseAsc": "Course: A → Z",
+      "courseDesc": "Course: Z → A"
+    },
+    "perPage": "{{count}} / page",
+    "exporting": "Exporting...",
+    "exportCsv": "Export CSV",
+    "tableTitle": "Learner list",
+    "error": {
+      "title": "Could not load learner list",
+      "hint": "Please try again later."
+    },
+    "empty": {
+      "filtered": "No results found",
+      "none": "No learners yet",
+      "filteredHint": "Try changing your search keyword or clearing the course filter",
+      "noneHint": "Learners will appear here when they enroll in your courses",
+      "manageCourses": "Manage courses"
+    },
+    "headers": {
+      "learner": "Learner",
+      "course": "Course",
+      "enrolledOn": "Enrolled on"
+    },
+    "actionsAria": "Actions",
+    "copyEmail": "Copy email",
+    "viewCourse": "View course",
+    "pagination": {
+      "summary": "Page {{page}} / {{total}} · {{count}} results",
+      "prevAria": "Previous page",
+      "nextAria": "Next page"
+    },
+    "toasts": {
+      "noEmail": "Learner has no email",
+      "copied": "Email copied",
+      "copyFailed": "Could not copy",
+      "noData": "No data to export",
+      "exported": "Exported {{count}} learners",
+      "exportFailed": "CSV export failed"
+    },
+    "timeAgo": {
+      "justNow": "Just now",
+      "minutes": "{{count}} min ago",
+      "hours": "{{count}}h ago",
+      "days": "{{count}} days ago",
+      "months": "{{count}} months ago",
+      "years": "{{count}} years ago"
+    },
+    "csv": {
+      "name": "Learner name",
+      "email": "Email",
+      "course": "Course",
+      "enrolledDate": "Enrollment date"
+    }
+  },
+  "profile": {
+    "loadError": "Could not load profile information. Please try again later.",
+    "notFound": "User information not found.",
+    "editProfile": "Edit profile",
+    "fallbackName": "Seller",
+    "badges": {
+      "instructor": "Instructor",
+      "active": "Active",
+      "suspended": "Suspended"
+    },
+    "joined": "Joined {{date}}",
+    "suspendedBanner": {
+      "title": "Seller account is suspended",
+      "body": "You can still view your profile but temporarily cannot publish courses or withdraw funds. If you believe this is a mistake, please contact an administrator."
+    },
+    "stats": {
+      "courses": "Courses",
+      "learners": "Learners",
+      "avgRating": "Avg rating",
+      "totalRevenue": "Total revenue"
+    },
+    "expertise": {
+      "title": "Expertise",
+      "empty": "No expertise yet — click 'Edit profile' to add."
+    },
+    "certification": {
+      "title": "Certifications",
+      "viewOriginal": "Click to view original image",
+      "alt": "Certificate {{index}}",
+      "empty": "No certifications yet — click 'Edit profile' to upload."
+    },
+    "wallet": {
+      "title": "Instructor wallet",
+      "viewDetails": "View details",
+      "withdrawable": "Withdrawable balance",
+      "pending": "Pending disbursement",
+      "totalReceived": "Total received",
+      "source": "Income source: commission split from learners purchasing courses."
+    },
+    "personal": {
+      "title": "Personal information",
+      "phone": "Phone number",
+      "dateOfBirth": "Date of birth",
+      "level": "Level",
+      "editHint": "Need to edit personal info? ",
+      "goToAccount": "Go to account page"
+    }
+  },
+  "createLesson": {
+    "defaultCourse": "course",
+    "backTo": "Back to {{course}}",
+    "title": "Create new lesson",
+    "basicInfo": "Basic information",
+    "titleLabel": "Lesson title",
+    "titlePlaceholder": "e.g. Lesson 1: Introduction to IELTS Writing",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Detailed description of the lesson content...",
+    "orderLabel": "Lesson order",
+    "orderHint": "The next lesson will have order: {{order}}.",
+    "videoSection": "Lecture video",
+    "autoDuration": "Auto duration:",
+    "durationValue": "{{minutes}} min {{seconds}} sec",
+    "videoLabel": "Lesson video (optional)",
+    "removeFile": "Remove file",
+    "dropHint": "Drag and drop or click to upload a video",
+    "formats": "Supports MP4, MPEG, MOV, AVI, WEBM (Max 100MB)",
+    "submit": "Create lesson",
+    "uploading": "Uploading...",
+    "errors": {
+      "titleRequired": "Lesson title is required",
+      "titleTooLong": "Title must not exceed 100 characters",
+      "orderMin": "Lesson order must be greater than 0",
+      "videoTooLarge": "Video size must not exceed 1GB",
+      "videoType": "Only video files are accepted (MP4, MPEG, MOV, AVI, WEBM)"
+    }
+  },
+  "createCourse": {
+    "topTitle": "Create new course",
+    "backToList": "Back",
+    "stepLabel": "Step {{n}}",
+    "steps": {
+      "basic": "Basic information",
+      "description": "Description & category",
+      "media": "Image & Confirm"
+    },
+    "step1": {
+      "title": "Basic information",
+      "subtitle": "Fill in the title and price for your course",
+      "titleLabel": "Course title",
+      "titlePlaceholder": "e.g. IELTS Speaking Masterclass — Band 7.0+",
+      "priceLabel": "Price (VND)",
+      "pricePlaceholder": "500000",
+      "levelLabel": "Level",
+      "levelPlaceholder": "Select level",
+      "clearLevel": "Clear level"
+    },
+    "step2": {
+      "title": "Description & Category",
+      "subtitle": "Help learners understand your course",
+      "descLabel": "Course description",
+      "descPlaceholder": "Detailed description: audience, key content, outcomes...",
+      "descHint": "An engaging description increases enrollment",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select category",
+      "customCategoryHint": "Or enter a custom category:",
+      "customCategoryPlaceholder": "e.g. PTE, Cambridge..."
+    },
+    "step3": {
+      "title": "Image & Confirm",
+      "subtitle": "Add a thumbnail and review the information",
+      "thumbnailLabel": "Course thumbnail",
+      "thumbnailAlt": "Thumbnail",
+      "changeImage": "Change image",
+      "remove": "Remove",
+      "uploadHint": "Click to upload an image",
+      "uploadFormats": "JPEG, PNG, WEBP, GIF • Max 5MB",
+      "summaryTitle": "Course summary",
+      "summaryTitleLabel": "Title",
+      "summaryPrice": "Price",
+      "summaryCategory": "Category",
+      "summaryLevel": "Level",
+      "summaryDescription": "Description",
+      "priceUnit": "{{amount}} VND",
+      "empty": "—",
+      "draftNotice": "The course will be in <strong>DRAFT</strong> status after creation. You can add lessons and tests, then submit it for admin review."
+    },
+    "nav": {
+      "back": "Back",
+      "cancel": "Cancel",
+      "next": "Next",
+      "submit": "Create course",
+      "submitting": "Creating..."
+    },
+    "toasts": {
+      "imageType": "Only JPEG, PNG, WEBP, GIF are accepted",
+      "imageTooLarge": "File must not exceed 5MB"
+    },
+    "errors": {
+      "titleRequired": "Title is required",
+      "titleTooLong": "Max 100 characters",
+      "priceRequired": "Price is required",
+      "priceInvalid": "Invalid price"
+    }
+  },
+  "courseDetail": {
+    "loadError": "Could not load course data.",
+    "backToList": "Back to list",
+    "notFoundTitle": "Course does not exist",
+    "preview": "Preview",
+    "previewTitle": "View the course from a learner's perspective",
+    "anonymousInstructor": "Anonymous instructor",
+    "level": "Level",
+    "publishError": "Could not publish the course",
+    "noChanges": "No changes to save.",
+    "draftCleared": "Draft cleared, reverted to original data",
+    "checklist": {
+      "thumbnail": "Has a thumbnail image",
+      "thumbnailHint": "Upload a thumbnail in the \"Update\" tab",
+      "description": "Has a course description (≥ 20 characters)",
+      "descriptionHint": "Briefly describe the goals & content of the course",
+      "price": "Price set",
+      "priceHint": "Set 0đ for a free course",
+      "level": "Level selected",
+      "levelHint": "A1, A2, B1, B2, C1, or C2",
+      "lessonsMin": "Has at least 3 lessons",
+      "lessonsMinHint": "Currently has {{count}} lessons",
+      "lessonContent": "At least 1 lesson has content (video or test)",
+      "lessonContentHint": "Upload a video or attach a quiz to a lesson"
+    },
+    "pills": {
+      "price": "Price",
+      "module": "Module",
+      "lesson": "Lesson",
+      "test": "Test",
+      "duration": "Duration",
+      "rating": "Rating"
+    },
+    "minutes": "{{count}} min",
+    "tabs": {
+      "overview": "Overview",
+      "lessons": "Modules & Lessons",
+      "ratings": "Ratings",
+      "update": "Update",
+      "finalTest": "Final test"
+    },
+    "quickStats": {
+      "module": "Module",
+      "lesson": "Lesson",
+      "test": "Test",
+      "duration": "Duration",
+      "avgRating": "Avg rating"
+    },
+    "descriptionTitle": "Course description",
+    "descriptionEmpty": "No description yet. Add one in the \"Update\" tab.",
+    "detailInfo": "Detailed information",
+    "info": {
+      "level": "Level",
+      "category": "Category",
+      "price": "Price",
+      "status": "Status"
+    },
+    "timeSection": "Time",
+    "time": {
+      "createdAt": "Created on",
+      "updatedAt": "Updated",
+      "finalTest": "Final test",
+      "hasFinalTest": "Available",
+      "noFinalTest": "Not available",
+      "comments": "Comments"
+    },
+    "ratingsTitle": "Learner ratings",
+    "ratingsCount": "{{count}} ratings",
+    "ratingsAverage": " • Average: {{rating}} ★",
+    "ratingsEmpty": "No ratings yet",
+    "ratingsEmptyDesc": "Ratings will appear when learners complete the course.",
+    "anonymous": "Anonymous",
+    "status": {
+      "DRAFT": "Draft",
+      "PENDING": "Pending review",
+      "ACTIVE": "Active",
+      "REFUSE": "Rejected",
+      "INACTIVE": "Suspended"
+    }
+  },
+  "reviewWorkflow": {
+    "rejection": {
+      "title": "Course was rejected in review",
+      "reasonLabel": "Reason from admin:",
+      "rejectedAt": "Rejected at {{date}}",
+      "resubmit": "Fix & resubmit",
+      "fixContent": "Edit course content",
+      "completeBelow": "Complete the items below then resubmit"
+    },
+    "pending": {
+      "title": "Awaiting admin review",
+      "body": "The course is in the review queue. It usually takes <strong>1–3 business days</strong>. You'll be notified as soon as there's a result.",
+      "submittedAt": "Submitted at {{date}}",
+      "daysAgo": "{{count}} days ago",
+      "delayed": "Past the usual timeframe. If urgent, you can contact the admin via the support page.",
+      "cancelHint": "While waiting, you can cancel the submission and keep editing in the “Update” tab (revert status to Draft)."
+    },
+    "checklist": {
+      "title": "Ready to submit for review?",
+      "ready": "All conditions met. Press \"Submit for review\" for the admin to review the course.",
+      "remaining": "{{count}} items left to complete.",
+      "submitting": "Submitting…",
+      "submit": "Submit for review"
+    },
+    "recheckTitle": "Check before resubmitting",
+    "history": {
+      "title": "Review history",
+      "loading": "Loading…",
+      "empty": "No events yet."
+    },
+    "confirm": {
+      "title": "Confirm submission for review",
+      "description": "After submitting, the admin will review it. You can still cancel and revert to Draft if needed.",
+      "titleLabel": "Title",
+      "levelLabel": "Level",
+      "priceLabel": "Price",
+      "descriptionLabel": "Description",
+      "descriptionEmpty": "None",
+      "checklistLabel": "Checklist",
+      "cancel": "Cancel",
+      "submitting": "Submitting…",
+      "confirm": "Confirm submission"
+    },
+    "transition": {
+      "sellerSubmit": "Seller submitted for review",
+      "adminApprove": "Admin approved",
+      "adminReject": "Admin rejected",
+      "sellerCancel": "Seller cancelled submission",
+      "inactive": "Course suspended",
+      "qualityFlagOpen": "Flagged: not meeting requirements",
+      "qualityFlagConfirmed": "Admin recorded seller's fix confirmation",
+      "qualityFlagCleared": "Admin removed the flag – course meets requirements",
+      "qualityFlagAutoDraft": "Auto-reverted to Draft (no confirmation within 48h)",
+      "statusChange": "Status change: {{from}} → {{to}}"
+    }
+  },
+  "metadataTab": {
+    "toasts": {
+      "imageTooLarge": "Thumbnail image must not exceed 5MB.",
+      "imageType": "Only JPG, PNG, WebP are accepted."
+    },
+    "title": "Update course",
+    "subtitle": "Edit course information and status",
+    "fields": {
+      "title": "Title",
+      "price": "Price (VND)",
+      "level": "Level",
+      "levelPlaceholder": "Select level",
+      "status": "Status",
+      "description": "Description",
+      "thumbnail": "Thumbnail image"
+    },
+    "priceWarning": "Price changes only apply to learners who <strong>buy after saving</strong>. Existing buyers are not refunded / charged the difference.",
+    "statusActions": {
+      "submitToast": "Press \"Save\" to submit for review.",
+      "submit": "Submit for review",
+      "suspendToast": "Press \"Save\" to suspend.",
+      "suspend": "Suspend"
+    },
+    "statusHints": {
+      "pending": "Awaiting admin review.",
+      "refuse": "Rejected. Please fix and resubmit."
+    },
+    "statusChange": "Will change to <strong>{{status}}</strong> when you save.",
+    "pendingLabel": "Pending review",
+    "inactiveLabel": "Suspended",
+    "thumbnail": {
+      "newAlt": "New thumbnail",
+      "currentAlt": "Current thumbnail",
+      "empty": "No image",
+      "newBadge": "New",
+      "change": "Change thumbnail",
+      "upload": "Upload thumbnail",
+      "cancelNew": "Cancel new image",
+      "formats": "JPG, PNG, WebP, max 5MB."
+    },
+    "save": {
+      "saving": "Saving...",
+      "save": "Save & update"
+    },
+    "clearDraft": "Clear draft"
+  },
+  "withdrawalModal": {
+    "title": "Withdrawal request",
+    "lead": "Admin usually approves within 24 business hours. Funds arrive at your bank in 1–3 business days.",
+    "available": "Available",
+    "amountLabel": "Amount to withdraw (VND)",
+    "amountPlaceholder": "Minimum {{amount}}",
+    "max": "Max",
+    "limits": "Min {{min}} • Max {{max}}/request",
+    "feeLabel": "Fee:",
+    "feeFree": "Free",
+    "bankNameLabel": "Bank",
+    "bankNamePlaceholder": "e.g. Vietcombank, Techcombank...",
+    "bankSelectPlaceholder": "Select a bank...",
+    "bankSearchPlaceholder": "Search by bank name or code...",
+    "bankSearchEmpty": "No bank found",
+    "accountNameLabel": "Account holder name",
+    "accountNamePlaceholder": "NGUYEN VAN A",
+    "accountNumberLabel": "Account number",
+    "accountNumberPlaceholder": "Enter account number (6–20 digits)",
+    "autofillHint": "Auto-filled from your last withdrawal ({{bank}}). You can edit if needed.",
+    "cancel": "Cancel",
+    "preview": "Preview",
+    "confirmTitle": "Confirm withdrawal request",
+    "confirmLead": "Double-check the details — admin transfers manually, a single wrong digit and the money won't arrive.",
+    "summary": {
+      "amount": "Withdrawal amount",
+      "fee": "Transaction fee",
+      "receive": "You will receive",
+      "bank": "Bank",
+      "accountName": "Account holder",
+      "accountNumber": "Account number",
+      "eta": "Expected arrival",
+      "etaValue": "By {{date}}"
+    },
+    "back": "Back",
+    "submitting": "Submitting…",
+    "submit": "Confirm submit",
+    "errors": {
+      "belowMin": "Minimum amount is {{amount}}",
+      "insufficient": "Insufficient available balance",
+      "aboveMax": "Maximum per request is {{amount}}",
+      "bankDetails": "Check the bank details again (account number must be 6–20 digits)",
+      "generic": "Something went wrong while submitting"
+    },
+    "toasts": {
+      "createdWithId": "Withdrawal request #WR-{{id}} created — awaiting admin approval",
+      "createdGeneric": "Withdrawal request submitted"
+    }
+  },
+  "withdrawalHistory": {
+    "filter": {
+      "all": "All statuses",
+      "pending": "Pending",
+      "approved": "Transferred",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "exportCsv": "Export CSV",
+    "empty": {
+      "noneTitle": "No withdrawal requests yet",
+      "filteredTitle": "No requests match the filter",
+      "noneHint": "Once you withdraw, history will show up here.",
+      "filteredHint": "Change the filter to see other requests."
+    },
+    "pagination": {
+      "prev": "Prev",
+      "next": "Next",
+      "page": "Page {{page}} / {{total}}"
+    },
+    "cancelDialog": {
+      "title": "Cancel withdrawal request?",
+      "bodyHtml": "Funds will return to <strong>Available balance</strong> immediately. You can submit a new withdrawal request afterward.",
+      "no": "No",
+      "cancelling": "Cancelling…",
+      "confirm": "Confirm cancel"
+    },
+    "proofDialog": {
+      "title": "Transfer receipt",
+      "lead": "Click \"Open image in new tab\" to download (right click → Save image).",
+      "alt": "Receipt",
+      "openInTab": "Open image in new tab"
+    },
+    "card": {
+      "cancel": "Cancel",
+      "retry": "Retry",
+      "proof": "Receipt",
+      "rejectionReason": "Rejection reason:",
+      "rejectionNote": "Funds have been returned to your available balance. You can edit and resubmit.",
+      "stale": "Pending more than 48 hours. If urgent,",
+      "supportLink": "contact support",
+      "retriedFrom": "This is a retry of rejected request #WR-{{id}}."
+    },
+    "status": {
+      "PENDING": "Pending",
+      "APPROVED": "Transferred",
+      "REJECTED": "Rejected",
+      "CANCELLED": "Cancelled"
+    },
+    "timeline": {
+      "submitted": "You submitted the withdrawal request",
+      "approved": "Admin transferred the funds",
+      "viewProof": "View receipt",
+      "etaArrival": "Expected arrival at your bank",
+      "rejected": "Admin rejected — funds returned to balance",
+      "cancelled": "You cancelled — funds returned to balance",
+      "waiting": "Waiting for admin approval…"
+    },
+    "support": {
+      "subject": "[Withdrawal #WR-{{id}}] Need support",
+      "body": "Withdrawal request #WR-{{id}} ({{amount}}) has been pending since {{date}}."
+    },
+    "toasts": {
+      "cancelled": "Withdrawal cancelled — funds returned to available balance",
+      "cancelFailed": "Could not cancel the withdrawal",
+      "retriedWithId": "Retried withdrawal #WR-{{id}}",
+      "retriedGeneric": "Withdrawal resubmitted",
+      "retryFailed": "Could not resubmit the withdrawal"
+    }
+  },
+  "addQuizLesson": {
+    "title": "Add a test to this module",
+    "lead": "Pick one test from your library. Create a new one on the <strong>My tests</strong> page if you don't have one yet.",
+    "searchPlaceholder": "Search by title…",
+    "finalBadge": "Final",
+    "finalBadgeTitle": "This is a FINAL test — typically used for the end-of-course slot",
+    "questionCount": "{{count}} questions",
+    "minutes": "{{count}} min",
+    "nextOrderHint": "The new test lesson will be inserted at position {{order}} in the module.",
+    "cancel": "Cancel",
+    "add": "Add to module",
+    "empty": {
+      "noneCreated": "You don't have any tests yet. Open \"My tests\" to create one first.",
+      "noMatch": "No matching tests found.",
+      "openTestsPage": "Open My tests"
+    },
+    "errors": {
+      "loadFailed": "Could not load your tests.",
+      "noneSelected": "Please select a test",
+      "addFailed": "Could not add the test"
+    }
+  },
+  "createCourseDialog": {
+    "title": "Create a new course",
+    "lead": "Fill in the details to create a new course. It will be saved as DRAFT after creation.",
+    "titleLabel": "Course title",
+    "titlePlaceholder": "e.g. IELTS Speaking Masterclass",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Detailed description of this course...",
+    "priceLabel": "Price (VND)",
+    "pricePlaceholder": "e.g. 500000",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "e.g. IELTS, TOEFL, Business English",
+    "levelLabel": "Level",
+    "levelPlaceholder": "Select a level (optional)",
+    "clearLevel": "Clear level",
+    "thumbnailLabel": "Course thumbnail",
+    "thumbnailAlt": "Thumbnail preview",
+    "pickImage": "Pick a thumbnail image (max 5MB)",
+    "thumbnailHint": "Supports: JPEG, PNG, WEBP, GIF",
+    "cancel": "Cancel",
+    "submit": "Create course",
+    "errors": {
+      "titleRequired": "Course title is required",
+      "titleTooLong": "Title cannot exceed 100 characters",
+      "priceRequired": "Course price is required",
+      "priceInvalid": "Price must be a non-negative number",
+      "levelInvalid": "Invalid level",
+      "imageTypeInvalid": "Only image files are accepted (JPEG, PNG, WEBP, GIF)",
+      "imageTooLarge": "Image cannot exceed 5MB"
+    }
+  },
+  "createLessonDialog": {
+    "title": "Create a new lesson",
+    "lead": "Fill in the details to create a new lesson for this course.",
+    "titleLabel": "Lesson title",
+    "titlePlaceholder": "e.g. Lesson 1: Introduction to IELTS Writing",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Detailed description of this lesson...",
+    "orderLabel": "Lesson order",
+    "orderPlaceholder": "e.g. 1",
+    "nextOrderHint": "The next lesson will use order: {{order}}.",
+    "autoDuration": "Auto-detected duration:",
+    "durationFormat": "{{minutes}} min {{seconds}} sec",
+    "videoLabel": "Lesson video (optional)",
+    "removeFile": "Remove file",
+    "uploadPrompt": "Click to upload a video",
+    "uploadHint": "Supports MP4, MPEG, MOV, AVI, WEBM (max 100MB)",
+    "cancel": "Cancel",
+    "submit": "Create lesson",
+    "uploading": "Uploading...",
+    "errors": {
+      "titleRequired": "Lesson title is required",
+      "titleTooLong": "Title cannot exceed 100 characters",
+      "orderInvalid": "Lesson order must be greater than 0",
+      "videoTooLarge": "Video size cannot exceed 1GB",
+      "videoTypeInvalid": "Only video files are accepted (MP4, MPEG, MOV, AVI, WEBM)"
+    }
+  },
+  "editProfile": {
+    "title": "Edit instructor profile",
+    "lead": "Update your expertise and certifications. You can remove old images or upload new ones.",
+    "expertiseLabel": "Expertise & skills",
+    "expertisePlaceholder": "e.g. IELTS 8.0, Business English...",
+    "add": "Add",
+    "noExpertise": "No expertise added yet.",
+    "existingCerts": "Existing certifications",
+    "certAlt": "Certificate",
+    "removeCertTitle": "Remove this certificate",
+    "addNewCerts": "Add new certifications",
+    "uploadPrompt": "Click to upload certificate images",
+    "uploadHint": "JPG/PNG/WebP, max 5MB per file. Up to 10 images total (existing + new).",
+    "previewAlt": "preview",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "errors": {
+      "duplicateExpertise": "This expertise is already listed",
+      "fileTooLarge": "Some files are too large (>5MB) and were skipped.",
+      "maxImages": "You can upload at most 10 certificate images (existing + new).",
+      "atLeastOneCert": "You must have at least 1 certificate.",
+      "atLeastOneExpertise": "You must have at least 1 expertise."
+    }
+  },
+  "importFile": {
+    "title": "Import questions from file",
+    "description": "Supports PDF (text) and DOCX. Scanned PDFs, image-based questions, and complex tables are NOT supported.",
+    "sampleTitle": "Recommended sample format",
+    "uploadPrompt": "Click to select a .pdf or .docx file",
+    "uploadHint": "Up to 50MB",
+    "cancel": "Cancel",
+    "parsing": "Parsing...",
+    "parse": "Parse file",
+    "resultTitle": "Parse result",
+    "parsedSummaryPrefix": "Parsed",
+    "parsedSummarySuffix": "questions —",
+    "withAnswer": "{{count}} with answer",
+    "withoutAnswer": "{{count}} without answer",
+    "warningCount": "{{count}} warning",
+    "manualKeyLabel": "Paste manual answer key (optional)",
+    "manualKeyMissing": "{{count}} questions still missing an answer — you can edit them later in the form.",
+    "manualKeyComplete": "All questions have answers.",
+    "optionsCount": "{{count}}/4 options",
+    "correctAnswer": "Correct: {{letter}}",
+    "correctAnswerManual": "Correct (manual): {{letter}}",
+    "noAnswer": "No answer yet",
+    "moreQuestions": "…and {{count}} more questions",
+    "chooseAnother": "Choose another file",
+    "append": "Append to list",
+    "replace": "Replace list",
+    "toastInvalidExt": "Only .pdf or .docx files are accepted",
+    "toastParseFailed": "Failed to parse file",
+    "toastReplaced": "Replaced with {{count}} questions",
+    "toastAppended": "Added {{count}} questions"
+  },
+  "finalTestTab": {
+    "loading": "Loading...",
+    "title": "Final exam",
+    "edit": "Edit",
+    "delete": "Delete test",
+    "questions": "Questions",
+    "minutes": "Minutes",
+    "totalScore": "Total score",
+    "passingScore": "Passing score",
+    "multipleChoice": "Multiple choice",
+    "questionList": "Question list",
+    "questionLabel": "Question {{n}}",
+    "explanation": "Explanation",
+    "confirmDeleteTitle": "Delete the final exam?",
+    "confirmDeleteDesc": "You are about to delete <strong>\"{{title}}\"</strong>. This action cannot be undone. All questions will be permanently deleted, and the course will no longer have a final exam.",
+    "cancel": "Cancel",
+    "deletePermanent": "Delete permanently",
+    "emptyTitle": "Final exam",
+    "emptyDescription": "The final exam evaluates the learner's outcome. Learners must complete all lessons before taking the test.",
+    "linkExistingTitle": "Pick from existing tests",
+    "linkExistingDesc": "Use a test you previously created in <strong>My tests</strong>.",
+    "createNewTitle": "Create a new test",
+    "createNewDesc": "Open the test editor. The new test will be linked to this course after saving.",
+    "pickerTitle": "Pick a test to use as Final Test",
+    "pickerDesc": "Link an existing test from \"My tests\" as the final exam.",
+    "searchPlaceholder": "Search by title…",
+    "pickerEmpty": "You don't have any tests yet. Close this dialog and click \"Create a new test\".",
+    "pickerNoMatch": "No matching tests found.",
+    "badgeFinal": "Final",
+    "badgeQuestionCount": "{{count}} questions",
+    "badgeMinutes": "{{count}} min",
+    "badgeInUse": "Used in {{count}} other course(s)",
+    "linkAsFinal": "Link as Final Test",
+    "toastLoadTestFailed": "Unable to load test details",
+    "toastLoadListFailed": "Unable to load test list",
+    "toastPickOne": "Please pick a test",
+    "toastLinked": "Final exam linked!",
+    "toastLinkFailed": "Unable to link the test",
+    "toastDeleted": "Final exam deleted",
+    "toastDeleteFailed": "Failed to delete the test"
+  },
+  "courseModulesTab": {
+    "dragToSort": "Drag to reorder",
+    "minutes": "{{count}} min",
+    "quiz": "Quiz",
+    "video": "Video",
+    "lessonCount": "{{count}} lessons",
+    "addLesson": "Add lesson",
+    "addQuiz": "Add quiz",
+    "editModule": "Edit module",
+    "deleteModule": "Delete module",
+    "noLessons": "No lessons in this module yet",
+    "header": "Modules & Lessons",
+    "summary": "{{moduleCount}} module(s) • {{unassignedCount}} unassigned lesson(s)",
+    "createModule": "Create Module",
+    "emptyTitle": "No modules yet",
+    "emptyDescription": "Create a module to organize lessons by topic.",
+    "createFirstModule": "Create the first module",
+    "moduleNamePlaceholder": "Module name",
+    "moduleDescPlaceholder": "Description (optional)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "createDialogTitle": "Create new Module",
+    "moduleNameLabel": "Module name *",
+    "moduleNameExample": "E.g.: Module 1: Foundation Skills",
+    "moduleDescLabel": "Description (optional)",
+    "moduleDescExample": "Short description of the module",
+    "creating": "Creating...",
+    "createModuleButton": "Create Module",
+    "unassignedTitle": "Unassigned lessons",
+    "confirmDeleteTitle": "Delete module?",
+    "confirmDeleteDesc": "You are about to delete the module <strong>\"{{title}}\"</strong>. Lessons inside will be moved to <em>unassigned lessons</em>; they will not be lost.",
+    "deleting": "Deleting…",
+    "deleteModuleButton": "Delete module",
+    "toastReorderLessonsFailed": "Failed to reorder lessons. Changes reverted.",
+    "toastReorderModulesFailed": "Failed to reorder modules. Changes reverted."
+  },
+  "sellerComments": {
+    "relTime": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}} min ago",
+      "hoursAgo": "{{count}} h ago",
+      "yesterday": "Yesterday",
+      "daysAgo": "{{count}} d ago"
+    },
+    "title": "Learner comments",
+    "subtitle": "Reply quickly, remove inappropriate comments, and monitor engagement.",
+    "refresh": "Refresh",
+    "totalLabel": "Total comments",
+    "unansweredLabel": "Unanswered",
+    "answeredLabel": "Answered",
+    "jumpHint": "Click to view now",
+    "jumpAria": "{{count}} unanswered comments — click to view",
+    "searchPlaceholder": "Search by comment content...",
+    "clearSearchAria": "Clear search",
+    "courseFilterPlaceholder": "Filter by course",
+    "allCourses": "All courses",
+    "statusAll": "All",
+    "statusUnanswered": "Unanswered",
+    "statusAnswered": "Answered",
+    "statusAllCount": "All ({{count}})",
+    "statusUnansweredCount": "Unanswered ({{count}})",
+    "statusAnsweredCount": "Answered ({{count}})",
+    "filteringLabel": "Filtering:",
+    "searchChip": "Search: \"{{q}}\"",
+    "courseChipFallback": "Course",
+    "clearAll": "Clear all",
+    "removeChipAria": "Remove {{label}}",
+    "totalComments": "{{formattedCount}} comments",
+    "loadingMore": "• loading...",
+    "emptyFiltered": "No comments match your filters",
+    "emptyAll": "No comments yet",
+    "emptyFilteredHint": "Try removing some filters.",
+    "emptyAllHint": "When learners start commenting on your courses, they will appear here.",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} / {{total}}",
+    "loadError": "Unable to load comments. Please try again later.",
+    "deleteTitle": "Delete comment?",
+    "deleteDesc": "The content will be permanently deleted and cannot be recovered. If this is a valid question, consider replying instead.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "reply": "Reply",
+    "openContext": "Open lesson for context",
+    "open": "Open",
+    "replyPlaceholder": "Write a reply… (Ctrl+Enter to send)",
+    "sending": "Sending…",
+    "send": "Send",
+    "badgeOwn": "You",
+    "badgeAnswered": "Answered",
+    "badgeUnanswered": "Unanswered",
+    "toastDeleted": "Comment deleted",
+    "toastDeleteFailed": "Unable to delete comment",
+    "toastReplySent": "Reply sent",
+    "toastReplyFailed": "Failed to send reply"
+  },
+  "lessonDetail": {
+    "backTo": "Back to {{title}}",
+    "backFallback": "course",
+    "pageTitleFallback": "Lesson details",
+    "orderLabel": "Order: {{n}}",
+    "duration": {
+      "zero": "0 min",
+      "minutes": "{{m}} min",
+      "minutesSeconds": "{{m}} min {{s}} sec"
+    },
+    "fileSizeKB": "{{value}} KB",
+    "fileSizeMB": "{{value}} MB",
+    "deleteLesson": "Delete lesson",
+    "restore": "Reset",
+    "saving": "Saving...",
+    "saveUpdate": "Save changes",
+    "infoTitle": "Lesson information",
+    "labelTitle": "Title",
+    "labelOrder": "Lesson order",
+    "labelDurationSec": "Duration (seconds)",
+    "approxDuration": "≈ {{value}}",
+    "labelDescription": "Description",
+    "descriptionPlaceholder": "Describe the lesson content...",
+    "materialsLabel": "Attached materials ({{count}})",
+    "addLink": "Add link",
+    "noMaterials": "No materials yet. Click \"Add link\" to start.",
+    "materialPlaceholder": "https://example.com/material.pdf",
+    "videoSection": "Lecture video",
+    "modeUrl": "Link",
+    "modeUpload": "Upload",
+    "currentVideo": "Current video",
+    "videoUrlLabel": "Video URL",
+    "videoUrlPlaceholder": "https://s3.amazonaws.com/.../video.mp4",
+    "videoUrlHint": "Paste a video link from AWS S3, YouTube, or another source.",
+    "dropPrompt": "Drag-drop or click to upload a video",
+    "dropHint": "Supports MP4, MPEG, MOV, AVI, WEBM (up to 100MB)",
+    "oldVideoNotice": "Old video: <strong>{{url}}</strong> — will be replaced when you upload a new file.",
+    "preview": "Preview",
+    "commentsHeader": "Comments ({{count}})",
+    "instructorBadge": "Instructor",
+    "editedTooltip": "Edited at {{time}}",
+    "editedLabel": "(edited)",
+    "userFallback": "User",
+    "savingShort": "Saving…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "cancelShort": "Cancel",
+    "replyBtn": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteOwnTitle": "Delete your comment",
+    "deleteViolationTitle": "Delete violating comment",
+    "noComments": "No comments yet.",
+    "replyingTo": "Replying to <span>@{{name}}</span>",
+    "replyPlaceholder": "Write a reply...",
+    "newCommentPlaceholder": "Write a new comment...",
+    "submitHint": "Press Enter to send, Shift+Enter for a new line.",
+    "confirmDeleteLessonTitle": "Delete lesson?",
+    "confirmDeleteLessonLine1": "You are about to delete the lesson <strong>\"{{title}}\"</strong>.",
+    "confirmDeleteLessonLine2": "All related <strong>videos, comments, and learning progress</strong> will be permanently deleted — this cannot be undone.",
+    "confirmDeleteLessonActiveWarn": "The course is ACTIVE; learners who already purchased will no longer see this lesson.",
+    "deleting": "Deleting...",
+    "deletePermanent": "Delete permanently",
+    "confirmDeleteCommentTitle": "Delete comment?",
+    "confirmDeleteCommentDesc": "The content will be permanently deleted and cannot be recovered.",
+    "deletingComment": "Deleting…",
+    "toastEmptyContent": "Content must not be empty",
+    "toastCommentUpdated": "Comment updated",
+    "toastCommentUpdateFailed": "Failed to update comment",
+    "toastCommentDeleted": "Comment deleted",
+    "toastCommentDeleteFailed": "Unable to delete comment",
+    "toastInvalidVideoFormat": "Invalid format. Supported: MP4, MPEG, MOV, AVI, WEBM",
+    "toastVideoTooLarge": "File too large. Maximum 100MB.",
+    "toastUpdateLessonFailed": "Failed to update lesson",
+    "toastRestored": "Original data restored",
+    "toastReplySent": "Reply sent",
+    "toastSendFailed": "Failed to send",
+    "toastCommentSent": "Comment sent",
+    "toastCommentSendFailed": "Failed to send comment"
+  }
+}

@@ -1,5 +1,7 @@
-import apiClient from "../config";
-import type { ApiResponse, InAppNotification, PaginationMeta } from "../types";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
+import type { InAppNotification } from "@/domain";
+import type { PaginationMeta } from "@/lib/api/types";
 
 export interface UserNotificationsResponse {
   notifications: InAppNotification[];
@@ -12,57 +14,216 @@ export interface UserNotificationStats {
   byType: Record<string, number>;
 }
 
+export interface UnreadCountResponse {
+  total: number;
+  byType: Record<string, number>;
+}
+
 export class NotificationService {
-  async getUserNotifications(params: {
-    userId: string;
+  /**
+   * List current user's notifications (token-based, no userId needed)
+   * GET /notifications
+   *
+   * Backend returns a flat envelope:
+   *   { success, data: InAppNotification[], total, page, limit, totalPages }
+   * Consumers (dropdown + /notifications page) read `data.notifications`, so
+   * we normalize the response into { notifications, pagination } here.
+   */
+  async getUserNotifications(params?: {
     page?: number;
     limit?: number;
     unreadOnly?: boolean;
     type?: string;
   }): Promise<ApiResponse<UserNotificationsResponse>> {
-    const { userId, page, limit, unreadOnly, type } = params;
+    const response = await apiClient.get<{
+      success?: boolean;
+      data: InAppNotification[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>("/notifications", { params });
+    const body = response.data;
+    return {
+      success: body.success,
+      data: {
+        notifications: Array.isArray(body.data) ? body.data : [],
+        pagination: {
+          page: body.page,
+          limit: body.limit,
+          total: body.total,
+          totalPages: body.totalPages,
+        },
+      },
+    };
+  }
 
-    const searchParams = new URLSearchParams();
-    if (page) searchParams.set("page", String(page));
-    if (limit) searchParams.set("limit", String(limit));
-    if (unreadOnly) searchParams.set("unreadOnly", "true");
-    if (type) searchParams.set("type", type);
-
-    const query = searchParams.toString();
-    const url = `/notifications/in-app/user/${userId}${
-      query ? `?${query}` : ""
-    }`;
-
-    const response = await apiClient.get<ApiResponse<UserNotificationsResponse>>(
-      url,
+  /**
+   * Get single notification
+   * GET /notifications/:id
+   */
+  async getNotification(id: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.get<ApiResponse<InAppNotification>>(
+      `/notifications/${id}`
     );
     return response.data;
   }
 
-  async markNotificationAsRead(notificationId: string): Promise<ApiResponse<null>> {
-    const response = await apiClient.post<ApiResponse<null>>(
-      `/notifications/in-app/${notificationId}/read`,
+  /**
+   * Mark a notification as read
+   * PATCH /notifications/:id/read
+   */
+  async markNotificationAsRead(notificationId: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.patch<ApiResponse<InAppNotification>>(
+      `/notifications/${notificationId}/read`
     );
     return response.data;
   }
 
-  async markAllAsRead(userId: string): Promise<ApiResponse<{ updatedCount: number }>> {
-    const response = await apiClient.post<
-      ApiResponse<{
-        updatedCount: number;
-      }>
-    >(`/notifications/in-app/user/${userId}/mark-all-read`);
+  /**
+   * Mark all notifications as read
+   * POST /notifications/read-all
+   */
+  async markAllAsRead(type?: string): Promise<ApiResponse<{ count: number }>> {
+    const response = await apiClient.post<ApiResponse<{ count: number }>>(
+      "/notifications/read-all",
+      { type }
+    );
     return response.data;
   }
 
-  async getUserStats(userId: string): Promise<ApiResponse<UserNotificationStats>> {
+  /**
+   * Archive a notification (save / mark as important)
+   * PATCH /notifications/:id/archive
+   */
+  async archiveNotification(notificationId: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.patch<ApiResponse<InAppNotification>>(
+      `/notifications/${notificationId}/archive`
+    );
+    return response.data;
+  }
+
+  /**
+   * Unarchive a notification (restore from saved list back to the active inbox)
+   * PATCH /notifications/:id/unarchive
+   */
+  async unarchiveNotification(notificationId: string): Promise<ApiResponse<InAppNotification>> {
+    const response = await apiClient.patch<ApiResponse<InAppNotification>>(
+      `/notifications/${notificationId}/unarchive`
+    );
+    return response.data;
+  }
+
+  /**
+   * Delete a notification
+   * DELETE /notifications/:id
+   */
+  async deleteNotification(notificationId: string): Promise<ApiResponse<null>> {
+    const response = await apiClient.delete<ApiResponse<null>>(
+      `/notifications/${notificationId}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get unread notification count
+   * GET /notifications/unread-count
+   */
+  async getUnreadCount(): Promise<ApiResponse<UnreadCountResponse>> {
+    const response = await apiClient.get<ApiResponse<UnreadCountResponse>>(
+      "/notifications/unread-count"
+    );
+    return response.data;
+  }
+
+  /**
+   * Get notification stats for current user
+   * GET /notifications/stats
+   */
+  async getUserStats(): Promise<ApiResponse<UserNotificationStats>> {
     const response = await apiClient.get<ApiResponse<UserNotificationStats>>(
-      `/notifications/in-app/user/${userId}/stats`,
+      "/notifications/stats"
+    );
+    return response.data;
+  }
+
+  // ── Admin: platform-wide notification feed ─────────────────────────────
+  async listAllForAdmin(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: string;
+    isRead?: boolean;
+    userId?: string;
+    campaignsOnly?: boolean;
+  }): Promise<AdminNotificationsResponse> {
+    const response = await apiClient.get<AdminNotificationsResponse>(
+      "/notifications/admin/all",
+      { params }
+    );
+    return response.data;
+  }
+
+  /** Admin: list notification types (used to populate campaign dropdown). */
+  async listAdminNotificationTypes(): Promise<ApiResponse<AdminNotificationTypeRow[]>> {
+    const response = await apiClient.get<ApiResponse<AdminNotificationTypeRow[]>>(
+      "/notifications/types"
+    );
+    return response.data;
+  }
+
+  // ── Admin campaign endpoints ───────────────────────────────────────────
+  async runCampaign(payload: CampaignPayload): Promise<ApiResponse<CampaignResult>> {
+    const response = await apiClient.post<ApiResponse<CampaignResult>>(
+      "/notifications/admin/campaign",
+      payload
+    );
+    return response.data;
+  }
+
+  async previewCampaign(
+    segment: CampaignSegment
+  ): Promise<ApiResponse<{ recipientCount: number }>> {
+    const response = await apiClient.post<ApiResponse<{ recipientCount: number }>>(
+      "/notifications/admin/campaign/preview",
+      { segment }
     );
     return response.data;
   }
 }
 
+export interface AdminNotificationsResponse {
+  success: boolean;
+  data: InAppNotification[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminNotificationTypeRow {
+  id: string;
+  name: string;
+  isLocked: boolean;
+}
+
+export type CampaignSegment =
+  | { kind: "all" }
+  | { kind: "role"; roles: string[] }
+  | { kind: "user-ids"; userIds: string[] };
+
+export interface CampaignPayload {
+  title: string;
+  content: string;
+  type: string;
+  metadata?: Record<string, unknown>;
+  segment: CampaignSegment;
+}
+
+export interface CampaignResult {
+  recipientCount: number;
+  createdCount: number;
+  segmentKind: CampaignSegment["kind"];
+}
+
 export const notificationService = new NotificationService();
-
-

@@ -28,3 +28,7 @@ dist-ssr
 *.sln
 *.sw?
 schema.prisma
+
+# Turborepo
+.turbo
+.cursor

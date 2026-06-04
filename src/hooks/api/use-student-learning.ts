@@ -5,6 +5,7 @@ import { studentLearningService } from "@/lib/api/services/user";
 import type {
   CreateLessonCommentRequest,
   StudentPaginatedParams,
+  Certificate,
 } from "@/lib/api/services/user";
 import type {
   CourseContext,
@@ -13,15 +14,9 @@ import type {
   LessonPlayer,
 } from "@/types/student-learning";
 
-type ForbiddenHandler = {
-  onForbidden?: () => void;
-};
-
-const handleForbidden = (error: unknown, callback?: () => void) => {
-  if (isAxiosError(error) && error.response?.status === 403) {
-    callback?.();
-  }
-};
+/** Check if error is 403 Forbidden */
+export const isForbiddenError = (error: unknown): boolean =>
+  isAxiosError(error) && error.response?.status === 403;
 
 export const learningKeys = {
   context: (courseId?: string) => ["student-learning", "context", courseId] as const,
@@ -33,54 +28,47 @@ export const learningKeys = {
     params?: StudentPaginatedParams
   ) => ["student-learning", "comments", courseId, lessonId, params] as const,
   ratings: (courseId?: string) => ["student-learning", "ratings", courseId] as const,
+  certificate: (courseId?: string) => ["student-learning", "certificate", courseId] as const,
 };
 
-export const useCourseContext = (
-  courseId: string | undefined,
-  options?: ForbiddenHandler
-) => {
+export const useCourseContext = (courseId: string | undefined) => {
   return useQuery({
     queryKey: learningKeys.context(courseId),
     queryFn: () => studentLearningService.getCourseContext(courseId!),
     enabled: Boolean(courseId),
     select: (response) => response.data as CourseContext,
-    onError: (error) => handleForbidden(error, options?.onForbidden),
+    retry: false,
   });
 };
 
 export const useLessonPlayer = (
   courseId: string | undefined,
-  lessonId: string | undefined,
-  options?: ForbiddenHandler
+  lessonId: string | undefined
 ) => {
   return useQuery({
     queryKey: learningKeys.lesson(courseId, lessonId),
     queryFn: () => studentLearningService.getLesson(courseId!, lessonId!),
     enabled: Boolean(courseId && lessonId),
     select: (response) => response.data as LessonPlayer,
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useLessonComments = (
   courseId: string | undefined,
   lessonId: string | undefined,
-  params?: StudentPaginatedParams,
-  options?: ForbiddenHandler
+  params?: StudentPaginatedParams
 ) => {
   return useQuery({
     queryKey: learningKeys.comments(courseId, lessonId, params),
     queryFn: () => studentLearningService.getLessonComments(courseId!, lessonId!, params),
     enabled: Boolean(courseId && lessonId),
     select: (response) => response.data as LessonCommentsResponse,
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useCourseRatings = (
   courseId: string | undefined,
-  params?: StudentPaginatedParams,
-  options?: ForbiddenHandler
+  params?: StudentPaginatedParams
 ) => {
   return useQuery({
     queryKey: learningKeys.ratings(courseId),
@@ -100,7 +88,13 @@ export const useCourseRatings = (
 
       // Response structure from backend:
       // { success, message, data: [...ratings], averageScore, pagination: { total, page, limit } }
-      const resp = response as any;
+      const resp = response as {
+        data?: CourseRatingsResponse["ratings"];
+        ratings?: CourseRatingsResponse["ratings"];
+        pagination?: { total?: number; page?: number; limit?: number };
+        total?: number;
+        averageScore?: number;
+      };
       
       // Extract ratings array - could be in response.data or response
       const ratingsArray = Array.isArray(resp.data) 
@@ -121,14 +115,12 @@ export const useCourseRatings = (
       
       return transformed;
     },
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useCreateLessonComment = (
   courseId: string | undefined,
-  lessonId: string | undefined,
-  options?: ForbiddenHandler
+  lessonId: string | undefined
 ) => {
   const queryClient = useQueryClient();
 
@@ -140,14 +132,12 @@ export const useCreateLessonComment = (
         queryClient.invalidateQueries({ queryKey: learningKeys.comments(courseId, lessonId) });
       }
     },
-    onError: (error) => handleForbidden(error, options?.onForbidden),
   });
 };
 
 export const useMarkLessonComplete = (
   courseId: string | undefined,
-  lessonId: string | undefined,
-  options?: ForbiddenHandler
+  lessonId: string | undefined
 ) => {
   const queryClient = useQueryClient();
 
@@ -156,9 +146,32 @@ export const useMarkLessonComplete = (
     onSuccess: () => {
       if (courseId) {
         queryClient.invalidateQueries({ queryKey: learningKeys.context(courseId) });
+        // Refresh certificate in case this was the last lesson
+        queryClient.invalidateQueries({ queryKey: learningKeys.certificate(courseId) });
       }
     },
-    onError: (error) => handleForbidden(error, options?.onForbidden),
+  });
+};
+
+export const useCertificate = (courseId: string | undefined) => {
+  return useQuery({
+    queryKey: learningKeys.certificate(courseId),
+    queryFn: () => studentLearningService.getCertificate(courseId!),
+    enabled: Boolean(courseId),
+    select: (response) => response.data as Certificate,
+    retry: false,
+  });
+};
+
+export const useIssueCertificate = (courseId: string | undefined) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => studentLearningService.issueCertificate(courseId!),
+    onSuccess: () => {
+      if (courseId) {
+        queryClient.invalidateQueries({ queryKey: learningKeys.certificate(courseId) });
+      }
+    },
   });
 };
 

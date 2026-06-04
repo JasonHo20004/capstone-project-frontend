@@ -1,16 +1,19 @@
-import Navbar from '@/components/user/layout/Navbar';
-import Footer from '@/components/user/layout/Footer';
-import Hero from '@/components/user/home/Hero';
-import Features from '@/components/user/home/Features';
 import CourseCard from '@/components/user/course/CourseCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Play, Quote } from 'lucide-react';
+import { ArrowRight, BookOpen, Target, Layers, ClipboardCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useCourses } from '@/hooks/api';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { useCourses, useUnreadNotificationCount } from '@/hooks/api';
+import { useEnrolledCourses } from '@/hooks/api/use-courses';
+import { useGetDecks } from '@/hooks/api/use-flashcards';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
+import { StatPill } from '@/components/ui/stat-pill';
 
 const Index = () => {
+  const reduce = useReducedMotion();
+  const { t } = useTranslation('dashboard');
   const {
     data: popularCoursesResponse,
     isLoading: isLoadingCourses,
@@ -19,203 +22,186 @@ const Index = () => {
     refetch: refetchCourses,
   } = useCourses({
     page: 1,
-    limit: 6,
+    limit: 12,
     sortBy: 'ratingCount',
     sortOrder: 'desc',
     status: 'ACTIVE',
   });
 
-  const popularCourses =
-    popularCoursesResponse?.data?.slice(0, 3) ??
-    [];
+  const { data: enrolled } = useEnrolledCourses();
+  const { data: unreadData } = useUnreadNotificationCount();
+  const { data: decks } = useGetDecks();
+
+  const ownedIds = new Set((enrolled ?? []).map((c) => c.id));
+  const popularCourses = (popularCoursesResponse?.data ?? [])
+    .filter((c) => !ownedIds.has(c.id))
+    .slice(0, 3);
+
+  const enrolledCount = enrolled?.length ?? 0;
+  const unreadCount = unreadData?.total ?? 0;
+  const deckCount = Array.isArray(decks) ? decks.length : 0;
+
+  const pad2 = (n: number) => String(n).padStart(2, '0');
+
+  const reveal = (i = 0) => ({
+    initial: reduce ? { opacity: 0 } : { opacity: 0, y: 16 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: '-80px' },
+    transition: { duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] as const },
+  });
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      
+    <div className="bg-background pb-14">
       <main>
-        <Hero />
-        <Features />
+        {/* Greeting hero — gradient + Pingo */}
+        <section className="container mx-auto px-4">
+          <motion.div
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="relative overflow-hidden rounded-3xl bg-hero-gradient p-8 text-white md:p-12"
+          >
+            <div aria-hidden className="absolute -right-20 -top-10 h-72 w-72 rounded-full bg-secondary/30 blur-3xl" />
+            <div aria-hidden className="absolute -bottom-20 -left-10 h-80 w-80 rounded-full bg-primary-light/40 blur-3xl" />
 
-        {/* Popular Courses Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
-                Khóa học <span className="text-primary">phổ biến nhất</span>
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Tham gia hàng nghìn học viên đang học với các khóa học được đánh giá cao của chúng tôi
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 min-h-[220px]">
-              {isLoadingCourses && (
-                <LoadingSpinner className="col-span-full py-8" text="Đang tải khoá học nổi bật..." />
-              )}
-              {isCoursesError && (
-                <ErrorMessage
-                  className="col-span-full"
-                  message={coursesError instanceof Error ? coursesError.message : 'Không thể tải dữ liệu.'}
-                  onRetry={refetchCourses}
-                />
-              )}
-              {!isLoadingCourses && !isCoursesError && popularCourses.length === 0 && (
-                <p className="col-span-full text-center text-muted-foreground">
-                  Hiện chưa có khoá học nào phù hợp.
+            <div className="relative z-10 grid gap-8 md:grid-cols-[1.6fr_1fr] md:items-center">
+              <div className="max-w-3xl">
+                <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-glass ring-1 ring-white/15">
+                  {t('hero.eyebrow')}
                 </p>
-              )}
-              {!isLoadingCourses &&
-                !isCoursesError &&
-                popularCourses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-            </div>
+                <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
+                  {t('hero.title')} <span className="text-secondary-light">{t('hero.titleAccent')}</span>
+                </h1>
+                <p className="mt-4 text-lg text-white/80">
+                  {t('hero.subtitle')}
+                </p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Link to="/#courses">
+                    <Button variant="default" size="lg">
+                      {t('hero.startLearning')}
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link to="/my-courses">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-primary"
+                    >
+                      {t('hero.myCourses')}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
 
-            <div className="text-center">
-              <Link to="/courses">
-                <Button size="lg" className="bg-gradient-primary shadow-accent">
-                  Xem tất cả khóa học
-                  <ArrowRight className="w-5 h-5 ml-2" />
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Quick stats pills */}
+        <section className="container mx-auto mt-10 px-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: <Target className="h-5 w-5" />,
+                label: t('stats.enrolledLabel'),
+                value: t('stats.enrolledValue', { count: pad2(enrolledCount) }),
+                tone: 'primary' as const,
+              },
+              {
+                icon: <BookOpen className="h-5 w-5" />,
+                label: t('stats.unreadLabel'),
+                value:
+                  unreadCount > 0
+                    ? t('stats.unreadValue', { count: pad2(unreadCount) })
+                    : t('stats.unreadAllRead'),
+                tone: 'secondary' as const,
+              },
+              {
+                icon: <Layers className="h-5 w-5" />,
+                label: t('stats.decksLabel'),
+                value:
+                  deckCount > 0
+                    ? t('stats.decksValue', { count: pad2(deckCount) })
+                    : t('stats.decksEmpty'),
+                tone: 'muted' as const,
+              },
+            ].map((item, i) => (
+              <motion.div key={item.label} {...reveal(i)}>
+                <StatPill
+                  icon={item.icon}
+                  label={item.label}
+                  value={item.value}
+                  tone={item.tone}
+                  className="w-full"
+                />
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Placement test CTA */}
+        <section className="container mx-auto mt-10 px-4">
+          <motion.div {...reveal(3)}>
+            <div className="flex flex-col gap-4 rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50 to-cyan-50 p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-500 text-white shadow">
+                  <ClipboardCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-bold text-slate-900">{t('placement.title')}</h3>
+                  <p className="mt-0.5 text-sm text-slate-600">
+                    {t('placement.subtitle')}
+                  </p>
+                </div>
+              </div>
+              <Link to="/placement-test" className="shrink-0">
+                <Button variant="default" className="w-full bg-teal-500 hover:bg-teal-600 md:w-auto">
+                  {t('placement.cta')}
+                  <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
             </div>
-          </div>
+          </motion.div>
         </section>
 
-        {/* How It Works Section */}
-        <section className="py-20 bg-gradient-hero text-primary-foreground">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
-                Cách hoạt động
-              </h2>
-              <p className="text-lg text-primary-foreground/80">
-                Bắt đầu hành trình học tập với ba bước đơn giản
-              </p>
+        {/* Popular courses */}
+        <section className="container mx-auto mt-16 px-4">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">{t('popular.title')}</h2>
+              <p className="mt-1 text-muted-foreground">{t('popular.subtitle')}</p>
             </div>
-
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {[
-                {
-                  step: '01',
-                  title: 'Chọn khóa học của bạn',
-                  description: 'Duyệt danh mục phong phú và chọn khóa học phù hợp với mục tiêu',
-                },
-                {
-                  step: '02',
-                  title: 'Học theo tốc độ của bạn',
-                  description: 'Truy cập bài giảng video, bài tập và tài liệu mọi lúc mọi nơi',
-                },
-                {
-                  step: '03',
-                  title: 'Nhận chứng chỉ',
-                  description: 'Hoàn thành khóa học và nhận chứng chỉ được công nhận',
-                },
-              ].map((item, index) => (
-                <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-secondary/20 backdrop-blur-sm border-2 border-secondary mb-6">
-                    <span className="text-3xl font-bold text-secondary">{item.step}</span>
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-3 font-['Be Vietnam Pro']">{item.title}</h3>
-                  <p className="text-primary-foreground/70">{item.description}</p>
-                </div>
+            <Link to="/courses" className="font-semibold text-primary hover:underline">
+              {t('popular.viewAll')}
+            </Link>
+          </div>
+          <div className="grid min-h-[220px] gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {isLoadingCourses && (
+              <LoadingSpinner className="col-span-full py-8" text={t('popular.loading')} />
+            )}
+            {isCoursesError && (
+              <ErrorMessage
+                className="col-span-full"
+                message={coursesError instanceof Error ? coursesError.message : t('popular.loadError')}
+                onRetry={refetchCourses}
+              />
+            )}
+            {!isLoadingCourses && !isCoursesError && popularCourses.length === 0 && (
+              <p className="col-span-full text-center text-muted-foreground">
+                {t('popular.empty')}
+              </p>
+            )}
+            {!isLoadingCourses &&
+              !isCoursesError &&
+              popularCourses.map((course, i) => (
+                <motion.div key={course.id} {...reveal(i)}>
+                  <CourseCard course={course} />
+                </motion.div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
-                Học viên nói gì
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Câu chuyện thực tế từ những học viên đã cải thiện kỹ năng tiếng Anh
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  name: 'Maria Rodriguez',
-                  role: 'Chuyên viên kinh doanh',
-                  image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=100&h=100&fit=crop',
-                  content: 'SkillBoost đã giúp tôi đạt được công việc mơ ước! Khóa Business English đúng là những gì tôi cần.',
-                },
-                {
-                  name: 'Ahmed Hassan',
-                  role: 'Sinh viên đại học',
-                  image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-                  content: 'Khóa luyện thi IELTS rất đầy đủ và giúp tôi đạt band mục tiêu.',
-                },
-                {
-                  name: 'Jennifer Kim',
-                  role: 'Giáo viên tiếng Anh',
-                  image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop',
-                  content: 'Là một giáo viên, tôi rất ấn tượng với chất lượng giảng dạy và tài liệu.',
-                },
-              ].map((testimonial, index) => (
-                <div
-                  key={index}
-                  className="bg-card rounded-2xl p-8 shadow-sm hover:shadow-accent transition-all border border-border"
-                >
-                  <Quote className="w-10 h-10 text-secondary mb-4" />
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    "{testimonial.content}"
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                      <div className="font-semibold">{testimonial.name}</div>
-                      <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-primary text-primary-foreground">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center space-y-6">
-              <h2 className="text-4xl md:text-5xl font-bold font-['Be Vietnam Pro']">
-                Bắt đầu hành trình học tập của bạn ngay hôm nay
-              </h2>
-              <p className="text-lg text-primary-foreground/80">
-                Khám phá hàng trăm khoá học từ các chuyên gia và nâng cao kỹ năng tiếng Anh của bạn.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/courses">
-                  <Button size="lg" className="bg-primary-foreground text-primary font-semibold">
-                    Khám phá khoá học
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link to="/seller/apply">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="bg-transparent border-primary-foreground text-primary-foreground"
-                  >
-                    Trở thành giảng viên
-                  </Button>
-                </Link>
-              </div>
-            </div>
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 };

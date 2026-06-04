@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Course as AdminCourse } from '@/types/type';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { Course as AdminCourse } from "@/domain";
 import { toast } from 'sonner';
-import { mockUserActivities, mockCourses } from '@/data/mock';
+import { courseServiceUser } from "@/lib/api/services/user";
 
 export type PurchasedItem = {
   id: string;
@@ -17,6 +17,7 @@ type PurchasesContextValue = {
   clear: () => void;
   has: (id: string) => boolean;
   count: number;
+  isLoading: boolean;
 };
 
 const PurchasesContext = createContext<PurchasesContextValue | undefined>(undefined);
@@ -32,31 +33,59 @@ export const PurchasesProvider: React.FC<React.PropsWithChildren> = ({ children 
       return [];
     }
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Seed purchases from UserActivity for current user
+  // Re-fetch trigger: increments when auth state changes
+  const [fetchKey, setFetchKey] = useState(0);
+
+  // Listen for auth changes (login/logout) via custom event + storage event
   useEffect(() => {
-    try {
-      const currentUserId = localStorage.getItem('currentUserId') || '1';
-      const now = new Date();
-      const purchasedCourseIds = mockUserActivities
-        .filter((a) => a.userId === currentUserId && a.transaction?.status === 'SUCCESS' && (!a.expiresAt || new Date(a.expiresAt) > now))
-        .map((a) => a.courseId);
-
-      if (purchasedCourseIds.length === 0) return;
-
-      const purchasedCourses = mockCourses.filter((c) => purchasedCourseIds.includes(c.id));
-
-      setItems((prev) => {
-        const existingIds = new Set(prev.map((i) => i.id));
-        const toAdd = purchasedCourses
-          .filter((c) => !existingIds.has(c.id))
-          .map((c) => ({ id: c.id, course: c, purchasedAt: new Date().toISOString() } as PurchasedItem));
-        return toAdd.length > 0 ? [...toAdd, ...prev] : prev;
-      });
-    } catch {
-      // ignore errors in seeding
-    }
+    const handleAuthChange = () => setFetchKey((k) => k + 1);
+    window.addEventListener('auth-change', handleAuthChange);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'accessToken') handleAuthChange();
+    });
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
   }, []);
+
+  // Fetch enrolled courses from API when user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setItems([]);
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+
+    courseServiceUser
+      .getEnrolledCourses()
+      .then((res) => {
+        if (cancelled) return;
+        const courses: AdminCourse[] = Array.isArray(res.data) ? res.data : [];
+        const mapped: PurchasedItem[] = courses.map((c) => ({
+          id: c.id,
+          course: c,
+          purchasedAt: (c as { createdAt?: string }).createdAt ?? new Date().toISOString(),
+        }));
+        setItems(mapped);
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoading(false);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchKey]);
 
   useEffect(() => {
     try {
@@ -109,7 +138,7 @@ export const PurchasesProvider: React.FC<React.PropsWithChildren> = ({ children 
 
   const count = items.length;
 
-  const value: PurchasesContextValue = { items, addCourse, addCourses, remove, clear, has, count };
+  const value: PurchasesContextValue = { items, addCourse, addCourses, remove, clear, has, count, isLoading };
 
   return <PurchasesContext.Provider value={value}>{children}</PurchasesContext.Provider>;
 };

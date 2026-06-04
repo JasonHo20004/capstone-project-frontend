@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import Navbar from "@/components/user/layout/Navbar";
-import Footer from "@/components/user/layout/Footer";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +22,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Edit,
@@ -31,26 +31,45 @@ import {
   Loader2,
   Check,
   ChevronsUpDown,
+  Zap,
+  BookOpen,
+  Play,
+  Layers,
+  Sparkles,
+  Clock,
+  RotateCcw,
+  Brain,
+  Globe,
+  Search,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { FlashcardDeck, Flashcard, Tag } from "@/types/type";
-import DeckList from "@/components/user/flashcards/DeckList";
+import { useQueryClient } from "@tanstack/react-query";
+import type { FlashcardDeck, Flashcard } from "@/domain";
+import RagGenerator from "./RagGenerator";
+import { DeckList } from "@/components/user/flashcards/DeckList";
 import CardList from "@/components/user/flashcards/CardList";
 import StudyMode from "@/components/user/flashcards/StudyMode";
-import { formatDate, formatDateForInput } from "@/lib/utils";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { MouseParticles } from "@/components/ui/mouse-particles";
+import { formatDate } from "@/lib/utils";
 
 import {
   useGetDecks,
+  useGetPublicDecks,
   useGetCards,
+  useGetReviewQueue,
   useCreateDeck,
   useUpdateDeck,
   useDeleteDeck,
   useCreateCard,
   useUpdateCard,
-  useDeleteCard
+  useDeleteCard,
+  useResetProgress
 } from "@/hooks/api/use-flashcards";
+import { useUser } from "@/hooks/api/use-user";
 import { useGetTags } from "@/hooks/api/use-tags";
-import { DeckFormDTO, CardFormDTO } from "@/lib/api/services/flashcard.service";
+import { DeckFormDTO, CardFormDTO } from "@/lib/api/services/user/flashcard/flashcard.service";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -66,17 +85,32 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+
 const Flashcards = () => {
-  // Deck state
+  const { user } = useUser();
+  const { t } = useTranslation("flashcards");
+
+  // ── Tab ────────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'mine' | 'explore'>('mine');
+
+  // ── My Decks ───────────────────────────────────────────────────────────────
   const { data: decksData, isLoading: isLoadingDecks } = useGetDecks();
   const decks = useMemo(() => decksData || [], [decksData]);
 
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
 
-  // Cards state (only those belonging to user's decks)
   const { data: cardsData, isLoading: isLoadingCards } =
     useGetCards(selectedDeckId);
   const selectedDeckCards = useMemo(() => cardsData || [], [cardsData]);
+
+  const { data: reviewQueueData, isLoading: isLoadingQueue } = useGetReviewQueue(selectedDeckId);
+  const reviewQueueCount = reviewQueueData?.length ?? 0;
+  const hasOnlyNewCards = useMemo(
+    () => reviewQueueCount > 0 && (reviewQueueData ?? []).every((c) => c.queueType === 'NEW'),
+    [reviewQueueData, reviewQueueCount]
+  );
+
+  const queryClient = useQueryClient();
 
   const { data: allTagsData, isLoading: isLoadingTags } = useGetTags();
   const allTags = useMemo(() => allTagsData || [], [allTagsData]);
@@ -86,19 +120,19 @@ const Flashcards = () => {
       setSelectedDeckId(decks[0].id);
     }
   }, [decks, selectedDeckId]);
+
   const selectedDeck = useMemo(
     () => decks.find((d) => d.id === selectedDeckId) ?? null,
     [decks, selectedDeckId]
   );
-  const createDeckMutation = useCreateDeck(); // 👈 KHỞI TẠO MUTATION
-  // Deck dialogs
-  const updateDeckMutation = useUpdateDeck();
-  const deleteDeckMutation = useDeleteDeck(); // 👈 KHỞI TẠO
 
-// 👈 THÊM: Khởi tạo card mutations
+  const createDeckMutation = useCreateDeck();
+  const updateDeckMutation = useUpdateDeck();
+  const deleteDeckMutation = useDeleteDeck();
   const createCardMutation = useCreateCard();
   const updateCardMutation = useUpdateCard();
   const deleteCardMutation = useDeleteCard();
+  const resetProgressMutation = useResetProgress();
 
   const [creatingDeck, setCreatingDeck] = useState(false);
   const [editingDeck, setEditingDeck] = useState<FlashcardDeck | null>(null);
@@ -111,18 +145,39 @@ const Flashcards = () => {
   });
 
   const [popoverOpen, setPopoverOpen] = useState(false);
-  // Card dialogs
   const [creatingCard, setCreatingCard] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
   const [deletingCard, setDeletingCard] = useState<Flashcard | null>(null);
-const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
+  const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
     frontContent: '',
     backContent: '',
     exampleSentence: '',
   });
   const [studyDialogOpen, setStudyDialogOpen] = useState(false);
+  const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
+  const [ragDialogOpen, setRagDialogOpen] = useState(false);
 
-  // Helpers
+  // ── Explore (public decks) ─────────────────────────────────────────────────
+  const [publicSearch, setPublicSearch] = useState('');
+  const [publicSearchInput, setPublicSearchInput] = useState('');
+  const [selectedPublicDeckId, setSelectedPublicDeckId] = useState<string | null>(null);
+  const [isPublicSheetOpen, setIsPublicSheetOpen] = useState(false);
+  const [publicStudyOpen, setPublicStudyOpen] = useState(false);
+
+  const { data: publicDecks, isLoading: isLoadingPublic } = useGetPublicDecks(publicSearch);
+  const { data: publicCardsData, isLoading: isLoadingPublicCards } = useGetCards(selectedPublicDeckId);
+  const publicCards = useMemo(() => publicCardsData || [], [publicCardsData]);
+  const { data: publicQueueData } = useGetReviewQueue(selectedPublicDeckId);
+  const publicQueueCount = publicQueueData?.length ?? 0;
+  const publicHasOnlyNewCards = useMemo(
+    () => publicQueueCount > 0 && (publicQueueData ?? []).every((c) => c.queueType === 'NEW'),
+    [publicQueueData, publicQueueCount]
+  );
+
+  const selectedPublicDeck = useMemo(
+    () => (publicDecks ?? []).find((d) => d.id === selectedPublicDeckId) ?? null,
+    [publicDecks, selectedPublicDeckId]
+  );
 
   // Deck handlers
   const openCreateDeck = () => {
@@ -132,86 +187,60 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
 
   const saveCreateDeck = () => {
     if (!deckForm.title.trim()) {
-      toast.error("Vui lòng nhập tên bộ thẻ");
+      toast.error(t("toast.deckNameRequired"));
       return;
     }
-
-    // Gọi mutation với data từ form
     createDeckMutation.mutate(deckForm, {
       onSuccess: (response) => {
-        // response.data là FlashcardDeck mới
-        setSelectedDeckId(response.data.id); // Tự động chọn bộ thẻ mới
-        setCreatingDeck(false); // Đóng dialog
+        setSelectedDeckId(response.data.id);
+        setCreatingDeck(false);
       },
-      // onError đã được xử lý trong hook
     });
   };
 
   const openEditDeck = (deck: FlashcardDeck) => {
-    setEditingDeck(deck); // Lưu lại deck đang sửa
-
-    // Điền data vào form
+    setEditingDeck(deck);
     setDeckForm({
       title: deck.title,
       description: deck.description ?? "",
       isPublic: deck.isPublic,
-      // Chuyển đổi deck.deckTags (từ API) -> tagIds (cho form)
       tagIds: deck.deckTags.map((deckTag) => deckTag.tag.id),
     });
   };
 
   const saveEditDeck = () => {
-    if (!editingDeck) return; // Không có deck nào đang được sửa
-
+    if (!editingDeck) return;
     if (!deckForm.title.trim()) {
-      toast.error("Vui lòng nhập tên bộ thẻ");
+      toast.error(t("toast.deckNameRequired"));
       return;
     }
-
-    // Gọi mutation với ID và data từ form
     updateDeckMutation.mutate(
-      {
-        deckId: editingDeck.id,
-        data: deckForm,
-      },
-      {
-        onSuccess: () => {
-          setEditingDeck(null); // Đóng dialog
-        },
-      }
+      { deckId: editingDeck.id, data: deckForm },
+      { onSuccess: () => setEditingDeck(null) }
     );
   };
 
   const deleteDeck = (deck: FlashcardDeck) => {
-    setDeletingDeck(deck); // 👈 Chỉ cần set state này
+    setDeletingDeck(deck);
   };
 
-  /**
-   * MỚI: Hàm xử lý khi người dùng BẤM NÚT XÓA THẬT
-   */
   const handleConfirmDelete = () => {
     if (!deletingDeck) return;
-
     deleteDeckMutation.mutate(deletingDeck.id, {
       onSuccess: () => {
         if (selectedDeckId === deletingDeck.id) {
-          const firstDeckId =
-            decks.find((d) => d.id !== deletingDeck.id)?.id ?? null;
+          const firstDeckId = decks.find((d) => d.id !== deletingDeck.id)?.id ?? null;
           setSelectedDeckId(firstDeckId);
         }
-        setDeletingDeck(null); // Đóng dialog sau khi xóa
       },
-      onError: () => {
-        // (Hook đã tự toast lỗi, không cần làm gì thêm)
-        setDeletingDeck(null); // Đóng dialog dù có lỗi
-      },
+      onSettled: () => setDeletingDeck(null),
     });
   };
 
   // Card handlers
- const openCreateCard = () => {
+  const openCreateCard = () => {
     if (!selectedDeckId) {
-      toast.error('Hãy chọn một bộ thẻ trước');
+      toast.error(t("toast.selectDeckFirst"));
       return;
     }
     setCardForm({ frontContent: '', backContent: '', exampleSentence: '' });
@@ -221,21 +250,19 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
   const saveCreateCard = () => {
     if (!selectedDeckId) return;
     if (!cardForm.frontContent.trim() || !cardForm.backContent.trim()) {
-      toast.error('Vui lòng nhập mặt trước và mặt sau');
+      toast.error(t("toast.cardFieldsRequired"));
       return;
     }
-    
     createCardMutation.mutate({
       ...cardForm,
-      deckId: selectedDeckId, // Thêm deckId lúc submit
+      deckId: selectedDeckId,
     }, {
-      onSuccess: () => {
-        setCreatingCard(false); // Đóng dialog
-      }
+      onSuccess: () => setCreatingCard(false),
     });
   };
+
   const openEditCard = (card: Flashcard) => {
-    setEditingCard(card); // Lưu lại thẻ đang sửa
+    setEditingCard(card);
     setCardForm({
       frontContent: card.frontContent,
       backContent: card.backContent,
@@ -245,242 +272,622 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
 
   const saveEditCard = () => {
     if (!editingCard) return;
-
     if (!cardForm.frontContent.trim() || !cardForm.backContent.trim()) {
-      toast.error('Vui lòng nhập mặt trước và mặt sau');
+      toast.error(t("toast.cardFieldsRequired"));
       return;
     }
-
     updateCardMutation.mutate({
       cardId: editingCard.id,
-      data: cardForm // Gửi data từ form
+      data: cardForm
     }, {
-      onSuccess: () => {
-        setEditingCard(null); // Đóng dialog
-      }
+      onSuccess: () => setEditingCard(null),
     });
   };
 
   const deleteCard = (card: Flashcard) => {
-    setDeletingCard(card); // 👈 Chỉ mở dialog
+    setDeletingCard(card);
   };
+
   const handleConfirmDeleteCard = () => {
     if (!deletingCard || !selectedDeckId) return;
-
     deleteCardMutation.mutate({
       cardId: deletingCard.id,
-      deckId: selectedDeckId, // 👈 Cần deckId để invalidate cache
+      deckId: selectedDeckId,
     }, {
-      onSuccess: () => {
-        setDeletingCard(null); // Đóng dialog
-      }
+      onSuccess: () => setDeletingCard(null),
     });
   };
-  return (
-    <div className="min-h-screen">
-      <Navbar />
 
-      <main className="pt-20">
-        {/* Header */}
-        <section className="bg-gradient-hero text-primary-foreground py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 font-['Be Vietnam Pro']">
-                Quản lý Flashcards
+  // Tag selector shared component
+  const renderTagSelector = () => (
+    <div className="space-y-2">
+      <Label className="text-slate-700 font-semibold">{t("tags.label")}</Label>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={popoverOpen}
+            className="w-full justify-between border-slate-200 hover:border-indigo-300 transition-colors"
+            disabled={isLoadingTags}
+          >
+            {deckForm.tagIds?.length ?? 0 > 0
+              ? t("tags.selected", { count: deckForm.tagIds?.length })
+              : t("tags.selectPlaceholder")}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+          <Command>
+            <CommandInput placeholder={t("tags.searchPlaceholder")} />
+            <CommandList>
+              <CommandEmpty>{t("tags.empty")}</CommandEmpty>
+              <CommandGroup>
+                {allTags.map((tag) => (
+                  <CommandItem
+                    key={tag.id}
+                    value={tag.name}
+                    onSelect={() => {
+                      const selected = deckForm.tagIds || [];
+                      const isSelected = selected.includes(tag.id);
+                      setDeckForm((f) => ({
+                        ...f,
+                        tagIds: isSelected
+                          ? selected.filter((id) => id !== tag.id)
+                          : [...selected, tag.id],
+                      }));
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        (deckForm.tagIds || []).includes(tag.id)
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                    {tag.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <div className="flex flex-wrap gap-1.5 pt-1">
+        {deckForm.tagIds?.map((id) => {
+          const tag = allTags.find((t) => t.id === id);
+          return tag ? (
+            <Badge key={id} className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-0 text-xs font-semibold">
+              {tag.name}
+            </Badge>
+          ) : null;
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <main>
+        {/* Hero Section — Kahoot-style vibrant header */}
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-6 md:p-8 shadow-xl shadow-indigo-500/20">
+          {/* Interactive Gamified Mouse Particles */}
+          <MouseParticles />
+
+          <div className="relative z-10 max-w-3xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                <Zap className="w-5 h-5 text-amber-300" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                {t("page.title")}
               </h1>
-              <p className="text-primary-foreground/80 text-lg">
-                Tạo, chỉnh sửa và xóa bộ thẻ và thẻ ghi nhớ của riêng bạn
-              </p>
+            </div>
+            <p className="text-indigo-100 text-base md:text-lg font-medium">
+              {t("page.subtitle")}
+            </p>
+
+            {/* Quick stats */}
+            <div className="flex gap-3 mt-4">
+              <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-semibold text-white">
+                <Layers className="w-3.5 h-3.5" />
+                {t("page.deckCount", { count: decks.length })}
+              </div>
+              {selectedDeck && (
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-semibold text-white">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  {t("page.cardCount", { count: selectedDeckCards.length })}
+                </div>
+              )}
             </div>
           </div>
         </section>
+
+        {/* Tab switcher */}
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit mt-6">
+          <button
+            onClick={() => setActiveTab('mine')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === 'mine'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Lock className="w-4 h-4" /> {t("tabs.mine")}
+          </button>
+          <button
+            onClick={() => setActiveTab('explore')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === 'explore'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Globe className="w-4 h-4" /> {t("tabs.explore")}
+          </button>
+        </div>
+
+        {/* ── Explore tab ──────────────────────────────────────────────────── */}
+        {activeTab === 'explore' && (
+          <section className="py-8">
+            <div className="container mx-auto px-0">
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  <Globe className="w-6 h-6 text-indigo-500" />
+                  {t("explore.heading")}
+                </h2>
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder={t("explore.searchPlaceholder")}
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 bg-white"
+                    value={publicSearchInput}
+                    onChange={(e) => setPublicSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && setPublicSearch(publicSearchInput)}
+                  />
+                </div>
+              </div>
+
+              {isLoadingPublic ? (
+                <div className="flex justify-center py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+                </div>
+              ) : !publicDecks || publicDecks.length === 0 ? (
+                <div className="flex flex-col items-center gap-4 py-20 text-center border-2 border-dashed border-indigo-100 rounded-3xl bg-indigo-50/30">
+                  <Globe className="w-12 h-12 text-indigo-200" />
+                  <p className="font-semibold text-slate-600">{t("explore.empty")}</p>
+                  <p className="text-sm text-slate-400">{t("explore.emptyHint")}</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {publicDecks.map((deck) => {
+                    const isOwn = deck.userId === user?.id;
+                    return (
+                      <div
+                        key={deck.id}
+                        className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                        onClick={() => {
+                          setSelectedPublicDeckId(deck.id);
+                          setIsPublicSheetOpen(true);
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <h3 className="font-bold text-slate-800 leading-snug line-clamp-2 flex-1 group-hover:text-indigo-700 transition-colors">
+                            {deck.title}
+                          </h3>
+                          {isOwn ? (
+                            <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full shrink-0">{t("explore.ownBadge")}</span>
+                          ) : (
+                            <Globe className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          )}
+                        </div>
+                        {deck.description && (
+                          <p className="text-sm text-slate-500 line-clamp-2 mb-3">{deck.description}</p>
+                        )}
+                        {deck.deckTags?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {deck.deckTags.slice(0, 3).map((dt: any) => (
+                              <span key={dt.tag?.id ?? dt.id} className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                                {dt.tag?.name ?? dt.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                          <span className="text-xs text-slate-400">
+                            {new Date(deck.createdAt).toLocaleDateString('vi-VN')}
+                          </span>
+                          <span className="text-xs font-semibold text-indigo-600 group-hover:underline">
+                            {t("explore.viewAndStudy")}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Content */}
-        <section className="py-12">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Decks Panel */}
-              <div className="w-full lg:w-1/3">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-semibold">Bộ thẻ của tôi</h2>
-                  <Button onClick={openCreateDeck} className="bg-primary">
-                    <Plus className="w-4 h-4 mr-2" /> Thêm bộ thẻ
-                  </Button>
-                </div>
+        {activeTab === 'mine' && (
+        <section className="py-8">
+          <div className="container mx-auto px-0">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <Layers className="w-6 h-6 text-indigo-500" />
+                {t("mine.heading")}
+              </h2>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => setRagDialogOpen(true)}
+                  variant="outline"
+                  className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
+                >
+                  <Brain className="w-5 h-5 mr-1" /> {t("mine.aiGenerate")}
+                </Button>
+                <Button
+                  onClick={openCreateDeck}
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 shadow-md shadow-indigo-500/20 transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
+                >
+                  <Plus className="w-5 h-5 mr-1" /> {t("mine.addDeck")}
+                </Button>
+              </div>
+            </div>
 
-                {isLoadingDecks ? (
-                  <div className="flex justify-center p-10 border rounded-xl">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            {isLoadingDecks ? (
+              <div className="flex flex-col items-center justify-center p-16 rounded-3xl border border-slate-200 bg-white">
+                <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                <p className="text-slate-400 mt-4 font-medium">{t("mine.loading")}</p>
+              </div>
+            ) : decks.length > 0 ? (
+              <DeckList
+                decks={decks}
+                selectedDeckId={selectedDeckId}
+                onSelectDeck={(id) => {
+                  setSelectedDeckId(id);
+                  // Using setTimeout to allow state flush before opening Sheet
+                  setTimeout(() => setIsDetailsSheetOpen(true), 0);
+                }}
+                onEditDeck={openEditDeck}
+                onDeleteDeck={deleteDeck}
+                formatDate={formatDate}
+              />
+            ) : (
+              <div className="border-2 border-dashed border-indigo-200 rounded-3xl p-16 text-center bg-indigo-50/50 max-w-2xl mx-auto">
+                <Sparkles className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-700 mb-2">{t("mine.empty")}</h3>
+                <p className="text-slate-500 mb-6">{t("mine.emptyHint")}</p>
+                <Button onClick={openCreateDeck} className="rounded-xl px-8">{t("mine.createNow")}</Button>
+              </div>
+            )}
+          </div>
+        </section>
+        )}
+      </main>
+
+      {/* ── Public Deck Sheet (Explore / read-only) ───────────────────────── */}
+      <Sheet open={isPublicSheetOpen} onOpenChange={setIsPublicSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh] sm:h-[90vh] rounded-t-2xl p-0 shadow-2xl flex flex-col gap-0 overflow-hidden bg-slate-50/50 backdrop-blur-xl border-none">
+          <div className="bg-white p-6 md:p-8 flex-shrink-0 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
+            <div className="relative z-10 max-w-5xl mx-auto flex flex-col md:flex-row gap-6 md:items-end md:justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl">
+                    <Globe className="w-6 h-6" />
                   </div>
-                ) : decks.length > 0 ? (
-                  <DeckList
-                    decks={decks} // Truyền data đã fetch
-                    selectedDeckId={selectedDeckId}
-                    onSelectDeck={setSelectedDeckId}
-                    onEditDeck={openEditDeck}
-                    onDeleteDeck={deleteDeck}
-                    formatDate={formatDate}
-                  />
-                ) : (
-                  <div className="border rounded-xl p-6 text-center text-muted-foreground">
-                    Chưa có bộ thẻ nào. Hãy tạo bộ thẻ đầu tiên!
+                  <SheetTitle className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    {selectedPublicDeck?.title || t("sheet.publicTitle")}
+                  </SheetTitle>
+                </div>
+                <SheetDescription className="text-base text-slate-500 mt-2 max-w-2xl text-left">
+                  {selectedPublicDeck?.description || t("sheet.noDesc")}
+                </SheetDescription>
+                {selectedPublicDeck?.deckTags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {selectedPublicDeck.deckTags.map((dt: any) => (
+                      <span key={dt.tag?.id ?? dt.id} className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2.5 py-0.5 rounded-full">
+                        {dt.tag?.name ?? dt.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {publicCards.length > 0 && (
+                  <div className="flex items-center gap-2 mt-4">
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold ${
+                      publicQueueCount === 0
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        : publicHasOnlyNewCards
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        : 'bg-amber-50 border-amber-200 text-amber-700'
+                    }`}>
+                      {publicQueueCount === 0 ? (
+                        <Check className="w-4 h-4" />
+                      ) : publicHasOnlyNewCards ? (
+                        <Sparkles className="w-4 h-4" />
+                      ) : (
+                        <Clock className="w-4 h-4" />
+                      )}
+                      {publicQueueCount === 0
+                        ? t("sheet.queueStatus.publicDone")
+                        : publicHasOnlyNewCards
+                        ? t("sheet.queueStatus.publicNew", { count: publicQueueCount })
+                        : t("sheet.queueStatus.publicDue", { count: publicQueueCount })}
+                    </div>
                   </div>
                 )}
               </div>
-
-              {/* Cards Panel */}
-              <div className="w-full lg:w-2/3">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-semibold">
-                    {selectedDeck
-                      ? `Thẻ trong: ${selectedDeck.title}`
-                      : "Chọn một bộ thẻ"}
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={openCreateCard}
-                      disabled={!selectedDeckId}
-                      className="bg-primary"
-                    >
-                      <Plus className="w-4 h-4 mr-2" /> Thêm thẻ
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setStudyDialogOpen(true)}
-                      disabled={
-                        !selectedDeckId || selectedDeckCards.length === 0
-                      }
-                    >
-                      Học thẻ
-                    </Button>
-                  </div>
-                </div>
-
-                {selectedDeckId ? (
-                  isLoadingCards ? (
-                    <div className="flex justify-center p-10 border rounded-xl">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                  ) : selectedDeckCards.length > 0 ? (
-                    <CardList
-                      cards={selectedDeckCards} // Truyền data đã fetch
-                      onEditCard={openEditCard}
-                      onDeleteCard={deleteCard}
-                    />
-                  ) : (
-                    <div className="border rounded-xl p-6 text-center text-muted-foreground">
-                      Chưa có thẻ nào trong bộ này. Hãy thêm thẻ!
-                    </div>
-                  )
-                ) : (
-                  <div className="border rounded-xl p-6 text-center text-muted-foreground">
-                    Hãy chọn một bộ thẻ ở panel bên trái.
-                  </div>
+              <div className="flex items-center gap-3 relative group">
+                <Button
+                  onClick={() => setPublicStudyOpen(true)}
+                  disabled={!selectedPublicDeckId || publicCards.length === 0}
+                  size="lg"
+                  className="h-14 px-8 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 shadow-xl shadow-emerald-500/20 text-white rounded-2xl text-lg font-bold transition-all duration-300 hover:scale-105 active:scale-95"
+                >
+                  <Play className="w-6 h-6 mr-2 fill-white" /> {t("sheet.study")}
+                </Button>
+                {publicQueueCount > 0 && (
+                  <span className={`absolute -top-2 -right-2 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
+                    publicHasOnlyNewCards ? 'bg-indigo-500' : 'bg-red-500'
+                  }`}>
+                    {publicQueueCount}
+                  </span>
                 )}
               </div>
             </div>
           </div>
-        </section>
-      </main>
+
+          <div className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
+            <div className="max-w-5xl mx-auto space-y-6">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-500" />
+                {t("sheet.cardList", { count: publicCards.length })}
+                <span className="ml-2 text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{t("sheet.readOnly")}</span>
+              </h3>
+
+              {isLoadingPublicCards ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                </div>
+              ) : publicCards.length === 0 ? (
+                <div className="border border-dashed border-slate-300 rounded-2xl p-12 text-center">
+                  <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">{t("sheet.emptyCards")}</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+                  <CardList
+                    cards={publicCards}
+                    onEditCard={() => {}}
+                    onDeleteCard={() => {}}
+                    readOnly
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Public Study Mode Dialog */}
+      <Dialog open={publicStudyOpen} onOpenChange={(open) => {
+        setPublicStudyOpen(open);
+        if (!open && selectedPublicDeckId) {
+          import("@/hooks/api/use-flashcards").then(module => {
+            queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedPublicDeckId) });
+          });
+        }
+      }}>
+        <DialogContent className="sm:max-w-2xl p-0 bg-transparent border-0 shadow-none" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{t("dialogs.studyMode.title")}</DialogTitle>
+          <StudyMode
+            deckId={selectedPublicDeckId!}
+            onClose={() => {
+              setPublicStudyOpen(false);
+              import("@/hooks/api/use-flashcards").then(module => {
+                queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedPublicDeckId!) });
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Kahoot-style Detail Sheet */}
+      <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh] sm:h-[90vh] rounded-t-2xl p-0 shadow-2xl flex flex-col gap-0 overflow-hidden bg-slate-50/50 backdrop-blur-xl border-none">
+          {/* Header Area with vibrant background */}
+          <div className="bg-white p-6 md:p-8 flex-shrink-0 relative overflow-hidden">
+             {/* Subtle gradient bloblets */}
+             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
+             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-500/5 rounded-full blur-2xl" />
+
+             <div className="relative z-10 max-w-5xl mx-auto flex flex-col md:flex-row gap-6 md:items-end md:justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl">
+                      <BookOpen className="w-6 h-6" />
+                    </div>
+                    <SheetTitle className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                      {selectedDeck?.title}
+                    </SheetTitle>
+                  </div>
+                  <SheetDescription className="text-base text-slate-500 mt-2 max-w-2xl text-left truncate">
+                    {selectedDeck?.description || t("sheet.noDesc")}
+                  </SheetDescription>
+
+                  {selectedDeckId && selectedDeckCards.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-3 mt-4">
+                      <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold shadow-sm transition-all duration-300 ${
+                          isLoadingQueue
+                            ? 'bg-slate-50 border-slate-200 text-slate-500 animate-pulse'
+                            : reviewQueueCount === 0
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            : hasOnlyNewCards
+                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                            : 'bg-amber-50 border-amber-200 text-amber-700'
+                        }`}
+                      >
+                        {isLoadingQueue ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : reviewQueueCount === 0 ? (
+                          <Check className="w-4 h-4" />
+                        ) : hasOnlyNewCards ? (
+                          <Sparkles className="w-4 h-4" />
+                        ) : (
+                          <Clock className="w-4 h-4" />
+                        )}
+                        <span>
+                          {isLoadingQueue
+                            ? t("sheet.queueStatus.loading")
+                            : reviewQueueCount === 0
+                            ? t("sheet.queueStatus.done")
+                            : hasOnlyNewCards
+                            ? t("sheet.queueStatus.newCards", { count: reviewQueueCount })
+                            : t("sheet.queueStatus.dueCards", { count: reviewQueueCount })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 w-full md:w-auto relative group">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          disabled={!selectedDeckId || resetProgressMutation.isPending}
+                          className="h-14 w-14 md:w-14 rounded-2xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
+                          aria-label={t("sheet.resetProgress")}
+                        >
+                          {resetProgressMutation.isPending ? (
+                            <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <RotateCcw className="w-6 h-6" aria-hidden="true" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("dialogs.resetProgress.title")}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t("dialogs.resetProgress.desc")}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("dialogs.resetProgress.cancel")}</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => selectedDeckId && resetProgressMutation.mutate(selectedDeckId)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {t("dialogs.resetProgress.confirm")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <Button
+                      onClick={() => setStudyDialogOpen(true)}
+                      disabled={!selectedDeckId || selectedDeckCards.length === 0}
+                      size="lg"
+                      className="flex-1 md:flex-none h-14 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 shadow-xl shadow-emerald-500/20 text-white rounded-2xl text-lg font-bold transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
+                    >
+                      {/* Shine effect */}
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+
+                      <Play className="w-6 h-6 mr-2 fill-white" /> {t("sheet.study")}
+                    </Button>
+
+                    {reviewQueueCount > 0 && (
+                        <span className={`absolute -top-2 -right-2 md:-right-4 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
+                          hasOnlyNewCards
+                            ? 'bg-indigo-500 shadow-indigo-500/40'
+                            : 'bg-red-500 shadow-red-500/40'
+                        }`}>
+                          {reviewQueueCount}
+                        </span>
+                    )}
+                </div>
+             </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
+            <div className="max-w-5xl mx-auto space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-indigo-500" />
+                  {t("sheet.cardList", { count: selectedDeckCards.length })}
+                </h3>
+                <Button
+                  onClick={openCreateCard}
+                  disabled={!selectedDeckId}
+                  variant="outline"
+                  className="rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 font-semibold shadow-sm bg-white"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> {t("sheet.addCard")}
+                </Button>
+              </div>
+
+              {isLoadingCards && (
+                <div className="flex justify-center p-8 border border-slate-200 bg-white rounded-2xl shadow-sm">
+                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                </div>
+              )}
+
+              {!isLoadingCards && selectedDeckCards.length === 0 ? (
+                <div className="border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white shadow-sm">
+                  <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-lg text-slate-600 font-bold mb-2">{t("sheet.emptyMyCards")}</p>
+                  <p className="text-slate-400 mb-6">{t("sheet.emptyMyCardsHint")}</p>
+                  <Button onClick={openCreateCard} className="rounded-xl px-6">{t("sheet.addCardNow")}</Button>
+                </div>
+              ) : !isLoadingCards && (
+                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+                  <CardList cards={selectedDeckCards} onEditCard={openEditCard} onDeleteCard={deleteCard} />
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ===== DIALOGS ===== */}
 
       {/* Create Deck Dialog */}
       <Dialog open={creatingDeck} onOpenChange={setCreatingDeck}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Tạo bộ thẻ mới</DialogTitle>
-            <DialogDescription>
-              Nhập thông tin cho bộ thẻ của bạn
-            </DialogDescription>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-indigo-600" />
+              </div>
+              {t("dialogs.createDeck.title")}
+            </DialogTitle>
+            <DialogDescription>{t("dialogs.createDeck.desc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Tên bộ thẻ *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.nameLabel")}</Label>
               <Input
                 value={deckForm.title}
-                onChange={(e) =>
-                  setDeckForm((f) => ({ ...f, title: e.target.value }))
-                }
-                placeholder="Ví dụ: Từ vựng Business English"
+                onChange={(e) => setDeckForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder={t("dialogs.createDeck.namePlaceholder")}
+                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
             <div className="space-y-2">
-              <Label>Mô tả</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
               <Textarea
                 value={deckForm.description}
-                onChange={(e) =>
-                  setDeckForm((f) => ({ ...f, description: e.target.value }))
-                }
-                placeholder="Mô tả ngắn về bộ thẻ"
+                onChange={(e) => setDeckForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder={t("dialogs.createDeck.descPlaceholder")}
+                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Tags</Label>
-              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={popoverOpen}
-                    className="w-full justify-between"
-                    disabled={isLoadingTags}
-                  >
-                    {deckForm.tagIds?.length ?? 0 > 0
-                      ? `Đã chọn ${deckForm.tagIds?.length} tag`
-                      : "Chọn tag..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Tìm tag..." />
-                    <CommandList>
-                      <CommandEmpty>Không tìm thấy tag.</CommandEmpty>
-                      <CommandGroup>
-                        {allTags.map((tag) => (
-                          <CommandItem
-                            key={tag.id}
-                            value={tag.name}
-                            onSelect={() => {
-                              const selected = deckForm.tagIds || [];
-                              const isSelected = selected.includes(tag.id);
-
-                              setDeckForm((f) => ({
-                                ...f,
-                                tagIds: isSelected
-                                  ? selected.filter((id) => id !== tag.id) // Bỏ chọn
-                                  : [...selected, tag.id], // Chọn
-                              }));
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                (deckForm.tagIds || []).includes(tag.id)
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {tag.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {/* Hiển thị tag đã chọn */}
-              <div className="flex flex-wrap gap-1 pt-1">
-                {deckForm.tagIds?.map((id) => {
-                  const tag = allTags.find((t) => t.id === id);
-
-                  return tag ? (
-                    <Badge key={id} variant="secondary">
-                      {tag.name}
-                    </Badge>
-                  ) : null;
-                })}
-              </div>
-            </div>
+            {renderTagSelector()}
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={deckForm.isPublic}
@@ -488,22 +895,22 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
                   setDeckForm((f) => ({ ...f, isPublic: !!checked }))
                 }
               />
-              <Label>Bộ thẻ công khai</Label>
+              <Label className="text-slate-600">{t("dialogs.createDeck.isPublic")}</Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreatingDeck(false)}>
-              Hủy
+              {t("dialogs.createDeck.cancel")}
             </Button>
             <Button
               onClick={saveCreateDeck}
-              className="bg-primary"
+              className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 font-bold"
               disabled={createDeckMutation.isPending}
             >
               {createDeckMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Tạo
+              {t("dialogs.createDeck.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -511,109 +918,34 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
 
       {/* Edit Deck Dialog */}
       <Dialog open={!!editingDeck} onOpenChange={() => setEditingDeck(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa bộ thẻ</DialogTitle>
-            <DialogDescription>Cập nhật thông tin bộ thẻ</DialogDescription>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <Edit className="w-4 h-4 text-amber-600" />
+              </div>
+              {t("dialogs.editDeck.title")}
+            </DialogTitle>
+            <DialogDescription>{t("dialogs.editDeck.desc")}</DialogDescription>
           </DialogHeader>
-
-          {/* Chúng ta tái sử dụng UI từ Create Deck, 
-            vì `deckForm` đã được `openEditDeck` điền sẵn data
-          */}
           <div className="space-y-4">
-            {/* Tên bộ thẻ */}
             <div className="space-y-2">
-              <Label>Tên bộ thẻ *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.editDeck.nameLabel")}</Label>
               <Input
                 value={deckForm.title}
-                onChange={(e) =>
-                  setDeckForm((f) => ({ ...f, title: e.target.value }))
-                }
+                onChange={(e) => setDeckForm((f) => ({ ...f, title: e.target.value }))}
+                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
-
-            {/* Mô tả */}
             <div className="space-y-2">
-              <Label>Mô tả</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
               <Textarea
                 value={deckForm.description}
-                onChange={(e) =>
-                  setDeckForm((f) => ({ ...f, description: e.target.value }))
-                }
+                onChange={(e) => setDeckForm((f) => ({ ...f, description: e.target.value }))}
+                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
-
-            {/* Chọn Tag (Logic y hệt Create Dialog) */}
-            <div className="space-y-2">
-              <Label>Tags</Label>
-              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={popoverOpen}
-                    className="w-full justify-between"
-                    disabled={isLoadingTags}
-                  >
-                    {deckForm.tagIds?.length ?? 0 > 0
-                      ? `Đã chọn ${deckForm.tagIds?.length} tag`
-                      : "Chọn tag..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Tìm tag..." />
-                    <CommandList>
-                      <CommandEmpty>Không tìm thấy tag.</CommandEmpty>
-                      <CommandGroup>
-                        {allTags.map((tag) => (
-                          <CommandItem
-                            key={tag.id}
-                            value={tag.name}
-                            onSelect={() => {
-                              const selected = deckForm.tagIds || [];
-                              const isSelected = selected.includes(tag.id);
-
-                              setDeckForm((f) => ({
-                                ...f,
-                                tagIds: isSelected
-                                  ? selected.filter((id) => id !== tag.id) // Bỏ chọn
-                                  : [...selected, tag.id], // Chọn
-                              }));
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                (deckForm.tagIds || []).includes(tag.id)
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {tag.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {/* Hiển thị tag đã chọn */}
-              <div className="flex flex-wrap gap-1 pt-1">
-                {deckForm.tagIds?.map((id) => {
-                  const tag = allTags.find((t) => t.id === id);
-
-                  return tag ? (
-                    <Badge key={id} variant="secondary">
-                      {tag.name}
-                    </Badge>
-                  ) : null;
-                })}
-              </div>
-            </div>
-
-            {/* Checkbox Công khai */}
+            {renderTagSelector()}
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={deckForm.isPublic}
@@ -621,27 +953,27 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
                   setDeckForm((f) => ({ ...f, isPublic: !!checked }))
                 }
               />
-              <Label>Bộ thẻ công khai</Label>
+              <Label className="text-slate-600">{t("dialogs.editDeck.isPublic")}</Label>
             </div>
           </div>
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingDeck(null)}>
-              Hủy
+              {t("dialogs.editDeck.cancel")}
             </Button>
             <Button
-              onClick={saveEditDeck} // 👈 Gọi hàm `saveEditDeck` mới
-              className="bg-primary"
-              disabled={updateDeckMutation.isPending} // 👈 Vô hiệu hóa khi đang lưu
+              onClick={saveEditDeck}
+              className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 font-bold"
+              disabled={updateDeckMutation.isPending}
             >
               {updateDeckMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Lưu
+              {t("dialogs.editDeck.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {/* Alert Delete Deck */}
       <AlertDialog
         open={!!deletingDeck}
@@ -649,82 +981,88 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </div>
+              {t("dialogs.deleteDeck.title")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn bộ
-              thẻ
-              <strong className="text-foreground">
-                {" "}
-                {deletingDeck?.title}{" "}
-              </strong>
-              và tất cả các thẻ con bên trong.
+              {t("dialogs.deleteDeck.desc", { name: deletingDeck?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletingDeck(null)}>
-              Hủy
+              {t("dialogs.deleteDeck.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-bold"
               onClick={handleConfirmDelete}
-              disabled={deleteDeckMutation.isPending} // 👈 Vô hiệu hóa khi đang xóa
+              disabled={deleteDeckMutation.isPending}
             >
               {deleteDeckMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Tiếp tục xóa
+              {t("dialogs.deleteDeck.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
       {/* Create Card Dialog */}
       <Dialog open={creatingCard} onOpenChange={setCreatingCard}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Thêm thẻ mới</DialogTitle>
-            <DialogDescription>Thêm thẻ vào bộ thẻ đang chọn</DialogDescription>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-emerald-600" />
+              </div>
+              {t("dialogs.createCard.title")}
+            </DialogTitle>
+            <DialogDescription>{t("dialogs.createCard.desc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Mặt trước *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.frontLabel")}</Label>
               <Input
                 value={cardForm.frontContent}
-                onChange={(e) =>
-                  setCardForm((f) => ({ ...f, frontContent: e.target.value }))
-                }
-                placeholder="Từ/cụm từ"
+                onChange={(e) => setCardForm((f) => ({ ...f, frontContent: e.target.value }))}
+                placeholder={t("dialogs.createCard.frontPlaceholder")}
+                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
             <div className="space-y-2">
-              <Label>Mặt sau *</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.backLabel")}</Label>
               <Textarea
                 value={cardForm.backContent}
-                onChange={(e) =>
-                  setCardForm((f) => ({ ...f, backContent: e.target.value }))
-                }
-                placeholder="Định nghĩa/giải thích"
+                onChange={(e) => setCardForm((f) => ({ ...f, backContent: e.target.value }))}
+                placeholder={t("dialogs.createCard.backPlaceholder")}
+                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
             <div className="space-y-2">
-              <Label>Câu ví dụ</Label>
+              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.exampleLabel")}</Label>
               <Textarea
                 value={cardForm.exampleSentence}
-                onChange={(e) =>
-                  setCardForm((f) => ({
-                    ...f,
-                    exampleSentence: e.target.value,
-                  }))
-                }
-                placeholder="Ví dụ sử dụng trong câu"
+                onChange={(e) => setCardForm((f) => ({ ...f, exampleSentence: e.target.value }))}
+                placeholder={t("dialogs.createCard.examplePlaceholder")}
+                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreatingCard(false)}>
-              Hủy
+              {t("dialogs.createCard.cancel")}
             </Button>
-            <Button onClick={saveCreateCard} className="bg-primary" disabled={createCardMutation.isPending}>
-              Tạo
+            <Button
+              onClick={saveCreateCard}
+              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 font-bold"
+              disabled={createCardMutation.isPending}
+            >
+              {createCardMutation.isPending && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
+              {t("dialogs.createCard.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -732,94 +1070,132 @@ const [cardForm, setCardForm] = useState<Omit<CardFormDTO, 'deckId'>>({
 
       {/* Edit Card Dialog */}
       <Dialog open={!!editingCard} onOpenChange={() => setEditingCard(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa thẻ</DialogTitle>
-            <DialogDescription>Cập nhật nội dung thẻ</DialogDescription>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <Edit className="w-4 h-4 text-amber-600" />
+              </div>
+              {t("dialogs.editCard.title")}
+            </DialogTitle>
+            <DialogDescription>{t("dialogs.editCard.desc")}</DialogDescription>
           </DialogHeader>
           {editingCard && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Mặt trước *</Label>
+                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.frontLabel")}</Label>
                 <Input
                   value={cardForm.frontContent}
-                  onChange={(e) =>
-                    setCardForm((f) => ({ ...f, frontContent: e.target.value }))
-                  }
+                  onChange={(e) => setCardForm((f) => ({ ...f, frontContent: e.target.value }))}
+                  className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Mặt sau *</Label>
+                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.backLabel")}</Label>
                 <Textarea
                   value={cardForm.backContent}
-                  onChange={(e) =>
-                    setCardForm((f) => ({ ...f, backContent: e.target.value }))
-                  }
+                  onChange={(e) => setCardForm((f) => ({ ...f, backContent: e.target.value }))}
+                  className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Câu ví dụ</Label>
+                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.exampleLabel")}</Label>
                 <Textarea
                   value={cardForm.exampleSentence}
-                  onChange={(e) =>
-                    setCardForm((f) => ({
-                      ...f,
-                      exampleSentence: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setCardForm((f) => ({ ...f, exampleSentence: e.target.value }))}
+                  className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
                 />
               </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingCard(null)}>
-              Hủy
+              {t("dialogs.editCard.cancel")}
             </Button>
-            <Button onClick={saveEditCard} className="bg-primary" disabled={createCardMutation.isPending}>
-              Lưu
+            <Button
+              onClick={saveEditCard}
+              className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 font-bold"
+              disabled={updateCardMutation.isPending}
+            >
+              {updateCardMutation.isPending && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
+              {t("dialogs.editCard.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-<AlertDialog open={!!deletingCard} onOpenChange={(isOpen) => !isOpen && setDeletingCard(null)}>
+
+      {/* Alert Delete Card */}
+      <AlertDialog open={!!deletingCard} onOpenChange={(isOpen) => !isOpen && setDeletingCard(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </div>
+              {t("dialogs.deleteCard.title")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn thẻ
-              <strong className="text-foreground"> {deletingCard?.frontContent} </strong>
-              khỏi bộ thẻ.
+              {t("dialogs.deleteCard.desc", { name: deletingCard?.frontContent })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletingCard(null)}>
-              Hủy
+              {t("dialogs.deleteCard.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleConfirmDeleteCard} // 👈 Gọi hàm mới
-              disabled={deleteCardMutation.isPending} // 👈 Vô hiệu hóa
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-bold"
+              onClick={handleConfirmDeleteCard}
+              disabled={deleteCardMutation.isPending}
             >
               {deleteCardMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              Tiếp tục xóa
+              {t("dialogs.deleteCard.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* Study Mode Dialog */}
-      <Dialog open={studyDialogOpen} onOpenChange={setStudyDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <StudyMode
-            //cards={selectedDeckCards}
-            deckId={selectedDeckId}
-            onClose={() => setStudyDialogOpen(false)}
-          />
+
+      {/* RAG Generator Dialog */}
+      <Dialog open={ragDialogOpen} onOpenChange={setRagDialogOpen}>
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <Brain className="w-4 h-4 text-emerald-600" />
+              </div>
+              {t("dialogs.ragGenerator.title")}
+            </DialogTitle>
+            <DialogDescription>{t("dialogs.ragGenerator.desc")}</DialogDescription>
+          </DialogHeader>
+          <RagGenerator embedded />
         </DialogContent>
       </Dialog>
 
-      <Footer />
+      {/* Study Mode Dialog */}
+      <Dialog open={studyDialogOpen} onOpenChange={(open) => {
+        setStudyDialogOpen(open);
+        if (!open && selectedDeckId) {
+          import("@/hooks/api/use-flashcards").then(module => {
+            queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedDeckId) });
+          });
+        }
+      }}>
+        <DialogContent className="sm:max-w-2xl p-0 bg-transparent border-0 shadow-none" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{t("dialogs.studyMode.title")}</DialogTitle>
+          <StudyMode
+            deckId={selectedDeckId!}
+            onClose={() => {
+              setStudyDialogOpen(false);
+              import("@/hooks/api/use-flashcards").then(module => {
+                queryClient.invalidateQueries({ queryKey: module.flashcardKeys.reviewQueue(selectedDeckId!) });
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

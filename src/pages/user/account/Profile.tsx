@@ -1,675 +1,672 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '@/components/user/layout/Navbar';
-import Footer from '@/components/user/layout/Footer';
+import { Trans, useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-
-} from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Edit, Save, X, Loader2, Camera, LayoutDashboard } from 'lucide-react';
+import { AvatarCropModal } from '@/components/ui/AvatarCropModal';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Calendar, Edit, Save, X, Loader2, Camera,
+  LayoutDashboard, User, Mail, Phone, Clock, Target, Wallet, KeyRound, AlertCircle, CheckCircle2,
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { User } from '@/types/type';
 import CourseSellerApplicationDialog from '@/components/user/account/CourseSellerApplicationDialog';
-import type { CourseSellerApplication } from '@/types/type';
 import { formatVND, formatDate, formatDateForInput } from '@/lib/utils';
 import { useProfile, useUpdateProfile } from '@/hooks/api/use-user';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { walletService } from '@/lib/api/services/user/wallet/wallet.service';
 
-const englishLevels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+const ENGLISH_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+const LEVEL_COLORS: Record<string, string> = {
+  A1: 'bg-slate-500  border-slate-500',
+  A2: 'bg-blue-500   border-blue-500',
+  B1: 'bg-cyan-500   border-cyan-500',
+  B2: 'bg-indigo-500 border-indigo-500',
+  C1: 'bg-violet-500 border-violet-500',
+  C2: 'bg-purple-600 border-purple-600',
+};
 
 export default function Profile() {
-  // MỚI: Lấy data từ hook, đây là nguồn dữ liệu (SSOT) duy nhất
+  const { t, i18n } = useTranslation('account');
+  const dateLocale = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-GB';
   const { user, myApplications, isLoading, isError, error } = useProfile();
-
-  // MỚI: Dùng để refresh data sau khi submit form
   const queryClient = useQueryClient();
   const updateProfileMutation = useUpdateProfile();
 
+  const { data: walletData, isLoading: walletLoading } = useQuery({
+    queryKey: ['wallet', 'me'],
+    queryFn: () => walletService.getWallet(),
+    staleTime: 1000 * 60 * 2,
+    retry: false,
+  });
+  const walletBalance = walletData?.data?.balance ?? walletData?.data?.allowance ?? 0;
+
   const [editing, setEditing] = useState(false);
-  const [goalInput, setGoalInput] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [goalInput, setGoalInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // MỚI: Khởi tạo form rỗng để tránh crash khi user đang null
+
+  // Avatar crop state
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+
+  // Email change dialog state
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+
   const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    phoneNumber: "",
-    profilePicture: "",
-    dateOfBirth: "",
-    englishLevel: "B1",
+    fullName: '',
+    phoneNumber: '',
+    profilePicture: '',
+    dateOfBirth: '',
+    englishLevel: 'B1',
     learningGoals: [] as string[],
   });
 
   const [applicationOpen, setApplicationOpen] = useState(false);
 
-  // BỎ: const [myApplications, setMyApplications] = ... (đã bỏ)
-
-  // MỚI: Dùng useEffect để đồng bộ data từ hook `useProfile` vào `form`
   useEffect(() => {
     if (user && !editing) {
-      // Chỉ đồng bộ khi có user VÀ không ở chế độ "sửa"
       setForm({
         fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber || "",
-        profilePicture: user.profilePicture || "",
+        phoneNumber: user.phoneNumber || '',
+        profilePicture: user.profilePicture || '',
         dateOfBirth: formatDateForInput(user.dateOfBirth),
-        englishLevel: user.englishLevel || "B1",
+        englishLevel: user.englishLevel || 'B1',
         learningGoals: [...(user.learningGoals || [])],
       });
     }
-  }, [user, editing]); // Chạy lại khi `user` thay đổi hoặc khi `editing` tắt
+  }, [user, editing]);
 
-  const handleChange = (key: keyof typeof form, value: any) => {
+  const handleChange = (key: keyof typeof form, value: string | string[]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
-  };
 
   const addGoal = () => {
     const v = goalInput.trim();
     if (!v) return;
-    if (form.learningGoals.includes(v)) {
-      toast.warning("Mục tiêu đã tồn tại");
-      return;
-    }
+    if (form.learningGoals.includes(v)) { toast.warning(t('profile.toasts.goalExists')); return; }
     setForm((prev) => ({ ...prev, learningGoals: [...prev.learningGoals, v] }));
-    setGoalInput("");
+    setGoalInput('');
   };
 
-  const removeGoal = (goal: string) => {
-    setForm((prev) => ({
-      ...prev,
-      learningGoals: prev.learningGoals.filter((g) => g !== goal),
-    }));
-  };
+  const removeGoal = (goal: string) =>
+    setForm((prev) => ({ ...prev, learningGoals: prev.learningGoals.filter((g) => g !== goal) }));
 
-  const startEdit = () => setEditing(true);
+  const cancelEdit = () => { setEditing(false); };
 
-  // MỚI: `cancelEdit` giờ chỉ cần tắt `editing`
-  // `useEffect` ở trên sẽ tự động reset form
-  const cancelEdit = () => {
-    setEditing(false);
-    setAvatarFile(null);
-  };
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  // File → open crop modal
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File quá lớn. Vui lòng chọn ảnh dưới 5MB.");
-      return;
-    }
-
-    // 1. Lưu file vào state để dành tí nữa bấm Save thì gửi
-    setAvatarFile(file);
-
-    // 2. Tạo URL ảo để hiển thị Preview ngay lập tức (cho User thấy ảnh đổi)
-    const previewUrl = URL.createObjectURL(file);
-    setForm((prev) => ({ ...prev, profilePicture: previewUrl }));
+    if (file.size > 5 * 1024 * 1024) { toast.error(t('profile.toasts.fileTooLarge')); return; }
+    const objectUrl = URL.createObjectURL(file);
+    setRawImageSrc(objectUrl);
+    setCropOpen(true);
+    e.target.value = '';
   };
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-  // MỚI: Sửa `saveEdit`
+  const handleCropConfirm = useCallback((dataUrl: string) => {
+    setForm((prev) => ({ ...prev, profilePicture: dataUrl }));
+    setCropOpen(false);
+    if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
+    setRawImageSrc(null);
+  }, [rawImageSrc]);
+
+  const handleCropClose = useCallback(() => {
+    setCropOpen(false);
+    if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
+    setRawImageSrc(null);
+  }, [rawImageSrc]);
+
+  // Save profile — always JSON, never FormData
   const saveEdit = () => {
     if (!user) return;
-
-    // 1. Tạo FormData
-    const formData = new FormData();
-
-    // 2. Thêm các trường text
-    formData.append('fullName', form.fullName);
-    formData.append('email', form.email); // (Thường email không cho sửa, tuỳ backend)
-    formData.append('phoneNumber', form.phoneNumber);
-    if (form.dateOfBirth) formData.append('dateOfBirth', new Date(form.dateOfBirth).toISOString());
-    if (form.englishLevel) formData.append('englishLevel', form.englishLevel);
-    
-    
-    // Xử lý mảng learningGoals (FormData không gửi được mảng trực tiếp)
-    form.learningGoals.forEach((goal) => {
-      formData.append('learningGoals[]', goal); // Hoặc 'learningGoals' tuỳ backend quy định
-    });
-
-    // 3. QUAN TRỌNG: Nếu có file ảnh mới, append file đó vào
-    if (avatarFile) {
-      // 'profilePicture' là tên field mà backend endpoint UPDATE mong đợi nhận file
-      formData.append('image', avatarFile); 
-    } else {
-        // Nếu không chọn ảnh mới, backend có thể giữ ảnh cũ
-        // (Không cần gửi field này, hoặc gửi URL cũ tuỳ logic backend)
+    const payload: Record<string, unknown> = {
+      fullName: form.fullName,
+      phoneNumber: form.phoneNumber,
+      englishLevel: form.englishLevel,
+      learningGoals: form.learningGoals,
+    };
+    if (form.dateOfBirth) {
+      payload.dateOfBirth = new Date(form.dateOfBirth).toISOString();
     }
-
-    // 4. Gửi FormData đi
-    updateProfileMutation.mutate(formData, {
+    if (form.profilePicture && form.profilePicture !== (user.profilePicture ?? '')) {
+      payload.profilePicture = form.profilePicture;
+    }
+    updateProfileMutation.mutate(payload as any, {
       onSuccess: () => {
-        toast.success('Cập nhật hồ sơ thành công!');
+        toast.success(t('profile.toasts.updateSuccess'));
         setEditing(false);
-        setAvatarFile(null); // Reset file tạm
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.message
+          || err?.response?.data?.error
+          || err?.message
+          || t('profile.toasts.updateFailed');
+        toast.error(msg);
       },
     });
   };
 
-  // MỚI: Xử lý trạng thái Loading
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="flex items-center justify-center pt-40">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // MỚI: Xử lý trạng thái Error
-  if (isError || !user) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="container mx-auto px-4 pt-40 text-center">
-          <h2 className="text-2xl font-semibold text-destructive mb-4">
-            Đã xảy ra lỗi
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {error || "Không thể tải thông tin cá nhân."}
-          </p>
-          <Button onClick={() => window.location.reload()}>
-            Tải lại trang
-          </Button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Check role từ localStorage hoặc từ user object
-  const getUserRole = () => {
-    // Thử lấy từ localStorage trước
-    const storedRole = localStorage.getItem('role');
-    if (storedRole) return storedRole;
-
-    // Nếu không có, lấy từ user object
-    return user?.role;
+  // Email change handlers
+  const handleEmailChangeSend = () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast.error(t('profile.toasts.invalidEmail'));
+      return;
+    }
+    setEmailSent(true);
+    toast.success(t('profile.toasts.verificationSent', { email: newEmail }));
   };
 
-  const userRole = getUserRole();
-  const canAccessSellerPortal = userRole === 'COURSESELLER';
-  const canAccessAdminPortal = userRole === 'ADMINISTRATOR';
+  const handleEmailDialogClose = () => {
+    setEmailDialogOpen(false);
+    setEmailSent(false);
+    setNewEmail('');
+  };
 
-  // Màn hình chính khi đã có data
+  // ── Loading / Error ──────────────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  if (isError || !user) {
+    return (
+      <div className="container mx-auto px-4 pt-16 text-center space-y-4">
+        <p className="text-xl font-semibold text-destructive">{t('profile.loadError')}</p>
+        <p className="text-slate-500 text-sm">{String(error ?? '')}</p>
+        <Button onClick={() => window.location.reload()}>{t('profile.actions.reload')}</Button>
+      </div>
+    );
+  }
+
+  const userRole = localStorage.getItem('role') || user?.role || 'STUDENT';
+  const isSeller = userRole === 'COURSESELLER';
+  const isAdmin  = userRole === 'ADMINISTRATOR';
+
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen">
-      <Navbar />
+    <div className="max-w-5xl mx-auto space-y-5 pb-12">
 
-      <main className="pt-20">
-        <section className="bg-gradient-hero text-primary-foreground py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-6">
-              <div className="relative group">
-                <Avatar className="h-24 w-24 border-4 border-background/20">
-                  {/* form.profilePicture lúc này có thể là URL thật HOẶC URL preview blob */}
-                  <AvatarImage src={form.profilePicture} className="object-cover" />
-                  <AvatarFallback className="text-2xl font-bold text-primary">
-                    {user.fullName?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
+      <div className="rounded-3xl border border-slate-200 shadow-sm">
+        <div className="h-36 rounded-t-3xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full" />
+          <div className="absolute top-4 left-14 w-16 h-16 bg-white/5 rounded-full" />
+          <div className="absolute -bottom-16 left-1/3 w-64 h-64 bg-indigo-700/30 rounded-full blur-2xl" />
+        </div>
 
-                {/* Nút Camera chỉ hiện khi Edit */}
-                {editing && (
-                  <div 
-                    className="absolute bottom-0 right-0 bg-white text-primary p-1.5 rounded-full shadow-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={triggerFileInput}
-                  >
-                    <Camera className="w-4 h-4" />
+        <div className="bg-white rounded-b-3xl px-6 pb-5">
+          <div className="flex items-start gap-4">
+            {/* Avatar — larger, with crop trigger */}
+            <div className="relative -mt-14 shrink-0 group">
+              <UserAvatar
+                src={form.profilePicture}
+                name={user.fullName}
+                className="h-28 w-28 border-4 border-white shadow-xl"
+              />
+              {editing && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Camera className="w-6 h-6 text-white" />
+                </button>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            {/* Name + role + badges + actions */}
+            <div className="flex-1 min-w-0 pt-3">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-bold text-slate-900 leading-tight truncate">{user.fullName}</h1>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">{user.email}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {form.englishLevel && (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-white border ${LEVEL_COLORS[form.englishLevel] ?? 'bg-indigo-500 border-indigo-500'}`}>
+                        {form.englishLevel}
+                      </span>
+                    )}
+                    {isSeller && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">{t('profile.badges.instructor')}</Badge>}
+                    {isAdmin  && <Badge className="bg-rose-100 text-rose-700 border-rose-200 text-xs font-semibold">{t('profile.badges.admin')}</Badge>}
                   </div>
-                )}
+                </div>
 
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold font-['Be Vietnam Pro']">
-                  Hồ sơ cá nhân
-                </h1>
-                <p className="text-primary-foreground/80">
-                  Quản lý và cập nhật thông tin của bạn
-                </p>
-              </div>
-              <div className="flex-1" />
-              <div className="flex items-center gap-3">
-                {canAccessAdminPortal && (
-                  <Button asChild variant="default">
-                    <Link to="/admin">
-                      <LayoutDashboard className="w-4 h-4 mr-2" />
-                      Quản lý hệ thống
-                    </Link>
-                  </Button>
-                )}
-                {canAccessSellerPortal && (
-                  <Button asChild variant="default">
-                    <Link to="/seller">
-                      <LayoutDashboard className="w-4 h-4 mr-2" />
-                      Quản lý khóa học
-                    </Link>
-                  </Button>
-                )}
-                {!editing ? (
-                  <Button variant="secondary" onClick={startEdit}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Chỉnh sửa
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button variant="secondary" onClick={saveEdit}>
-                      <Save className="w-4 h-4 mr-2" />
-                      Lưu
+                <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                  {isAdmin && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/admin"><LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.adminDashboard')}</Link>
                     </Button>
-                    <Button variant="outline" onClick={cancelEdit}>
-                      <X className="w-4 h-4 mr-2" />
-                      Hủy
+                  )}
+                  {isSeller && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/seller"><LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.sellerDashboard')}</Link>
                     </Button>
-                  </div>
-                )}
+                  )}
+                  {!editing ? (
+                    <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                      <Edit className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.edit')}
+                    </Button>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <Button size="sm" onClick={saveEdit} disabled={updateProfileMutation.isPending}>
+                        {updateProfileMutation.isPending
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <><Save className="w-3.5 h-3.5 mr-1.5" />{t('profile.actions.save')}</>}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={cancelEdit}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
 
-        <section className="py-12">
-          <div className="container mx-auto px-4 grid lg:grid-cols-3 gap-8">
-            {/* Thông tin cơ bản */}
-            <Card className="p-6 lg:col-span-2">
-              <h2 className="text-xl font-semibold mb-6">Thông tin cơ bản</h2>
-              {/* Tất cả Input bây giờ sẽ dùng `form.xyz` 
-                  Đây là logic đúng, giữ nguyên
-              */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Họ và tên</Label>
-                  <Input
-                    id="fullName"
-                    value={form.fullName}
-                    disabled={!editing}
-                    onChange={(e) => handleChange("fullName", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={form.email}
-                    disabled={!editing}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Số điện thoại</Label>
-                  <Input
-                    id="phone"
-                    value={form.phoneNumber}
-                    disabled={!editing}
-                    type="tel" // Thêm type="tel" để hiện bàn phím số trên điện thoại
-                    onChange={(e) => {
-                      // Regex: /[^0-9+]/g nghĩa là "tìm tất cả ký tự KHÔNG phải số 0-9 và KHÔNG phải dấu +"
-                      // Sau đó thay thế chúng bằng '' (xóa đi)
-                      const sanitizedValue = e.target.value.replace(
-                        /[^0-9+]/g,
-                        ""
-                      );
-                      handleChange("phoneNumber", sanitizedValue);
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dob">Ngày sinh</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="dob"
-                      type="date"
-                      className="pl-10"
-                      value={form.dateOfBirth}
-                      disabled={!editing}
-                      onChange={(e) =>
-                        handleChange("dateOfBirth", e.target.value)
-                      }
-                    />
-                  </div>
-                  {/* {!editing && (
-                    <p className="text-xs text-muted-foreground">{formatDate(user.dateOfBirth)}</p>
-                  )} */}
-                </div>
-                <div className="space-y-2">
-                  <Label>Trình độ tiếng Anh</Label>
-                  <Select
-                    value={form.englishLevel}
-                    onValueChange={(v) => handleChange("englishLevel", v)}
-                    disabled={!editing}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn trình độ" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {englishLevels.map((lvl) => (
-                        <SelectItem key={lvl} value={lvl}>
-                          {lvl}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+      {/* ── MAIN GRID ───────────────────────────────────────────────────── */}
+      <div className="grid lg:grid-cols-3 gap-5">
+
+        {/* Personal info — 2/3 */}
+        <Card className="lg:col-span-2 p-6">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2">
+            <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+            {t('profile.sections.personalInfo')}
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="fullName" className="text-xs font-medium text-slate-500">{t('profile.fields.fullName')}</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <Input id="fullName" className="pl-10" value={form.fullName} disabled={!editing}
+                  onChange={(e) => handleChange('fullName', e.target.value)} />
               </div>
+            </div>
 
-              {/* <div className="space-y-2 mt-6">
-                <Label htmlFor="bio">Giới thiệu</Label>
-                <Textarea id="bio" placeholder="Chia sẻ đôi nét về bạn..." disabled={!editing}
-                  value={form.bio} onChange={(e) => handleChange('bio', e.target.value)} />
-              </div> */}
-            </Card>
-
-            {/* Tài khoản & ví */}
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Tài khoản</h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">ID người dùng</p>
-                  <p className="font-mono text-sm">{user.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Ngày tạo</p>
-                  <p className="text-sm">{formatDate(user.createdAt)}</p>
-                </div>
-                <div className="pt-2 border-t">
-                  <p className="text-sm text-muted-foreground">Số dư ví</p>
-                  <p className="text-lg font-semibold">
-                    {user.wallet ? formatVND(user.wallet.allowance) : "—"}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </section>
-
-        {/* Mục tiêu học tập */}
-        <section className="py-2">
-          <div className="container mx-auto px-4 lg:max-w-4xl">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Mục tiêu học tập</h2>
-
-              {/* Danh sách các mục tiêu đang có */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {form.learningGoals.length > 0 ? (
-                  form.learningGoals.map((g) => (
-                    <Badge
-                      key={g}
-                      variant="secondary"
-                      className={`px-3 py-1 ${
-                        editing
-                          ? "cursor-pointer hover:bg-destructive/20 hover:text-destructive"
-                          : ""
-                      }`}
-                      // Chỉ cho phép xóa khi đang ở chế độ chỉnh sửa
-                      onClick={() => editing && removeGoal(g)}
-                    >
-                      {g}
-                      {editing && <X className="w-3 h-3 ml-2" />}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Chưa có mục tiêu nào.
-                  </p>
-                )}
-              </div>
-
-              {/* Ô nhập liệu để thêm mục tiêu mới */}
+            {/* Email — locked, change via dialog */}
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                {t('profile.fields.email')}
+                {(user as any).isEmailVerified
+                  ? <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  : <AlertCircle className="w-3 h-3 text-amber-500" />}
+              </Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Ví dụ: Đạt IELTS 7.0, Giao tiếp trôi chảy..."
-                  value={goalInput}
-                  // Vô hiệu hóa khi KHÔNG ở chế độ chỉnh sửa
-                  disabled={!editing}
-                  onChange={(e) => setGoalInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") addGoal();
-                  }}
-                />
-                <Button
-                  variant="default"
-                  disabled={!editing} // Vô hiệu hóa nút thêm
-                  onClick={addGoal}
-                  type="button" // Quan trọng để không trigger submit form ngoài ý muốn
-                >
-                  Thêm
-                </Button>
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <Input id="email" type="email" className="pl-10 bg-slate-50 text-slate-500" value={user.email} disabled />
+                </div>
+                {/* Email là định danh đăng nhập — không cho đổi ở MVP (luồng đổi + xác thực email mới chưa có ở backend). */}
               </div>
-
-              {!editing && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  * Nhấn nút "Chỉnh sửa" ở trên để thêm hoặc xóa mục tiêu.
+              {!(user as any).isEmailVerified && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />{t('profile.email.notVerified')}
                 </p>
               )}
-            </Card>
-          </div>
-        </section>
+            </div>
 
-        {/* Course Seller Application
-            MỚI: Biến `myApplications` ở đây giờ là data
-            từ hook `useProfile`, không phải từ localStorage
-        */}
-        <section className="py-2">
-          <div className="container mx-auto px-4 lg:max-w-4xl">
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">
-                  Trở thành người bán khóa học
-                </h2>
-                {user.role === "COURSESELLER" ? (
-                  <Badge variant="outline">Bạn đã là giảng viên</Badge>
-                ) : null}
+            <div className="space-y-1.5">
+              <Label htmlFor="phone" className="text-xs font-medium text-slate-500">{t('profile.fields.phone')}</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <Input id="phone" type="tel" className="pl-10" value={form.phoneNumber} disabled={!editing}
+                  onChange={(e) => handleChange('phoneNumber', e.target.value.replace(/[^0-9+]/g, ''))} />
               </div>
+            </div>
 
-              <p className="text-sm text-muted-foreground">
-                Gửi đơn đăng ký để đội ngũ admin xét duyệt. Bạn nên cung cấp
-                chứng chỉ và chuyên môn liên quan đến giảng dạy.
+            <div className="space-y-1.5">
+              <Label htmlFor="dob" className="text-xs font-medium text-slate-500">{t('profile.fields.dateOfBirth')}</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <Input id="dob" type="date" className="pl-10" value={form.dateOfBirth} disabled={!editing}
+                  onChange={(e) => handleChange('dateOfBirth', e.target.value)} />
+              </div>
+            </div>
+
+            {/* English level */}
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-medium text-slate-500">{t('profile.fields.englishLevel')}</Label>
+              <div className="flex flex-wrap gap-2">
+                {ENGLISH_LEVELS.map((lvl) => {
+                  const active = form.englishLevel === lvl;
+                  return (
+                    <button key={lvl} type="button"
+                      disabled={!editing}
+                      onClick={() => editing && handleChange('englishLevel', lvl)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-bold border-2 transition-all duration-150
+                        ${active
+                          ? `${LEVEL_COLORS[lvl] ?? 'bg-indigo-500 border-indigo-500'} text-white shadow-sm`
+                          : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'}
+                        disabled:cursor-default`}
+                    >
+                      {lvl}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Account sidebar — 1/3 */}
+        <Card className="p-6 flex flex-col gap-5">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <div className="w-1 h-4 bg-violet-500 rounded-full" />
+            {t('profile.sections.account')}
+          </h2>
+
+          {/* Wallet */}
+          <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 p-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-xs font-medium text-slate-500 mb-1">
+              <Wallet className="w-3.5 h-3.5" />{t('profile.wallet.balance')}
+            </div>
+            {walletLoading ? (
+              <div className="flex justify-center py-1">
+                <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+              </div>
+            ) : (
+              <p className="text-2xl font-bold text-indigo-600">
+                {formatVND(walletBalance)}
               </p>
+            )}
+            <Link to="/wallet"
+              className="text-xs text-indigo-400 hover:text-indigo-600 hover:underline mt-1 inline-block transition-colors">
+              {t('profile.wallet.topUp')}
+            </Link>
+          </div>
 
-              {user.role !== "COURSESELLER" ? (
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm">Trạng thái đơn mới nhất:</p>
-                    {/* Logic này giờ đọc `myApplications` từ hook `useProfile` */}
-                    {myApplications.length > 0 ? (
-                      <div className="mt-2">
-                        {(() => {
-                          const latest = [...myApplications].sort(
-                            (a, b) =>
-                              new Date(b.createdAt).getTime() -
-                              new Date(a.createdAt).getTime()
-                          )[0];
-                          const statusLabel =
-                            latest.status === "PENDING"
-                              ? "Đang chờ duyệt"
-                              : latest.status === "APPROVED"
-                              ? "Đã duyệt"
-                              : "Từ chối";
-                          const statusVariant =
-                            latest.status === "APPROVED"
-                              ? "default"
-                              : latest.status === "REJECTED"
-                              ? "destructive"
-                              : "secondary";
-                          return (
-                            <div className="flex items-center gap-2">
-                              <Badge variant={statusVariant as any}>
-                                {statusLabel}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(latest.createdAt).toLocaleDateString(
-                                  "vi-VN"
-                                )}
-                              </span>
-                            </div>
-                          );
-                        })()}
+          {/* Meta */}
+          <div className="space-y-0 text-sm divide-y divide-slate-100">
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-slate-400 flex items-center gap-1.5 text-xs">
+                <Clock className="w-3.5 h-3.5" />{t('profile.wallet.joined')}
+              </span>
+              <span className="font-medium text-slate-700 text-xs text-right">{formatDate(user.createdAt)}</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* ── LEARNING GOALS ──────────────────────────────────────────────── */}
+      <Card className="p-6">
+        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+          {t('profile.sections.learningGoals')}
+        </h2>
+
+        <div className="flex flex-wrap gap-2 mb-4 min-h-[2.25rem]">
+          {form.learningGoals.length > 0 ? (
+            form.learningGoals.map((g) => (
+              <div key={g}
+                onClick={() => editing && removeGoal(g)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium select-none
+                  bg-emerald-50 text-emerald-700 border border-emerald-200
+                  ${editing ? 'cursor-pointer hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors' : ''}`}
+              >
+                <Target className="w-3 h-3 shrink-0" />
+                {g}
+                {editing && <X className="w-3 h-3 opacity-60 shrink-0" />}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-slate-400 italic self-center">{t('profile.goals.empty')}</p>
+          )}
+        </div>
+
+        {editing ? (
+          <div className="flex gap-2">
+            <Input className="flex-1"
+              placeholder={t('profile.goals.placeholder')}
+              value={goalInput}
+              onChange={(e) => setGoalInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGoal(); } }}
+            />
+            <Button type="button" onClick={addGoal} className="shrink-0">{t('profile.goals.add')}</Button>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-400">{t('profile.goals.hint')}</p>
+        )}
+      </Card>
+
+      {/* ── SELLER APPLICATION ──────────────────────────────────────────── */}
+      {!isAdmin && (
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <div className="w-1 h-4 bg-amber-500 rounded-full" />
+              {t('profile.sections.becomeInstructor')}
+            </h2>
+            {isSeller && (
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">
+                {t('profile.badges.alreadyInstructor')}
+              </Badge>
+            )}
+          </div>
+
+          <p className="text-sm text-slate-500">
+            {t('profile.application.intro')}
+          </p>
+
+          {!isSeller && (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">{t('profile.application.latestStatus')}</p>
+                {myApplications.length > 0 ? (() => {
+                  const latest = [...myApplications].sort((a, b) =>
+                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+                  return (
+                    <div className="flex items-center gap-2">
+                      <Badge variant={
+                        latest.status === 'APPROVED' ? 'default' :
+                        latest.status === 'REJECTED' ? 'destructive' : 'secondary'
+                      }>
+                        {latest.status === 'PENDING' ? t('profile.application.statusPending') :
+                         latest.status === 'APPROVED' ? t('profile.application.statusApproved') : t('profile.application.statusRejected')}
+                      </Badge>
+                      <span className="text-xs text-slate-400">
+                        {new Date(latest.createdAt).toLocaleDateString(dateLocale)}
+                      </span>
+                    </div>
+                  );
+                })() : (
+                  <p className="text-sm text-slate-400 italic">{t('profile.application.noApplication')}</p>
+                )}
+              </div>
+              <Button
+                onClick={() => setApplicationOpen(true)}
+                disabled={myApplications.some((a) => a.status === 'PENDING')}
+                className="shrink-0"
+              >
+                {myApplications.some((a) => a.status === 'PENDING') ? t('profile.application.statusPending') : t('profile.application.apply')}
+              </Button>
+            </div>
+          )}
+
+          {myApplications.length > 0 && !isSeller && (
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{t('profile.application.history')}</p>
+              {[...myApplications]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .map((app) => (
+                  <div key={app.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={
+                        app.status === 'APPROVED' ? 'default' :
+                        app.status === 'REJECTED' ? 'destructive' : 'secondary'
+                      }>
+                        {app.status === 'PENDING' ? t('profile.application.statusPending') :
+                         app.status === 'APPROVED' ? t('profile.application.statusApproved') : t('profile.application.statusRejected')}
+                      </Badge>
+                      <span className="text-xs text-slate-400">
+                        {new Date(app.createdAt).toLocaleDateString(dateLocale)}
+                      </span>
+                    </div>
+
+                    {app.message && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-1">{t('profile.application.message')}</p>
+                        <p className="text-sm bg-white p-2.5 rounded-lg border border-slate-200">{app.message}</p>
                       </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Chưa có đơn nào
-                      </p>
+                    )}
+
+                    {app.rejectionReason && (
+                      <div>
+                        <p className="text-xs font-medium text-destructive mb-1">{t('profile.application.rejectionReason')}</p>
+                        <p className="text-sm text-destructive bg-destructive/5 p-2.5 rounded-lg border border-destructive/20">
+                          {app.rejectionReason}
+                        </p>
+                      </div>
+                    )}
+
+                    {app.expertise && app.expertise.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-1.5">{t('profile.application.expertise')}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {app.expertise.map((exp, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs font-normal">{exp}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {app.certification && app.certification.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-1.5">{t('profile.application.certification')}</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {app.certification.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={t('profile.application.certificationView')}
+                              className="block aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 bg-white hover:opacity-90 hover:shadow-md transition-all"
+                            >
+                              <img
+                                src={url}
+                                alt={`Cert ${idx + 1}`}
+                                className="w-full h-full object-contain"
+                                loading="lazy"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <div>
-                    <Button
-                      variant="default"
-                      onClick={() => setApplicationOpen(true)}
-                      disabled={myApplications.some(
-                        (a) => a.status === "PENDING"
-                      )}
-                    >
-                      {myApplications.some((a) => a.status === "PENDING")
-                        ? "Đang chờ duyệt"
-                        : "Nộp đơn"}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* ... (Giữ nguyên logic hiển thị profile giảng viên) ... */}
-                </div>
-              )}
-
-              {/* Danh sách đơn đã nộp (Đọc `myApplications` từ hook) */}
-              {myApplications.length > 0 && user.role !== "COURSESELLER" && (
-  <div className="pt-4 border-t">
-    <h3 className="text-sm font-medium mb-3">Đơn đã nộp</h3>
-    <div className="space-y-3">
-      {[...myApplications]
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() -
-            new Date(a.createdAt).getTime()
-        )
-        .map((app) => (
-          <div key={app.id} className="p-4 rounded-lg border border-border bg-muted/10">
-            {/* Header: Status & Date */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Badge 
-                  variant={
-                    app.status === 'APPROVED' ? 'default' : 
-                    app.status === 'REJECTED' ? 'destructive' : 
-                    'secondary'
-                  }
-                >
-                  {app.status === 'PENDING' ? 'Đang chờ duyệt' : 
-                   app.status === 'APPROVED' ? 'Đã duyệt' : 'Từ chối'}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(app.createdAt).toLocaleDateString('vi-VN')}
-                </span>
-              </div>
+                ))}
             </div>
+          )}
+        </Card>
+      )}
 
-            {/* Message */}
-            {app.message && (
-              <div className="mb-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Lời nhắn:</p>
-                <p className="text-sm bg-background p-2 rounded border border-border/50">
-                  {app.message}
-                </p>
-              </div>
-            )}
-
-            {/* Rejection Reason */}
-            {app.rejectionReason && (
-              <div className="mb-3">
-                <p className="text-xs font-medium text-destructive mb-1">Lý do từ chối:</p>
-                <p className="text-sm text-destructive bg-destructive/10 p-2 rounded border border-destructive/20">
-                  {app.rejectionReason}
-                </p>
-              </div>
-            )}
-
-            {/* Expertise */}
-            {app.expertise && app.expertise.length > 0 && (
-              <div className="mb-2">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Chuyên môn:</p>
-                <div className="flex flex-wrap gap-1">
-                  {app.expertise.map((exp, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs font-normal">
-                      {exp}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Certification Images */}
-            {app.certification && app.certification.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Chứng chỉ:</p>
-                <div className="flex flex-wrap gap-2">
-                  {app.certification.map((certUrl, idx) => (
-                    <a 
-                      key={idx} 
-                      href={certUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block w-16 h-16 rounded overflow-hidden border hover:opacity-80 transition-opacity"
-                    >
-                      <img 
-                        src={certUrl} 
-                        alt={`Cert ${idx + 1}`} 
-                        className="w-full h-full object-cover"
-                      />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-    </div>
-  </div>
-)}
-            </Card>
-          </div>
-        </section>
-      </main>
-
-      {/* Dialog nộp đơn giảng viên */}
       <CourseSellerApplicationDialog
         open={applicationOpen}
         onOpenChange={setApplicationOpen}
-        userId={user.id} // MỚI: Dùng user.id thay vì currentUserId
-        onSubmitted={(app) => {
-          // MỚI: Thay vì `setMyApplications`, chúng ta báo React Query
-          // rằng data đã cũ và cần fetch lại.
-          toast.success("Nộp đơn thành công!");
-          queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
+        existingApplication={myApplications[0] ?? null}
+        onSubmitted={() => {
+          toast.success(t('profile.application.submitSuccess'));
+          queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
         }}
       />
 
-      <Footer />
+      {/* ── AVATAR CROP MODAL ───────────────────────────────────────────── */}
+      {rawImageSrc && (
+        <AvatarCropModal
+          imageSrc={rawImageSrc}
+          open={cropOpen}
+          onClose={handleCropClose}
+          onConfirm={handleCropConfirm}
+        />
+      )}
+
+      {/* ── EMAIL CHANGE DIALOG ─────────────────────────────────────────── */}
+      <Dialog open={emailDialogOpen} onOpenChange={(o) => !o && handleEmailDialogClose()}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-indigo-500" />
+              {t('profile.email.dialogTitle')}
+            </DialogTitle>
+          </DialogHeader>
+
+          {!emailSent ? (
+            <div className="space-y-4 py-1">
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
+                <Trans
+                  i18nKey="profile.email.currentNotice"
+                  ns="account"
+                  values={{ email: user.email }}
+                  components={{ strong: <strong /> }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">{t('profile.email.newLabel')}</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <Input
+                    type="email"
+                    className="pl-10"
+                    placeholder={t('profile.email.placeholder')}
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleEmailChangeSend()}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-4 space-y-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-800">{t('profile.email.sentTitle')}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  <Trans
+                    i18nKey="profile.email.sentDesc"
+                    ns="account"
+                    values={{ email: newEmail }}
+                    components={{ strong: <strong /> }}
+                  />
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2 flex-row justify-end pt-1">
+            <Button variant="outline" size="sm" onClick={handleEmailDialogClose}>
+              {emailSent ? t('profile.email.close') : t('profile.email.cancel')}
+            </Button>
+            {!emailSent && (
+              <Button size="sm" onClick={handleEmailChangeSend}>
+                {t('profile.email.send')}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -12,6 +12,7 @@ export interface LessonPlayer {
   lessonOrder: number | null;
   courseId: string;
   courseTitle: string;
+  testId?: string | null;
   mediaAssets: LessonMediaAsset[];
   recentComments: Array<{
     id: string;
@@ -62,12 +63,13 @@ export interface CourseContext {
 export interface LessonComment {
   id: string;
   content: string;
+  userId: string;
   createdAt: string;
   parentCommentId: string | null;
-  user: {
-    id: string;
-    fullName: string;
-    profilePicture: string | null;
+  user?: {
+    id?: string;
+    fullName?: string;
+    profilePicture?: string | null;
   };
 }
 

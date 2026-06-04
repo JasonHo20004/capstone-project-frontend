@@ -1,12 +1,24 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { Course as AdminCourse } from '@/types/type';
+import React, { createContext, useContext, useMemo, useCallback } from 'react';
+import {
+  useGetUserCart,
+  useAddToCart,
+  useRemoveCartItem,
+  useClearCart,
+} from '@/hooks/api/use-cart';
+import type { Course as AdminCourse } from '@/domain';
 
 export type CartItem = {
   id: string;
+  courseId: string;
   title: string;
   price: number;
-  course?: AdminCourse;
+  addedAt: string;
+  course?: {
+    id: string;
+    title: string;
+    price: number;
+    thumbnailUrl?: string;
+  };
 };
 
 type CartContextValue = {
@@ -16,50 +28,57 @@ type CartContextValue = {
   clear: () => void;
   count: number;
   total: number;
+  isLoading: boolean;
 };
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
-const STORAGE_KEY = 'skillboost_cart_v1';
-
 export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as CartItem[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  const { data: cart, isLoading } = useGetUserCart();
+  const addToCartMutation = useAddToCart();
+  const removeCartItemMutation = useRemoveCartItem();
+  const clearCartMutation = useClearCart();
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      // ignore
-    }
-  }, [items]);
-
-  const addItem = (course: AdminCourse) => {
-    setItems((prev) => {
-      if (prev.some((i) => i.id === course.id)) {
-        toast.info('Khoá học đã có trong giỏ hàng');
-        return prev;
-      }
-      const next = [...prev, { id: course.id, title: course.title, price: course.price, course }];
-      toast.success('Đã thêm vào giỏ hàng');
-      return next;
-    });
-  };
-
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  };
-
-  const clear = () => setItems([]);
+  const items: CartItem[] = useMemo(() => {
+    if (!cart?.cartItems) return [];
+    return cart.cartItems.map((item) => ({
+      id: item.id,
+      courseId: item.courseId,
+      title: item.course?.title || 'Unknown Course',
+      price: Number(item.course?.price ?? item.priceAtTime ?? 0),
+      addedAt: item.addedAt,
+      course: item.course,
+    }));
+  }, [cart]);
 
   const count = items.length;
-  const total = useMemo(() => items.reduce((sum, i) => sum + (i.price || 0), 0), [items]);
+  const total = useMemo(
+    () => items.reduce((sum, i) => sum + Number(i.price || 0), 0),
+    [items]
+  );
+
+  const addItem = useCallback(
+    (course: AdminCourse) => {
+      addToCartMutation.mutate({
+        id: course.id,
+        title: course.title,
+        price: course.price,
+        thumbnailUrl: course.thumbnailUrl,
+      });
+    },
+    [addToCartMutation]
+  );
+
+  const removeItem = useCallback(
+    (cartItemId: string) => {
+      removeCartItemMutation.mutate(cartItemId);
+    },
+    [removeCartItemMutation]
+  );
+
+  const clear = useCallback(() => {
+    clearCartMutation.mutate();
+  }, [clearCartMutation]);
 
   const value: CartContextValue = {
     items,
@@ -68,6 +87,7 @@ export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     clear,
     count,
     total,
+    isLoading,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

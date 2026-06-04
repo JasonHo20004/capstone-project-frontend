@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateCourse } from '@/hooks/api';
-import { CourseLevel } from '@/types/type';
+import { CourseLevel } from "@/domain";
 
 interface Props {
   open: boolean;
@@ -32,6 +33,7 @@ const COURSE_LEVELS: CourseLevel[] = [
 ];
 
 export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Props) {
+  const { t } = useTranslation('seller');
   const createCourseMutation = useCreateCourse();
 
   // Form state
@@ -54,22 +56,22 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Tiêu đề khóa học là bắt buộc';
+      newErrors.title = t('createCourseDialog.errors.titleRequired');
     } else if (formData.title.trim().length > 100) {
-      newErrors.title = 'Tiêu đề không được vượt quá 100 ký tự';
+      newErrors.title = t('createCourseDialog.errors.titleTooLong');
     }
 
     if (formData.price === '') {
-      newErrors.price = 'Giá khóa học là bắt buộc';
+      newErrors.price = t('createCourseDialog.errors.priceRequired');
     } else {
       const priceNum = parseFloat(formData.price);
       if (isNaN(priceNum) || priceNum < 0) {
-        newErrors.price = 'Giá phải là số không âm';
+        newErrors.price = t('createCourseDialog.errors.priceInvalid');
       }
     }
 
     if (formData.courseLevel !== undefined && !COURSE_LEVELS.includes(formData.courseLevel)) {
-      newErrors.courseLevel = 'Level không hợp lệ';
+      newErrors.courseLevel = t('createCourseDialog.errors.levelInvalid');
     }
 
     setErrors(newErrors);
@@ -97,13 +99,13 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Chỉ chấp nhận file ảnh (JPEG, PNG, WEBP, GIF)');
+      toast.error(t('createCourseDialog.errors.imageTypeInvalid'));
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File ảnh không được vượt quá 5MB');
+      toast.error(t('createCourseDialog.errors.imageTooLarge'));
       return;
     }
 
@@ -236,21 +238,19 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tạo khóa học mới</DialogTitle>
-          <DialogDescription>
-            Điền thông tin để tạo khóa học mới. Khóa học sẽ ở trạng thái DRAFT sau khi tạo.
-          </DialogDescription>
+          <DialogTitle>{t('createCourseDialog.title')}</DialogTitle>
+          <DialogDescription>{t('createCourseDialog.lead')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">
-              Tiêu đề khóa học <span className="text-destructive">*</span>
+              {t('createCourseDialog.titleLabel')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="title"
-              placeholder="VD: IELTS Speaking Masterclass"
+              placeholder={t('createCourseDialog.titlePlaceholder')}
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               disabled={createCourseMutation.isPending}
@@ -264,10 +264,10 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Mô tả</Label>
+            <Label htmlFor="description">{t('createCourseDialog.descriptionLabel')}</Label>
             <Textarea
               id="description"
-              placeholder="Mô tả chi tiết về khóa học..."
+              placeholder={t('createCourseDialog.descriptionPlaceholder')}
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
               disabled={createCourseMutation.isPending}
@@ -278,12 +278,12 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
           {/* Price */}
           <div className="space-y-2">
             <Label htmlFor="price">
-              Giá (VNĐ) <span className="text-destructive">*</span>
+              {t('createCourseDialog.priceLabel')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="price"
               type="number"
-              placeholder="VD: 500000"
+              placeholder={t('createCourseDialog.pricePlaceholder')}
               value={formData.price}
               onChange={(e) => handleChange('price', e.target.value)}
               disabled={createCourseMutation.isPending}
@@ -298,10 +298,10 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category">Danh mục</Label>
+            <Label htmlFor="category">{t('createCourseDialog.categoryLabel')}</Label>
             <Input
               id="category"
-              placeholder="VD: IELTS, TOEFL, Business English"
+              placeholder={t('createCourseDialog.categoryPlaceholder')}
               value={formData.category}
               onChange={(e) => handleChange('category', e.target.value)}
               disabled={createCourseMutation.isPending}
@@ -311,14 +311,14 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
 
           {/* Course Level */}
           <div className="space-y-2">
-            <Label htmlFor="courseLevel">Level</Label>
+            <Label htmlFor="courseLevel">{t('createCourseDialog.levelLabel')}</Label>
             <Select
               {...(formData.courseLevel && { value: formData.courseLevel })}
               onValueChange={(value) => handleChange('courseLevel', value)}
               disabled={createCourseMutation.isPending}
             >
               <SelectTrigger id="courseLevel" className={errors.courseLevel ? 'border-destructive' : ''}>
-                <SelectValue placeholder="Chọn level (tùy chọn)" />
+                <SelectValue placeholder={t('createCourseDialog.levelPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {COURSE_LEVELS.map((level) => (
@@ -337,7 +337,7 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
                 disabled={createCourseMutation.isPending}
                 className="h-8 text-xs"
               >
-                Xóa level
+                {t('createCourseDialog.clearLevel')}
               </Button>
             )}
             {errors.courseLevel && (
@@ -347,7 +347,7 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
 
           {/* Thumbnail Upload */}
           <div className="space-y-2">
-            <Label htmlFor="thumbnail">Thumbnail khóa học</Label>
+            <Label htmlFor="thumbnail">{t('createCourseDialog.thumbnailLabel')}</Label>
             <input
               ref={fileInputRef}
               type="file"
@@ -362,7 +362,7 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
                 <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
                   <img
                     src={formData.thumbnailPreview}
-                    alt="Thumbnail preview"
+                    alt={t('createCourseDialog.thumbnailAlt')}
                     className="h-full w-full object-cover"
                   />
                   <Button
@@ -389,11 +389,11 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
                 className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" />
-                Chọn ảnh thumbnail (Tối đa 5MB)
+                {t('createCourseDialog.pickImage')}
               </Button>
             )}
             <p className="text-xs text-muted-foreground">
-              Hỗ trợ: JPEG, PNG, WEBP, GIF
+              {t('createCourseDialog.thumbnailHint')}
             </p>
           </div>
 
@@ -405,11 +405,11 @@ export default function CreateCourseDialog({ open, onOpenChange, onSuccess }: Pr
               onClick={() => handleOpenChange(false)}
               disabled={createCourseMutation.isPending}
             >
-              Hủy
+              {t('createCourseDialog.cancel')}
             </Button>
             <Button type="submit" disabled={createCourseMutation.isPending}>
               {createCourseMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Tạo khóa học
+              {t('createCourseDialog.submit')}
             </Button>
           </div>
         </form>

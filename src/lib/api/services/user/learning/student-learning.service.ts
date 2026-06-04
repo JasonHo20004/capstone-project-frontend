@@ -56,9 +56,40 @@ class StudentLearningService {
     return response.data;
   }
 
+  async editLessonComment(
+    courseId: string,
+    lessonId: string,
+    commentId: string,
+    content: string
+  ) {
+    const response = await apiClient.patch<ApiResponse<LessonCommentsResponse["comments"][number]>>(
+      `/student/courses/${courseId}/lessons/${lessonId}/comments/${commentId}`,
+      { content }
+    );
+    return response.data;
+  }
+
+  async reportLessonComment(
+    courseId: string,
+    lessonId: string,
+    commentId: string,
+    payload: {
+      reasonType: 'SPAM' | 'ABUSE' | 'SCAM' | 'MISINFORMATION' | 'OFF_TOPIC' | 'OTHER';
+      note?: string;
+    }
+  ) {
+    const response = await apiClient.post<
+      ApiResponse<{ autoHidden: boolean; totalReports: number }>
+    >(
+      `/student/courses/${courseId}/lessons/${lessonId}/comments/${commentId}/report`,
+      payload
+    );
+    return response.data;
+  }
+
   async getCourseRatings(courseId: string, params?: PaginatedParams) {
     // Backend returns: { success, message, data: [...ratings], averageScore, pagination }
-    const response = await apiClient.get<any>(
+    const response = await apiClient.get<{ data: unknown }>(
       `/student/courses/${courseId}/ratings`,
       { params }
     );
@@ -66,11 +97,39 @@ class StudentLearningService {
   }
 
   async markLessonComplete(courseId: string, lessonId: string) {
-    const response = await apiClient.post<ApiResponse<{ success: boolean; message: string }>>(
+    const response = await apiClient.post<ApiResponse<{
+      certificateIssued: boolean;
+      certificate: Certificate | null;
+    }>>(
       `/student/courses/${courseId}/lessons/${lessonId}/complete`
     );
     return response.data;
   }
+
+  async getCertificate(courseId: string) {
+    const response = await apiClient.get<ApiResponse<Certificate>>(
+      `/student/courses/${courseId}/certificate`
+    );
+    return response.data;
+  }
+
+  async issueCertificate(courseId: string) {
+    const response = await apiClient.post<ApiResponse<Certificate>>(
+      `/student/courses/${courseId}/certificate/issue`
+    );
+    return response.data;
+  }
+}
+
+export interface Certificate {
+  id: string;
+  certificateNumber: string;
+  userId: string;
+  courseId: string;
+  userName: string;
+  courseName: string;
+  courseLevel: string | null;
+  issuedAt: string;
 }
 
 export const studentLearningService = new StudentLearningService();

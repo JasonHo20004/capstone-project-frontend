@@ -1,0 +1,140 @@
+{
+  "about": {
+    "hero": {
+      "title": "About Alicia",
+      "subtitle": "Empowering learners worldwide to master English and achieve their dreams"
+    },
+    "stats": {
+      "activeStudents": "Active learners",
+      "courses": "In-depth courses",
+      "successRate": "Success rate",
+      "countries": "Countries"
+    },
+    "story": {
+      "title": "Our story",
+      "p1": "Founded in 2020, Alicia was born from a simple yet powerful vision: bring high-quality English education to everyone, regardless of location or background.",
+      "p2": "Starting as a small, passionate team, we have grown into a global platform serving thousands of learners across more than 50 countries. Our commitment to quality and student success has never wavered.",
+      "p3": "Today, we continue to innovate and refine our courses to ensure every learner gets the best possible learning experience. Join us on the journey to mastering English.",
+      "imgAlt": "Our story"
+    },
+    "values": {
+      "title": "Core values",
+      "subtitle": "The principles that guide everything we do",
+      "items": {
+        "mission": {
+          "title": "Our mission",
+          "description": "Bring quality English education to everyone, everywhere, and empower learners to reach their goals."
+        },
+        "experts": {
+          "title": "Expert team",
+          "description": "Our instructors are certified experts, deeply experienced and passionate about teaching."
+        },
+        "quality": {
+          "title": "Quality first",
+          "description": "We hold the highest standards across course content, delivery, and student support."
+        },
+        "studentSuccess": {
+          "title": "Student success",
+          "description": "Your success is our priority. We stay with you throughout your learning journey."
+        }
+      }
+    },
+    "team": {
+      "title": "Our instructors",
+      "subtitle": "Learn from experienced experts dedicated to your success",
+      "members": {
+        "sarah": "Lead instructor",
+        "michael": "Business English specialist",
+        "emma": "IELTS specialist",
+        "david": "Speaking coach"
+      }
+    },
+    "cta": {
+      "title": "Join our growing community",
+      "subtitle": "Start your English journey with the support and guidance of expert instructors",
+      "exploreCourses": "Explore courses"
+    }
+  },
+  "contact": {
+    "hero": {
+      "title": "Contact us",
+      "subtitle": "Have a question? Send us a message and we'll respond as soon as possible."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Call us",
+      "address": "Address",
+      "addressValue": "123 Learning Street, Education City, EC 12345"
+    },
+    "form": {
+      "title": "Send us a message",
+      "name": "Full name",
+      "namePlaceholder": "John Doe",
+      "email": "Email address",
+      "emailPlaceholder": "name@example.com",
+      "subject": "Subject",
+      "subjectPlaceholder": "How can we help you?",
+      "message": "Message",
+      "messagePlaceholder": "Describe your request in detail...",
+      "submit": "Send message"
+    },
+    "toast": {
+      "title": "Message sent!",
+      "description": "We'll get back to you as soon as possible."
+    },
+    "map": {
+      "label": "Map location",
+      "addressShort": "123 Learning Street, Education City"
+    }
+  },
+  "blog": {
+    "hero": {
+      "title": "Learning resources and tips",
+      "subtitle": "Expert advice, study tips, and insights to help you master English"
+    },
+    "featuredBadge": "Featured",
+    "readMore": "Read article",
+    "latestArticles": "Latest articles",
+    "newsletter": {
+      "title": "Subscribe to our newsletter",
+      "subtitle": "Get the latest study tips and resources straight to your inbox",
+      "placeholder": "Enter your email",
+      "submit": "Subscribe"
+    },
+    "readTime": "{{minutes}} min read",
+    "categories": {
+      "studyTips": "Study tips",
+      "methodology": "Methodology",
+      "business": "Business English",
+      "grammar": "Grammar",
+      "testPrep": "Test prep",
+      "vocabulary": "Vocabulary"
+    },
+    "posts": {
+      "tips10": {
+        "title": "10 essential tips to learn English faster",
+        "excerpt": "Discover proven strategies to accelerate your English journey and reach fluency faster than you thought possible."
+      },
+      "immersion": {
+        "title": "The power of immersion: how to create an English environment",
+        "excerpt": "Learn how to surround yourself with English in daily life and accelerate your learning through immersion techniques."
+      },
+      "businessEnglish": {
+        "title": "Mastering business English: the complete guide",
+        "excerpt": "Everything you need to know about professional English communication, from emails to presentations."
+      },
+      "grammarMistakes": {
+        "title": "Common grammar mistakes and how to avoid them",
+        "excerpt": "Identify and fix the grammar mistakes English learners frequently make, with real-life examples."
+      },
+      "ieltsSpeaking": {
+        "title": "IELTS Speaking: strategies for Band 7+",
+        "excerpt": "Tips from IELTS examiners to help you ace the speaking test and reach your target band."
+      },
+      "vocabulary": {
+        "title": "Building vocabulary: the right way",
+        "excerpt": "Effective techniques to expand your vocabulary and retain words long-term."
+      }
+    }
+  }
+}

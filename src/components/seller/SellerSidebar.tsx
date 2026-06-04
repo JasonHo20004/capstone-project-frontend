@@ -1,59 +1,87 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   BookOpen,
-  CreditCard,
+  FileText,
   Users,
   MessageSquare,
   User,
+  GraduationCap,
+  DollarSign,
+  ClipboardList,
 } from 'lucide-react';
 
 const sidebarItems = [
-  { title: 'Dashboard', href: '/seller', icon: LayoutDashboard },
-  { title: 'Khoá học của tôi', href: '/seller/courses', icon: BookOpen },
-  { title: 'Phí hằng tháng', href: '/seller/fees', icon: CreditCard },
-  { title: 'Người học', href: '/seller/learners', icon: Users },
-  { title: 'Bình luận', href: '/seller/comments', icon: MessageSquare },
-  { title: 'Hồ sơ', href: '/seller/profile', icon: User },
-];
+  { labelKey: 'sidebar.nav.dashboard', href: '/seller', icon: LayoutDashboard },
+  { labelKey: 'sidebar.nav.courses', href: '/seller/courses', icon: BookOpen },
+  { labelKey: 'sidebar.nav.tests', href: '/seller/tests', icon: ClipboardList },
+  { labelKey: 'sidebar.nav.earnings', href: '/seller/earnings', icon: DollarSign },
+  { labelKey: 'sidebar.nav.monthlyReport', href: '/seller/monthly-report', icon: FileText },
+  { labelKey: 'sidebar.nav.learners', href: '/seller/learners', icon: Users },
+  { labelKey: 'sidebar.nav.comments', href: '/seller/comments', icon: MessageSquare },
+  { labelKey: 'sidebar.nav.profile', href: '/seller/profile', icon: User },
+] as const;
 
 export default function SellerSidebar() {
   const location = useLocation();
+  const { t } = useTranslation('seller');
   const queryClient = useQueryClient();
 
   const handleNavClick = () => {
-    // Invalidate all queries to refetch data when navigating
     queryClient.invalidateQueries();
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-card border-r">
-      <div className="flex h-16 items-center border-b px-6">
-        <h2 className="text-lg font-semibold">Seller Panel</h2>
+    <aside
+      className={cn(
+        'group fixed inset-y-0 left-0 z-40 flex flex-col bg-card border-r border-border/60',
+        'overflow-hidden shadow-[4px_0_24px_rgba(0,0,0,0.02)] hover:shadow-[4px_0_24px_rgba(0,0,0,0.06)]',
+        'w-20 hover:w-64 transition-[width] duration-300 ease-soft',
+      )}
+    >
+      <div className="flex h-16 items-center gap-3 border-b border-border/60 px-5 flex-shrink-0">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
+          <GraduationCap className="h-5 w-5 text-primary" />
+        </div>
+        <div className="overflow-hidden whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+          <h2 className="font-semibold font-display tracking-tight leading-tight">{t('sidebar.brand.title')}</h2>
+          <p className="text-[10px] text-muted-foreground leading-tight">{t('sidebar.brand.subtitle')}</p>
+        </div>
       </div>
-      <nav className="flex-1 space-y-1 p-4">
+
+      <nav className="flex-1 space-y-1 p-3 overflow-y-auto overflow-x-hidden">
         {sidebarItems.map((item) => {
           const isActive = location.pathname === item.href;
+          const label = t(item.labelKey);
           return (
             <Link
               key={item.href}
               to={item.href}
               onClick={handleNavClick}
+              title={label}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200',
                 isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
-              <item.icon className="h-4 w-4" />
-              {item.title}
+              <item.icon
+                className={cn(
+                  'h-5 w-5 shrink-0',
+                  isActive ? 'text-primary-foreground' : '',
+                )}
+              />
+              <span className="whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                {label}
+              </span>
             </Link>
           );
         })}
       </nav>
-    </div>
+    </aside>
   );
 }

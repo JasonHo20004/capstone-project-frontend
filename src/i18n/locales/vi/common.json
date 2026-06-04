@@ -1,0 +1,190 @@
+{
+  "app": {
+    "name": "Alicia",
+    "tagline": "Khu vực học tập"
+  },
+  "actions": {
+    "save": "Lưu",
+    "cancel": "Huỷ",
+    "confirm": "Xác nhận",
+    "delete": "Xoá",
+    "edit": "Sửa",
+    "create": "Tạo",
+    "update": "Cập nhật",
+    "back": "Quay lại",
+    "next": "Tiếp",
+    "previous": "Trước",
+    "submit": "Gửi",
+    "search": "Tìm kiếm",
+    "loading": "Đang tải...",
+    "retry": "Thử lại",
+    "close": "Đóng",
+    "view": "Xem",
+    "viewAll": "Xem tất cả",
+    "viewDetails": "Xem chi tiết",
+    "more": "Thêm",
+    "less": "Thu gọn",
+    "yes": "Có",
+    "no": "Không",
+    "continue": "Tiếp tục",
+    "start": "Bắt đầu",
+    "finish": "Hoàn tất",
+    "saving": "Đang lưu...",
+    "saved": "Đã lưu",
+    "savingFailed": "Lưu thất bại",
+    "retrySave": "Thử lưu lại",
+    "send": "Gửi",
+    "filter": "Lọc",
+    "reset": "Đặt lại",
+    "apply": "Áp dụng",
+    "select": "Chọn",
+    "upload": "Tải lên",
+    "download": "Tải xuống"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Ngưng hoạt động",
+    "completed": "Hoàn tất",
+    "pending": "Đang chờ",
+    "inProgress": "Đang thực hiện",
+    "failed": "Thất bại",
+    "success": "Thành công",
+    "error": "Lỗi",
+    "empty": "Chưa có dữ liệu"
+  },
+  "labels": {
+    "email": "Email",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "name": "Tên",
+    "fullName": "Họ và tên",
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "role": "Vai trò",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "settings": "Cài đặt"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "switchTo": "Đổi ngôn ngữ"
+  },
+  "theme": {
+    "label": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Theo hệ thống",
+    "switchTo": "Đổi giao diện"
+  },
+  "errors": {
+    "title": "Đã xảy ra lỗi",
+    "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+    "network": "Lỗi mạng. Vui lòng kiểm tra kết nối.",
+    "notFound": "Không tìm thấy",
+    "unauthorized": "Bạn không có quyền truy cập.",
+    "required": "Trường này là bắt buộc."
+  },
+  "roles": {
+    "ADMINISTRATOR": "Quản trị viên",
+    "COURSESELLER": "Giảng viên",
+    "STUDENT": "Học viên"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Rất tiếc! Không tìm thấy trang",
+    "backHome": "Về Trang chủ"
+  },
+  "error": {
+    "backHome": "Về trang chủ",
+    "goBack": "Quay lại",
+    "signIn": "Đăng nhập",
+    "tryAgain": "Thử lại",
+    "needHelp": "Cần hỗ trợ? Liên hệ chúng tôi",
+    "unauthorized": {
+      "status": "Chưa đăng nhập",
+      "title": "Vui lòng đăng nhập để tiếp tục",
+      "message": "Trang này dành cho thành viên đã đăng nhập. Hãy đăng nhập và chúng tôi sẽ đưa bạn trở lại ngay."
+    },
+    "forbidden": {
+      "status": "Không có quyền",
+      "title": "Bạn không có quyền truy cập trang này",
+      "message": "Tài khoản của bạn không có quyền vào khu vực này. Hãy liên hệ quản trị viên nếu bạn nghĩ đây là nhầm lẫn."
+    },
+    "serverError": {
+      "status": "Lỗi máy chủ",
+      "title": "Đã có sự cố từ phía chúng tôi",
+      "message": "Đây là lỗi từ phía chúng tôi, không phải bạn. Hãy thử lại sau giây lát, hoặc quay về trang chủ."
+    }
+  },
+  "backToTop": "Cuộn lên đầu trang",
+  "relativeTime": {
+    "justNow": "Vừa xong",
+    "minutesAgo": "{{count}} phút trước",
+    "hoursAgo": "{{count}} giờ trước",
+    "daysAgo": "{{count}} ngày trước"
+  },
+  "premium": {
+    "loading": "Đang kiểm tra quyền truy cập...",
+    "title": "Tính năng Premium",
+    "defaultMessage": "{{feature}} là tính năng dành cho gói Pro. Nâng cấp để trải nghiệm đầy đủ.",
+    "upgrade": "Nâng cấp lên Pro",
+    "benefits": {
+      "speaking": "AI chấm Speaking & Writing chuyên sâu",
+      "dictation": "Luyện Dictation không giới hạn",
+      "learningPath": "Learning Path & Skill Tree cá nhân hóa"
+    }
+  },
+  "discussion": {
+    "title": "Thảo luận",
+    "subtitle": "Chia sẻ kinh nghiệm, hỏi đáp",
+    "commentPlaceholder": "Viết bình luận...",
+    "replyPlaceholder": "Viết câu trả lời...",
+    "keyboardHint": "Nhấn Enter để gửi, Shift+Enter để xuống dòng.",
+    "emptyHint": "Chưa có bình luận nào. Hãy là người đầu tiên!",
+    "reply": "Trả lời",
+    "cancel": "Hủy",
+    "edit": "Sửa",
+    "report": "Báo cáo",
+    "reportTitle": "Báo cáo bình luận không phù hợp",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "edited": "(đã chỉnh sửa)",
+    "viewMore": "Xem thêm {{count}} trả lời",
+    "collapse": "Ẩn bớt",
+    "replyingTo": "Trả lời",
+    "reasons": {
+      "SPAM": "Spam / Quảng cáo",
+      "ABUSE": "Xúc phạm / Quấy rối",
+      "SCAM": "Lừa đảo",
+      "MISINFORMATION": "Sai thông tin",
+      "OFF_TOPIC": "Lạc đề",
+      "OTHER": "Khác"
+    },
+    "toasts": {
+      "posted": "Đã gửi bình luận",
+      "replied": "Đã gửi trả lời",
+      "postError": "Lỗi khi gửi",
+      "emptyContent": "Nội dung không được để trống",
+      "editSuccess": "Đã cập nhật bình luận",
+      "editError": "Lỗi khi cập nhật bình luận",
+      "reportSuccess": "Đã gửi báo cáo. Cám ơn bạn!",
+      "reportError": "Không thể gửi báo cáo"
+    },
+    "reportDialog": {
+      "title": "Báo cáo bình luận",
+      "description": "Bình luận sẽ được ẩn tạm thời nếu nhiều người báo cáo. Admin sẽ xem xét và quyết định.",
+      "reasonLabel": "Lý do",
+      "noteLabel": "Ghi chú thêm",
+      "noteOptional": "(tuỳ chọn)",
+      "notePlaceholder": "Mô tả thêm để admin hiểu bối cảnh…",
+      "cancel": "Huỷ",
+      "submit": "Gửi báo cáo",
+      "submitting": "Đang gửi…"
+    }
+  },
+  "offline": {
+    "message": "Mất kết nối mạng — thao tác có thể chưa được lưu. Đang chờ kết nối lại…"
+  }
+}

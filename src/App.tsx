@@ -1,105 +1,186 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/query/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
+import { CartProvider } from "./context/CartContext";
+import { WalletProvider } from "./context/WalletContext";
+import { PurchasesProvider } from "./context/PurchasesContext";
+import { SubscriptionProvider } from "./context/SubscriptionContext";
 
 // User pages
 import Index from "./pages/user/home/Home";
-import Courses from "./pages/user/courses/Courses";
+import Landing from "./pages/user/home/Landing";
 import CourseDetail from "./pages/user/courses/CourseDetail";
 import Flashcards from "./pages/user/learning/Flashcards";
 import StudentLearningPage from "./pages/user/learning/StudentLearning";
 import Profile from "./pages/user/account/Profile";
 import Wallet from "./pages/user/account/Wallet";
 import Cart from "./pages/user/account/Cart";
-import About from "./pages/user/info/About";
 import Contact from "./pages/user/info/Contact";
 import Blog from "./pages/user/info/Blog";
 import Notifications from "./pages/user/account/Notifications";
 import MyCourses from "./pages/user/courses/MyCourses";
+import UserRefunds from "./pages/user/refund/Refunds";
+import LiveRoomList from "./pages/user/livestream/LiveRoomList";
+import { lazy, Suspense } from "react";
+const LiveRoom = lazy(() => import("./pages/user/livestream/LiveRoom"));
+const LiveReplay = lazy(() => import("./pages/user/livestream/LiveReplay"));
+
+// Exam center (static UI integration)
+import SpeakingTest from "./pages/user/exam-center/SpeakingTest";
+import ExamCenter from "./pages/user/exam-center/ExamCenter";
+import SkillTree from "./pages/user/exam-center/SkillTree";
+import DictationPractice from "./pages/user/exam-center/DictationPractice";
+import DictationExercises from "./pages/user/exam-center/DictationExercises";
+import LearningPath from "./pages/user/exam-center/LearningPath";
+import IeltsTestModule from "./pages/user/exam-center/IeltsTestModule";
+import TestHistory from "./pages/user/exam-center/TestHistory";
+import WritingHistory from "./pages/user/exam-center/WritingHistory";
+import SpeakingHistory from "./pages/user/exam-center/SpeakingHistory";
+import ProgressAnalytics from "./pages/user/exam-center/ProgressAnalytics";
+import TestResultPage from "./pages/user/exam-center/TestResultPage";
+import TestDetailPage from "./pages/user/exam-center/TestDetailPage";
+import SpeakingResultPage from "./pages/user/exam-center/SpeakingResultPage";
+import PlacementTest from "./pages/user/placement-test/PlacementTest";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
 import UsersManagement from "./pages/admin/user-management/Users";
 import CoursesManagement from "./pages/admin/course-management/Courses";
 import ApplicationsManagement from "./pages/admin/application-management/ApplicationsManagement";
-import ReportsManagement from "./pages/admin/management/ReportsManagement";
+import AuditLogs from "./pages/admin/audit-log/AuditLogs";
+import AdminRefunds from "./pages/admin/refund/AdminRefunds";
+import CommentReports from "./pages/admin/moderation/CommentReports";
 import NotificationsManagement from "./pages/admin/management/NotificationsManagement";
 import TransactionsManagement from "./pages/admin/transaction-management/Transactions";
-import RevenueManagement from "./pages/admin/revenue-management/Revenues";
-import SubscriptionPlansManagement from "./pages/admin/management/SubscriptionPlansManagement";
-import SubscriptionContractsManagement from "./pages/admin/management/SubscriptionContractsManagement";
 import AdminCourseDetail from "./pages/admin/course-management/CourseDetail";
 import AdminLessonDetail from "./pages/admin/course-management/LessonDetail";
 import TagsManagement from "./pages/admin/tag-management/Tags";
+import ExamManagement from "./pages/admin/exam-management/ExamManagement";
+import ExamFormPage from "./pages/admin/exam-management/ExamForm";
+import WritingTestForm from "./pages/admin/exam-management/WritingTestForm";
+import SpeakingTestForm from "./pages/admin/exam-management/SpeakingTestForm";
+import SpeakingTopicManager from "./pages/admin/exam-management/SpeakingTopicManager";
+import DictationManagement from "./pages/admin/exam-management/DictationManagement";
+import UserPlansManagement from "./pages/admin/management/UserPlansManagement";
+import CommissionManagement from "./pages/admin/revenue-management/CommissionManagement";
+import WithdrawalManagement from "./pages/admin/revenue-management/WithdrawalManagement";
+import SettingsPage from "./pages/admin/settings/SettingsPage";
+import AdminCoupons from "./pages/admin/coupon-management/CouponsManagement";
 
 // Protected Routes
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 import { SellerProtectedRoute } from "./components/auth/SellerProtectedRoute";
+// Payment result
+import PaymentResultPage from "./pages/user/payment/PaymentResult";
+
 // Shared pages
 import Login from "./pages/shared/auth/Login";
 import NotFound from "./pages/shared/NotFound";
+import Unauthorized from "./pages/shared/Unauthorized";
+import Forbidden from "./pages/shared/Forbidden";
+import ServerError from "./pages/shared/ServerError";
 import Register from "./pages/shared/auth/Register";
 import VerifyEmailPage from "./pages/shared/auth/VerifyEmail";
+import ForgotPassword from "./pages/shared/auth/ForgotPassword";
+import ResetPassword from "./pages/shared/auth/ResetPassword";
 
 // Layouts
-import AdminLayout from "./components/admin/AdminLayout";
 import SellerLayout from "./components/seller/SellerLayout";
 import SellerDashboard from "./pages/seller/dashboard/SellerDashboard";
 import SellerCourses from "./pages/seller/courses/SellerCourses";
 import SellerMonthlyFees from "./pages/seller/finance/SellerMonthlyFees";
+import SellerEarnings from "./pages/seller/finance/SellerEarnings";
+import SellerTests from "./pages/seller/tests/SellerTests";
+import SellerTestDetail from "./pages/seller/tests/SellerTestDetail";
+import CreateTestPage from "./pages/seller/tests/CreateTestPage";
 import SellerComments from "./pages/seller/interactions/SellerComments";
 import SellerLearners from "./pages/seller/learners/SellerLearners";
 import SellerProfile from "./pages/seller/account/SellerProfile";
 import SellerCourseDetail from "./pages/seller/courses/SellerCourseDetail";
-
-// Cấu hình QueryClient với default options
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1, // Retry 1 lần khi fail
-      refetchOnWindowFocus: false, // Không refetch khi focus window
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-    mutations: {
-      retry: false, // Không retry mutations
-    },
-  },
-});
+import SellerCreateCourse from "./pages/seller/courses/SellerCreateCourse";
+import CreateLessonPage from "./pages/seller/courses/CreateLessonPage";
+import LessonDetailPage from "./pages/seller/courses/LessonDetailPage";
+import UserAppLayout from "./components/user/layout/UserAppLayout";
 
 const App = () => (
+  <ThemeProvider
+    attribute="class"
+    defaultTheme="system"
+    enableSystem
+    disableTransitionOnChange
+    storageKey="vibecoding-theme"
+  >
   <QueryClientProvider client={queryClient}>
+    <CartProvider>
+      <WalletProvider>
+        <PurchasesProvider>
+         <SubscriptionProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <OfflineBanner />
       <BrowserRouter>
         <Routes>
-          {/* public routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/courses" element={<Courses />} />
+          {/* public routes - / là trang chủ (landing, giới thiệu + khoá học), /about redirect về / */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/courses" element={<Landing />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/about" element={<Landing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/verify" element={<VerifyEmailPage />} />
-          {/* protected routes */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          {/* protected routes - dashboard học viên */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/my-courses" element={<MyCourses />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/flashcards" element={<Flashcards />} />
+            <Route element={<UserAppLayout />}>
+              <Route path="/dashboard" element={<Index />} />
+              <Route path="/my-courses" element={<MyCourses />} />
+              <Route path="/flashcards" element={<Flashcards />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/wallet" element={<Wallet />} />
+              <Route path="/refunds" element={<UserRefunds />} />
+              <Route path="/notifications" element={<Notifications />} />
+
+              {/* AI Features (with sidebar layout) */}
+              <Route path="/exam" element={<ExamCenter />} />
+              <Route path="/exam/history" element={<TestHistory />} />
+              <Route path="/exam/writing-history" element={<WritingHistory />} />
+              <Route path="/exam/speaking-history" element={<SpeakingHistory />} />
+              <Route path="/my-progress" element={<ProgressAnalytics />} />
+              <Route path="/skill-tree" element={<SkillTree />} />
+              <Route path="/dictation" element={<DictationExercises />} />
+              <Route path="/dictation/:exerciseId" element={<DictationPractice />} />
+              <Route path="/learning-path" element={<LearningPath />} />
+              <Route path="/live" element={<LiveRoomList />} />
+              <Route path="/live/:roomId" element={<Suspense fallback={null}><LiveRoom /></Suspense>} />
+              <Route path="/live/replay/:roomId" element={<Suspense fallback={null}><LiveReplay /></Suspense>} />
+            </Route>
             <Route path="/learning/courses/:courseId/lessons/:lessonId?" element={<StudentLearningPage />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/notifications" element={<Notifications />} />
+
+            {/* AI Test routes (full-page, no sidebar — immersive test mode) */}
+            <Route path="/placement-test" element={<PlacementTest />} />
+            <Route path="/exam/test/speaking" element={<SpeakingTest />} />
+            <Route path="/exam/test/:testId" element={<IeltsTestModule />} />
+            <Route path="/exam/test/:testId/session/:sessionId" element={<IeltsTestModule />} />
+            <Route path="/exam/result/:sessionId" element={<TestResultPage />} />
+            <Route path="/exam/speaking-result/:evaluationId" element={<SpeakingResultPage />} />
+            <Route path="/practice/:testId" element={<TestDetailPage />} />
+            <Route path="/practice/:testId/result/:sessionId" element={<TestDetailPage />} />
 
             <Route path="/blog" element={<Blog />} />
           </Route>
           {/* admin Routes */}
 
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminProtectedRoute />}>
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UsersManagement />} />
             <Route path="courses" element={<CoursesManagement />} />
@@ -107,18 +188,27 @@ const App = () => (
             <Route path="lessons/:lessonId" element={<AdminLessonDetail />} />
             <Route path="transactions" element={<TransactionsManagement />} />
             <Route path="applications" element={<ApplicationsManagement />} />
-            <Route path="reports" element={<ReportsManagement />} />
+            <Route path="moderation" element={<CommentReports />} />
+            <Route path="exams" element={<ExamManagement />} />
+            <Route path="exams/new" element={<ExamFormPage />} />
+            <Route path="exams/new/reading" element={<ExamFormPage lockedSkill="READING" />} />
+            <Route path="exams/new/listening" element={<ExamFormPage lockedSkill="LISTENING" />} />
+            <Route path="exams/new/writing" element={<WritingTestForm />} />
+            <Route path="exams/new/speaking" element={<SpeakingTestForm />} />
+            <Route path="exams/:id/edit" element={<ExamFormPage />} />
+            <Route path="exams/:id/edit/writing" element={<WritingTestForm />} />
+            <Route path="exams/:id/edit/speaking" element={<SpeakingTestForm />} />
+            <Route path="speaking-topics" element={<SpeakingTopicManager />} />
+            <Route path="dictation" element={<DictationManagement />} />
             <Route path="notifications" element={<NotificationsManagement />} />
-            <Route
-              path="subscription-plans"
-              element={<SubscriptionPlansManagement />}
-            />
-            <Route
-              path="subscription-contracts"
-              element={<SubscriptionContractsManagement />}
-            />
-            <Route path="revenue" element={<RevenueManagement />} />
+            <Route path="commission" element={<CommissionManagement />} />
+            <Route path="withdrawals" element={<WithdrawalManagement />} />
             <Route path="tags" element={<TagsManagement />} />
+            <Route path="user-plans" element={<UserPlansManagement />} />
+            <Route path="audit-logs" element={<AuditLogs />} />
+            <Route path="refunds" element={<AdminRefunds />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="coupons" element={<AdminCoupons />} />
           </Route>
 
           {/* Seller Routes */}
@@ -126,20 +216,41 @@ const App = () => (
             <Route path="/seller" element={<SellerLayout />}>
               <Route index element={<SellerDashboard />} />
               <Route path="courses" element={<SellerCourses />} />
+              <Route path="courses/new" element={<SellerCreateCourse />} />
+              <Route path="courses/:courseId/lessons/create" element={<CreateLessonPage />} />
+              <Route path="courses/:courseId/lessons/:lessonId" element={<LessonDetailPage />} />
               <Route path="courses/:id" element={<SellerCourseDetail />} />
-              <Route path="fees" element={<SellerMonthlyFees />} />
+              <Route path="monthly-report" element={<SellerMonthlyFees />} />
+              <Route path="earnings" element={<SellerEarnings />} />
+              <Route path="tests" element={<SellerTests />} />
+              <Route path="tests/new" element={<CreateTestPage />} />
+              <Route path="tests/:id/edit" element={<CreateTestPage />} />
+              <Route path="tests/:id" element={<SellerTestDetail />} />
               <Route path="comments" element={<SellerComments />} />
               <Route path="learners" element={<SellerLearners />} />
               <Route path="profile" element={<SellerProfile />} />
             </Route>
           </Route>
           
+          {/* Payment result callback (Stripe) */}
+          <Route path="/payment/result" element={<PaymentResultPage />} />
+
+          {/* Error pages — reachable by path and for programmatic redirects */}
+          <Route path="/401" element={<Unauthorized />} />
+          <Route path="/403" element={<Forbidden />} />
+          <Route path="/500" element={<ServerError />} />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+         </SubscriptionProvider>
+        </PurchasesProvider>
+      </WalletProvider>
+    </CartProvider>
   </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

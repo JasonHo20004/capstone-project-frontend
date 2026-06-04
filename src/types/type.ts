@@ -5,7 +5,8 @@ export enum UserRole {
 }
 
 export enum PaymentMethod {
-  MOMO = 'MOMO',
+  STRIPE = 'STRIPE',
+  VNPAY = 'VNPAY',
   ZALOPAY = 'ZALOPAY',
   BANKING = 'BANKING',
   APPLEPAY = 'APPLEPAY'
@@ -20,7 +21,6 @@ export enum OrderStatus {
 export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
   PAYMENT = 'PAYMENT',
-  MONTHLYFEE = 'MONTHLYFEE',
   WITHDRAW = 'WITHDRAW'
 }
 
@@ -35,9 +35,7 @@ export enum CourseStatus {
   ACTIVE = 'ACTIVE',
   REFUSE = 'REFUSE',
   INACTIVE = 'INACTIVE',
-  DELETE = 'DELETE',
-  DRAFT = 'DRAFT',
-  PUBLISHED = 'PUBLISHED'
+  DRAFT = 'DRAFT'
 }
 
 export enum CourseLevel {
@@ -124,7 +122,6 @@ export interface User {
   practiceSessions?: PracticeSession[];
   ratings?: Rating[];
   reports?: Report[];
-  subscriptionContracts?: SubscriptionContract[];
   topupOrders?: TopupOrder[];
   userActivities?: UserActivity[];
   userAnswers?: UserAnswer[];
@@ -171,17 +168,6 @@ export interface Tag {
   
   // Relations
   deckTags?: DeckTag[];
-}
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description?: string;
-  maxCourses: number;
-  monthlyFee: number; // Decimal as number
-  
-  // Relations
-  subscriptionContracts?: SubscriptionContract[];
 }
 
 export interface CourseSellerProfile {
@@ -451,25 +437,6 @@ export interface PracticeSession {
   userAnswers?: UserAnswer[];
 }
 
-export interface SubscriptionContract {
-  id: string;
-  courseSellerId: string;
-  status: boolean;
-  subscriptionPlanId: string;
-  createdAt: string;
-  expiresAt: string;
-  updatedAt?: string;
-  renewalCount: number;
-  lastRenewalAt?: string;
-  notes?: string;
-  lastNotificationAt?: string;
-  
-  // Relations
-  user?: User;
-  subscriptionPlan?: SubscriptionPlan;
-  transactions?: Transaction[];
-}
-
 export interface Rating {
   id: string;
   score: number;
@@ -495,13 +462,11 @@ export interface Transaction {
   walletId: string;
   transactionType: TransactionType;
   topupOrderId?: string;
-  subscriptionContractId?: string;
   orderId?: string;
-  
+
   // Relations
   wallet?: Wallet;
   topupOrder?: TopupOrder;
-  subscriptionContract?: SubscriptionContract;
   userActivities?: UserActivity[];
   order?: Order;
 }
@@ -552,6 +517,15 @@ export interface UserLesson {
   user?: User;
 }
 
+export interface CourseLesson {
+  lessonId: string;
+  courseId: string;
+  
+  // Relations
+  lesson?: Lesson;
+  course?: Course;
+}
+
 export interface UserAnswer {
   id: string;
   practiceSessionId: string;
@@ -600,6 +574,7 @@ export interface Lesson {
   description?: string;
   durationInSeconds?: number;
   lessonOrder?: number;
+  videoUrl?: string;
   materials: string[];
   commentCount?: number;
   courseId: string;

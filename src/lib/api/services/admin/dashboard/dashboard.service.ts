@@ -1,9 +1,12 @@
-import apiClient from "../../../config";
-import type { ApiResponse } from "../../../types";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
 import type {
   DashboardData,
   DashboardStats,
-} from "../../../types/dashboard.types";
+  MonthlyRevenueData,
+  MonthlyUserGrowthData,
+  CourseStatusData,
+} from "@/lib/api/types/dashboard.types";
 
 class DashboardService {
   /**
@@ -29,8 +32,8 @@ class DashboardService {
   /**
    * Get revenue data for chart (last N months)
    */
-  async getRevenueData(months: number = 6): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  async getRevenueData(months: number = 6): Promise<ApiResponse<MonthlyRevenueData[]>> {
+    const response = await apiClient.get<ApiResponse<MonthlyRevenueData[]>>(
       `/admin/dashboard/revenue?months=${months}`
     );
     return response.data;
@@ -39,8 +42,8 @@ class DashboardService {
   /**
    * Get user growth data for chart (last N months)
    */
-  async getUserGrowthData(months: number = 6): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  async getUserGrowthData(months: number = 6): Promise<ApiResponse<MonthlyUserGrowthData[]>> {
+    const response = await apiClient.get<ApiResponse<MonthlyUserGrowthData[]>>(
       `/admin/dashboard/user-growth?months=${months}`
     );
     return response.data;
@@ -49,8 +52,8 @@ class DashboardService {
   /**
    * Get course status distribution
    */
-  async getCourseStatusData(): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  async getCourseStatusData(): Promise<ApiResponse<CourseStatusData[]>> {
+    const response = await apiClient.get<ApiResponse<CourseStatusData[]>>(
       "/admin/dashboard/course-status"
     );
     return response.data;

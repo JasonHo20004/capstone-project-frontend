@@ -1,35 +1,33 @@
-import apiClient from "../../../config";
-import type { ApiResponse } from "../../../types";
-import type { CourseSellerApplication } from "@/types/type";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
+import type { CourseSellerApplication } from "@/domain";
 
 export interface UpdateApplicationStatusRequest {
   status: "APPROVED" | "REJECTED";
+  rejectionReason?: string;
+  message?: string;
 }
 
 class ApplicationManagementService {
-  async getApplications(): Promise<ApiResponse<CourseSellerApplication[]>> {
+  async getApplications(params?: {
+    page?: number;
+    limit?: number;
+    status?: "PENDING" | "APPROVED" | "REJECTED";
+  }): Promise<ApiResponse<CourseSellerApplication[]>> {
     const response = await apiClient.get<ApiResponse<CourseSellerApplication[]>>(
-      "/admin/applications"
-    );
-    return response.data;
-  }
-
-  async getApplicationById(
-    applicationId: string
-  ): Promise<ApiResponse<CourseSellerApplication>> {
-    const response = await apiClient.get<ApiResponse<CourseSellerApplication>>(
-      `/admin/applications/${applicationId}`
+      "/admin/seller-applications",
+      { params }
     );
     return response.data;
   }
 
   async updateApplicationStatus(
     applicationId: string,
-    status: "APPROVED" | "REJECTED"
+    body: UpdateApplicationStatusRequest
   ): Promise<ApiResponse<CourseSellerApplication>> {
-    const response = await apiClient.put<ApiResponse<CourseSellerApplication>>(
-      `/admin/applications/${applicationId}`,
-      { status }
+    const response = await apiClient.patch<ApiResponse<CourseSellerApplication>>(
+      `/admin/seller-applications/${applicationId}`,
+      body
     );
     return response.data;
   }

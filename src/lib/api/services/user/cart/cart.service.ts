@@ -1,7 +1,7 @@
 // src/lib/api/services/cart.service.ts
 import apiClient from '@/lib/api/config'
 import type { ApiResponse } from  '@/lib/api/types'; // Assuming you have a generic ApiResponse type
-import type { Cart } from '@/types/type';
+import type { Cart } from "@/domain";
 
 export interface CheckoutResponse {
   id: string; // Order ID
@@ -20,21 +20,28 @@ class CartService {
   }
 
   // POST /cart/add-to-cart
-  public async addToCart(courseId: string): Promise<ApiResponse<any>> {
+  public async addToCart(courseId: string): Promise<ApiResponse<unknown>> {
     const response = await apiClient.post('/carts/add-to-cart', { courseId });
     return response.data;
   }
 
   // POST /cart/checkout/full-cart
-  public async checkoutFullCart(): Promise<ApiResponse<CheckoutResponse>> {
-    const response = await apiClient.post<ApiResponse<CheckoutResponse>>('/carts/checkout/full-cart');
+  public async checkoutFullCart(couponCode?: string): Promise<ApiResponse<CheckoutResponse>> {
+    const response = await apiClient.post<ApiResponse<CheckoutResponse>>(
+      '/carts/checkout/full-cart',
+      couponCode ? { couponCode } : {}
+    );
     return response.data;
   }
 
   // POST /cart/checkout/partial
-  public async checkoutPartial(cartItemIds: string[]): Promise<ApiResponse<CheckoutResponse>> {
+  public async checkoutPartial(
+    cartItemIds: string[],
+    couponCode?: string
+  ): Promise<ApiResponse<CheckoutResponse>> {
     const response = await apiClient.post<ApiResponse<CheckoutResponse>>('/carts/checkout/partial', {
       cartItemIds,
+      ...(couponCode ? { couponCode } : {}),
     });
     return response.data;
   }
@@ -45,6 +52,18 @@ class CartService {
           courseId
       });
       return response.data;
+  }
+
+  // DELETE /carts/items/:cartItemId
+  public async removeFromCart(cartItemId: string): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.delete<ApiResponse<Cart>>(`/carts/items/${cartItemId}`);
+    return response.data;
+  }
+
+  // DELETE /carts
+  public async clearCart(): Promise<ApiResponse<Cart>> {
+    const response = await apiClient.delete<ApiResponse<Cart>>('/carts');
+    return response.data;
   }
 }
 

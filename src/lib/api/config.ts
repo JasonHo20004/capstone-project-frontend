@@ -66,9 +66,32 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
-    
+
+    // Public auth pages handle their own session state. Don't let a 401 from
+    // some background fetch trigger a refresh/logout cascade that boots the
+    // user back to /login mid-verify or mid-register.
+    const path = window.location.pathname;
+    const isPublicAuthPage =
+      path.startsWith("/auth/") || path === "/login" || path === "/register";
+    if (error.response?.status === 401 && isPublicAuthPage) {
+      return Promise.reject(error);
+    }
+
+    // Skip retry for /auth/refresh - if refresh fails, we must logout immediately to avoid deadlock/infinite loading
+    const isRefreshRequest = originalRequest?.url?.includes("/auth/refresh");
+    if (error.response?.status === 401 && isRefreshRequest) {
+      isRefreshing = false;
+      processQueue(error, null);
+      handleLogout();
+      return Promise.reject(error);
+    }
+
     // Chỉ xử lý lỗi 401 (Unauthorized) và không phải là request retry
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (!localStorage.getItem("accessToken")) {
+        return Promise.reject(error);
+      }
+
       // Nếu đang trong quá trình refresh, đưa request vào hàng đợi
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -91,7 +114,12 @@ apiClient.interceptors.response.use(
         // Cookie (refreshToken) sẽ được gửi tự động.
         const response = await apiClient.post("/auth/refresh");
 
-        const { accessToken } = response.data;
+        // Backend returns { success, data: { accessToken } }
+        const accessToken = response.data?.data?.accessToken || response.data?.accessToken;
+
+        if (!accessToken) {
+          throw new Error("No access token in refresh response");
+        }
 
         // Lưu accessToken mới
         localStorage.setItem("accessToken", accessToken);

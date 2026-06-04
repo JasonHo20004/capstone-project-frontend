@@ -1,65 +1,27 @@
 import apiClient from '@/lib/api/config';
-import type { ApiResponse, EmptyResponse } from '@/lib/api/types';
-
-/**
- * Auth Service - Xử lý tất cả API calls liên quan đến authentication
- */
-
-// Types cho Auth
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken?: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-  };
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  fullName: string;       // Thay cho 'name'
-  phoneNumber?: string;   // Mới
-  dateOfBirth?: string;   // Mới (ISO String)
-}
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
-
-export interface RefreshTokenResponse {
-  accessToken: string;
-}
-
-export interface RegisterRequest {
-  fullName: string;
-  email: string;
-  password: string;
-}
-
-export interface RegisterResponse {
-  accessToken: string;
-  refreshToken?: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-  };
-}
+import type {
+  LoginRequest,
+  LoginApiResponse,
+  RegisterRequest,
+  RegisterApiResponse,
+  RefreshTokenRequest,
+  RefreshTokenApiResponse,
+  LogoutApiResponse,
+  ResendVerificationRequest,
+  ResendVerificationApiResponse,
+  VerifyEmailApiResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordApiResponse,
+  ResetPasswordRequest,
+  ResetPasswordApiResponse,
+} from '@/lib/api/types/auth.types';
 
 class AuthService {
   /**
    * Đăng nhập
    */
-  async login(data: LoginRequest): Promise<ApiResponse<LoginResponse>> {
-    const response = await apiClient.post<ApiResponse<LoginResponse>>(
+  async login(data: LoginRequest): Promise<LoginApiResponse> {
+    const response = await apiClient.post<LoginApiResponse>(
       '/auth/login',
       data
     );
@@ -71,9 +33,10 @@ class AuthService {
    */
   async refreshToken(
     data: RefreshTokenRequest
-  ): Promise<ApiResponse<RefreshTokenResponse>> {
-    const response = await apiClient.post<ApiResponse<RefreshTokenResponse>>(
-      '/auth/refresh'
+  ): Promise<RefreshTokenApiResponse> {
+    const response = await apiClient.post<RefreshTokenApiResponse>(
+      '/auth/refresh',
+      data
     );
     return response.data;
   }
@@ -81,9 +44,9 @@ class AuthService {
   /**
    * Đăng ký
    */
-  async register(data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> {
-    const response = await apiClient.post<ApiResponse<RegisterResponse>>(
-      '/users/register',
+  async register(data: RegisterRequest): Promise<RegisterApiResponse> {
+    const response = await apiClient.post<RegisterApiResponse>(
+      '/auth/register',
       data
     );
     return response.data;
@@ -92,9 +55,58 @@ class AuthService {
   /**
    * Đăng xuất
    */
-  async logout(): Promise<ApiResponse<EmptyResponse>> {
-    const response = await apiClient.post<ApiResponse<EmptyResponse>>(
+  async logout(): Promise<LogoutApiResponse> {
+    const response = await apiClient.post<LogoutApiResponse>(
       '/auth/logout',
+    );
+    return response.data;
+  }
+
+  /**
+   * Verify email and receive a session (auto-login)
+   */
+  async verifyEmail(token: string): Promise<VerifyEmailApiResponse> {
+    const response = await apiClient.get<VerifyEmailApiResponse>('/auth/verify', {
+      params: { token },
+    });
+    return response.data;
+  }
+
+  /**
+   * Resend verification email by email address
+   */
+  async resendVerification(
+    data: ResendVerificationRequest
+  ): Promise<ResendVerificationApiResponse> {
+    const response = await apiClient.post<ResendVerificationApiResponse>(
+      '/auth/resend-verification',
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Request a password reset link to be emailed.
+   */
+  async forgotPassword(
+    data: ForgotPasswordRequest
+  ): Promise<ForgotPasswordApiResponse> {
+    const response = await apiClient.post<ForgotPasswordApiResponse>(
+      '/auth/forgot-password',
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Reset the password using the token from the email link.
+   */
+  async resetPassword(
+    data: ResetPasswordRequest
+  ): Promise<ResetPasswordApiResponse> {
+    const response = await apiClient.post<ResetPasswordApiResponse>(
+      '/auth/reset-password',
+      data
     );
     return response.data;
   }

@@ -1,0 +1,33 @@
+{
+  "hero": {
+    "eyebrow": "Khu vực học tập",
+    "title": "Học mọi nơi,",
+    "titleAccent": "tiến bộ mỗi ngày",
+    "subtitle": "Khám phá khoá học, theo dõi tiến độ và học theo nhịp của bạn với giao diện trực quan hơn.",
+    "startLearning": "Bắt đầu học",
+    "myCourses": "Khoá học của tôi"
+  },
+  "stats": {
+    "enrolledLabel": "Khoá học đang theo học",
+    "enrolledValue": "{{count}} khoá học",
+    "unreadLabel": "Thông báo chưa đọc",
+    "unreadValue": "{{count}} cần xem",
+    "unreadAllRead": "Đã xem hết",
+    "decksLabel": "Bộ thẻ ghi nhớ",
+    "decksValue": "{{count}} bộ thẻ",
+    "decksEmpty": "Chưa có bộ thẻ"
+  },
+  "placement": {
+    "title": "Kiểm tra trình độ tiếng Anh",
+    "subtitle": "50 câu hỏi · ~40 phút · Xác định cấp độ CEFR A1–C2 và nhận lộ trình học phù hợp",
+    "cta": "Làm bài kiểm tra"
+  },
+  "popular": {
+    "title": "Khoá học nổi bật",
+    "subtitle": "Danh sách được cập nhật theo xu hướng học viên",
+    "viewAll": "Xem tất cả →",
+    "loading": "Đang tải khoá học nổi bật...",
+    "loadError": "Không thể tải dữ liệu.",
+    "empty": "Hiện chưa có khoá học nào phù hợp."
+  }
+}

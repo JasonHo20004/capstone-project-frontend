@@ -34,5 +34,9 @@ export type {
   GetMonthlyFeesResponse,
 } from './seller.service';
 
+export type {
+  UserNotificationsResponse,
+  UserNotificationStats,
+} from './notification.service';
 
 

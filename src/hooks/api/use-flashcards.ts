@@ -1,12 +1,11 @@
-import { useQuery,useQueryClient,useMutation } from '@tanstack/react-query';
-import { flashcardService, type SubmitReviewDTO, type DeckFormDTO, type CardFormDTO, } from '@/lib/api/services/user';
-
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { flashcardService, type SubmitReviewDTO, type DeckFormDTO, type CardFormDTO } from '@/lib/api/services/user';
 import { toast } from 'sonner';
 // Tạo key factory giúp quản lý key nhất quán
 export const flashcardKeys = {
   allDecks: ['flashcardDecks', 'me'] as const,
+  publicDecks: (search?: string) => ['flashcardDecks', 'public', search ?? ''] as const,
   cardsByDeck: (deckId: string) => ['flashcards', 'byDeck', deckId] as const,
-  // 🔽 THÊM key mới
   reviewQueue: (deckId: string) => ['flashcardQueue', 'byDeck', deckId] as const,
 };
 
@@ -19,6 +18,17 @@ export const useGetDecks = () => {
     queryFn: async () => (await flashcardService.getMyDecks()).data,
   });
 };
+
+/**
+ * Hook 1b: Fetch public decks from all users (for Explore tab)
+ */
+export const useGetPublicDecks = (search?: string) => {
+  return useQuery({
+    queryKey: flashcardKeys.publicDecks(search),
+    queryFn: async () => (await flashcardService.getPublicDecks({ search, limit: 24 })).data,
+    staleTime: 30_000,
+  });
+};
 export const useCreateDeck = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -27,10 +37,6 @@ export const useCreateDeck = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: flashcardKeys.allDecks });
       toast.success('Tạo bộ thẻ thành công!');
-    },
-    onError: (error:any) => {
-      const message = error.response?.data?.message || "Tạo bộ thẻ thất bại";
-      toast.error(message);
     },
   });
 };
@@ -42,14 +48,8 @@ export const useUpdateDeck = () => {
       flashcardService.updateDeck(deckId, data),
     
     onSuccess: () => {
-      // Fetch lại danh sách decks sau khi cập nhật thành công
       queryClient.invalidateQueries({ queryKey: flashcardKeys.allDecks });
       toast.success('Cập nhật bộ thẻ thành công!');
-    },
-    onError: (error:any) => {
-    
-      const message = error.response?.data?.message || "Cập nhật thất bại";
-      toast.error(message);
     },
   });
 };
@@ -67,11 +67,6 @@ export const useDeleteDeck = () => {
       
       toast.success('Đã xóa bộ thẻ!');
     },
-    onError: (error:any) => {
-      
-      const message = error.response?.data?.message || "Xóa thất bại";
-      toast.error(message);
-    },
   });
 };
 /**
@@ -81,9 +76,13 @@ export const useGetCards = (deckId: string | null) => {
   return useQuery({
     queryKey: flashcardKeys.cardsByDeck(deckId!), // Dùng `!` vì `enabled` sẽ lo
     queryFn: async () => (await flashcardService.getCardsByDeck(deckId!)).data,
-    
-    // Rất quan trọng: Chỉ chạy query này khi `deckId` tồn tại (không null)
-    enabled: !!deckId, 
+
+    enabled: !!deckId,
+    retry: (failureCount, error: unknown) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 403) return false;
+      return failureCount < 1;
+    },
   });
 };
 export const useCreateCard = () => {
@@ -97,11 +96,6 @@ export const useCreateCard = () => {
       // Fetch lại danh sách thẻ của bộ này
       queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(deckId) });
       toast.success('Tạo thẻ thành công!');
-    },
-    onError: (error:any) => {
-   
-      const message = error.response?.data?.message || "Tạo thẻ thất bại";
-      toast.error(message);
     },
   });
 };
@@ -117,10 +111,6 @@ export const useUpdateCard = () => {
       queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(deckId) });
       toast.success('Cập nhật thẻ thành công!');
     },
-    onError: (error:any) => {
-      const message = error.response?.data?.message || "Cập nhật thẻ thất bại";
-      toast.error(message);
-    },
   });
 };
 export const useDeleteCard = () => {
@@ -135,11 +125,6 @@ export const useDeleteCard = () => {
       // Fetch lại danh sách thẻ của bộ này
       queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(deckId) });
       toast.success('Đã xóa thẻ!');
-    },
-    onError: (error:any) => {
-   
-      const message = error.response?.data?.message || "Xóa thẻ thất bại";
-      toast.error(message);
     },
   });
 };
@@ -167,17 +152,21 @@ export const useSubmitReview = () => {
     }) =>
       flashcardService.submitReview(flashcardId, data),
     
-    // SỬA: Dùng `deckId` từ `variables`
-    onSuccess: (response, variables) => {
-      // `variables` chính là object { flashcardId, deckId, data }
-      const { deckId } = variables;
-
-      // Bây giờ chúng ta có thể làm mới hàng đợi (queue)
-      // cho đúng bộ thẻ này!
-      queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
+    // Không invalidate reviewQueue ở đây để tránh reset progress bar
+    // Queue sẽ tự refetch khi user mở lại study mode (staleTime: 0)
+    onSuccess: () => {
+      // Review submitted — session state is managed locally in StudyMode
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
+  });
+};
+
+export const useResetProgress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (deckId: string) => flashcardService.resetProgress(deckId),
+    onSuccess: (_, deckId) => {
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
+      toast.success('Đã xóa tiến độ học!');
     },
   });
 };

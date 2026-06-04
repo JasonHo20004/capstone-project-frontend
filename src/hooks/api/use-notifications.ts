@@ -5,115 +5,158 @@ import {
   type UserNotificationsResponse,
   type UserNotificationStats,
 } from "@/lib/api/services";
-import type { InAppNotification } from "@/lib/api/types";
+import type { InAppNotification } from "@/domain";
 
-const NOTIFICATIONS_QUERY_KEY = (userId: string, params: any) => [
-  "notifications",
-  userId,
-  params,
-];
-
-export const useNotifications = (params: {
-  userId: string | undefined;
+interface NotificationQueryParams {
   page?: number;
   limit?: number;
   unreadOnly?: boolean;
   type?: string;
+  isArchived?: boolean;
+}
+
+const NOTIFICATIONS_QUERY_KEY = (params: NotificationQueryParams) => [
+  "notifications",
+  params,
+];
+
+/**
+ * Fetch current user's notifications (token-based auth, no userId needed)
+ */
+export const useNotifications = (params: {
+  page?: number;
+  limit?: number;
+  unreadOnly?: boolean;
+  type?: string;
+  isArchived?: boolean;
   enabled?: boolean;
 }) => {
-  const { userId, enabled = true, ...rest } = params;
+  const { enabled = true, ...rest } = params;
 
-  const query = useQuery<UserNotificationsResponse>({
-    queryKey: NOTIFICATIONS_QUERY_KEY(userId || "anonymous", rest),
+  return useQuery<UserNotificationsResponse>({
+    queryKey: NOTIFICATIONS_QUERY_KEY(rest),
     queryFn: async () => {
-      if (!userId) {
-        return {
-          notifications: [],
-          pagination: {
-            page: rest.page ?? 1,
-            limit: rest.limit ?? 10,
-            total: 0,
-            totalPages: 0,
-          },
-        };
-      }
-
-      const response = await notificationService.getUserNotifications({
-        userId,
-        ...rest,
-      });
-
+      const response = await notificationService.getUserNotifications(rest);
       return response.data!;
     },
-    enabled: Boolean(userId) && enabled,
+    enabled,
     staleTime: 60_000,
   });
-
-  return query;
 };
 
-export const useNotificationStats = (userId: string | undefined) => {
+/**
+ * Fetch notification stats for current user
+ */
+export const useNotificationStats = () => {
   return useQuery<UserNotificationStats>({
-    queryKey: ["notifications", "stats", userId || "anonymous"],
+    queryKey: ["notifications", "stats"],
     queryFn: async () => {
-      if (!userId) {
-        return {
-          total: 0,
-          unread: 0,
-          byType: {},
-        };
-      }
-      const response = await notificationService.getUserStats(userId);
+      const response = await notificationService.getUserStats();
       return response.data!;
     },
-    enabled: Boolean(userId),
     staleTime: 60_000,
   });
 };
 
-export const useMarkNotificationAsRead = (userId: string | undefined) => {
+/**
+ * Fetch unread notification count
+ */
+export const useUnreadNotificationCount = () => {
+  return useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: async () => {
+      const response = await notificationService.getUnreadCount();
+      return response.data!;
+    },
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Mark a single notification as read
+ */
+export const useMarkNotificationAsRead = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (notificationId: string) =>
       notificationService.markNotificationAsRead(notificationId),
     onSuccess: () => {
-      if (!userId) return;
-      queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
-      queryClient.invalidateQueries({
-        queryKey: ["notifications", "stats", userId],
-      });
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 };
 
-export const useMarkAllNotificationsAsRead = (userId: string | undefined) => {
+/**
+ * Mark all notifications as read
+ */
+export const useMarkAllNotificationsAsRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<unknown, Error, string | undefined>({
+    mutationFn: async (type?: string) => {
+      return notificationService.markAllAsRead(type);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+};
+
+/**
+ * Archive (save) a notification — moves it out of the active inbox
+ * into the "Đã lưu trữ" list.
+ */
+export const useArchiveNotification = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => {
-      if (!userId) return Promise.resolve();
-      return notificationService.markAllAsRead(userId);
-    },
+    mutationFn: (notificationId: string) =>
+      notificationService.archiveNotification(notificationId),
     onSuccess: () => {
-      if (!userId) return;
-      queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
-      queryClient.invalidateQueries({
-        queryKey: ["notifications", "stats", userId],
-      });
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message);
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 };
 
+/**
+ * Unarchive a notification — restores it from the saved list back
+ * to the active inbox.
+ */
+export const useUnarchiveNotification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      notificationService.unarchiveNotification(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+};
+
+/**
+ * Delete a notification
+ */
+export const useDeleteNotification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      notificationService.deleteNotification(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+};
+
+/**
+ * Real-time notification updates via polling
+ * (SSE endpoint not yet implemented on backend, using polling fallback)
+ */
 export const useNotificationRealtime = (
   userId: string | undefined,
-  onNotification?: (notification: InAppNotification) => void,
+  _onNotification?: (notification: InAppNotification) => void,
 ) => {
   const queryClient = useQueryClient();
 
@@ -122,44 +165,13 @@ export const useNotificationRealtime = (
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) return;
 
-    if (typeof EventSource === "undefined") {
-      return;
-    }
-
-    const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
-    const streamUrl = `${API_BASE_URL}/notifications/in-app/stream?token=${encodeURIComponent(
-      accessToken,
-    )}`;
-
-    const es = new EventSource(streamUrl);
-
-    es.addEventListener("notification", (event) => {
-      try {
-        const data = JSON.parse((event as MessageEvent).data) as InAppNotification;
-
-        if (onNotification) {
-          onNotification(data);
-        }
-
-        // Refresh queries for this user so UI stays in sync
-        queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
-        queryClient.invalidateQueries({
-          queryKey: ["notifications", "stats", userId],
-        });
-      } catch {
-        // ignore parsing errors
-      }
-    });
-
-    es.onerror = () => {
-      es.close();
-    };
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }, 30_000);
 
     return () => {
-      es.close();
+      clearInterval(interval);
     };
-  }, [userId, queryClient, onNotification]);
+  }, [userId, queryClient]);
 };
-
-

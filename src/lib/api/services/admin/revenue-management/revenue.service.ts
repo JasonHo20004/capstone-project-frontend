@@ -1,11 +1,11 @@
-import apiClient from "../../../config";
-import type { ApiResponse } from "../../../types";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
 import type {
   RevenueData,
   RevenueStats,
   RevenueFilters,
-  TransactionListResponse,
-} from "../../../types/revenue.types";
+  RevenueTransactionListResponse,
+} from "@/lib/api/types/revenue.types";
 
 class RevenueManagementService {
   /**
@@ -57,7 +57,7 @@ class RevenueManagementService {
    */
   async getTransactions(
     filters: RevenueFilters = {}
-  ): Promise<ApiResponse<TransactionListResponse>> {
+  ): Promise<ApiResponse<RevenueTransactionListResponse>> {
     const params = new URLSearchParams();
 
     if (filters.startDate) params.append("startDate", filters.startDate);
@@ -69,7 +69,7 @@ class RevenueManagementService {
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
 
-    const response = await apiClient.get<ApiResponse<TransactionListResponse>>(
+    const response = await apiClient.get<ApiResponse<RevenueTransactionListResponse>>(
       `/admin/revenue/transactions?${params.toString()}`
     );
     return response.data;

@@ -1,7 +1,7 @@
 
-import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -12,27 +12,60 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  MoreHorizontal, 
-  Eye, 
-  Check, 
+import {
+  MoreHorizontal,
+  Eye,
+  Check,
   X,
   Star,
-  Pencil
+  Pencil,
 } from 'lucide-react';
-import { Course, CourseWithStats, CourseStatus } from '@/types/type';
-import { courseManagementService } from '@/lib/api/services/admin';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import type { Course, CourseWithStats } from "@/domain";
+import { CourseStatus } from "@/domain";
+import { courseManagementService, auditLogService } from '@/lib/api/services/admin';
 import DataTable from '@/components/admin/DataTable';
 import FilterSection from '@/components/admin/FilterSection';
 import { useCourses } from '@/hooks/api';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
+import { toast } from 'sonner';
 
 export default function CoursesManagement() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
+  const [approveTarget, setApproveTarget] = useState<Course | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (searchTerm) next.set("q", searchTerm); else next.delete("q");
+    if (statusFilter && statusFilter !== "all") next.set("status", statusFilter);
+    else next.delete("status");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter]);
 
   const {
     data: coursesResponse,
@@ -50,26 +83,89 @@ export default function CoursesManagement() {
   });
 
   const courses = coursesResponse?.data ?? [];
-  const totalCourses = coursesResponse?.pagination.total ?? courses.length;
-
-  const filteredCourses = useMemo(() => {
-    if (!courses) return [];
-    return courses.filter(course => {
-      const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (course.courseSeller?.fullName ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [courses, searchTerm, statusFilter]);
+  // Server has already filtered by search + status — no client-side re-filter.
+  const totalCourses = coursesResponse?.total ?? courses.length;
 
   const updateCourseMutation = useMutation({
     mutationFn: (vars: { id: string; data: { status?: Course["status"] } }) =>
       courseManagementService.updateCourse(vars.id, vars.data),
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: ['adminCourses'] });
       refetch();
+      if (vars.data.status === CourseStatus.ACTIVE) {
+        toast.success('Đã duyệt khóa học');
+        setApproveTarget(null);
+      }
+    },
+    onError: () => {
+      toast.error('Thao tác thất bại');
     },
   });
+
+  // Bulk selection — mirrors ApplicationsManagement pattern.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  /** IDs that errored during the previous bulk run — surfaced as a Retry CTA. */
+  const [failedIds, setFailedIds] = useState<string[]>([]);
+
+  const pendingSelectedCourses = useMemo(() => {
+    const idSet = new Set(selectedIds);
+    return courses.filter((c) => idSet.has(c.id) && c.status === CourseStatus.PENDING);
+  }, [courses, selectedIds]);
+
+  const failedCourses = useMemo(() => {
+    if (failedIds.length === 0) return [];
+    const set = new Set(failedIds);
+    return courses.filter((c) => set.has(c.id));
+  }, [courses, failedIds]);
+
+  const runBulkApproveFor = async (targets: Course[]) => {
+    if (targets.length === 0) {
+      toast.error('Không có khóa học PENDING nào trong lựa chọn');
+      return;
+    }
+    setBulkProgress({ done: 0, total: targets.length });
+    let success = 0;
+    const failures: string[] = [];
+    for (const [i, course] of targets.entries()) {
+      try {
+        await courseManagementService.updateCourse(course.id, {
+          status: CourseStatus.ACTIVE,
+        });
+        auditLogService
+          .record({
+            action: 'COURSE_APPROVE',
+            entityType: 'COURSE',
+            entityId: course.id,
+            reason: 'Bulk approval',
+            metadata: { bulk: true, title: course.title },
+          })
+          .catch((err) => console.error('[Audit] bulk course approve log failed:', err));
+        success++;
+      } catch {
+        failures.push(course.id);
+      }
+      setBulkProgress({ done: i + 1, total: targets.length });
+    }
+    queryClient.invalidateQueries({ queryKey: ['adminCourses'] });
+    refetch();
+    setBulkProgress(null);
+    setBulkConfirmOpen(false);
+    setSelectedIds([]);
+    setFailedIds(failures);
+    if (failures.length === 0) {
+      toast.success(`Hoàn tất: ${success} duyệt thành công`);
+    } else {
+      toast.warning(
+        `${success} duyệt thành công, ${failures.length} thất bại — bấm "Thử lại" để duyệt phần lỗi`,
+        { duration: 8000 }
+      );
+    }
+  };
+
+  const runBulkApprove = () => runBulkApproveFor(pendingSelectedCourses);
+  const runRetryFailed = () => runBulkApproveFor(failedCourses);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -80,8 +176,6 @@ export default function CoursesManagement() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "PUBLISHED":
-        return <Badge variant="default">Đã xuất bản</Badge>;
       case "ACTIVE":
         return <Badge variant="default">Hoạt động</Badge>;
       case "PENDING":
@@ -105,9 +199,15 @@ export default function CoursesManagement() {
       header: "Khóa học",
       render: (course: Course) => (
         <div>
-          <div className="font-medium">{course.title}</div>
+          <button
+            type="button"
+            onClick={() => navigate(`/admin/courses/${course.id}`)}
+            className="font-medium text-left hover:text-primary hover:underline focus:outline-none focus-visible:underline"
+          >
+            {course.title}
+          </button>
           <div className="text-sm text-muted-foreground">
-            Giảng viên: {course.courseSeller?.fullName ?? 'Giảng viên ẩn danh'}
+            Giảng viên: {course.sellerName || course.courseSeller?.fullName || 'Chưa xác định'}
           </div>
         </div>
       ),
@@ -183,27 +283,19 @@ export default function CoursesManagement() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-green-600"
-                  onClick={() =>
-                    updateCourseMutation.mutate({
-                      id: course.id,
-                      data: { status: CourseStatus.ACTIVE },
-                    })
-                  }
+                  onClick={() => setApproveTarget(course)}
                 >
                   <Check className="mr-2 h-4 w-4" />
                   Duyệt khóa học
                 </DropdownMenuItem>
+                {/* Rejection now requires a written reason — handled on the
+                    detail page where we can render a textarea. */}
                 <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() =>
-                    updateCourseMutation.mutate({
-                      id: course.id,
-                      data: { status: CourseStatus.REFUSE },
-                    })
-                  }
+                  onClick={() => navigate(`/admin/courses/${course.id}`)}
                 >
                   <X className="mr-2 h-4 w-4" />
-                  Từ chối
+                  Từ chối (mở chi tiết)
                 </DropdownMenuItem>
               </>
             )}
@@ -215,13 +307,11 @@ export default function CoursesManagement() {
 
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
-    { value: 'PUBLISHED', label: 'Đã xuất bản' },
     { value: 'ACTIVE', label: 'Hoạt động' },
     { value: 'PENDING', label: 'Chờ duyệt' },
     { value: 'REFUSE', label: 'Từ chối' },
     { value: 'INACTIVE', label: 'Không hoạt động' },
     { value: 'DRAFT', label: 'Bản nháp' },
-    { value: 'DELETE', label: 'Đã xoá' },
   ];
 
   if (isLoading) {
@@ -268,13 +358,143 @@ export default function CoursesManagement() {
         ]}
       />
 
+      {failedCourses.length > 0 && !bulkProgress && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+          <div className="text-sm">
+            <span className="font-semibold text-amber-700 dark:text-amber-400">
+              {failedCourses.length} khóa học chưa duyệt được
+            </span>
+            <span className="text-muted-foreground ml-2">
+              từ lần duyệt hàng loạt trước. Có thể do mạng hoặc validate bên BE.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setFailedIds([])}>
+              Bỏ qua
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-amber-500 text-amber-700 hover:bg-amber-50"
+              onClick={runRetryFailed}
+            >
+              <Check className="mr-1 h-4 w-4" /> Thử lại {failedCourses.length}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <DataTable
         title="Danh sách khóa học"
         description={`Tổng cộng ${totalCourses} khóa học`}
-        data={filteredCourses}
+        data={courses}
         columns={columns}
         emptyMessage="Không tìm thấy khóa học nào"
+        selectable
+        getRowId={(course) => course.id}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={() => {
+          const pendingCount = pendingSelectedCourses.length;
+          return (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+              disabled={pendingCount === 0}
+              onClick={() => setBulkConfirmOpen(true)}
+              title={pendingCount === 0 ? 'Không có khóa học PENDING trong lựa chọn' : undefined}
+            >
+              <Check className="mr-1 h-4 w-4" /> Duyệt {pendingCount} khóa học chờ
+            </Button>
+          );
+        }}
       />
+
+      {/* Bulk approve confirmation */}
+      <Dialog
+        open={bulkConfirmOpen}
+        onOpenChange={(open) => !open && !bulkProgress && setBulkConfirmOpen(false)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duyệt {pendingSelectedCourses.length} khóa học?</DialogTitle>
+            <DialogDescription>
+              Các khóa học PENDING được chọn sẽ chuyển sang trạng thái ACTIVE và hiển thị công khai
+              cho học viên mua ngay. Khóa học không ở trạng thái PENDING sẽ được bỏ qua.
+            </DialogDescription>
+          </DialogHeader>
+          {pendingSelectedCourses.length > 0 && (
+            <div className="max-h-40 overflow-y-auto rounded-md border bg-muted/30 p-2 text-sm">
+              {pendingSelectedCourses.slice(0, 10).map((c) => (
+                <div key={c.id} className="truncate py-0.5">• {c.title}</div>
+              ))}
+              {pendingSelectedCourses.length > 10 && (
+                <div className="text-xs text-muted-foreground pt-1">
+                  ... và {pendingSelectedCourses.length - 10} khóa khác
+                </div>
+              )}
+            </div>
+          )}
+          {bulkProgress && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Đang xử lý...</span>
+                <span>{bulkProgress.done}/{bulkProgress.total}</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBulkConfirmOpen(false)}
+              disabled={!!bulkProgress}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={runBulkApprove}
+              disabled={!!bulkProgress || pendingSelectedCourses.length === 0}
+            >
+              {bulkProgress ? 'Đang xử lý...' : 'Xác nhận duyệt'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!approveTarget} onOpenChange={(open) => !open && setApproveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duyệt khóa học</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn sắp công khai khóa học <strong>{approveTarget?.title}</strong> ra trang chính —
+              học viên có thể nhìn thấy và mua ngay. Vui lòng đảm bảo nội dung đã được rà soát.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateCourseMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updateCourseMutation.isPending}
+              onClick={() =>
+                approveTarget &&
+                updateCourseMutation.mutate({
+                  id: approveTarget.id,
+                  data: { status: CourseStatus.ACTIVE },
+                })
+              }
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Xác nhận duyệt
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

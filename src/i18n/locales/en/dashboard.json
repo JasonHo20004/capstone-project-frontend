@@ -1,0 +1,33 @@
+{
+  "hero": {
+    "eyebrow": "Learning Workspace",
+    "title": "Learn anywhere,",
+    "titleAccent": "progress every day",
+    "subtitle": "Discover courses, track progress and learn at your own pace with a more intuitive interface.",
+    "startLearning": "Start learning",
+    "myCourses": "My courses"
+  },
+  "stats": {
+    "enrolledLabel": "Courses in progress",
+    "enrolledValue": "{{count}} courses",
+    "unreadLabel": "Unread notifications",
+    "unreadValue": "{{count}} to review",
+    "unreadAllRead": "All read",
+    "decksLabel": "Flashcard decks",
+    "decksValue": "{{count}} decks",
+    "decksEmpty": "No decks yet"
+  },
+  "placement": {
+    "title": "Take the English placement test",
+    "subtitle": "50 questions · ~40 minutes · Determine your CEFR level (A1–C2) and get a tailored learning path.",
+    "cta": "Take the test"
+  },
+  "popular": {
+    "title": "Popular courses",
+    "subtitle": "Updated based on learner trends",
+    "viewAll": "View all →",
+    "loading": "Loading popular courses...",
+    "loadError": "Failed to load data.",
+    "empty": "No matching courses yet."
+  }
+}

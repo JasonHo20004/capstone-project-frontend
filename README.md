@@ -100,7 +100,7 @@ Create a `.env` file in the root directory with the following content:
 VITE_API_BASE_URL=http://localhost:3000/api
 
 # Optional Configuration
-VITE_APP_NAME=SkillBoost
+VITE_APP_NAME=Alicia
 VITE_APP_VERSION=1.0.0
 ```
 

@@ -1,0 +1,1895 @@
+{
+  "speakingTest": {
+    "workshopTitle": "IELTS Speaking Workshop",
+    "workshopSubtitle": "Giám khảo AI tương tác",
+    "topic": {
+      "heading": "Chọn chủ đề Speaking",
+      "subtitle": "AI Examiner sẽ hỏi bạn theo format IELTS Speaking thật: Part 1 → Part 2 → Part 3",
+      "starting": "Đang khởi tạo...",
+      "randomTopic": "Chủ đề ngẫu nhiên",
+      "orChoose": "hoặc chọn một chủ đề",
+      "adminCreated": "Admin tạo",
+      "upgrade": {
+        "title": "Chủ đề PRO",
+        "body": "Chủ đề này dành cho gói Pro. Nâng cấp để truy cập tất cả chủ đề Speaking.",
+        "close": "Đóng",
+        "upgradeBtn": "Nâng cấp Pro"
+      }
+    },
+    "micCheck": {
+      "back": "Quay lại",
+      "title": "Kiểm tra mic & Chuẩn bị",
+      "topicLabel": "Chủ đề: {{topic}}",
+      "testMic": "Test microphone",
+      "micOk": "Mic OK",
+      "micWaiting": "Đang chờ quyền...",
+      "testHint": "Hãy nói thử vài câu — nếu thanh dưới chuyển sang xanh/cam là mic đang hoạt động tốt.",
+      "grantMic": "Cấp quyền microphone",
+      "vocabTitle": "Từ vựng band 7+ cho chủ đề này",
+      "vocabHint": "Cố gắng dùng những từ này khi nói — AI Examiner sẽ cộng điểm Lexical Resource.",
+      "vocabBadge": "B7+",
+      "vocabEmpty": "Chưa có gợi ý — bạn vẫn có thể bắt đầu bài thi.",
+      "instructionsTitle": "Hướng dẫn nhanh",
+      "instructions": {
+        "part1": "<b>Part 1</b>: 4-5 câu hỏi cá nhân, mỗi câu trả lời ~30 giây",
+        "part2": "<b>Part 2</b>: 1 cue card — bạn có <b>1 phút chuẩn bị</b>, sau đó nói liên tục <b>1-2 phút</b>",
+        "part3": "<b>Part 3</b>: Câu hỏi mở thảo luận, mỗi câu trả lời 45-60 giây",
+        "controls": "Bạn có thể <b>tạm dừng</b> hoặc <b>kết thúc sớm</b> bất cứ lúc nào"
+      },
+      "start": "Bắt đầu thi Speaking"
+    },
+    "conversation": {
+      "partLabels": {
+        "1": "Part 1 — Introduction & Interview",
+        "2": "Part 2 — Individual Long Turn",
+        "3": "Part 3 — Two-way Discussion"
+      },
+      "partFallback": "Part {{num}}",
+      "vocabTip": "Mẹo từ vựng",
+      "hide": "Ẩn",
+      "show": "Xem",
+      "transcript": "Transcript",
+      "finishEarly": "Kết thúc sớm",
+      "vocabPanelTitle": "Từ vựng band 7+",
+      "historyTitle": "Lịch sử hội thoại & Bóc băng (Transcripts)",
+      "examiner": "Examiner",
+      "you": "You (Detected Speech)",
+      "noConversation": "Chưa có đoạn hội thoại nào.",
+      "analyzing": "Examiner đang phân tích...",
+      "preparingNext": "Chuẩn bị câu hỏi tiếp theo",
+      "cueCardBadge": "Part 2 — Cue Card",
+      "prep": "Prep",
+      "youShouldSay": "You should say:",
+      "hideNotes": "Ẩn ghi chú",
+      "addNotes": "Ghi chú thêm...",
+      "notesPlaceholder": "Gõ nháp / script của bạn vào đây...",
+      "paused": "PAUSED",
+      "resume": "Tiếp tục",
+      "pause": "Tạm dừng",
+      "pausedHint": "Đang tạm dừng",
+      "stopHint": "Nhấn STOP để kết thúc",
+      "wait": "Vui lòng đợi...",
+      "startAnswering": "Nhấn để bắt đầu trả lời"
+    },
+    "grading": {
+      "title": "Đang chấm điểm...",
+      "subtitle": "AI đang phân tích bài nói của bạn",
+      "hint": "Quá trình này có thể mất 30-60 giây"
+    },
+    "result": {
+      "title": "Speaking Result",
+      "history": "Lịch sử",
+      "back": "Quay lại",
+      "overallBand": "Overall Band Score",
+      "na": "N/A",
+      "feedbackTitle": "Nhận xét chi tiết",
+      "transcriptTitle": "Bản dịch băng ghi âm (Transcript)",
+      "examiner": "Examiner",
+      "you": "You (Detected Speech)",
+      "practiceMore": "Luyện tiếp"
+    }
+  },
+  "examCenter": {
+    "title": "Trung tâm thi IELTS",
+    "subtitle": "Luyện tập đầy đủ 4 kỹ năng IELTS — Đọc, Viết, Nghe, Nói.",
+    "officialNotice": "Bài thi tính giờ và theo đúng quy chuẩn IELTS chính thức",
+    "historyMenu": {
+      "trigger": "Lịch sử",
+      "readingListening": "Đọc / Nghe",
+      "writing": "Viết",
+      "speaking": "Nói"
+    },
+    "tabs": {
+      "all": "Tất cả kỹ năng",
+      "listening": "Nghe",
+      "reading": "Đọc",
+      "writing": "Viết",
+      "speaking": "Nói",
+      "fullTest": "Đề tổng hợp"
+    },
+    "actions": {
+      "startTest": "Bắt đầu",
+      "preview": "Xem trước",
+      "viewHistory": "Xem lịch sử"
+    },
+    "labels": {
+      "duration": "Thời gian",
+      "durationMins": "{{count}} phút",
+      "status": "Trạng thái",
+      "questions": "Câu hỏi",
+      "level": "Trình độ",
+      "type": "Loại",
+      "published": "Đã phát hành"
+    },
+    "skills": {
+      "READING": "Đọc",
+      "LISTENING": "Nghe",
+      "WRITING": "Viết",
+      "SPEAKING": "Nói"
+    },
+    "loading": "Đang tải danh sách bài thi...",
+    "empty": "Chưa có bài thi IELTS cho kỹ năng này."
+  },
+  "practiceTests": {
+    "title": "Bài luyện tập",
+    "subtitle": "Tìm và bắt đầu các bài luyện kỹ năng Đọc / Nghe / Viết / Nói.",
+    "searchPlaceholder": "Tìm theo tên hoặc loại...",
+    "allTypes": "Tất cả loại",
+    "loading": "Đang tải bài luyện tập...",
+    "loadError": "Không tải được bài luyện tập.",
+    "emptyFiltered": "Không có bài thi nào khớp bộ lọc.",
+    "questionsCount": "{{count}} câu hỏi",
+    "minutes": "{{count}} phút",
+    "start": "Bắt đầu"
+  },
+  "testHistory": {
+    "title": "Lịch sử làm bài",
+    "attemptsCount_one": "{{count}} lần làm bài",
+    "attemptsCount_other": "{{count}} lần làm bài",
+    "stats": "Thống kê",
+    "backToExamCenter": "← Phòng thi",
+    "loginRequired": "Vui lòng đăng nhập để xem lịch sử",
+    "login": "Đăng nhập",
+    "totalLabel": "Tổng bài thi",
+    "avgLabel": "Band trung bình",
+    "bestLabel": "Band cao nhất",
+    "filters": {
+      "all": "Tất cả",
+      "READING": "Đọc",
+      "LISTENING": "Nghe"
+    },
+    "empty": "Chưa có lịch sử làm bài",
+    "startNow": "Làm bài ngay →",
+    "defaultTitle": "Bài thi",
+    "correctSummary": "{{correct}}/{{total}} câu đúng · {{minutes}} phút",
+    "correctSummaryNoMinutes": "{{correct}}/{{total}} câu đúng · — phút",
+    "bandLabel": "band"
+  },
+  "bandLabels": {
+    "Expert": "Expert",
+    "VeryGood": "Very Good",
+    "Competent": "Competent",
+    "Modest": "Modest",
+    "Limited": "Limited",
+    "Basic": "Basic"
+  },
+  "writingHistory": {
+    "header": {
+      "title": "Lịch sử Writing",
+      "subtitle": "Lịch sử bài viết đã nộp"
+    },
+    "nav": {
+      "stats": "Thống kê",
+      "readingListening": "Lịch sử Reading/Listening"
+    },
+    "stats": {
+      "totalEssays": "Tổng bài viết",
+      "highestBand": "Band cao nhất",
+      "averageBand": "Band trung bình"
+    },
+    "loading": "Đang tải lịch sử...",
+    "loadError": "Không thể tải lịch sử. Vui lòng thử lại.",
+    "empty": {
+      "title": "Chưa có bài viết nào",
+      "hint": "Bắt đầu luyện Writing để xem lịch sử ở đây.",
+      "cta": "Viết bài ngay"
+    },
+    "status": {
+      "grading": "Đang chấm",
+      "failed": "Chấm thất bại. Vui lòng thử lại."
+    },
+    "wordsCount": "{{count}} từ"
+  },
+  "speakingHistory": {
+    "header": {
+      "title": "Lịch sử Speaking",
+      "subtitle": "Lịch sử phiên thi Speaking"
+    },
+    "nav": {
+      "stats": "Thống kê",
+      "readingListening": "Reading/Listening",
+      "writing": "Writing"
+    },
+    "stats": {
+      "totalSessions": "Tổng phiên",
+      "highestBand": "Band cao nhất",
+      "averageBand": "Band trung bình",
+      "recentTrend": "Xu hướng gần đây",
+      "needTwoMore": "Cần ≥2 bài"
+    },
+    "chart": {
+      "title": "Biểu đồ tiến độ band score",
+      "attemptsCount": "{{count}} bài"
+    },
+    "loading": "Đang tải lịch sử...",
+    "loadError": "Không thể tải lịch sử.",
+    "empty": {
+      "title": "Chưa có phiên thi nào",
+      "hint": "Bắt đầu luyện Speaking để xem lịch sử ở đây.",
+      "cta": "Thi Speaking ngay"
+    },
+    "statuses": {
+      "COMPLETED": "Hoàn thành",
+      "GRADING": "Đang chấm",
+      "IN_PROGRESS": "Đang làm"
+    },
+    "gradingShort": "Chấm",
+    "partLabel": "Part {{current}}/3",
+    "completedLabel": "Hoàn thành: {{date}}"
+  },
+  "toeicOverview": {
+    "title": "TOEIC® Listening and Reading Test",
+    "duration": "120 phút",
+    "totalQuestions": "200 câu hỏi",
+    "hero": {
+      "badge": "Tiếng Anh thương mại",
+      "title": "Làm chủ giao tiếp công sở",
+      "description": "Bài thi TOEIC Listening and Reading đo lường khả năng tiếng Anh hằng ngày của những người làm việc trong môi trường quốc tế. Bài luyện này mô phỏng đúng điều kiện thi thật giúp bạn chuẩn bị hiệu quả.",
+      "startFullExam": "Bắt đầu thi tổng",
+      "downloadSyllabus": "Tải đề cương"
+    },
+    "tabs": {
+      "description": "Mô tả",
+      "breakdown": "Cấu trúc bài thi",
+      "studyPlan": "Lộ trình học",
+      "reviews": "Đánh giá"
+    },
+    "description": {
+      "heading": "Về bài thi này",
+      "intro": "Bài thi kéo dài hai giờ theo dạng trắc nghiệm với 200 câu hỏi chia thành hai phần: Nghe và Đọc.",
+      "listening": {
+        "title": "Phần I: Nghe",
+        "body": "Thí sinh nghe nhiều câu hỏi và các đoạn hội thoại ngắn bằng tiếng Anh, sau đó trả lời câu hỏi dựa trên những gì đã nghe (tổng 100 câu).",
+        "part1": "Part 1: Mô tả tranh",
+        "part2": "Part 2: Hỏi và đáp",
+        "part3": "Part 3: Hội thoại",
+        "part4": "Part 4: Bài nói"
+      },
+      "reading": {
+        "title": "Phần II: Đọc",
+        "body": "Thí sinh đọc nhiều dạng tài liệu và trả lời theo tốc độ của mình (tổng 100 câu).",
+        "part5": "Part 5: Điền từ vào câu",
+        "part6": "Part 6: Điền từ vào đoạn",
+        "part7": "Part 7: Đọc hiểu"
+      },
+      "learn": {
+        "heading": "Bạn sẽ học được gì",
+        "item1": "Hiểu các hướng dẫn và giải thích chi tiết",
+        "item2": "Đọc hiểu các tài liệu kinh doanh phức tạp",
+        "item3": "Theo dõi các đoạn hội thoại và bài nói dài",
+        "item4": "Kết nối thông tin giữa nhiều văn bản"
+      }
+    },
+    "info": {
+      "heading": "Thông tin bài thi",
+      "format": "Định dạng",
+      "formatValue": "Trắc nghiệm",
+      "questions": "Số câu hỏi",
+      "questionsValue": "200 câu",
+      "duration": "Thời lượng",
+      "durationValue": "2 giờ",
+      "skillLevel": "Trình độ",
+      "skillLevelValue": "Trung cấp - Nâng cao",
+      "language": "Ngôn ngữ",
+      "languageValue": "Tiếng Anh"
+    },
+    "provider": {
+      "heading": "Cung cấp bởi",
+      "name": "ETS Official",
+      "subtitle": "Educational Testing Service",
+      "description": "Là đơn vị tạo ra bài thi TOEIC, ETS là tổ chức khảo thí và đánh giá phi lợi nhuận tư nhân lớn nhất thế giới.",
+      "viewProfile": "Xem hồ sơ đơn vị"
+    },
+    "tags": {
+      "business": "Kinh doanh",
+      "communication": "Giao tiếp",
+      "workplace": "Công sở",
+      "international": "Quốc tế"
+    }
+  },
+  "dictation": {
+    "title": "Luyện chính tả",
+    "subtitle": "Cải thiện kỹ năng Listening — nghe, gõ và kiểm tra từng câu.",
+    "backToExamCenter": "Quay lại Phòng thi",
+    "exercisesLabel": "bài tập",
+    "categoriesLabel": "danh mục",
+    "categoryAll": "Tất cả",
+    "loading": "Đang tải bài tập...",
+    "sentencesCount": "{{count}} câu",
+    "practice": "Luyện tập",
+    "empty": "Chưa có bài tập nào",
+    "emptyHint": "Quay lại sau để xem bài tập mới!",
+    "upgrade": {
+      "title": "Bài tập PRO",
+      "body": "Bài tập này dành cho gói Pro. Nâng cấp để truy cập tất cả bài Dictation.",
+      "close": "Đóng",
+      "upgradeBtn": "Nâng cấp Pro"
+    }
+  },
+  "dictationPractice": {
+    "loading": "Đang tải bài tập...",
+    "notFound": "Không tìm thấy bài tập.",
+    "backToList": "Quay lại danh sách",
+    "backToListShort": "Quay lại danh sách",
+    "progress": "Tiến độ",
+    "tabs": {
+      "dictation": "Luyện tập",
+      "transcript": "Transcript"
+    },
+    "complete": {
+      "title": "Hoàn thành xuất sắc!",
+      "body": "Bạn đã hoàn thành cả {{count}} câu",
+      "chooseAnother": "Chọn bài khác"
+    },
+    "sentenceLabel": "Câu {{n}}",
+    "replayTitle": "Nghe lại",
+    "playing": "Đang phát...",
+    "keyboard": {
+      "replay": "Nghe lại",
+      "check": "Kiểm tra"
+    },
+    "placeholder": "Nghe và gõ những gì bạn nghe được...",
+    "check": "Kiểm tra",
+    "skip": "Bỏ qua",
+    "attemptsLabel": "Lần thử: {{count}}",
+    "next": "Câu tiếp",
+    "hint": "Gợi ý",
+    "attemptN": "Lần {{n}}",
+    "revealedAnswer": "Đáp án",
+    "correct": "Chính xác!",
+    "firstTry": "Lần đầu!",
+    "attemptsTaken_one": "{{count}} lần thử",
+    "attemptsTaken_other": "{{count}} lần thử",
+    "transcriptTitle": "Toàn bộ Transcript",
+    "transcriptProgress": "{{completed}} / {{total}} đã hoàn thành"
+  },
+  "practiceResult": {
+    "noData": "Không tìm thấy dữ liệu kết quả. Vui lòng nộp lại bài thi.",
+    "goBack": "Quay lại",
+    "backToList": "Về danh sách bài luyện",
+    "title": "Kết quả bài luyện",
+    "subtitle": "Tóm tắt chấm tự động",
+    "retake": "Làm lại",
+    "score": "Điểm",
+    "correct": "Đúng",
+    "total": "Tổng",
+    "percentage": "Tỉ lệ",
+    "answerReview": "Xem lại bài làm",
+    "itemsCount": "{{count}} câu",
+    "questionIdLabel": "Mã câu hỏi:",
+    "yourAnswer": "Bạn trả lời:",
+    "correctAnswer": "Đáp án đúng:",
+    "showingFirst25": "Hiển thị 25 câu đầu tiên."
+  },
+  "placementTest": {
+    "title": "Kiểm tra trình độ tiếng Anh",
+    "intro": {
+      "title": "Xác định trình độ tiếng Anh của bạn",
+      "description": "Làm bài kiểm tra 50 câu trong khoảng 40 phút để biết cấp độ CEFR (A1–C2) và nhận lộ trình học phù hợp.",
+      "duration": "~40 phút",
+      "questions": "50 câu hỏi",
+      "levels": "A1 – C2",
+      "startBtn": "Bắt đầu kiểm tra"
+    },
+    "questionLabel": "Câu {{current}} / {{total}}",
+    "timeLeft": "Thời gian còn lại",
+    "nextBtn": "Tiếp",
+    "previousBtn": "Trước",
+    "submitBtn": "Nộp bài",
+    "confirmSubmit": "Bạn có chắc muốn nộp bài?",
+    "submitting": "Đang nộp bài...",
+    "errors": {
+      "profileLoad": "Không thể tải hồ sơ của bạn. Vui lòng tải lại và thử lại.",
+      "generate": "Tải bài kiểm tra thất bại. Vui lòng thử lại."
+    },
+    "section": {
+      "label": "Phần {{number}}: {{title}}",
+      "nextHeader": "Phần {{number}} — {{title}}"
+    },
+    "analyzing": {
+      "title": "Đang phân tích câu trả lời…",
+      "subtitle": "Đang tính toán trình độ của bạn…"
+    },
+    "loading": "Đang tải…",
+    "backToHub": "Về Trung tâm Học tập",
+    "readingHint": "Dành chút thời gian đọc kỹ đề…",
+    "confirmOrder": "Xác nhận thứ tự",
+    "nextArrow": "Tiếp →",
+    "exitModal": {
+      "title": "Thoát khỏi bài kiểm tra?",
+      "body": "Nếu thoát bây giờ, <strong>phiên hiện tại sẽ bị huỷ</strong> và câu trả lời của bạn sẽ <strong>không được lưu</strong>. Bạn sẽ phải bắt đầu lại từ đầu nếu muốn làm bài kiểm tra này lần nữa.",
+      "continue": "Tiếp tục làm bài",
+      "confirm": "Thoát và huỷ phiên"
+    },
+    "result": {
+      "title": "Kết quả của bạn",
+      "yourLevel": "Trình độ của bạn",
+      "score": "Điểm",
+      "viewPath": "Xem lộ trình học",
+      "retake": "Làm lại bài kiểm tra"
+    },
+    "progressBar": {
+      "questionShort": "Câu"
+    },
+    "reorder": {
+      "openingParagraph": "Đoạn mở đầu",
+      "fragmentAria": "Đoạn {{key}}, vị trí {{position}}",
+      "yourOrder": "Thứ tự của bạn:"
+    },
+    "break": {
+      "title": "Nghỉ giải lao",
+      "startsIn": "Phần tiếp theo bắt đầu sau",
+      "upNext": "Sắp tới",
+      "meta": "{{questions}} câu · {{timePer}} giây/câu",
+      "confirm": "Bạn có chắc không? Vẫn còn {{time}}.",
+      "skipYes": "Bỏ qua",
+      "cancel": "Huỷ",
+      "skipBtn": "Bỏ qua nghỉ →"
+    },
+    "listening": {
+      "contextLabel": "Bối cảnh:",
+      "playAriaLabel": "Phát âm thanh",
+      "preparing": "Đang tải âm thanh…",
+      "audioError": "Không tải được âm thanh. Vui lòng làm mới.",
+      "answerAny": "Bạn có thể trả lời bất cứ lúc nào.",
+      "pressPlay": "Nhấn phát để nghe câu hỏi.",
+      "playsRemaining": "Lượt phát còn lại: {{remaining}} / {{total}}",
+      "transcript": "Phụ đề:"
+    },
+    "resultScreen": {
+      "yourLevel": "Trình độ của bạn",
+      "congrats": "Chúc mừng bạn đã hoàn thành bài kiểm tra trình độ!",
+      "totalScore": "Tổng điểm",
+      "sectionTitles": {
+        "1": "Phần 1 — Ngữ pháp & Từ vựng",
+        "2": "Phần 2 — Đọc hiểu",
+        "3": "Phần 3 — Nghe hiểu"
+      },
+      "aboutLevel": "Về trình độ của bạn",
+      "levelDescriptions": {
+        "Pre-A1": "Bạn vừa bắt đầu hành trình học tiếng Anh. Bạn có thể nhận biết một vài từ và cụm từ đơn giản quen thuộc. Hãy tập trung xây dựng vốn từ cơ bản và mẫu câu đơn giản.",
+        "A1": "Bạn có thể hiểu và sử dụng các diễn đạt hàng ngày quen thuộc và những cụm từ rất cơ bản. Bạn có thể tự giới thiệu và đặt các câu hỏi cá nhân đơn giản.",
+        "A2": "Bạn có thể giao tiếp trong các tình huống quen thuộc, lặp lại. Bạn có thể miêu tả hoàn cảnh, môi trường sống và nhu cầu trước mắt bằng những cụm từ đơn giản.",
+        "B1": "Bạn có thể xử lý hầu hết các tình huống thường gặp khi đi du lịch. Bạn có thể viết đoạn văn liền mạch về các chủ đề quen thuộc và đưa ra lý do, giải thích cho quan điểm và kế hoạch của mình.",
+        "B2": "Bạn có thể giao tiếp với người bản ngữ một cách tương đối trôi chảy và tự nhiên. Bạn có thể viết bài chi tiết, rõ ràng về nhiều chủ đề và trình bày quan điểm về các vấn đề thời sự.",
+        "C1": "Bạn có thể diễn đạt một cách trôi chảy và tự nhiên mà không cần tìm kiếm từ ngữ nhiều. Bạn có thể dùng ngôn ngữ linh hoạt và hiệu quả cho mục đích xã hội, học thuật và nghề nghiệp.",
+        "C2": "Bạn có thể hiểu gần như mọi thứ nghe và đọc một cách dễ dàng. Bạn có thể diễn đạt một cách tự nhiên, rất trôi chảy và chính xác, phân biệt được các sắc thái nghĩa tinh tế ngay cả trong các tình huống phức tạp."
+      },
+      "comparisonHeaders": {
+        "cefr": "CEFR",
+        "description": "Mô tả",
+        "ielts": "IELTS",
+        "toeic": "TOEIC"
+      },
+      "comparisonDescriptions": {
+        "Pre-A1": "Vỡ lòng",
+        "A1": "Sơ cấp",
+        "A2": "Tiền trung cấp",
+        "B1": "Trung cấp",
+        "B2": "Trung cấp trên",
+        "C1": "Nâng cao",
+        "C2": "Thành thạo"
+      },
+      "retake": "Làm lại bài kiểm tra",
+      "backToHub": "Về Trung tâm Học tập"
+    },
+    "onboarding": {
+      "welcome": {
+        "title": "Kiểm tra trình độ tiếng Anh",
+        "meta": "50 câu · ~40 phút · Xác định trình độ CEFR của bạn",
+        "description": "Bài kiểm tra đánh giá kỹ năng Ngữ pháp, Từ vựng, Đọc hiểu và Nghe hiểu để xác định trình độ tiếng Anh của bạn (CEFR A1–C2). Bạn sẽ thấy kết quả cùng quy đổi sang IELTS/TOEIC ngay sau khi hoàn thành.",
+        "stats": {
+          "questionsValue": "50",
+          "questionsLabel": "Câu hỏi",
+          "durationValue": "~40 phút",
+          "durationLabel": "Thời lượng",
+          "levelsValue": "A1-C2",
+          "levelsLabel": "Trình độ"
+        },
+        "preparing": "Đang chuẩn bị đề thi…",
+        "startTest": "Bắt đầu",
+        "notNow": "Để sau, đưa tôi về Trung tâm Học tập"
+      },
+      "audioCheck": {
+        "title": "Kiểm tra âm thanh",
+        "subtitle": "Nhấn phát. Nếu bạn nghe được mẫu rõ ràng, bạn đã sẵn sàng.",
+        "playAria": "Phát âm thanh mẫu",
+        "sampleText": "Welcome to the English placement test. Please make sure you can hear this message clearly before proceeding.",
+        "ttsText": "Welcome to the English placement test. Please make sure you can hear this message clearly before proceeding.",
+        "problemHint": "Hãy thử: tăng âm lượng, cắm tai nghe hoặc đổi trình duyệt khác.",
+        "canHear": "Tôi nghe được",
+        "cantHear": "Tôi không nghe được"
+      },
+      "brightnessCheck": {
+        "title": "Kiểm tra độ sáng",
+        "subtitle": "Đảm bảo màn hình đủ sáng để đọc bài thoải mái.",
+        "faintText": "Nếu bạn đọc rõ dòng chữ này, độ sáng màn hình đang phù hợp để làm bài.",
+        "referenceLabel": "Tham chiếu",
+        "referenceText": "Nếu bạn đọc rõ dòng chữ này, độ sáng màn hình đang phù hợp để làm bài.",
+        "problemHint": "Thử tăng độ sáng trong cài đặt hệ điều hành hoặc màn hình của bạn.",
+        "canSee": "Tôi nhìn rõ",
+        "cantSee": "Tôi không nhìn rõ"
+      },
+      "rules": {
+        "title": "Quy định bài thi",
+        "subtitle": "Đọc nhanh trước khi bắt đầu — những điều này quan trọng.",
+        "items": {
+          "1": "50 câu hỏi, chia làm 3 phần.",
+          "2": "Phần 1 — Ngữ pháp & Từ vựng: 27 câu, 30 giây mỗi câu.",
+          "3": "Phần 2 — Đọc hiểu: 11 câu, 1 phút 30 giây mỗi câu.",
+          "4": "Phần 3 — Nghe hiểu: 12 câu (thời gian dài hơn cho đoạn khó).",
+          "5": "Mỗi câu sẽ tự nộp khi hết thời gian.",
+          "6": "Bạn không thể quay lại câu trước.",
+          "7": "Có quãng nghỉ giữa các phần (có thể bỏ qua).",
+          "8": "Kết quả thể hiện trình độ CEFR cùng quy đổi sang IELTS/TOEIC."
+        },
+        "warning": "Đừng làm mới trang hoặc đóng tab trong khi thi — tiến trình sẽ bị mất và phiên thi sẽ bị huỷ.",
+        "agree": "Tôi đã đọc và đồng ý với quy định của bài thi",
+        "begin": "Bắt đầu thi"
+      },
+      "countdown": {
+        "go": "Bắt đầu!",
+        "getReady": "Chuẩn bị nào…"
+      }
+    }
+  },
+  "learningPath": {
+    "title": "Lộ trình học cá nhân hoá",
+    "subtitle": "Phù hợp với mục tiêu và trình độ hiện tại của bạn",
+    "header": {
+      "titleFull": "Tạo lộ trình học cá nhân hoá của bạn",
+      "titleCompact": "Lộ trình của bạn",
+      "aiBadge": "AI hỗ trợ",
+      "tagline": "Alicia AI sử dụng trình độ đầu vào, mục tiêu và thói quen học của bạn để dựng lộ trình phù hợp riêng — không phải một lộ trình chung chung.",
+      "backToDashboard": "← Về bảng điều khiển"
+    },
+    "error": {
+      "title": "Hiện chưa thể tạo lộ trình cho bạn",
+      "description": "Các lựa chọn của bạn đã được lưu. Hãy thử lại hoặc chỉnh sửa rồi thử lại.",
+      "editInputs": "Chỉnh sửa",
+      "tryAgain": "Thử lại"
+    },
+    "common": {
+      "back": "Quay lại",
+      "continue": "Tiếp tục",
+      "dash": "—"
+    },
+    "stepper": {
+      "ariaLabel": "Các bước thiết lập lộ trình học",
+      "items": {
+        "1": {
+          "label": "Trình độ",
+          "hint": "Mức xuất phát"
+        },
+        "2": {
+          "label": "Mục tiêu",
+          "hint": "Kỳ thi & thời hạn"
+        },
+        "3": {
+          "label": "Lịch học",
+          "hint": "Thời gian mỗi tuần"
+        },
+        "4": {
+          "label": "Sở thích",
+          "hint": "Cá nhân hoá"
+        }
+      }
+    },
+    "generating": {
+      "title": "Đang dựng lộ trình cá nhân hoá của bạn…",
+      "subtitle": "Alicia AI đang phân tích trình độ, mục tiêu, lịch học và sở thích học của bạn.",
+      "steps": {
+        "1": "Phân tích trình độ CEFR",
+        "2": "Hiểu mục tiêu của bạn",
+        "3": "Tính khối lượng học cần thiết",
+        "4": "Ưu tiên các kỹ năng",
+        "5": "Khớp bài học và bài luyện",
+        "6": "Tạo các cột mốc theo tuần"
+      }
+    },
+    "step1": {
+      "title": "Xác nhận trình độ xuất phát",
+      "description": "Kết quả bài kiểm tra đầu vào là mức gốc. Bạn có thể chỉnh nếu mình đã tiến bộ.",
+      "badge": "Bước 1 / 4",
+      "placement": {
+        "recent": "Kết quả gần nhất",
+        "takenOn": "Làm vào {{date}}",
+        "notAvailable": "Chưa có",
+        "recentBadge": "Kết quả gần đây"
+      },
+      "noPlacement": {
+        "title": "Chưa có kết quả kiểm tra đầu vào",
+        "body": "Hãy làm bài kiểm tra nhanh để Alicia xác định trình độ CEFR của bạn. Bạn vẫn có thể tiếp tục thủ công bên dưới — độ chính xác sẽ hạn chế hơn.",
+        "takeTest": "Làm bài kiểm tra đầu vào"
+      },
+      "levelField": {
+        "labelOverride": "Ghi đè trình độ (tùy chọn)",
+        "labelSelect": "Chọn trình độ của bạn",
+        "hint": "CEFR mô tả trình độ tiếng Anh tổng thể — chúng tôi sẽ cá nhân hoá theo từng kỹ năng sau.",
+        "ariaLabel": "Trình độ CEFR"
+      },
+      "cefr": {
+        "A1": "Mới bắt đầu — câu giao tiếp cơ bản",
+        "A2": "Sơ cấp — tình huống quen thuộc",
+        "B1": "Trung cấp — nắm ý chính các chủ đề quen",
+        "B2": "Trung cao — văn bản và lập luận phức tạp",
+        "C1": "Cao cấp — sử dụng linh hoạt, hiệu quả",
+        "C2": "Thành thạo — gần như bản ngữ"
+      },
+      "backDashboard": "← Về bảng điều khiển",
+      "preview": {
+        "title": "Vì sao CEFR quan trọng",
+        "description": "CEFR là mức gốc, nhưng chúng tôi kết hợp với mục tiêu, lịch học và phong cách học của bạn để cá nhân hoá thực sự.",
+        "bullet1Strong": "Chỉ là mức gốc.",
+        "bullet1Text": "Hai người cùng B1 vẫn có thể yếu rất khác nhau.",
+        "bullet2Strong": "Kết hợp dữ liệu kỹ năng.",
+        "bullet2Text": "Khi có dữ liệu chi tiết từng kỹ năng, hệ thống sẽ tự ưu tiên.",
+        "bullet3Strong": "Theo dõi theo thời gian.",
+        "bullet3Text": "Hãy làm lại bài kiểm tra đầu vào để lộ trình luôn sát thực tế."
+      }
+    },
+    "step2": {
+      "title": "Đặt mục tiêu",
+      "description": "Hãy cho Alicia biết bạn đang hướng tới gì. Chúng tôi sẽ kiểm tra tính khả thi so với trình độ và thời hạn.",
+      "badge": "Bước 2 / 4",
+      "fields": {
+        "exam": "Loại kỳ thi",
+        "examAria": "Loại kỳ thi",
+        "target": "Điểm mục tiêu",
+        "deadline": "Thời hạn",
+        "deadlineAria": "Thời hạn",
+        "deadlineCustomAria": "Ngày thời hạn tuỳ chỉnh",
+        "reason": "Bạn học để làm gì?"
+      },
+      "exams": {
+        "IELTS": {
+          "label": "IELTS",
+          "subtitle": "Học thuật / Tổng quát"
+        },
+        "TOEIC": {
+          "label": "TOEIC",
+          "subtitle": "Tiếng Anh công sở"
+        },
+        "TOEFL": {
+          "label": "TOEFL",
+          "subtitle": "iBT / Essentials"
+        },
+        "CEFR": {
+          "label": "CEFR",
+          "subtitle": "Mục tiêu theo cấp độ"
+        },
+        "General": {
+          "label": "Tổng quát",
+          "subtitle": "Không thi, chỉ cải thiện"
+        }
+      },
+      "targetHints": {
+        "IELTS": "Điểm IELTS từ 1.0 đến 9.0 (ví dụ 6.5).",
+        "TOEIC": "Điểm TOEIC từ 10 đến 990.",
+        "TOEFL": "Điểm TOEFL iBT từ 0 đến 120.",
+        "CEFR": "Chọn mục tiêu CEFR như B2 hoặc C1.",
+        "General": "Mô tả trình độ bạn muốn đạt."
+      },
+      "targetPlaceholders": {
+        "IELTS": "ví dụ 6.5",
+        "TOEIC": "ví dụ 750",
+        "TOEFL": "ví dụ 90",
+        "CEFR": "ví dụ B2",
+        "General": "ví dụ Tự tin trong các buổi họp"
+      },
+      "validation": {
+        "IELTS": "Hãy nhập điểm IELTS từ 1.0 đến 9.0.",
+        "TOEIC": "Hãy nhập điểm TOEIC từ 10 đến 990.",
+        "TOEFL": "Hãy nhập điểm TOEFL iBT từ 0 đến 120."
+      },
+      "deadlines": {
+        "1 month": {
+          "label": "1 tháng",
+          "hint": "Tốc lực"
+        },
+        "3 months": {
+          "label": "3 tháng",
+          "hint": "Tập trung"
+        },
+        "6 months": {
+          "label": "6 tháng",
+          "hint": "Cân bằng"
+        },
+        "12 months": {
+          "label": "12 tháng",
+          "hint": "Dài hạn"
+        },
+        "Custom": {
+          "label": "Ngày tự chọn",
+          "hint": "Chọn ngày cụ thể"
+        }
+      },
+      "reasons": {
+        "Study abroad": "Du học",
+        "Work": "Công việc",
+        "Graduation requirement": "Điều kiện tốt nghiệp",
+        "Immigration": "Định cư",
+        "Interview preparation": "Chuẩn bị phỏng vấn",
+        "Daily communication": "Giao tiếp hằng ngày",
+        "General improvement": "Cải thiện tổng quát"
+      },
+      "warning": {
+        "title": "Lưu ý — mục tiêu có thể hơi thách thức với thời hạn này",
+        "body": "Bạn vẫn có thể tiếp tục. Chúng tôi sẽ đề xuất lộ trình dày hơn, hoặc bạn có thể nới thời hạn / giảm điểm mục tiêu ở bước kết quả."
+      },
+      "preview": {
+        "title": "Xem trước cá nhân hoá",
+        "description": "Càng nhập thêm chi tiết, lộ trình càng chính xác hơn.",
+        "cefr": "CEFR đầu vào",
+        "target": "Mục tiêu",
+        "timeline": "Thời gian",
+        "reason": "Lý do"
+      }
+    },
+    "step3": {
+      "title": "Lịch học của bạn",
+      "description": "Thời gian học mỗi tuần ảnh hưởng nhiều hơn cả thời hạn khi tính khối lượng học.",
+      "badge": "Bước 3 / 4",
+      "fields": {
+        "hours": "Thời gian học mỗi tuần",
+        "hoursAria": "Thời gian học mỗi tuần",
+        "days": "Các ngày có thể học",
+        "daysHint": "Chọn các ngày bạn thực sự có thể học. Chúng tôi sẽ xếp lịch tuần xoay quanh các ngày đó.",
+        "daysAria": "Các ngày có thể học",
+        "session": "Độ dài mỗi buổi",
+        "sessionAria": "Độ dài buổi học",
+        "intensity": "Cường độ học",
+        "intensityAria": "Cường độ học",
+        "reminders": "Nhắc lịch",
+        "remindersAria": "Lựa chọn nhắc lịch"
+      },
+      "hours": {
+        "2-3": {
+          "label": "2–3 giờ",
+          "description": "Học thư giãn"
+        },
+        "4-5": {
+          "label": "4–5 giờ",
+          "description": "Đều đặn"
+        },
+        "6-8": {
+          "label": "6–8 giờ",
+          "description": "Quyết tâm"
+        },
+        "10+": {
+          "label": "10+ giờ",
+          "description": "Toàn lực"
+        }
+      },
+      "days": {
+        "Monday": "Thứ Hai",
+        "Tuesday": "Thứ Ba",
+        "Wednesday": "Thứ Tư",
+        "Thursday": "Thứ Năm",
+        "Friday": "Thứ Sáu",
+        "Saturday": "Thứ Bảy",
+        "Sunday": "Chủ nhật"
+      },
+      "daysShort": {
+        "Monday": "T2",
+        "Tuesday": "T3",
+        "Wednesday": "T4",
+        "Thursday": "T5",
+        "Friday": "T6",
+        "Saturday": "T7",
+        "Sunday": "CN"
+      },
+      "toggleDay": "Bật/tắt {{day}}",
+      "selected": "Đã chọn:",
+      "daysCount_one": "{{count}} ngày mỗi tuần",
+      "daysCount_other": "{{count}} ngày mỗi tuần",
+      "sessions": {
+        "15": "15 phút",
+        "30": "30 phút",
+        "45": "45 phút",
+        "60": "60 phút",
+        "90": "90 phút"
+      },
+      "intensity": {
+        "Light": {
+          "label": "Nhẹ",
+          "description": "Đều đặn, ít áp lực"
+        },
+        "Standard": {
+          "label": "Tiêu chuẩn",
+          "description": "Khối lượng cân bằng"
+        },
+        "Intensive": {
+          "label": "Cường độ cao",
+          "description": "Tiến nhanh hơn, luyện nhiều hơn"
+        }
+      },
+      "reminders": {
+        "None": {
+          "label": "Không nhắc",
+          "description": "Tôi sẽ tự kiểm tra"
+        },
+        "Daily": {
+          "label": "Nhắc hằng ngày",
+          "description": "Nhắc một lần mỗi ngày"
+        },
+        "Weekly": {
+          "label": "Kiểm tra hàng tuần",
+          "description": "Tổng kết tuần"
+        },
+        "Before session": {
+          "label": "Trước mỗi buổi học",
+          "description": "Báo trước giờ học"
+        }
+      },
+      "preview": {
+        "title": "Chúng tôi sẽ dùng thông tin này như thế nào",
+        "description": "Lịch học định hình lộ trình tuần. Cường độ nhẹ sẽ giảm bài thi thử; cường độ cao thêm bài luyện.",
+        "hoursLine1": "<0>{{hours}}</0> giờ / tuần với buổi dài <1>{{session}} phút</1>.",
+        "hoursLineFallback": "—",
+        "daysLine": "Chúng tôi sẽ xếp bài học vào <0>{{days}}</0>.",
+        "noDaysYet": "chưa chọn ngày",
+        "intensityLine": "Cường độ: <0>{{intensity}}</0> — ảnh hưởng tần suất thi thử và độ sâu ôn tập."
+      }
+    },
+    "step4": {
+      "title": "Tinh chỉnh cho riêng bạn",
+      "description": "Một vài chi tiết cuối để lộ trình thực sự dành cho bạn, không phải một học viên chung chung.",
+      "badge": "Bước 4 / 4",
+      "fields": {
+        "weakest": "Kỹ năng nào bạn thấy yếu nhất hiện tại?",
+        "preferences": "Bạn thích học theo cách nào?",
+        "preferencesHint": "Chọn một hoặc nhiều — chúng tôi sẽ điều chỉnh trọng số lộ trình.",
+        "preferencesAria": "Sở thích học",
+        "experience": "Kinh nghiệm thi trước đây",
+        "experienceAria": "Kinh nghiệm thi trước đây",
+        "confidence": "Bạn tự tin với tiếng Anh hiện tại đến đâu?",
+        "confidenceAria": "Mức tự tin",
+        "prevScore": "Điểm gần nhất (tuỳ chọn)",
+        "prevScorePlaceholder": "ví dụ IELTS 5.5"
+      },
+      "weakSkills": {
+        "Listening": "Nghe",
+        "Reading": "Đọc",
+        "Writing": "Viết",
+        "Speaking": "Nói",
+        "Vocabulary": "Từ vựng",
+        "Grammar": "Ngữ pháp",
+        "Not sure": "Chưa rõ"
+      },
+      "notSureCallout": {
+        "title": "Chúng tôi sẽ xây lộ trình cân bằng",
+        "body": "Vì bạn chưa chắc, chúng tôi sẽ giữ tất cả kỹ năng luân phiên và đề xuất một bài chẩn đoán ngắn sau để tinh chỉnh lộ trình."
+      },
+      "preferences": {
+        "Video lessons": "Bài giảng video",
+        "Flashcards": "Flashcard",
+        "Practice exercises": "Bài tập luyện",
+        "Mock tests": "Đề thi thử",
+        "Reading materials": "Tài liệu đọc",
+        "Mixed": "Kết hợp"
+      },
+      "experiences": {
+        "Never": {
+          "label": "Chưa bao giờ thi",
+          "description": "Hoàn toàn mới với kỳ thi này"
+        },
+        "Once": {
+          "label": "Đã thi một lần",
+          "description": "Mình đã có điểm trước đây"
+        },
+        "Multiple": {
+          "label": "Nhiều lần",
+          "description": "Thi đi thi lại"
+        },
+        "MockOnly": {
+          "label": "Chỉ thi thử",
+          "description": "Đã luyện nhưng chưa thi thật"
+        }
+      },
+      "confidence": {
+        "Low": {
+          "label": "Thấp",
+          "description": "Còn ngại trong hầu hết tình huống"
+        },
+        "Medium": {
+          "label": "Trung bình",
+          "description": "Thoải mái với chủ đề quen"
+        },
+        "High": {
+          "label": "Cao",
+          "description": "Tự tin trong đa số tình huống"
+        }
+      },
+      "generate": "Tạo lộ trình học cá nhân hoá",
+      "preview": {
+        "title": "Sẵn sàng tạo lộ trình",
+        "description": "Alicia AI sẽ kết hợp mọi thông tin bạn cung cấp thành lộ trình có cột mốc theo tuần và bài học gợi ý.",
+        "listHeading": "Bạn sẽ nhận được:",
+        "list1": "Phân tích khoảng cách mục tiêu và độ khả thi",
+        "list2": "Bảng xếp hạng ưu tiên kỹ năng kèm lý do",
+        "list3": "Lộ trình theo giai đoạn (Nền tảng → Phát triển kỹ năng → Mô phỏng)",
+        "list4": "Lịch tuần khớp với các ngày rảnh của bạn",
+        "list5": "Bài học, flashcard và bài thi thử thật bên trong Alicia"
+      }
+    },
+    "result": {
+      "badge": "Lộ trình cá nhân hoá của bạn",
+      "headline": "Lộ trình {{exam}} {{score}}",
+      "editInputs": "Chỉnh sửa",
+      "regenerate": "Tạo lại",
+      "save": {
+        "idle": "Lưu lộ trình",
+        "saving": "Đang lưu…",
+        "saved": "Đã lưu ✓",
+        "error": "Thử lưu lại"
+      },
+      "summary": {
+        "current": "Hiện tại",
+        "target": "Mục tiêu",
+        "deadline": "Thời hạn",
+        "weekly": "Mỗi tuần",
+        "weeklyValue": "{{hours}}h"
+      },
+      "personalization": {
+        "title": "Mức độ cá nhân hoá",
+        "ariaLabel": "Mức độ cá nhân hoá",
+        "Basic": "Cơ bản",
+        "Good": "Khá",
+        "High": "Cao"
+      },
+      "gap": {
+        "heading": "Phân tích khoảng cách mục tiêu",
+        "from": "Từ",
+        "to": "Đến",
+        "estimatedGap": "Khoảng cách ước tính",
+        "warningTitle": "Lưu ý khả thi"
+      },
+      "feasibility": {
+        "Achievable": "Khả thi",
+        "Challenging": "Thách thức",
+        "Very challenging": "Rất thách thức"
+      },
+      "gapSize": {
+        "Low": "Thấp",
+        "Medium": "Trung bình",
+        "Medium-high": "Trung bình–cao",
+        "High": "Cao"
+      },
+      "priorities": {
+        "heading": "Xếp hạng ưu tiên kỹ năng",
+        "subtitle": "Lộ trình phân bổ thời gian dựa trên xếp hạng này.",
+        "rank": "#{{rank}}",
+        "priorityLabel": "Ưu tiên {{intensity}}"
+      },
+      "intensity": {
+        "High": "cao",
+        "Medium": "trung bình",
+        "Low": "thấp"
+      },
+      "phases": {
+        "heading": "Các giai đoạn",
+        "subtitle": "Ba giai đoạn dẫn dắt cột mốc tiến độ của bạn."
+      },
+      "weekly": {
+        "heading": "Lịch theo tuần",
+        "subtitle": "Chúng tôi đã xếp các buổi học vào những ngày bạn rảnh.",
+        "duration": "{{minutes}} phút",
+        "start": "Bắt đầu"
+      },
+      "why": {
+        "heading": "Vì sao là lộ trình này?"
+      },
+      "sections": {
+        "lessons": {
+          "title": "Bài học & khoá học",
+          "description": "Bắt đầu ở đây để rèn các kỹ năng được ưu tiên."
+        },
+        "flashcards": {
+          "title": "Flashcard cần luyện",
+          "description": "Các bộ thẻ ngắn, tập trung để duy trì khả năng nhớ."
+        },
+        "quizzes": {
+          "title": "Quiz & bài thi thử",
+          "description": "Đo tiến độ bằng bài đánh giá thật của Alicia."
+        }
+      },
+      "types": {
+        "Course": "Khoá học",
+        "Lesson": "Bài học",
+        "Flashcard": "Flashcard",
+        "Quiz": "Quiz",
+        "Practice Test": "Bài thi thử"
+      },
+      "difficulty": {
+        "Beginner": "Cơ bản",
+        "Intermediate": "Trung cấp",
+        "Advanced": "Nâng cao"
+      },
+      "skillsList": {
+        "Listening": "Nghe",
+        "Reading": "Đọc",
+        "Writing": "Viết",
+        "Speaking": "Nói",
+        "Vocabulary": "Từ vựng",
+        "Grammar": "Ngữ pháp"
+      },
+      "cta": {
+        "Start": "Bắt đầu",
+        "Add to plan": "Thêm vào lộ trình",
+        "Practice": "Luyện tập"
+      },
+      "taskTypes": {
+        "Vocabulary": "Từ vựng",
+        "Listening": "Nghe",
+        "Reading": "Đọc",
+        "Writing": "Viết",
+        "Speaking": "Nói",
+        "Mock test": "Thi thử",
+        "Review": "Ôn lại"
+      },
+      "itemMeta": {
+        "minutes": "{{minutes}} phút"
+      },
+      "actionBar": {
+        "ariaLabel": "Hành động cho lộ trình",
+        "note": "Bạn có thể chỉnh lộ trình bất cứ lúc nào — thông tin đã được lưu.",
+        "retake": "Làm lại bài đầu vào"
+      }
+    }
+  },
+  "testDetail": {
+    "examCenter": "Exam Center",
+    "historyLink": "Lịch sử",
+    "loadingResult": "Đang tải kết quả...",
+    "loadingOverview": "Đang tải thông tin bài thi...",
+    "errorTitle": "Lỗi",
+    "errorNotFound": "Không tìm thấy bài thi",
+    "backToExamCenter": "← Exam Center",
+    "defaultTestTitle": "Bài thi",
+    "completedTitle": "Hoàn thành bài thi!",
+    "ringBandLabel": "Band",
+    "stats": {
+      "correct": "Đúng",
+      "bandScore": "Band Score",
+      "accuracy": "Độ chính xác",
+      "incorrect": "Sai",
+      "time": "Thời gian"
+    },
+    "review": {
+      "title": "Chi tiết đáp án",
+      "subtitle": "So sánh đáp án của bạn với đáp án đúng",
+      "headers": {
+        "questionNum": "Q#",
+        "question": "Câu hỏi",
+        "type": "Loại",
+        "yourAnswer": "Đáp án của bạn",
+        "correctAnswer": "Đáp án đúng",
+        "result": "KQ"
+      },
+      "noAnswer": "(không trả lời)",
+      "defaultQuestion": "Câu {{n}}",
+      "viewEvidence": "Xem dẫn chứng",
+      "types": {
+        "MCQ": "MCQ",
+        "MCQMulti": "MCQ (Nhiều)",
+        "TFNG": "T/F/NG",
+        "YNNG": "Y/N/NG",
+        "Fill": "Điền",
+        "ShortAns": "Trả lời ngắn"
+      }
+    },
+    "banner": {
+      "practiceCount_one": "{{count}} lượt luyện",
+      "practiceCount_other": "{{count}} lượt luyện"
+    },
+    "overviewStats": {
+      "minutes": "phút",
+      "questions": "câu hỏi",
+      "parts": "phần"
+    },
+    "structure": {
+      "title": "Cấu trúc bài thi",
+      "sectionQuestions_one": "{{count}} câu",
+      "sectionQuestions_other": "{{count}} câu"
+    },
+    "startButton": "Bắt đầu làm bài",
+    "timerNote": "Thời gian sẽ bắt đầu đếm ngược khi bạn vào bài thi",
+    "discussion": {
+      "title": "Thảo luận",
+      "subtitle": "Chia sẻ kinh nghiệm, hỏi đáp về bài thi này"
+    },
+    "historyButton": "Lịch sử làm bài"
+  },
+  "progressAnalytics": {
+    "loading": "Đang tải thống kê...",
+    "loginRequired": "Vui lòng đăng nhập",
+    "loginCta": "Đăng nhập",
+    "testsCount_one": "{{count}} bài thi",
+    "testsCount_other": "{{count}} bài thi",
+    "skills": {
+      "reading": "Reading",
+      "listening": "Listening",
+      "writing": "Writing",
+      "speaking": "Speaking"
+    },
+    "stats": {
+      "avg": "TB",
+      "max": "Max",
+      "latest": "Latest"
+    },
+    "lineChart": {
+      "title": "Band Score Progress",
+      "subtitle": "Xu hướng điểm theo thời gian"
+    },
+    "radarChart": {
+      "title": "Skill Profile",
+      "subtitle": "5 bài gần nhất mỗi skill",
+      "seriesName": "Band"
+    },
+    "tabs": {
+      "all": "Tất cả",
+      "reading": "Reading",
+      "listening": "Listening",
+      "writing": "Writing",
+      "speaking": "Speaking"
+    },
+    "empty": {
+      "generic": "Chưa có kết quả",
+      "withSkill": "Chưa có kết quả {{skill}}",
+      "cta": "Làm bài thi"
+    },
+    "itemStatus": {
+      "grading": "Đang chấm",
+      "processing": "Đang xử lý",
+      "failed": "Lỗi"
+    },
+    "itemSubtitle": "{{correct}}/{{total}} câu đúng · {{minutes}} phút",
+    "speakingDefaultLabel": "Speaking Session",
+    "writingDefaultLabel": "Writing Assessment"
+  },
+  "writingTest": {
+    "result": {
+      "header": "Kết quả bài Writing",
+      "backToTests": "← Quay lại danh sách bài thi",
+      "evaluatingTitle": "AI đang chấm bài...",
+      "evaluatingSubtitle": "Thường mất 15-30 giây. Vui lòng đợi.",
+      "failedTitle": "Chấm bài thất bại",
+      "failedBody": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+      "retry": "Thử lại",
+      "estimatedBand": "Band dự kiến",
+      "disclaimer": "Kết quả AI có thể chênh ±0.5 band so với chấm IELTS chính thức",
+      "criteria": {
+        "taskAchievement": "Task Achievement",
+        "coherence": "Coherence & Cohesion",
+        "lexical": "Lexical Resource",
+        "grammar": "Grammar Range & Accuracy"
+      },
+      "improvementsTitle": "Cách cải thiện",
+      "keyCorrections": "Lỗi cần sửa",
+      "backToPractice": "Quay lại Practice"
+    },
+    "editor": {
+      "header": "IELTS Writing Assessment",
+      "taskLabel": "Task 2: Essay",
+      "assistantReading": "AI đang đọc...",
+      "submit": "Nộp bài",
+      "submitting": "Đang nộp...",
+      "taskPromptLabel": "Đề bài",
+      "promptTitle": "Tác động của việc làm việc từ xa",
+      "promptQuote": "Một số người cho rằng làm việc từ xa đã cải thiện cân bằng công việc — cuộc sống, trong khi số khác lại cho rằng nó làm mờ ranh giới giữa công việc và đời tư. Hãy thảo luận cả hai quan điểm và đưa ra ý kiến của bạn.",
+      "promptHint1": "Đưa ra lý do cho câu trả lời và bao gồm ví dụ từ kiến thức hoặc trải nghiệm của bạn.",
+      "promptHint2": "Viết tối thiểu 250 từ.",
+      "assistantTitle": "AI Writing Assistant",
+      "tipsTitle": "Mẹo viết",
+      "tips": {
+        "plan": "Lập dàn ý cấu trúc bài trước khi viết.",
+        "mix": "Kết hợp câu phức và câu đơn.",
+        "check": "Kiểm tra lỗi chính tả và ngữ pháp.",
+        "address": "Đảm bảo bạn trả lời đầy đủ các phần của đề bài."
+      },
+      "wordCountLabel": "Số từ:",
+      "wordCountMin": "/ tối thiểu 250",
+      "placeholder": "Bắt đầu viết bài luận tại đây..."
+    }
+  },
+  "speakingComponents": {
+    "countdown": {
+      "prepare": "Chuẩn bị...",
+      "go": "Bắt đầu nói!"
+    },
+    "timer": {
+      "overtime": "Quá thời gian! Nên kết thúc.",
+      "warning": "Còn {{remaining}}s - chuẩn bị kết bài",
+      "speaking": "Đang nói..."
+    }
+  },
+  "practiceRunner": {
+    "writing": {
+      "task1Title": "Task 1 — Biểu đồ",
+      "task2Title": "Task 2 — Essay",
+      "fallbackPrompt": "Viết bài luận của bạn ở đây.",
+      "resultHeader": "Kết quả chấm Writing",
+      "backLink": "← Quay lại",
+      "aiGrading": "AI đang chấm bài...",
+      "aiGradingHint": "Thường mất 15-30 giây. Vui lòng đợi.",
+      "gradingFailed": "Chấm bài thất bại",
+      "errorOccurred": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+      "retry": "Thử lại",
+      "overallBand": "Overall Band Score",
+      "criteria": {
+        "taskAchievement": "Task Achievement",
+        "coherence": "Coherence & Cohesion",
+        "lexical": "Lexical Resource",
+        "grammar": "Grammar Range & Accuracy"
+      },
+      "errorsDetected": "Lỗi phát hiện ({{count}})",
+      "backToPractice": "Quay lại Practice",
+      "brand": "IELTS Writing",
+      "aiChecking": "AI đang kiểm tra...",
+      "submitting": "Đang nộp...",
+      "submit": "Nộp bài",
+      "wordsMin": "{{count}}+ từ",
+      "chartLabel": "Biểu đồ / Sơ đồ",
+      "promptLabel": "Đề bài",
+      "task1Instruction": "Summarise the information by selecting and reporting the main features, and make comparisons where relevant. Write at least {{count}} words.",
+      "task2Instruction": "Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least {{count}} words.",
+      "assistantTitle": "AI Writing Assistant",
+      "tipsTitle": "Mẹo viết",
+      "task1Tips": {
+        "paraphrase": "Bắt đầu bằng câu paraphrase đề bài",
+        "overview": "Nêu overview/tổng quan trước khi vào chi tiết",
+        "compare": "So sánh số liệu nổi bật, không liệt kê tất cả",
+        "vocabulary": "Sử dụng từ vựng mô tả xu hướng chính xác"
+      },
+      "task2Tips": {
+        "plan": "Lập dàn ý trước khi viết: Mở bài → Thân bài → Kết luận",
+        "views": "Trình bày cả 2 quan điểm rồi đưa ý kiến cá nhân",
+        "linking": "Dùng linking words: However, Furthermore, In contrast...",
+        "proofread": "Kiểm tra lỗi chính tả và ngữ pháp trước khi nộp"
+      },
+      "yourEssay": "Bài viết của bạn",
+      "wordCountLabel": "Số từ:",
+      "wordCountMinSuffix": "min",
+      "wordsEnough": "Đủ từ",
+      "placeholderTask1": "The chart/diagram illustrates...",
+      "placeholderTask2": "In today's society, the issue of..."
+    },
+    "shell": {
+      "loading": "Đang tải bài thi...",
+      "loadError": "Không thể tải bài thi.",
+      "groupOption": "Nhóm {{n}}",
+      "audio": "Audio",
+      "image": "Hình",
+      "noPassage": "Không có đoạn văn cho nhóm câu này.",
+      "context": "Ngữ cảnh",
+      "questions": "Câu hỏi",
+      "itemsCount": "{{count}} câu",
+      "answerPlaceholder": "Nhập câu trả lời...",
+      "exitConfirm": {
+        "title": "Thoát khỏi bài làm?",
+        "description": "Bạn sẽ rời khỏi màn hình làm bài. Tiến độ hiện tại có thể bị mất. Bạn có chắc muốn thoát?",
+        "confirm": "Thoát",
+        "cancel": "Ở lại"
+      }
+    }
+  },
+  "speakingResultPage": {
+    "grading": {
+      "title": "Đang chấm điểm...",
+      "subtitle": "AI đang phân tích bài nói của bạn",
+      "hint": "Quá trình này có thể mất 30-60 giây"
+    },
+    "error": {
+      "title": "Không thể tải kết quả",
+      "body": "Kết quả không tồn tại hoặc đã có lỗi xảy ra.",
+      "backToExamCenter": "Quay lại Exam Center"
+    },
+    "header": {
+      "title": "Kết quả Speaking",
+      "history": "Lịch sử",
+      "back": "Quay lại"
+    },
+    "overallBandScore": "Điểm Band tổng",
+    "delta": {
+      "bandSuffix": "band",
+      "same": "Bằng lần trước",
+      "vs": "so với \"{{topic}}\"",
+      "previous": "lần trước"
+    },
+    "criteria": {
+      "fluency": "Fluency & Coherence",
+      "lexical": "Lexical Resource",
+      "grammar": "Grammar Range",
+      "pronunciation": "Pronunciation"
+    },
+    "feedbackTitle": "Nhận xét chi tiết",
+    "feedbackParts": {
+      "strengths": "Điểm mạnh:\n- ",
+      "areasToImprove": "\nCần cải thiện:\n- ",
+      "tips": "\nGợi ý luyện tập:\n- "
+    },
+    "conversation": {
+      "title": "Bản dịch & ghi âm theo từng câu"
+    },
+    "singleTranscript": {
+      "title": "Bản dịch băng ghi âm"
+    },
+    "analyze": {
+      "analyzing": "Đang phân tích...",
+      "analyzed_one": "Đã phân tích {{count}} lỗi",
+      "analyzed_other": "Đã phân tích {{count}} lỗi",
+      "find": "Tìm lỗi grammar/vocab"
+    },
+    "roles": {
+      "examiner": "Examiner",
+      "you": "Bạn (transcribed by Whisper)"
+    },
+    "hideAudio": "Ẩn audio",
+    "replay": "Nghe lại",
+    "noContent": "(không có nội dung)",
+    "errorDetails": "Chi tiết các lỗi:",
+    "fullRecording": "Bản ghi âm hoàn chỉnh:",
+    "modelAnswer": {
+      "title": "Đáp án mẫu Band 8",
+      "generating": "Đang sinh...",
+      "view": "Xem đáp án mẫu",
+      "placeholder": "Xem cách AI Examiner trả lời ở band 8 để học theo.",
+      "keyVocab": "Từ/cụm nổi bật trong đáp án mẫu",
+      "advice": "Lời khuyên"
+    },
+    "practiceMore": "Luyện tiếp",
+    "evaluationTopic": "Đánh giá Speaking"
+  },
+  "flashcards": {
+    "cardList": {
+      "playAudioTitle": "Nghe phát âm",
+      "playAudioAria": "Phát âm thanh từ vựng"
+    },
+    "deckList": {
+      "public": "Công khai",
+      "private": "Riêng tư"
+    },
+    "studyMode": {
+      "loadingCards": "Đang tải thẻ học...",
+      "empty": {
+        "title": "Không có thẻ cần ôn tập!",
+        "subtitle": "Tất cả thẻ đã được ôn. Hẹn gặp lại ở phiên học tiếp theo."
+      },
+      "close": "Đóng",
+      "studying": "Đang học",
+      "cancel": "Hủy",
+      "cancelTitle": "Hủy phiên học",
+      "cancelDialog": {
+        "title": "Hủy phiên học?",
+        "description": "Tiến trình phiên học sẽ bị mất. Các thẻ đã chấm điểm sẽ được lưu lại, nhưng các thẻ chưa ôn sẽ không được tính.",
+        "keep": "Tiếp tục học",
+        "confirm": "Hủy phiên học"
+      },
+      "statsShort": {
+        "new": "Mới",
+        "learning": "Học",
+        "review": "Ôn"
+      },
+      "progress": "{{current}} / {{total}} thẻ",
+      "status": {
+        "new": "Mới",
+        "learning": "Đang học",
+        "review": "Ôn tập",
+        "other": "Khác"
+      },
+      "tapToFlip": "Chạm để lật",
+      "feedback": {
+        "again": "Sẽ ôn lại sớm",
+        "hard": "Đã đánh dấu khó",
+        "good": "Tốt lắm",
+        "easy": "Quá tốt!"
+      },
+      "grade": {
+        "again": "Quên",
+        "hard": "Khó",
+        "good": "Được",
+        "easy": "Dễ"
+      },
+      "gradeHint": {
+        "again": "< 1p",
+        "hard": "~2 ngày",
+        "good": "~4 ngày",
+        "easy": "~7 ngày"
+      },
+      "finish": {
+        "title": "Hoàn thành xuất sắc!",
+        "subtitle": "Bạn đã hoàn thành tất cả {{count}} thẻ trong phiên này.",
+        "cardsLearned": "Thẻ đã học",
+        "duration": "Thời gian",
+        "cta": "Kết thúc bài học"
+      }
+    }
+  },
+  "skillTree": {
+    "header": {
+      "title": "Bản đồ học tập",
+      "back": "← Quay lại",
+      "changeTopic": "← Đổi chủ đề"
+    },
+    "celebrationMessages": {
+      "1": "Hoàn hảo! 🎉",
+      "2": "Làm tốt lắm! ✨",
+      "3": "Bạn đang bùng cháy! 🔥",
+      "4": "Xuất sắc! 🌟",
+      "5": "Tuyệt vời! 💪"
+    },
+    "topics": {
+      "travel": {
+        "label": "Du lịch",
+        "description": "Đặt chỗ, chỉ đường, sân bay"
+      },
+      "food": {
+        "label": "Ẩm thực",
+        "description": "Gọi món, nấu ăn, dinh dưỡng"
+      },
+      "business": {
+        "label": "Kinh doanh",
+        "description": "Email, họp, thuyết trình"
+      },
+      "health": {
+        "label": "Sức khỏe",
+        "description": "Khám bệnh, triệu chứng, thuốc men"
+      },
+      "technology": {
+        "label": "Công nghệ",
+        "description": "Internet, phần mềm, AI"
+      },
+      "education": {
+        "label": "Giáo dục",
+        "description": "Trường học, bài giảng, kỳ thi"
+      },
+      "daily_life": {
+        "label": "Đời sống",
+        "description": "Mua sắm, giao tiếp, gia đình"
+      },
+      "environment": {
+        "label": "Môi trường",
+        "description": "Ô nhiễm, bảo tồn, tái chế"
+      }
+    },
+    "levels": {
+      "A1": {
+        "description": "Sơ cấp",
+        "subtext": "Giới thiệu & cụm từ đơn giản"
+      },
+      "A2": {
+        "description": "Cơ bản",
+        "subtext": "Tình huống & thói quen hằng ngày"
+      },
+      "B1": {
+        "description": "Trung cấp",
+        "subtext": "Hội thoại du lịch, công việc & trường học"
+      },
+      "B2": {
+        "description": "Trung cao",
+        "subtext": "Bày tỏ quan điểm & thảo luận chi tiết"
+      },
+      "C1": {
+        "description": "Nâng cao",
+        "subtext": "Giao tiếp trôi chảy, phức tạp"
+      },
+      "C2": {
+        "description": "Thành thạo",
+        "subtext": "Tinh tế & chính xác gần như người bản xứ"
+      }
+    },
+    "resume": {
+      "heading": "Tiếp tục hành trình",
+      "subtitle": "Tiếp tục từ chỗ bạn dừng lại",
+      "lastVisited": "Vừa xem",
+      "loading": "Đang tải…",
+      "tapToResume": "Chạm để tiếp tục →"
+    },
+    "newTopic": {
+      "headingResumable": "Khám phá thế giới mới",
+      "subtitleResumable": "Chọn một điểm đến — mỗi thế giới kết hợp ngữ pháp, từ vựng và nghe",
+      "heading": "Chọn thế giới của bạn",
+      "subtitle": "Mỗi thế giới là một hành trình học tập kết hợp ngữ pháp, từ vựng và nghe"
+    },
+    "topicCard": {
+      "popular": "Phổ biến",
+      "lessons": "~{{count}} bài học",
+      "difficultyAria": "Độ khó {{level}} trên 5",
+      "enterWorld": "Vào thế giới"
+    },
+    "level": {
+      "selectTitle": "Chọn trình độ",
+      "cefrScale": "Thang chuẩn CEFR",
+      "placementHint": "Chưa chắc? Làm bài kiểm tra xếp lớp nhanh →",
+      "building": "AI đang xây dựng lộ trình cho bạn...",
+      "startLearning": "Bắt đầu học"
+    },
+    "tree": {
+      "level": "Trình độ {{level}}",
+      "change": "Đổi",
+      "startQuiz": "Bắt đầu Quiz"
+    },
+    "flow": {
+      "section": "Chặng {{num}}",
+      "bonusXp": "+50 XP thưởng",
+      "review": "Ôn lại: {{label}}",
+      "new": "MỚI",
+      "tapToStart": "Chạm để bắt đầu",
+      "completedCount": "{{done}} / {{total}} đã hoàn thành",
+      "sections": {
+        "foundations": "Nền tảng",
+        "skillBuilding": "Xây dựng kỹ năng",
+        "realConversations": "Hội thoại thực tế",
+        "mastery": "Thành thạo",
+        "beyond": "Vượt giới hạn"
+      },
+      "aria": {
+        "completed": "đã hoàn thành",
+        "locked": "đã khoá",
+        "newStart": "mới, chạm để bắt đầu",
+        "activeContinue": "đang học, chạm để tiếp tục"
+      }
+    },
+    "micDenied": "Không có quyền dùng micro",
+    "micDeniedDesc": "Hãy cho phép quyền micro cho trang này trong trình duyệt rồi thử lại.",
+    "micError": "Không truy cập được micro",
+    "micErrorDesc": "Kiểm tra thiết bị thu âm hoặc thử lại với trình duyệt khác."
+  },
+  "miniQuiz": {
+    "tts": {
+      "playing": "Đang phát audio...",
+      "tapToListen": "Chạm để nghe",
+      "tapToReplay": "Chạm để nghe lại",
+      "playedOnce": "Đã nghe {{count}} lần",
+      "playedMany": "Đã nghe {{count}} lần",
+      "listenCarefully": "Nghe kỹ rồi trả lời"
+    },
+    "pair": {
+      "terms": "Thuật ngữ",
+      "matches": "Tương ứng",
+      "allMatched": "Đã ghép xong {{count}} cặp!",
+      "nowTapRight": "Bây giờ chạm vào mục tương ứng bên phải",
+      "progress": "{{done}}/{{total}} đã ghép — chạm vào một mục bên trái để bắt đầu"
+    },
+    "progress": {
+      "current": "Câu {{current}} / {{total}}",
+      "answered": "Đã trả lời {{count}}"
+    },
+    "loading": "Đang tạo câu hỏi...",
+    "result": {
+      "excellent": "Xuất sắc!",
+      "keepPracticing": "Hãy luyện tập thêm!",
+      "correctOf": "Đúng {{correct}} / {{total}}",
+      "areasToImprove": "Phần cần cải thiện:",
+      "viewRemedial": "Xem các nút ôn tập",
+      "continueLearning": "Tiếp tục học"
+    },
+    "input": {
+      "placeholder": "Nhập câu trả lời..."
+    },
+    "nav": {
+      "prev": "← Trước",
+      "next": "Tiếp →",
+      "grading": "Đang chấm...",
+      "submit": "Nộp"
+    }
+  },
+  "speakingTestLayout": {
+    "submitModal": {
+      "error": "Có lỗi xảy ra",
+      "done": "Hoàn tất!",
+      "processing": "Đang xử lý..."
+    },
+    "steps": {
+      "upload": "Đang upload audio lên server...",
+      "sendAi": "Đang gửi cho AI Examiner...",
+      "grading": "AI đang chấm bài (30-60 giây)...",
+      "done": "Hoàn tất!"
+    },
+    "errors": {
+      "noRecording": "Bạn chưa ghi âm câu nào. Hãy ghi âm ít nhất 1 câu trả lời.",
+      "noEvaluationId": "Không nhận được evaluationId",
+      "gradingTimeout": "Chấm bài quá lâu. Bạn có thể xem kết quả sau ở trang Lịch sử.",
+      "submitFailed": "Đã có lỗi xảy ra khi nộp bài."
+    },
+    "skillBadge": "SPEAKING",
+    "recordedCount": "{{count}}/{{total}} đã ghi",
+    "part": "Phần {{num}}",
+    "questionTitle": "Câu {{num}}",
+    "examinerAsks": "Giám khảo hỏi",
+    "recorded": "Đã ghi âm",
+    "replay": "Nghe lại",
+    "reRecord": "Ghi lại",
+    "transcriptLabel": "Transcript (AI nghe được)",
+    "hideNotes": "Ẩn ghi chú",
+    "quickNotes": "Ghi chú nhanh...",
+    "outlineNotes": "Ghi chú outline...",
+    "notesPlaceholderP1": "Gõ nháp ý tưởng / keywords trước khi nói...",
+    "notesPlaceholderP2": "Ghi ý chính hoặc outline trước khi nói...",
+    "prevQuestion": "Câu trước",
+    "nextQuestion": "Câu sau",
+    "cueCardBadge": "Part 2 — Cue Card",
+    "prepTime": "Thời gian chuẩn bị",
+    "youShouldSay": "Bạn nên nói về:",
+    "prevPart": "Phần trước",
+    "nextPart": "Phần tiếp",
+    "submit": "Nộp bài",
+    "tapToReRecord": "Nhấn để ghi lại",
+    "tapToAnswer": "Nhấn để trả lời",
+    "recording": "● ĐANG GHI"
+  },
+  "testResultPage": {
+    "loading": "Đang tải kết quả...",
+    "notFound": "Không tìm thấy kết quả",
+    "examCenter": "Exam Center",
+    "history": "Lịch sử",
+    "historyFull": "Lịch sử làm bài",
+    "defaultTestTitle": "Bài thi",
+    "testCompleted": "Đã hoàn thành bài thi",
+    "band": "Band",
+    "noPassage": "Không có nội dung passage.",
+    "questionTypes": {
+      "MULTIPLE_CHOICE": "MCQ",
+      "MULTIPLE_CHOICE_MULTI_ANSWER": "MCQ (Multi)",
+      "TRUE_FALSE_NOT_GIVEN": "T/F/NG",
+      "YES_NO_NOT_GIVEN": "Y/N/NG",
+      "GAP_FILL": "Fill",
+      "SHORT_ANSWER": "Short",
+      "MATCHING": "Matching"
+    },
+    "stats": {
+      "correct": "Đúng",
+      "wrong": "Sai",
+      "accuracy": "Độ chính xác",
+      "bandScore": "Band Score"
+    },
+    "questionAlt": "Câu {{n}}",
+    "correct": "Đúng",
+    "incorrect": "Sai",
+    "yourAnswer": "Câu trả lời của bạn",
+    "correctAnswer": "Đáp án đúng",
+    "noAnswer": "(chưa trả lời)",
+    "showExplanation": "Lời giải",
+    "hideExplanation": "Ẩn lời giải",
+    "aiTutor": "AI Tutor",
+    "audioTranscript": "Bản ghi âm thanh",
+    "readingPassage": "Bài đọc",
+    "clearHighlight": "Xóa đánh dấu",
+    "highlightingEvidence": "Đang đánh dấu dẫn chứng cho <strong>Q{{order}}</strong>",
+    "audioReplay": "Nghe lại audio",
+    "diagram": "Sơ đồ",
+    "sectionDiagramAlt": "Sơ đồ phần thi",
+    "answerReviewCount": "Xem lại đáp án · {{count}} câu hỏi",
+    "clickToHighlight": "Nhấp vào câu hỏi để đánh dấu dẫn chứng",
+    "noQuestions": "Phần này không có câu hỏi nào.",
+    "discussionTitle": "Thảo luận",
+    "discussionSubtitle": "Chia sẻ kinh nghiệm, hỏi đáp về bài thi này"
+  },
+  "ieltsTestModule": {
+    "loading": {
+      "title": "Đang tải bài thi IELTS...",
+      "subtitle": "Đang tải dữ liệu bài thi từ máy chủ"
+    },
+    "errors": {
+      "noTestId": "Không có ID bài thi.",
+      "notFound": "Không tìm thấy bài thi.",
+      "loadFailed": "Không tải được bài thi. Vui lòng thử lại.",
+      "submitFailed": "Không thể nộp bài. Vui lòng kiểm tra mạng và thử lại."
+    },
+    "errorTitle": "Lỗi",
+    "backToExamCenter": "Quay lại Exam Center",
+    "timeWarnings": {
+      "fiveMin": "Còn 5 phút — hãy kiểm tra các câu chưa làm.",
+      "oneMin": "Còn 1 phút! Bài sẽ tự nộp khi hết giờ."
+    },
+    "submitted": {
+      "title": "Bài thi đã được nộp!",
+      "subtitle": "Kết quả đang được xử lý...",
+      "examCenter": "Exam Center",
+      "history": "Lịch sử"
+    },
+    "writing": {
+      "defaultTask1Title": "Task 1 — Biểu đồ",
+      "defaultTask2Title": "Task 2 — Essay",
+      "resultHeader": "Kết quả chấm Writing",
+      "backLink": "Quay lại",
+      "backToExamCenter": "Quay lại Exam Center",
+      "errorsDetected": "Lỗi phát hiện ({{count}})",
+      "ieltsWriting": "IELTS Writing",
+      "aiChecking": "AI đang kiểm tra...",
+      "submitting": "Đang nộp...",
+      "submit": "Nộp bài",
+      "wordsMin": "{{count}}+ từ",
+      "chartLabel": "Biểu đồ / Sơ đồ",
+      "task1VisualAlt": "Task 1 Visual",
+      "promptLabel": "Đề bài",
+      "writeAtLeast": "Viết ít nhất {{count}} từ.",
+      "assistantTitle": "AI Writing Assistant",
+      "tipsTitle": "Mẹo viết",
+      "task1Tips": {
+        "paraphrase": "Bắt đầu bằng câu paraphrase đề bài",
+        "overview": "Nêu overview trước khi vào chi tiết",
+        "compare": "So sánh số liệu nổi bật"
+      },
+      "task2Tips": {
+        "outline": "Lập dàn ý: Mở bài → Thân bài → Kết luận",
+        "bothViews": "Trình bày cả 2 quan điểm",
+        "linking": "Dùng linking words"
+      },
+      "yourEssay": "Bài viết của bạn",
+      "wordCountLabel": "Số từ:",
+      "wordsSuffix": "/ {{min}} min",
+      "enough": "Đủ từ",
+      "essayAria": "Khu vực soạn bài viết",
+      "needMore": "Cần viết thêm <strong>{{remaining}}</strong> từ nữa để đạt mức tối thiểu ({{min}} từ)."
+    },
+    "test": {
+      "answeredShort": "Đã trả lời {{answered}}/{{total}}",
+      "sectionProgress": "Phần {{current}} / {{total}}",
+      "totalProgress": "Tổng: {{answered}}/{{total}}",
+      "prevSectionTitle": "Phần trước ( [ )",
+      "prevSection": "← Phần trước",
+      "nextSectionTitle": "Phần tiếp ( ] )",
+      "nextSection": "Phần tiếp →",
+      "submitting": "Đang nộp...",
+      "submitted": "Đã nộp",
+      "submit": "Nộp bài",
+      "submitFailedTitle": "Nộp bài thất bại",
+      "mobilePassageListening": "Audio / Ngữ cảnh",
+      "mobilePassageReading": "Bài đọc",
+      "mobileQuestions": "Câu hỏi ({{answered}}/{{total}})",
+      "audioLabel": "Audio",
+      "audioPlayed": "Đã phát xong",
+      "audioUnsupported": "Trình duyệt của bạn không hỗ trợ audio.",
+      "audioLockedOnce": "Section này đã nghe xong — không thể nghe lại (chuẩn IELTS).",
+      "audioOnceNotice": "Đây là bài thi IELTS thật — bạn chỉ được nghe MỘT lần, không tua lại được.",
+      "hideTranscript": "Ẩn transcript",
+      "showTranscript": "Hiện transcript",
+      "transcriptLabel": "Transcript",
+      "questionsContext": "Ngữ cảnh câu hỏi",
+      "readingPassage": "Bài đọc",
+      "fontDecreaseTitle": "Giảm cỡ chữ",
+      "fontDecreaseAria": "Giảm cỡ chữ bài đọc",
+      "fontIncreaseTitle": "Tăng cỡ chữ",
+      "fontIncreaseAria": "Tăng cỡ chữ bài đọc",
+      "highlightOnTitle": "Tắt highlight (phím h)",
+      "highlightOffTitle": "Bật highlight (phím h)",
+      "highlightOn": "BẬT",
+      "highlightLabel": "Highlight",
+      "clearHighlightsTitle": "Xóa tất cả highlight",
+      "highlightHintSelect": "Bôi đen chữ → chọn màu",
+      "highlightHintRemove": "Click highlight để xóa",
+      "noPassage": "Không có nội dung bài đọc.",
+      "cancelTitle": "Hủy",
+      "diagramMap": "Sơ đồ / Bản đồ",
+      "sectionDiagramAlt": "Sơ đồ phần thi",
+      "resizeTitle": "Kéo để chỉnh độ rộng • Nhấp đúp để đặt lại 50/50",
+      "rangeSingle": "Câu {{n}}",
+      "rangeMulti": "Câu {{from}}–{{to}}",
+      "unflagTitle": "Bỏ đánh dấu",
+      "flagTitle": "Đánh dấu để xem lại",
+      "questionImageAlt": "Câu {{n}}",
+      "typeAnswerPlaceholder": "Nhập câu trả lời...",
+      "questionAria": "Câu {{n}}",
+      "selectAnswer": "-- Chọn đáp án --",
+      "matchingPlaceholder": "Nhập đáp án (VD: A, B, C)...",
+      "questionNavigator": "Điều hướng câu hỏi",
+      "navOk": "(đã làm)",
+      "navFlagged": "(đánh dấu)",
+      "sectionFallback": "Phần {{n}}",
+      "closeWarningAria": "Đóng cảnh báo",
+      "confirm": {
+        "title": "Nộp bài thi?",
+        "answered": "Đã trả lời",
+        "unanswered": "Còn <strong>{{count}}</strong> câu chưa trả lời. Vẫn nộp?",
+        "allDone": "Bạn đã hoàn thành tất cả câu hỏi.",
+        "noEdit": "Sau khi nộp, bạn không thể chỉnh sửa đáp án.",
+        "continueTest": "Tiếp tục làm bài",
+        "submitting": "Đang nộp...",
+        "submit": "Nộp bài"
+      }
+    },
+    "highlightColors": {
+      "Yellow": "Vàng",
+      "Green": "Xanh lá",
+      "Blue": "Xanh dương",
+      "Pink": "Hồng"
+    },
+    "beforeUnload": "Bài thi đang làm dở sẽ không được nộp nếu bạn rời trang."
+  },
+  "speakingResultStatic": {
+    "backToExamCenter": "Về Trung tâm thi",
+    "title": "Kết quả bài nói",
+    "downloadReport": "Báo cáo",
+    "practiceAgain": "Luyện tập lại",
+    "overallBand": "Điểm tổng quát",
+    "scoreBreakdown": "Chi tiết điểm",
+    "criteria": {
+      "fluency": "Độ lưu loát & Mạch lạc",
+      "lexical": "Vốn từ vựng",
+      "grammatical": "Ngữ pháp",
+      "pronunciation": "Phát âm"
+    },
+    "yourRecording": "Bản ghi của bạn",
+    "aiAnalysis": "Phân tích & Phản hồi từ AI",
+    "strengths": "Điểm mạnh",
+    "areasForImprovement": "Điểm cần cải thiện",
+    "vocabularySuggestions": "Gợi ý từ vựng"
+  },
+  "writingResultStatic": {
+    "backToExamCenter": "Về Trung tâm thi",
+    "title": "Kết quả bài viết",
+    "downloadReport": "Báo cáo PDF",
+    "practiceAgain": "Luyện tập lại",
+    "estimatedBand": "Band ước tính",
+    "scoreBreakdown": "Chi tiết điểm",
+    "criteria": {
+      "taskResponse": "Đáp ứng yêu cầu",
+      "coherence": "Kết cấu & Liên kết",
+      "lexical": "Vốn từ vựng",
+      "grammatical": "Ngữ pháp"
+    },
+    "annotatedFeedback": "Phản hồi chi tiết bài viết",
+    "legend": {
+      "grammar": "Ngữ pháp",
+      "vocabulary": "Từ vựng",
+      "structure": "Cấu trúc"
+    },
+    "recommendedActions": "Hành động đề xuất",
+    "expandVocabulary": {
+      "title": "Mở rộng từ vựng",
+      "cta": "Xem danh sách từ vựng →"
+    },
+    "developIdeas": {
+      "title": "Phát triển ý tưởng đầy đủ",
+      "cta": "Xem hướng dẫn cấu trúc →"
+    }
+  },
+  "aiTutor": {
+    "questionLabel": "Câu {{n}}",
+    "saved": "Đã lưu",
+    "streaming": "Đang stream",
+    "restart": "Bắt đầu lại",
+    "loadingHistory": "Đang tải lịch sử...",
+    "greeting": "Chào bạn!",
+    "analyzing": "Đang phân tích câu hỏi...",
+    "selectQuestion": "Chọn một câu sai, sau đó bấm 'AI Giải thích' để bắt đầu.",
+    "connecting": "AI đang kết nối...",
+    "streamingPlaceholder": "Đang stream...",
+    "inputPlaceholder": "Hỏi thêm về câu này...",
+    "stopStream": "Dừng stream",
+    "disclaimer": "AI có thể sai. Kiểm tra lại passage gốc. • Cuộc trò chuyện được lưu tự động.",
+    "streamError": "Lỗi: {{error}}"
+  },
+  "examPreview": {
+    "noAudio": "Chưa có audio",
+    "noPassage": "Chưa có nội dung passage",
+    "noQuestions": "Chưa có câu hỏi",
+    "correctAnswer": "← đáp án đúng",
+    "questionsContext": "Ngữ cảnh câu hỏi",
+    "readingPassage": "Đoạn đọc",
+    "transcript": "Bản ghi",
+    "diagramMap": "Sơ đồ / Bản đồ"
+  }
+}

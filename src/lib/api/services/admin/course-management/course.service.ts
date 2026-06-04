@@ -1,6 +1,6 @@
-import apiClient from "../../../config";
-import type { ApiResponse } from "../../../types";
-import type { Course, CourseLevel, CourseStatus } from "@/types/type";
+import apiClient from "@/lib/api/config";
+import type { ApiResponse } from "@/lib/api/types";
+import type { Course, CourseLevel, CourseStatus, Lesson, Rating } from "@/domain";
 
 export interface UpdateCourseRequest {
   title?: string;
@@ -8,6 +8,8 @@ export interface UpdateCourseRequest {
   price?: number;
   courseLevel?: CourseLevel;
   status?: CourseStatus;
+  /** Required when status transitions to REFUSE — backend validates min 10 chars. */
+  rejectionReason?: string;
 }
 
 class CourseManagementService {
@@ -51,15 +53,38 @@ class CourseManagementService {
     return response.data;
   }
 
-  async getLessons(courseId: string): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  // ─── Quality flag ("Chưa đạt yêu cầu") ──────────────────────────────────
+  async flagCourse(id: string, reason: string): Promise<ApiResponse<unknown>> {
+    const response = await apiClient.post<ApiResponse<unknown>>(
+      `/admin/courses/${id}/quality-flag`,
+      { reason }
+    );
+    return response.data;
+  }
+
+  async confirmCourseFlagFix(id: string): Promise<ApiResponse<unknown>> {
+    const response = await apiClient.post<ApiResponse<unknown>>(
+      `/admin/courses/${id}/quality-flag/confirm`
+    );
+    return response.data;
+  }
+
+  async removeCourseFlag(id: string): Promise<ApiResponse<unknown>> {
+    const response = await apiClient.delete<ApiResponse<unknown>>(
+      `/admin/courses/${id}/quality-flag`
+    );
+    return response.data;
+  }
+
+  async getLessons(courseId: string): Promise<ApiResponse<Lesson[]>> {
+    const response = await apiClient.get<ApiResponse<Lesson[]>>(
       `/admin/courses/${courseId}/lessons`
     );
     return response.data;
   }
 
-  async createLesson(courseId: string, data: any): Promise<ApiResponse<any>> {
-    const response = await apiClient.post<ApiResponse<any>>(
+  async createLesson(courseId: string, data: FormData | Partial<Lesson>): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.post<ApiResponse<Lesson>>(
       `/admin/courses/${courseId}/lessons`,
       data
     );
@@ -69,9 +94,9 @@ class CourseManagementService {
   async updateLesson(
     courseId: string,
     lessonId: string,
-    data: any
-  ): Promise<ApiResponse<any>> {
-    const response = await apiClient.put<ApiResponse<any>>(
+    data: Partial<Lesson>
+  ): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.put<ApiResponse<Lesson>>(
       `/admin/courses/${courseId}/lessons/${lessonId}`,
       data
     );
@@ -81,8 +106,8 @@ class CourseManagementService {
   async getLessonById(
     courseId: string,
     lessonId: string
-  ): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  ): Promise<ApiResponse<Lesson>> {
+    const response = await apiClient.get<ApiResponse<Lesson>>(
       `/admin/courses/${courseId}/lessons/${lessonId}`
     );
     return response.data;
@@ -98,8 +123,8 @@ class CourseManagementService {
     return response.data;
   }
 
-  async getRatings(courseId: string): Promise<ApiResponse<any>> {
-    const response = await apiClient.get<ApiResponse<any>>(
+  async getRatings(courseId: string): Promise<ApiResponse<Rating[]>> {
+    const response = await apiClient.get<ApiResponse<Rating[]>>(
       `/admin/courses/${courseId}/ratings`
     );
     return response.data;

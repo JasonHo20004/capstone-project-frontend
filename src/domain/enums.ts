@@ -1,0 +1,116 @@
+/**
+ * Domain Enums - business-level enumerations
+ */
+
+export enum UserRole {
+  ADMINISTRATOR = 'ADMINISTRATOR',
+  COURSESELLER = 'COURSESELLER'
+}
+
+export enum PaymentMethod {
+  STRIPE = 'STRIPE',
+  ZALOPAY = 'ZALOPAY',
+  BANKING = 'BANKING',
+  APPLEPAY = 'APPLEPAY'
+}
+
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED'
+}
+
+export enum TransactionType {
+  DEPOSIT = 'DEPOSIT',
+  PAYMENT = 'PAYMENT',
+  WITHDRAW = 'WITHDRAW',
+  SUBSCRIPTION = 'SUBSCRIPTION'
+}
+
+export enum TransactionStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED'
+}
+
+export enum CourseStatus {
+  PENDING = 'PENDING',
+  ACTIVE = 'ACTIVE',
+  REFUSE = 'REFUSE',
+  INACTIVE = 'INACTIVE',
+  DRAFT = 'DRAFT'
+}
+
+export enum CourseLevel {
+  A1 = 'A1',
+  A2 = 'A2',
+  B1 = 'B1',
+  B2 = 'B2',
+  C1 = 'C1',
+  C2 = 'C2'
+}
+
+export enum SessionStatus {
+  ONGOING = 'ONGOING',
+  COMPLETED = 'COMPLETED'
+}
+
+export enum QuestionType {
+  // General
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  MULTIPLE_CHOICE_MULTI_ANSWER = 'MULTIPLE_CHOICE_MULTI_ANSWER',
+  ESSAY = 'ESSAY',
+  FILL_IN_THE_BLANK = 'FILL_IN_THE_BLANK',
+  SHORT_ANSWER = 'SHORT_ANSWER',
+  // IELTS auto-graded
+  GAP_FILL = 'GAP_FILL',
+  MATCHING = 'MATCHING',
+  TRUE_FALSE_NOT_GIVEN = 'TRUE_FALSE_NOT_GIVEN',
+  YES_NO_NOT_GIVEN = 'YES_NO_NOT_GIVEN',
+  // TOEIC auto-graded
+  TOEIC_SINGLE_CHOICE = 'TOEIC_SINGLE_CHOICE',
+  TOEIC_TEXT_COMPLETION = 'TOEIC_TEXT_COMPLETION',
+  // Future: AI / teacher graded (scaffolded, not yet implemented)
+  IELTS_WRITING_TASK1 = 'IELTS_WRITING_TASK1',
+  IELTS_WRITING_TASK2 = 'IELTS_WRITING_TASK2',
+  IELTS_SPEAKING = 'IELTS_SPEAKING',
+  TOEIC_WRITING = 'TOEIC_WRITING',
+  TOEIC_SPEAKING = 'TOEIC_SPEAKING'
+}
+
+export enum SkillType {
+  READING = 'READING',
+  LISTENING = 'LISTENING',
+  WRITING = 'WRITING',
+  SPEAKING = 'SPEAKING'
+}
+
+export enum MediaType {
+  AUDIO = 'AUDIO',
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO'
+}
+
+export enum ApplicationStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
+
+export enum FlashcardStatus {
+  NEW = 'NEW',
+  LEARNING = 'LEARNING',
+  REVIEW = 'REVIEW',
+}
+
+export enum TestType {
+  FINAL = 'FINAL'
+}
+
+export enum EReasonType {
+  INAPPROPRIATE_CONTENT = 'INAPPROPRIATE_CONTENT',
+  COPYRIGHT_VIOLATION = 'COPYRIGHT_VIOLATION',
+  NOT_AS_DESCRIBED = 'NOT_AS_DESCRIBED',
+  UNRESPONSIVE_INSTRUCTOR = 'UNRESPONSIVE_INSTRUCTOR',
+  INCOMPLETE_CONTENT = 'INCOMPLETE_CONTENT'
+}
