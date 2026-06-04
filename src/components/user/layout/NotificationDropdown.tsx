@@ -71,6 +71,14 @@ const NOTIFICATION_TYPE_MAP: Record<string, NotificationTypeConfig> = {
     bgColor: 'bg-amber-50',
     bgColorUnread: 'bg-amber-100',
   },
+  // ── Learning reminder (emitted by course-service inactivity cron) ────────
+  COURSE_PROGRESS_REMINDER: {
+    icon: BookOpen,
+    labelKey: 'COURSE_PROGRESS_REMINDER',
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50',
+    bgColorUnread: 'bg-indigo-100',
+  },
   // ── Seller-specific events (emitted by course-service) ──────────────────
   COURSE_APPROVED: {
     icon: CheckCircle2,
@@ -154,6 +162,9 @@ export function getNotificationLink(notification: InAppNotification): string | n
     case 'COURSE_ENROLLMENT':
       return courseId ? `/seller/courses/${courseId}` : '/seller/learners';
     case 'COURSE_UPDATE':
+      return courseId ? `/courses/${courseId}` : null;
+    case 'COURSE_PROGRESS_REMINDER':
+      // Learner nudge — send them straight to the course to resume.
       return courseId ? `/courses/${courseId}` : null;
     case 'COURSE_APPROVED':
     case 'COURSE_REJECTED':

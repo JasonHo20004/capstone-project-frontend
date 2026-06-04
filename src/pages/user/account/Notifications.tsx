@@ -33,6 +33,7 @@ const TYPE_FILTER_KEYS = [
   'comment_reply',
   'course_enrollment',
   'course_update',
+  'COURSE_PROGRESS_REMINDER',
   // Seller-specific events emitted by course-service / payment-service.
   // Keys are uppercase to match what handlers write (see NotificationDropdown).
   'COURSE_APPROVED',
