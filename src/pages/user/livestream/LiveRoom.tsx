@@ -99,9 +99,14 @@ interface ChatMessage {
 // ── Audio queue ───────────────────────────────────────────────────────────────
 
 class AudioQueue {
-  private queue: string[] = [];
+  private queue: string[] = [];          // lecture (slide) narration, FIFO
+  private priorityQueue: string[] = [];  // AI answers — jump ahead of slides
   private playing = false;
   private current: HTMLAudioElement | null = null;
+  // A slide narration paused mid-way to let an AI answer through; resumed once
+  // every queued answer has finished.
+  private paused: HTMLAudioElement | null = null;
+  private currentIsPriority = false;
   private _muted = false;
   private _rate = 1;
   private _blocked = false;
@@ -110,16 +115,40 @@ class AudioQueue {
   /** Fired when the browser blocked autoplay — the UI should prompt a tap. */
   onBlocked?: () => void;
 
+  /** Queue a slide narration clip (plays after anything already queued). */
   push(url: string) {
     if (!url) return;
     this.queue.push(url);
     if (!this.playing && !this._blocked) this._next();
   }
 
-  private _next() {
-    if (!this.queue.length) { this.playing = false; this.onStop?.(); return; }
+  /**
+   * Queue an AI answer. Answers take priority over slides: if a slide narration
+   * is currently playing it is paused mid-way, the answer plays immediately, and
+   * the slide resumes once every queued answer has finished. This is what lets
+   * the AI reply to a question without waiting for the current slide to end.
+   */
+  pushPriority(url: string) {
+    if (!url) return;
+    this.priorityQueue.push(url);
+    if (this._blocked) return; // resumes via unlock()
+    if (this.playing && this.current && !this.currentIsPriority) {
+      // Interrupt the slide narration and remember it so we can resume later.
+      this.paused = this.current;
+      this.current.pause();
+      this.current = null;
+      this.playing = false;
+      this._next();
+    } else if (!this.playing) {
+      this._next();
+    }
+    // If an answer is already playing, the new one just waits in priorityQueue.
+  }
+
+  private _play(q: string[], isPriority: boolean) {
     this.playing = true;
-    const url = this.queue[0]; // peek — only drop the item once it actually plays/ends
+    this.currentIsPriority = isPriority;
+    const url = q[0]; // peek — only drop the item once it actually plays/ends
     const audio = new Audio(url);
     audio.muted = this._muted;
     audio.playbackRate = this._rate;
@@ -127,8 +156,8 @@ class AudioQueue {
     // onPlay fires on the real `play` event, so the avatar only "speaks" when
     // audio is genuinely audible (not when playback was silently blocked).
     audio.onplay   = () => { this._blocked = false; this.onPlay?.(); };
-    audio.onended  = () => { this.queue.shift(); this.current = null; this._next(); };
-    audio.onerror  = () => { this.queue.shift(); this.current = null; this._next(); };
+    audio.onended  = () => { q.shift(); this.current = null; this._next(); };
+    audio.onerror  = () => { q.shift(); this.current = null; this._next(); };
     audio.play().catch(() => {
       // Autoplay blocked (no user gesture yet). Keep the item queued and wait
       // for unlock() instead of silently draining the whole lesson.
@@ -139,10 +168,40 @@ class AudioQueue {
     });
   }
 
+  private _next() {
+    // 1) Answers first — they may have interrupted a slide narration.
+    if (this.priorityQueue.length) { this._play(this.priorityQueue, true); return; }
+
+    // 2) Resume a slide narration an answer interrupted (reuse the element so it
+    //    continues from where it was paused, not from the start).
+    if (this.paused) {
+      const audio = this.paused;
+      this.paused = null;
+      this.playing = true;
+      this.currentIsPriority = false;
+      this.current = audio;
+      audio.muted = this._muted;
+      audio.playbackRate = this._rate;
+      audio.play().catch(() => {
+        this.paused = audio;   // resume blocked — wait for unlock()
+        this.current = null;
+        this.playing = false;
+        this._blocked = true;
+        this.onStop?.();
+        this.onBlocked?.();
+      });
+      return;
+    }
+
+    // 3) Otherwise the next slide narration.
+    if (!this.queue.length) { this.playing = false; this.current = null; this.onStop?.(); return; }
+    this._play(this.queue, false);
+  }
+
   /** Resume playback after a user gesture has granted audio permission. */
   unlock() {
     this._blocked = false;
-    if (!this.playing && this.queue.length) this._next();
+    if (!this.playing && (this.priorityQueue.length || this.paused || this.queue.length)) this._next();
   }
 
   setMuted(muted: boolean) {
@@ -157,10 +216,14 @@ class AudioQueue {
 
   clear() {
     this.queue = [];
+    this.priorityQueue = [];
     this.playing = false;
     this._blocked = false;
+    this.currentIsPriority = false;
     this.current?.pause();
     this.current = null;
+    this.paused?.pause();
+    this.paused = null;
     this.onStop?.();
   }
 }
@@ -220,6 +283,7 @@ export default function LiveRoom() {
   const audioQueueRef   = useRef(new AudioQueue());
   const chatEndRef      = useRef<HTMLDivElement>(null);
   const activeChunkRef  = useRef<HTMLDivElement>(null);
+  const stageRef        = useRef<HTMLDivElement>(null);
   const reconnectTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectDelay  = useRef(1000);
   // Guards against an infinite refresh→reconnect loop when the token can't be
@@ -297,10 +361,11 @@ export default function LiveRoom() {
   // Auto-scroll chat
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chat]);
 
-  // Auto-scroll transcript to active section
+  // Auto-scroll up to the active slide (stage) when a new slide appears,
+  // so the learner always sees the current slide rather than the transcript below it.
   useEffect(() => {
     if (currentChunkIndex >= 0) {
-      setTimeout(() => activeChunkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+      setTimeout(() => stageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     }
   }, [currentChunkIndex]);
 
@@ -462,7 +527,9 @@ export default function LiveRoom() {
         setIsThinking(false);
         setAiTyping(false);
         setChat(p => [...p, { type: 'answer', user_name: msg.user_name as string, answer: msg.answer as string }]);
-        if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string);
+        // Answers jump ahead of the slide narration: the current slide is paused,
+        // the answer plays immediately, then the slide resumes (see AudioQueue).
+        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
         // Increment unread counter when user is watching the stage tab on mobile
         setUnreadChat(n => n + 1);
         break;
@@ -875,7 +942,7 @@ export default function LiveRoom() {
           mobileTab === 'stage' ? 'flex' : 'hidden', 'lg:flex',
         )}>
           {/* ── Stage ── */}
-          <div className="relative shrink-0 bg-gradient-to-b from-indigo-50 to-white">
+          <div ref={stageRef} className="relative shrink-0 bg-gradient-to-b from-indigo-50 to-white">
             <ReactionLayer reactions={reactions} onExpire={expireReaction} />
 
             {/* Live spotlight caption — what the invited student is saying, shown to everyone */}

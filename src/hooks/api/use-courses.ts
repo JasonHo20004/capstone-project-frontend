@@ -149,8 +149,18 @@ export const useUpdateCourse = () => {
       data: UpdateCourseRequest | FormData;
     }) => courseService.updateCourse(id, data),
     onSuccess: (response, variables) => {
-      // Update cache cho course cụ thể
-      queryClient.setQueryData(['course', variables.id], response.data);
+      // useCourse caches the FULL ApiResponse envelope and unwraps it via
+      // `select: (r) => r.data`. The update endpoint returns a LEAN course
+      // projection (no lessons/modules), so MERGE it into the cached detail
+      // rather than replacing. Writing `response.data` (a bare course) would
+      // make `select` run `.data` on it → undefined → the page flashes
+      // "khóa học không tồn tại"; writing `response` alone would momentarily
+      // drop lessons/modules.
+      queryClient.setQueryData(
+        ['course', variables.id],
+        (prev: any) =>
+          prev?.data ? { ...prev, data: { ...prev.data, ...response.data } } : response
+      );
       // Invalidate danh sách courses
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
@@ -185,7 +195,12 @@ export const usePublishCourse = () => {
   return useMutation({
     mutationFn: (id: string) => courseService.publishCourse(id),
     onSuccess: (response, variables) => {
-      queryClient.setQueryData(['course', variables], response.data);
+      // useCourse caches the FULL ApiResponse envelope and unwraps it via
+      // `select: (r) => r.data`. Write the whole `response` here (not
+      // `response.data`) so the shape matches — otherwise `select` runs
+      // `.data` on a bare course, yields undefined, and the page flashes
+      // "khóa học không tồn tại" until the next refetch.
+      queryClient.setQueryData(['course', variables], response);
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['seller-courses'] });
       queryClient.invalidateQueries({ queryKey: ['course-review-history', variables] });
