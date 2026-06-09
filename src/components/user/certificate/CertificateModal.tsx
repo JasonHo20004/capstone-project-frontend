@@ -141,6 +141,18 @@ export function CertificateModal({ certificate, onClose }: Props) {
             maxWidth: '800px',
             margin: '0 auto',
           }}>
+            {/* Inner border frame */}
+            <div style={{
+              position: 'absolute',
+              top: '8px',
+              left: '8px',
+              right: '8px',
+              bottom: '8px',
+              border: '1px solid rgba(217, 119, 6, 0.35)',
+              borderRadius: '8px',
+              pointerEvents: 'none',
+            }} />
+
             {/* Corner ornaments */}
             {([
               { top: 12, left: 12, borderTop: '3px solid #d97706', borderLeft: '3px solid #d97706', borderRadius: '6px 0 0 0' },
@@ -152,17 +164,50 @@ export function CertificateModal({ certificate, onClose }: Props) {
             ))}
 
             {/* Platform name */}
-            <p style={{ textAlign: 'center', fontFamily: 'system-ui,sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '4px', textTransform: 'uppercase', color: '#92400e', marginBottom: '20px' }}>
+            <p style={{ textAlign: 'center', fontFamily: 'system-ui,sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '4px', textTransform: 'uppercase', color: '#92400e', marginBottom: '16px' }}>
               English Learning Platform
             </p>
 
-            {/* Star badge */}
-            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <span style={{ display: 'inline-block', background: 'linear-gradient(135deg,#fbbf24,#f59e0b)', borderRadius: '50%', padding: '14px', boxShadow: '0 4px 12px rgba(245,158,11,0.4)' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            {/* Premium Golden Seal with Ribbon */}
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <div style={{ position: 'relative', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="80" height="80" viewBox="0 0 100 100" style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible' }}>
+                  {/* Left ribbon tail */}
+                  <path d="M35,60 L25,95 L45,85 Z" fill="#b45309" />
+                  <path d="M35,60 L25,95 L45,85 Z" fill="url(#ribbonGrad)" />
+                  {/* Right ribbon tail */}
+                  <path d="M65,60 L75,95 L55,85 Z" fill="#b45309" />
+                  <path d="M65,60 L75,95 L55,85 Z" fill="url(#ribbonGrad)" />
+                  
+                  <defs>
+                    <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#d97706" />
+                      <stop offset="50%" stopColor="#f59e0b" />
+                      <stop offset="100%" stopColor="#92400e" />
+                    </linearGradient>
+                  </defs>
                 </svg>
-              </span>
+                {/* Circular Golden Stamp */}
+                <div style={{
+                  position: 'absolute',
+                  top: '5px',
+                  left: '5px',
+                  width: '70px',
+                  height: '70px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%)',
+                  boxShadow: '0 6px 16px rgba(217,119,6,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px double #fef08a',
+                  zIndex: 2,
+                }}>
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="#78350f">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Title */}
@@ -208,7 +253,20 @@ export function CertificateModal({ certificate, onClose }: Props) {
                 <p style={{ fontSize: '11px', color: '#a16207', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Ngày cấp</p>
                 <p style={{ fontSize: '15px', fontWeight: 600, color: '#78350f' }}>{formatDate(certificate.issuedAt)}</p>
               </div>
-              <div style={{ textAlign: 'center' }}>
+              <div style={{ textAlign: 'center', minWidth: '160px' }}>
+                {/* Ink Signature */}
+                <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '-10px' }}>
+                  <svg width="110" height="48" viewBox="0 0 100 45" style={{ opacity: 0.9 }}>
+                    <path
+                      d="M 10 32 Q 25 3 40 28 T 60 12 T 80 32 T 95 18 M 20 22 L 85 24"
+                      fill="none"
+                      stroke="#1e3a8a"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
                 <div style={{ width: '140px', borderBottom: '2px solid #d97706', marginBottom: '4px', marginLeft: 'auto', marginRight: 'auto' }} />
                 <p style={{ fontSize: '12px', color: '#a16207' }}>Ban Giám đốc</p>
                 <p style={{ fontSize: '11px', color: '#b45309', fontWeight: 600 }}>English Learning Platform</p>

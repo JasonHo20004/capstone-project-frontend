@@ -83,6 +83,12 @@ const StudentLearningPage = () => {
 
   const { data: ratings } = useCourseRatings(courseId, { page: 1, limit: 50 });
   const markCompleteMutation = useMarkLessonComplete(courseId, effectiveLessonId);
+  const isLessonCompleted = useMemo(() => {
+    if (!context?.syllabus || !effectiveLessonId) return false;
+    const currentLesson = context.syllabus.find((item) => item.id === effectiveLessonId);
+    return currentLesson?.isCompleted ?? false;
+  }, [context?.syllabus, effectiveLessonId]);
+
   const { data: certificate } = useCertificate(courseId);
   const [showCertificate, setShowCertificate] = useState(false);
 
@@ -178,6 +184,7 @@ const StudentLearningPage = () => {
                     isLoading={loadingContext || loadingLesson}
                     onMarkComplete={handleMarkComplete}
                     markCompletedLoading={markCompleteMutation.isPending}
+                    isCompleted={isLessonCompleted}
                   />
                 )}
 

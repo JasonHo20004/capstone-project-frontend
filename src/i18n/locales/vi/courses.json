@@ -262,6 +262,7 @@
       "selectLessonDesc": "Chọn một bài học trong danh sách để xem nội dung chi tiết.",
       "saving": "Đang lưu...",
       "markComplete": "Đánh dấu hoàn thành",
+      "completed": "Đã hoàn thành",
       "newCommentsCount": "{{count}} bình luận mới",
       "recentComments": "Bình luận gần đây",
       "noComments": "Chưa có bình luận nào cho bài học này. Hãy trở thành người đầu tiên!",

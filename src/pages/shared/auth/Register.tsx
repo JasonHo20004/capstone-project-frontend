@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, Mail, Lock, User, Phone, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Phone, Calendar, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/api/use-auth';
 import { InlineLoading } from '@/components/ui/loading-spinner';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -156,9 +156,11 @@ const Register = () => {
       <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-800 text-white p-12">
         <div className="max-w-md space-y-8">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
-              <BookOpen className="w-8 h-8" />
-            </div>
+            <img
+              src="/logo.png"
+              alt={t('app.name', { ns: 'common' })}
+              className="w-16 h-16 rounded-2xl bg-white object-contain p-1.5 shadow-lg shadow-primary/20 transition-transform group-hover:scale-105"
+            />
             <span className="text-4xl font-bold font-display">{t('app.name', { ns: 'common' })}</span>
           </Link>
 
@@ -194,9 +196,11 @@ const Register = () => {
         <div className="w-full max-w-md space-y-6">
           {/* Mobile Logo */}
           <Link to="/" className="flex lg:hidden items-center gap-2 justify-center">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt={t('app.name', { ns: 'common' })}
+              className="w-12 h-12 rounded-xl bg-white object-contain p-1 shadow-lg shadow-primary/20"
+            />
             <span className="text-2xl font-bold bg-primary bg-clip-text text-transparent font-display">
               {t('app.name', { ns: 'common' })}
             </span>

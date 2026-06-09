@@ -38,7 +38,8 @@ export function useAIAdvisor({
     // Clean up existing connection
     eventSourceRef.current?.close();
 
-    const url = `${API_BASE}/api/ai/advisor/stream?userId=${userId}`;
+    const token = localStorage.getItem("accessToken") || "";
+    const url = `${API_BASE}/api/ai/advisor/stream?userId=${userId}&token=${encodeURIComponent(token)}`;
     const es = new EventSource(url, { withCredentials: true });
     eventSourceRef.current = es;
 
