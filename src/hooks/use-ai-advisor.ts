@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { AdvisorAction } from "@/lib/api/services/user/advisor/advisor.service";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 interface UseAIAdvisorOptions {
   userId: string | undefined;
