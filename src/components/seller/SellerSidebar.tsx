@@ -9,7 +9,6 @@ import {
   Users,
   MessageSquare,
   User,
-  GraduationCap,
   DollarSign,
   ClipboardList,
 } from 'lucide-react';
@@ -43,9 +42,11 @@ export default function SellerSidebar() {
       )}
     >
       <div className="flex h-16 items-center gap-3 border-b border-border/60 px-5 flex-shrink-0">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-          <GraduationCap className="h-5 w-5 text-primary" />
-        </div>
+        <img
+          src="/logo.png"
+          alt={t('sidebar.brand.title')}
+          className="h-9 w-9 rounded-lg object-contain flex-shrink-0"
+        />
         <div className="overflow-hidden whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
           <h2 className="font-semibold font-display tracking-tight leading-tight">{t('sidebar.brand.title')}</h2>
           <p className="text-[10px] text-muted-foreground leading-tight">{t('sidebar.brand.subtitle')}</p>

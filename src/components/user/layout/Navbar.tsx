@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, BookOpen, User, Wallet, LogOut, Layers } from 'lucide-react';
+import { Menu, X, User, Wallet, LogOut, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/hooks/api/use-auth';
@@ -69,9 +69,11 @@ const Navbar = () => {
           to="/"
           className="flex items-center gap-2.5 shrink-0 cursor-pointer group"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shadow-sm transition-all duration-200 group-hover:shadow-md group-hover:scale-[1.02]">
-            <BookOpen className="h-4 w-4 text-white" />
-          </div>
+          <img
+            src="/logo.png"
+            alt={t('app.name', { ns: 'common' })}
+            className="h-9 w-9 object-contain transition-all duration-200 group-hover:scale-[1.02]"
+          />
           <span className="text-lg font-bold tracking-tight text-slate-900 font-display sm:text-xl">
             {t('app.name', { ns: 'common' })}
           </span>
