@@ -262,6 +262,7 @@
       "selectLessonDesc": "Pick a lesson from the list to see the detailed content.",
       "saving": "Saving...",
       "markComplete": "Mark as complete",
+      "completed": "Completed",
       "newCommentsCount": "{{count}} new comments",
       "recentComments": "Recent comments",
       "noComments": "No comments yet for this lesson. Be the first!",

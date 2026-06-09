@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
-import { Clock, MessageSquare, PlayCircle } from "lucide-react";
+import { Clock, MessageSquare, PlayCircle, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +14,7 @@ type VideoSectionProps = {
   isLoading?: boolean;
   onMarkComplete?: () => void;
   markCompletedLoading?: boolean;
+  isCompleted?: boolean;
 };
 
 const formatDuration = (seconds?: number | null) => {
@@ -27,6 +29,7 @@ export const VideoSection = ({
   isLoading,
   onMarkComplete,
   markCompletedLoading,
+  isCompleted = false,
 }: VideoSectionProps) => {
   const { t } = useTranslation("courses");
   const videoAsset = lesson?.mediaAssets.find((asset) =>
@@ -119,13 +122,23 @@ export const VideoSection = ({
           </div>
           <Button
             onClick={onMarkComplete}
-            disabled={!lesson || markCompletedLoading}
-            variant="secondary"
-            className="self-start rounded-full md:self-center"
+            disabled={!lesson || markCompletedLoading || isCompleted}
+            variant={isCompleted ? "outline" : "secondary"}
+            className={cn(
+              "self-start rounded-full md:self-center gap-2",
+              isCompleted && "border-emerald-500/30 bg-emerald-50 text-emerald-600 disabled:opacity-100 disabled:pointer-events-auto cursor-default"
+            )}
           >
-            {markCompletedLoading
-              ? t("studentLearning.videoSection.saving")
-              : t("studentLearning.videoSection.markComplete")}
+            {markCompletedLoading ? (
+              t("studentLearning.videoSection.saving")
+            ) : isCompleted ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                {t("studentLearning.videoSection.completed")}
+              </>
+            ) : (
+              t("studentLearning.videoSection.markComplete")
+            )}
           </Button>
         </div>
 
