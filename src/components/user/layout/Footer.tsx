@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 const Footer = () => {
   const { t } = useTranslation('layout');
@@ -13,9 +13,11 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
-                <BookOpen className="w-6 h-6" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="Alicia"
+                className="w-10 h-10 rounded-lg bg-white object-contain p-1 shadow-lg shadow-primary/20 transition-transform group-hover:scale-105"
+              />
               <span className="text-2xl font-bold text-white font-display">Alicia</span>
             </Link>
             <p className="text-slate-400 leading-relaxed">
