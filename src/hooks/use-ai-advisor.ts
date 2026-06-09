@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { AdvisorAction } from "@/lib/api/services/user/advisor/advisor.service";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 interface UseAIAdvisorOptions {
   userId: string | undefined;
@@ -39,7 +39,7 @@ export function useAIAdvisor({
     eventSourceRef.current?.close();
 
     const token = localStorage.getItem("accessToken") || "";
-    const url = `${API_BASE}/api/ai/advisor/stream?userId=${userId}&token=${encodeURIComponent(token)}`;
+    const url = `${API_BASE}/ai/advisor/stream?userId=${userId}&token=${encodeURIComponent(token)}`;
     const es = new EventSource(url, { withCredentials: true });
     eventSourceRef.current = es;
 
