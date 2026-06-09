@@ -76,9 +76,9 @@ export const SyllabusSidebar = ({
                     <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted font-semibold">
                       {lesson.lessonOrder ?? index + 1}
                     </span>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="font-semibold text-foreground">{lesson.title}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground line-clamp-2">
                         {lesson.description ?? t("studentLearning.syllabusSidebar.noDescription")}
                       </p>
                     </div>

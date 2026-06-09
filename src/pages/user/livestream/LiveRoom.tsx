@@ -282,7 +282,6 @@ export default function LiveRoom() {
   const wsRef           = useRef<WebSocket | null>(null);
   const audioQueueRef   = useRef(new AudioQueue());
   const chatEndRef      = useRef<HTMLDivElement>(null);
-  const activeChunkRef  = useRef<HTMLDivElement>(null);
   const stageRef        = useRef<HTMLDivElement>(null);
   const reconnectTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectDelay  = useRef(1000);
@@ -1085,14 +1084,25 @@ export default function LiveRoom() {
                 </div>
               )}
 
-              {/* Practice-available nudge — only when the active slide has a phrase */}
+              {/* Practice card for the active slide */}
               {hasActiveSlide && activeChunk?.practice_phrase && (
+                <div className="w-full max-w-xl my-2 px-4 z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <PracticeCard
+                    phrase={activeChunk.practice_phrase}
+                    onResult={(t, s) => sendPracticeResult(activeChunk.practice_phrase!, t, s)}
+                  />
+                </div>
+              )}
+
+              {/* Explain again button */}
+              {hasActiveSlide && isLive && (
                 <button
-                  onClick={() => activeChunkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
-                  className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors animate-bounce"
-                  style={{ animationDuration: '2s' }}
+                  onClick={() => sendChip(t('room.explainAgainPart', { title: activeChunk.title }))}
+                  disabled={questionsLeft === 0 || !connected}
+                  className="flex items-center justify-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors my-1 z-10"
                 >
-                  <Mic className="w-3 h-3" /> {t('room.practiceAvailable')}
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  {t('room.transcript.explainAgain')}
                 </button>
               )}
 
@@ -1120,130 +1130,7 @@ export default function LiveRoom() {
             </div>
           </div>
 
-          {/* Transcript panel — flows in the parent scroll */}
-          <div className="flex flex-col">
-            <div className="sticky top-0 z-10 flex items-center gap-1.5 px-4 py-2 border-b border-slate-100 bg-white/95 backdrop-blur-sm">
-              <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-xs font-medium text-slate-500">{t('room.transcript.heading')}</span>
-              <span className="ml-auto text-[10px] text-slate-400">
-                {transcript.length} / {progress.total || transcript.length} {t('room.transcript.slidesCount')}
-              </span>
-            </div>
-            {/* Slide progress bar */}
-            {transcript.length > 0 && progress.total > 0 && (
-              <div className="px-4 pt-2 pb-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-indigo-400 rounded-full transition-all duration-700"
-                      style={{ width: `${((currentChunkIndex + 1) / progress.total) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-slate-400 shrink-0">
-                    {Math.max(0, currentChunkIndex + 1)}/{progress.total}
-                  </span>
-                </div>
-              </div>
-            )}
-            <div className="px-4 py-3">
-              {transcript.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-8">
-                  {t('room.transcript.empty')}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {transcript.map((chunk, i) => {
-                    const isActive = i === currentChunkIndex;
-                    const isDone   = i < currentChunkIndex;
-                    return (
-                      <div
-                        key={i}
-                        ref={isActive ? activeChunkRef : null}
-                        className={cn(
-                          'rounded-2xl border overflow-hidden transition-all duration-300',
-                          isActive
-                            ? 'border-indigo-300 shadow-md ring-1 ring-indigo-200'
-                            : isDone
-                              ? 'border-slate-100 opacity-70'
-                              : 'border-slate-100',
-                        )}
-                      >
-                        {/* Slide header */}
-                        <div className={cn(
-                          'flex items-center gap-2 px-3 py-2',
-                          isActive ? 'bg-indigo-600' : isDone ? 'bg-slate-100' : 'bg-slate-50',
-                        )}>
-                          <span className={cn(
-                            'flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0',
-                            isActive ? 'bg-white text-indigo-600' : isDone ? 'bg-slate-300 text-slate-600' : 'bg-slate-200 text-slate-500',
-                          )}>
-                            {i + 1}
-                          </span>
-                          <p className={cn(
-                            'text-xs font-semibold flex-1 truncate',
-                            isActive ? 'text-white' : isDone ? 'text-slate-500' : 'text-slate-600',
-                          )}>
-                            {chunk.title}
-                          </p>
-                          {isActive && isSpeaking && (
-                            <span className="flex gap-0.5 shrink-0">
-                              {[0,1,2].map(j => (
-                                <span
-                                  key={j}
-                                  className="inline-block w-0.5 h-3 bg-white/80 rounded-full"
-                                  style={{ animation: `speaking-bar 0.6s ease-in-out ${j*0.15}s infinite alternate` }}
-                                />
-                              ))}
-                            </span>
-                          )}
-                          {isDone && (
-                            <span className="text-[10px] text-slate-400 shrink-0"><Check size={14} /></span>
-                          )}
-                        </div>
 
-                        {/* Slide body */}
-                        {isActive ? (
-                          // Active slide is shown at the top stage — here show compact controls only
-                          <div className="px-3 py-2.5 bg-indigo-50 space-y-2">
-                            <p className="text-[11px] text-indigo-600 italic">
-                              {t('room.transcript.activeAbove')}
-                            </p>
-                            {chunk.practice_phrase && (
-                              <PracticeCard
-                                phrase={chunk.practice_phrase}
-                                onResult={(t, s) => sendPracticeResult(chunk.practice_phrase!, t, s)}
-                              />
-                            )}
-                            {isLive && (
-                              <button
-                                onClick={() => sendChip(t('room.explainAgainPart', { title: chunk.title }))}
-                                disabled={questionsLeft === 0 || !connected}
-                                className="flex items-center gap-1 text-[11px] text-indigo-500 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                                {t('room.transcript.explainAgain')}
-                              </button>
-                            )}
-                          </div>
-                        ) : isDone ? (
-                          // Past slide — render the slide content (not animated, no avatar PIP)
-                          <div className="px-3 py-2.5 bg-white">
-                            <LessonSlide
-                              chunk={chunk}
-                              index={i}
-                              total={progress.total || transcript.length}
-                              active={false}
-                              ragBase={RAG_BASE}
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Right: Q&A chat */}
