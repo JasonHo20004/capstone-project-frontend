@@ -108,6 +108,32 @@ const StudentLearningPage = () => {
     markCompleteMutation.mutate();
   };
 
+  const nextLessonId = useMemo(() => {
+    if (!context?.syllabus || !effectiveLessonId) return undefined;
+    const idx = context.syllabus.findIndex((item) => item.id === effectiveLessonId);
+    if (idx < 0) return undefined;
+    return context.syllabus[idx + 1]?.id;
+  }, [context?.syllabus, effectiveLessonId]);
+
+  const goToNextLesson = useCallback(() => {
+    if (!courseId || !nextLessonId) return;
+    navigate(`/learning/courses/${courseId}/lessons/${nextLessonId}?${searchParams.toString()}`);
+  }, [courseId, nextLessonId, navigate, searchParams]);
+
+  // When a video plays to the end: mark this lesson complete (if it isn't
+  // already), then advance to the next lesson once the mark-complete request
+  // succeeds so the syllabus checkmark is in sync before we move on.
+  const handleVideoEnded = useCallback(() => {
+    if (!courseId || !effectiveLessonId) return;
+    if (isLessonCompleted) {
+      goToNextLesson();
+      return;
+    }
+    markCompleteMutation.mutate(undefined, {
+      onSuccess: () => goToNextLesson(),
+    });
+  }, [courseId, effectiveLessonId, isLessonCompleted, markCompleteMutation, goToNextLesson]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -169,14 +195,7 @@ const StudentLearningPage = () => {
                   <LessonTestRunner
                     testId={lesson.testId}
                     lessonTitle={lesson.title}
-                    onContinue={() => {
-                      if (!context?.syllabus || !effectiveLessonId) return;
-                      const idx = context.syllabus.findIndex((l) => l.id === effectiveLessonId);
-                      const next = idx >= 0 ? context.syllabus[idx + 1] : undefined;
-                      if (next && courseId) {
-                        navigate(`/learning/courses/${courseId}/lessons/${next.id}`);
-                      }
-                    }}
+                    onContinue={goToNextLesson}
                   />
                 ) : (
                   <VideoSection
@@ -185,6 +204,7 @@ const StudentLearningPage = () => {
                     onMarkComplete={handleMarkComplete}
                     markCompletedLoading={markCompleteMutation.isPending}
                     isCompleted={isLessonCompleted}
+                    onEnded={handleVideoEnded}
                   />
                 )}
 
@@ -200,7 +220,7 @@ const StudentLearningPage = () => {
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
                         >
                           <span className="text-xl">🏅</span>
-                          <span className="text-sm font-semibold text-amber-800">Xem chứng chỉ hoàn thành</span>
+                          <span className="text-sm font-semibold text-amber-800">{t("studentLearning.certificate.viewButton")}</span>
                           <span className="ml-auto text-amber-400">›</span>
                         </button>
                       </div>

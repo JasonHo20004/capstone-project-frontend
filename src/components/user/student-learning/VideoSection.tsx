@@ -15,6 +15,8 @@ type VideoSectionProps = {
   onMarkComplete?: () => void;
   markCompletedLoading?: boolean;
   isCompleted?: boolean;
+  /** Fired when the video plays through to the end. */
+  onEnded?: () => void;
 };
 
 const formatDuration = (seconds?: number | null) => {
@@ -30,6 +32,7 @@ export const VideoSection = ({
   onMarkComplete,
   markCompletedLoading,
   isCompleted = false,
+  onEnded,
 }: VideoSectionProps) => {
   const { t } = useTranslation("courses");
   const videoAsset = lesson?.mediaAssets.find((asset) =>
@@ -88,6 +91,19 @@ export const VideoSection = ({
                 className="h-full w-full rounded-2xl bg-black object-cover"
                 src={videoAsset?.assetUrl}
                 poster="/placeholder.svg"
+                onEnded={() => {
+                  // Finished watching: drop the saved resume position so a
+                  // later revisit starts fresh, then let the page mark this
+                  // lesson complete and advance to the next one.
+                  if (storageKey) {
+                    try {
+                      localStorage.removeItem(storageKey);
+                    } catch {
+                      /* ignore */
+                    }
+                  }
+                  onEnded?.();
+                }}
               >
                 <track kind="captions" />
               </video>

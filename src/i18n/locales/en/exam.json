@@ -74,7 +74,7 @@
     "grading": {
       "title": "Grading...",
       "subtitle": "AI is analyzing your speech",
-      "hint": "This may take 30-60 seconds"
+      "hint": "This may take about a minute"
     },
     "result": {
       "title": "Speaking Result",
@@ -1298,7 +1298,7 @@
     "grading": {
       "title": "Grading...",
       "subtitle": "AI is analyzing your speaking",
-      "hint": "This may take 30-60 seconds"
+      "hint": "This may take about a minute"
     },
     "error": {
       "title": "Unable to load result",
@@ -1604,7 +1604,7 @@
     "steps": {
       "upload": "Uploading audio to server...",
       "sendAi": "Sending to AI Examiner...",
-      "grading": "AI is grading (30-60 seconds)...",
+      "grading": "AI is grading (about a minute)...",
       "done": "Completed!"
     },
     "errors": {
