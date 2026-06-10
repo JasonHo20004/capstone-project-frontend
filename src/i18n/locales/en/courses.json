@@ -350,6 +350,22 @@
       "explanation": "Explanation:",
       "passed": "Passed",
       "notPassed": "Not passed"
+    },
+    "certificate": {
+      "viewButton": "View completion certificate",
+      "modalTitle": "Certificate of Completion",
+      "print": "Print",
+      "downloadPdf": "Download PDF",
+      "generatingPdf": "Generating PDF…",
+      "printTitle": "Certificate",
+      "platform": "English Learning Platform",
+      "title": "Certificate of Completion",
+      "subtitle": "Course Completion Certificate",
+      "certifyThat": "This certifies that",
+      "completedExcellently": "has successfully completed the course",
+      "issuedDate": "Issue date",
+      "signatory": "Board of Directors",
+      "certificateNumber": "Certificate ID"
     }
   }
 }

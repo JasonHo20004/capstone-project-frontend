@@ -220,7 +220,7 @@ const StudentLearningPage = () => {
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
                         >
                           <span className="text-xl">🏅</span>
-                          <span className="text-sm font-semibold text-amber-800">Xem chứng chỉ hoàn thành</span>
+                          <span className="text-sm font-semibold text-amber-800">{t("studentLearning.certificate.viewButton")}</span>
                           <span className="ml-auto text-amber-400">›</span>
                         </button>
                       </div>

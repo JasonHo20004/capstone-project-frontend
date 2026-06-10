@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { X, Download, Printer, Award, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type { Certificate } from '@/lib/api/services/user';
 
@@ -17,8 +18,8 @@ const LEVEL_LABEL: Record<string, string> = {
   C2: 'C2 – Proficiency',
 };
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', {
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     day: '2-digit', month: 'long', year: 'numeric',
   });
 }
@@ -28,6 +29,8 @@ function slugify(text: string) {
 }
 
 export function CertificateModal({ certificate, onClose }: Props) {
+  const { t, i18n } = useTranslation('courses');
+  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'vi-VN';
   const certRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -77,7 +80,7 @@ export function CertificateModal({ certificate, onClose }: Props) {
     const win = window.open('', '_blank', 'width=960,height=700');
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/>
-      <title>Chứng chỉ – ${certificate.courseName}</title>
+      <title>${t('studentLearning.certificate.printTitle')} – ${certificate.courseName}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#fff; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
@@ -97,7 +100,7 @@ export function CertificateModal({ certificate, onClose }: Props) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-amber-500" />
-            <span className="font-semibold text-slate-800">Chứng chỉ hoàn thành</span>
+            <span className="font-semibold text-slate-800">{t('studentLearning.certificate.modalTitle')}</span>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -107,7 +110,7 @@ export function CertificateModal({ certificate, onClose }: Props) {
               className="gap-1.5"
             >
               <Printer className="w-4 h-4" />
-              In
+              {t('studentLearning.certificate.print')}
             </Button>
             <Button
               size="sm"
@@ -118,7 +121,9 @@ export function CertificateModal({ certificate, onClose }: Props) {
               {downloading
                 ? <Loader2 className="w-4 h-4 animate-spin" />
                 : <Download className="w-4 h-4" />}
-              {downloading ? 'Đang tạo PDF…' : 'Tải PDF'}
+              {downloading
+                ? t('studentLearning.certificate.generatingPdf')
+                : t('studentLearning.certificate.downloadPdf')}
             </Button>
             <button
               onClick={onClose}
@@ -165,7 +170,7 @@ export function CertificateModal({ certificate, onClose }: Props) {
 
             {/* Platform name */}
             <p style={{ textAlign: 'center', fontFamily: 'system-ui,sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '4px', textTransform: 'uppercase', color: '#92400e', marginBottom: '16px' }}>
-              English Learning Platform
+              {t('studentLearning.certificate.platform')}
             </p>
 
             {/* Premium Golden Seal with Ribbon */}
@@ -212,10 +217,10 @@ export function CertificateModal({ certificate, onClose }: Props) {
 
             {/* Title */}
             <h1 style={{ textAlign: 'center', fontSize: '32px', fontWeight: 700, color: '#78350f', marginBottom: '6px', fontFamily: 'Georgia,serif', letterSpacing: '1px' }}>
-              Certificate of Completion
+              {t('studentLearning.certificate.title')}
             </h1>
             <p style={{ textAlign: 'center', fontFamily: 'system-ui,sans-serif', fontSize: '12px', color: '#a16207', marginBottom: '32px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-              Chứng nhận hoàn thành khóa học
+              {t('studentLearning.certificate.subtitle')}
             </p>
 
             {/* Divider */}
@@ -223,13 +228,13 @@ export function CertificateModal({ certificate, onClose }: Props) {
 
             {/* Recipient */}
             <p style={{ textAlign: 'center', fontFamily: 'system-ui,sans-serif', fontSize: '14px', color: '#78350f', marginBottom: '8px' }}>
-              Chứng nhận rằng
+              {t('studentLearning.certificate.certifyThat')}
             </p>
             <h2 style={{ textAlign: 'center', fontSize: '36px', fontWeight: 700, color: '#1c1917', marginBottom: '8px', fontFamily: 'Georgia,serif', fontStyle: 'italic' }}>
               {certificate.userName}
             </h2>
             <p style={{ textAlign: 'center', fontFamily: 'system-ui,sans-serif', fontSize: '14px', color: '#78350f', marginBottom: '28px' }}>
-              đã hoàn thành xuất sắc khóa học
+              {t('studentLearning.certificate.completedExcellently')}
             </p>
 
             {/* Course name */}
@@ -250,8 +255,8 @@ export function CertificateModal({ certificate, onClose }: Props) {
             {/* Footer */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontFamily: 'system-ui,sans-serif', marginTop: '4px' }}>
               <div>
-                <p style={{ fontSize: '11px', color: '#a16207', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Ngày cấp</p>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#78350f' }}>{formatDate(certificate.issuedAt)}</p>
+                <p style={{ fontSize: '11px', color: '#a16207', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>{t('studentLearning.certificate.issuedDate')}</p>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: '#78350f' }}>{formatDate(certificate.issuedAt, dateLocale)}</p>
               </div>
               <div style={{ textAlign: 'center', minWidth: '160px' }}>
                 {/* Ink Signature */}
@@ -268,11 +273,11 @@ export function CertificateModal({ certificate, onClose }: Props) {
                   </svg>
                 </div>
                 <div style={{ width: '140px', borderBottom: '2px solid #d97706', marginBottom: '4px', marginLeft: 'auto', marginRight: 'auto' }} />
-                <p style={{ fontSize: '12px', color: '#a16207' }}>Ban Giám đốc</p>
-                <p style={{ fontSize: '11px', color: '#b45309', fontWeight: 600 }}>English Learning Platform</p>
+                <p style={{ fontSize: '12px', color: '#a16207' }}>{t('studentLearning.certificate.signatory')}</p>
+                <p style={{ fontSize: '11px', color: '#b45309', fontWeight: 600 }}>{t('studentLearning.certificate.platform')}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '11px', color: '#a16207', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Mã chứng chỉ</p>
+                <p style={{ fontSize: '11px', color: '#a16207', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>{t('studentLearning.certificate.certificateNumber')}</p>
                 <p style={{ fontSize: '12px', fontWeight: 700, color: '#78350f', fontFamily: 'monospace' }}>{certificate.certificateNumber}</p>
               </div>
             </div>
