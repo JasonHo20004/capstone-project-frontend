@@ -74,7 +74,7 @@
     "grading": {
       "title": "Đang chấm điểm...",
       "subtitle": "AI đang phân tích bài nói của bạn",
-      "hint": "Quá trình này có thể mất 30-60 giây"
+      "hint": "Quá trình này có thể mất khoảng 1 phút"
     },
     "result": {
       "title": "Speaking Result",
@@ -1298,7 +1298,7 @@
     "grading": {
       "title": "Đang chấm điểm...",
       "subtitle": "AI đang phân tích bài nói của bạn",
-      "hint": "Quá trình này có thể mất 30-60 giây"
+      "hint": "Quá trình này có thể mất khoảng 1 phút"
     },
     "error": {
       "title": "Không thể tải kết quả",
@@ -1604,7 +1604,7 @@
     "steps": {
       "upload": "Đang upload audio lên server...",
       "sendAi": "Đang gửi cho AI Examiner...",
-      "grading": "AI đang chấm bài (30-60 giây)...",
+      "grading": "AI đang chấm bài (khoảng 1 phút)...",
       "done": "Hoàn tất!"
     },
     "errors": {

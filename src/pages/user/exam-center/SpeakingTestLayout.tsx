@@ -350,7 +350,10 @@ export default function SpeakingTestLayout({
 
       setSubmitStep(2);
       let attempts = 0;
-      const maxAttempts = 60;
+      // ~4 min at 3s/poll. Grading now runs Whisper STT + Gemini Pro multimodal
+      // (slower than Flash) and the worker is concurrency:1, so allow more time
+      // before giving up and sending the user to History.
+      const maxAttempts = 80;
 
       while (attempts < maxAttempts) {
         await new Promise(r => setTimeout(r, 3000));

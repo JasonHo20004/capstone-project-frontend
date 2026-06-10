@@ -101,10 +101,11 @@ function normalizeEvaluation(e: any): NormalizedResult {
   };
 }
 
-// Stop auto-polling after this many attempts (~2 min at 3s) so a grading job
+// Stop auto-polling after this many attempts (~3 min at 3s) so a grading job
 // that never finishes can't poll the API forever. The user keeps a manual
-// "reload" button to check again.
-const MAX_GRADING_POLLS = 40;
+// "reload" button to check again. Bumped from 40 because grading now uses
+// Whisper STT + Gemini Pro (slower than the old Flash-only path).
+const MAX_GRADING_POLLS = 60;
 
 // Try to load either entity. Prefer session (History route uses session IDs).
 function useNormalizedResult(id: string | null) {
