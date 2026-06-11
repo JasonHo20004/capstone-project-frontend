@@ -20,6 +20,8 @@ import {
   RotateCcw, PlaySquare, Mic, MicOff, RefreshCw, Hand,
   Mic2, Star, CheckCircle, Check,
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Livestream traffic (HTTP + WebSocket) routes through the api-gateway, which
 // proxies /api/livestream/* to the rag-service. Point at the gateway origin.
@@ -41,27 +43,7 @@ const QUICK_CHIPS = [
   { key: 'memorize',     value: 'How do I memorize this word?' },
 ] as const;
 
-// Minimal type shim for Web Speech API (Chrome)
-interface ISpeechRecognitionEvent {
-  results: { [i: number]: { [i: number]: { transcript: string } }; length: number };
-}
-interface ISpeechRecognition extends EventTarget {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onresult: ((e: ISpeechRecognitionEvent) => void) | null;
-  onend:    (() => void) | null;
-  onerror:  (() => void) | null;
-}
-declare global {
-  interface Window {
-    SpeechRecognition?:       new () => ISpeechRecognition;
-    webkitSpeechRecognition?: new () => ISpeechRecognition;
-  }
-}
+// Minimal type shim for Web Speech API (Chrome) removed in favor of MediaRecorder + Whisper API
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -114,6 +96,56 @@ class AudioQueue {
   onStop?: () => void;
   /** Fired when the browser blocked autoplay — the UI should prompt a tap. */
   onBlocked?: () => void;
+  onVolumeChange?: (vol: number) => void;
+  onProgress?: (progress: number, isPriority: boolean) => void;
+
+  private audioCtx?: AudioContext;
+  private analyser?: AnalyserNode;
+  private dataArray?: Uint8Array;
+  private animationFrameId?: number;
+  private sourceNode?: MediaElementAudioSourceNode;
+
+  private initAudioContext() {
+    if (!this.audioCtx) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        this.audioCtx = new AudioCtx();
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 256;
+        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+        this.analyser.connect(this.audioCtx.destination);
+      }
+    }
+    if (this.audioCtx?.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+  }
+
+  private startVolumeLoop() {
+    if (!this.analyser || !this.dataArray || !this.onVolumeChange) return;
+    const loop = () => {
+      this.analyser!.getByteFrequencyData(this.dataArray!);
+      let sum = 0;
+      for (let i = 0; i < this.dataArray!.length; i++) sum += this.dataArray![i];
+      const avg = sum / this.dataArray!.length;
+      this.onVolumeChange!(avg / 255); // normalize 0 to 1
+
+      if (this.current && this.current.duration && this.onProgress) {
+        this.onProgress(this.current.currentTime / this.current.duration, this.currentIsPriority);
+      }
+
+      this.animationFrameId = requestAnimationFrame(loop);
+    };
+    this.animationFrameId = requestAnimationFrame(loop);
+  }
+
+  private stopVolumeLoop() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = undefined;
+    }
+    if (this.onVolumeChange) this.onVolumeChange(0);
+  }
 
   /** Queue a slide narration clip (plays after anything already queued). */
   push(url: string) {
@@ -150,14 +182,39 @@ class AudioQueue {
     this.currentIsPriority = isPriority;
     const url = q[0]; // peek — only drop the item once it actually plays/ends
     const audio = new Audio(url);
+    audio.crossOrigin = "anonymous"; // crucial for Web Audio API with external URLs
     audio.muted = this._muted;
     audio.playbackRate = this._rate;
     this.current = audio;
+
+    try {
+      this.initAudioContext();
+      if (this.audioCtx && this.analyser) {
+        this.sourceNode = this.audioCtx.createMediaElementSource(audio);
+        this.sourceNode.connect(this.analyser);
+      }
+    } catch (e) {
+      console.warn('AudioContext setup failed', e);
+    }
+
     // onPlay fires on the real `play` event, so the avatar only "speaks" when
     // audio is genuinely audible (not when playback was silently blocked).
-    audio.onplay   = () => { this._blocked = false; this.onPlay?.(); };
-    audio.onended  = () => { q.shift(); this.current = null; this._next(); };
-    audio.onerror  = () => { q.shift(); this.current = null; this._next(); };
+    audio.onplay   = () => { 
+      this._blocked = false; 
+      this.onPlay?.(); 
+      if (this.audioCtx?.state === 'suspended') this.audioCtx.resume();
+      this.startVolumeLoop();
+    };
+    audio.onended  = () => { 
+      this.stopVolumeLoop();
+      if (this.sourceNode) { this.sourceNode.disconnect(); this.sourceNode = undefined; }
+      q.shift(); this.current = null; this._next(); 
+    };
+    audio.onerror  = () => { 
+      this.stopVolumeLoop();
+      if (this.sourceNode) { this.sourceNode.disconnect(); this.sourceNode = undefined; }
+      q.shift(); this.current = null; this._next(); 
+    };
     audio.play().catch(() => {
       // Autoplay blocked (no user gesture yet). Keep the item queued and wait
       // for unlock() instead of silently draining the whole lesson.
@@ -201,6 +258,7 @@ class AudioQueue {
   /** Resume playback after a user gesture has granted audio permission. */
   unlock() {
     this._blocked = false;
+    this.initAudioContext();
     if (!this.playing && (this.priorityQueue.length || this.paused || this.queue.length)) this._next();
   }
 
@@ -220,6 +278,8 @@ class AudioQueue {
     this.playing = false;
     this._blocked = false;
     this.currentIsPriority = false;
+    this.stopVolumeLoop();
+    if (this.sourceNode) { this.sourceNode.disconnect(); this.sourceNode = undefined; }
     this.current?.pause();
     this.current = null;
     this.paused?.pause();
@@ -327,14 +387,18 @@ export default function LiveRoom() {
   const [speaking, setSpeaking]             = useState(false);   // my mic is live
   const [spotlight, setSpotlight]           = useState<{ user_name: string; text: string } | null>(null); // live caption for the room
   const [aiTyping, setAiTyping]             = useState(false);
+  const [audioVolume, setAudioVolume]       = useState(0);
+  const [audioProgress, setAudioProgress]   = useState<{ progress: number; isPriority: boolean } | null>(null);
   const [unreadChat, setUnreadChat]         = useState(0);
   const [rateLimitSecs, setRateLimitSecs]   = useState(0);
   const rateLimitTimerRef                   = useRef<ReturnType<typeof setInterval> | null>(null);
   const spotlightPanelRef                   = useRef<HTMLDivElement>(null);
   const reactionIdRef = useRef(0);
   const currentUserIdRef = useRef<string>('');
-  const recognitionRef = useRef<ISpeechRecognition | null>(null);
-  const speakRecRef = useRef<ISpeechRecognition | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const speakRecorderRef = useRef<MediaRecorder | null>(null);
+  const speakChunksRef = useRef<Blob[]>([]);
   const speakTextRef = useRef('');
 
   // Keep the ref in sync with the latest profile (used by `connect` for name).
@@ -346,10 +410,13 @@ export default function LiveRoom() {
 
   useEffect(() => {
     const aq = audioQueueRef.current;
-    aq.onPlay = () => { setIsSpeaking(true); setAudioBlocked(false); };
-    aq.onStop = () => setIsSpeaking(false);
+    aq.onPlay    = () => { setIsSpeaking(true); setAudioBlocked(false); };
+    aq.onStop    = () => { setIsSpeaking(false); setAudioVolume(0); setAudioProgress(null); };
     aq.onBlocked = () => setAudioBlocked(true);
-    return () => { unmounted.current = true; };
+    aq.onVolumeChange = (vol) => setAudioVolume(vol);
+    aq.onProgress = (progress, isPriority) => setAudioProgress({ progress, isPriority });
+
+    return () => { unmounted.current = true; aq.clear(); };
   }, []);
 
   const enableAudio = useCallback(() => {
@@ -454,7 +521,7 @@ export default function LiveRoom() {
         setSpotlight(null);
         if (msg.user_id === currentUserIdRef.current) {
           setIsSpotlight(false);
-          speakRecRef.current?.abort();
+          speakRecorderRef.current?.abort();
           setSpeaking(false);
         }
         break;
@@ -522,15 +589,38 @@ export default function LiveRoom() {
         setIsThinking(true);
         setAiTyping(true);
         break;
+      case 'ai_answer_chunk': {
+        setIsThinking(false); // Once streaming starts, orb can pulse or at least not say PROCESSING
+        setAiTyping(true);
+        setChat(p => {
+          const lastMsg = p[p.length - 1];
+          if (lastMsg && lastMsg.type === 'answer' && lastMsg.user_name === msg.user_name) {
+            const copy = [...p];
+            copy[copy.length - 1] = { ...lastMsg, answer: msg.text_so_far as string };
+            return copy;
+          }
+          return [...p, { type: 'answer', user_name: msg.user_name as string, answer: msg.text_so_far as string }];
+        });
+        setUnreadChat(n => n + 1);
+        break;
+      }
       case 'ai_answer':
         setIsThinking(false);
         setAiTyping(false);
-        setChat(p => [...p, { type: 'answer', user_name: msg.user_name as string, answer: msg.answer as string }]);
+        // If ai_answer_chunk handled the text, just update the final text if needed
+        setChat(p => {
+          const lastMsg = p[p.length - 1];
+          if (lastMsg && lastMsg.type === 'answer' && lastMsg.user_name === msg.user_name) {
+            const copy = [...p];
+            copy[copy.length - 1] = { ...lastMsg, answer: msg.answer as string };
+            return copy;
+          }
+          return [...p, { type: 'answer', user_name: msg.user_name as string, answer: msg.answer as string }];
+        });
         // Answers jump ahead of the slide narration: the current slide is paused,
         // the answer plays immediately, then the slide resumes (see AudioQueue).
         if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
         // Increment unread counter when user is watching the stage tab on mobile
-        setUnreadChat(n => n + 1);
         break;
       case 'error':
         setChat(p => [...p, { type: 'error', text: msg.message as string }]);
@@ -625,65 +715,115 @@ export default function LiveRoom() {
     };
   }, [roomId, navigate, connect]);
 
-  const toggleVoice = useCallback(() => {
+  const toggleVoice = useCallback(async () => {
+    audioQueueRef.current.unlock();
     if (isListening) {
-      recognitionRef.current?.stop();
+      mediaRecorderRef.current?.stop();
       setIsListening(false);
       return;
     }
-    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SR) return;
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
 
-    const rec = new SR();
-    rec.lang = room?.language === 'en' ? 'en-US' : 'vi-VN';
-    rec.continuous = false;
-    rec.interimResults = true;
-    rec.onresult = (e: ISpeechRecognitionEvent) => {
-      const text = Array.from(e.results).map(r => r[0].transcript).join('');
-      setQuestion(text.slice(0, MAX_QUESTION_LENGTH));
-    };
-    rec.onend  = () => setIsListening(false);
-    rec.onerror = () => setIsListening(false);
-    rec.start();
-    recognitionRef.current = rec;
-    setIsListening(true);
-  }, [isListening]);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        setQuestion('Đang xử lý giọng nói...');
+        try {
+          const { ragService } = await import('@/lib/api/services/rag.service');
+          const data = await ragService.transcribeDictation(audioBlob, room?.language || 'vi');
+          if (data && data.success && data.sentences) {
+            const text = data.sentences.map(s => s.text).join(' ');
+            setQuestion(text.slice(0, MAX_QUESTION_LENGTH));
+          } else {
+            setQuestion('Không thể nhận diện giọng nói.');
+          }
+        } catch (e) {
+          console.error(e);
+          setQuestion('Lỗi kết nối.');
+        }
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsListening(true);
+    } catch (err) {
+      console.error('Mic access denied', err);
+      setIsListening(false);
+    }
+  }, [isListening, room?.language]);
 
   // Stop mics if user navigates away
-  useEffect(() => () => { recognitionRef.current?.abort(); speakRecRef.current?.abort(); }, []);
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+      if (speakRecorderRef.current?.state === 'recording') speakRecorderRef.current.stop();
+    };
+  }, []);
 
-  // ── Spotlight speaking (option B: live speech-to-text, no WebRTC) ──
-  const startSpeaking = useCallback(() => {
-    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SR || wsRef.current?.readyState !== WebSocket.OPEN) return;
-    const rec = new SR();
-    rec.lang = room?.language === 'en' ? 'en-US' : 'vi-VN';
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.onresult = (e: ISpeechRecognitionEvent) => {
-      const text = Array.from(e.results).map(r => r[0].transcript).join('').slice(0, 300);
-      speakTextRef.current = text;
-      wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text, final: false }));
-    };
-    rec.onend = () => {
-      setSpeaking(false);
-      const finalText = speakTextRef.current.trim();
-      wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text: finalText, final: true }));
-      speakTextRef.current = '';
-      setIsSpotlight(false);
-    };
-    rec.onerror = () => setSpeaking(false);
-    rec.start();
-    speakRecRef.current = rec;
-    setSpeaking(true);
+  // ── Spotlight speaking (Live speech via WebM upload instead of WebRTC/browser-speech) ──
+  const startSpeaking = useCallback(async () => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      speakChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) speakChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const audioBlob = new Blob(speakChunksRef.current, { type: 'audio/webm' });
+        
+        try {
+          const { ragService } = await import('@/lib/api/services/rag.service');
+          const data = await ragService.transcribeDictation(audioBlob, room?.language || 'vi');
+          if (data && data.success && data.sentences) {
+            const finalText = data.sentences.map(s => s.text).join(' ');
+            speakTextRef.current = finalText;
+            wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text: finalText, final: true }));
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setSpeaking(false);
+          setIsSpotlight(false);
+          speakTextRef.current = '';
+        }
+      };
+
+      recorder.start();
+      speakRecorderRef.current = recorder;
+      setSpeaking(true);
+      // Let the room know we're processing audio internally
+      wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text: 'Đang ghi âm và xử lý giọng nói (Vibe)...', final: false }));
+    } catch (err) {
+      console.error('Mic access denied for spotlight', err);
+    }
   }, [room?.language]);
 
   const stopSpeaking = useCallback(() => {
-    speakRecRef.current?.stop(); // triggers onend → sends the final transcript
+    if (speakRecorderRef.current?.state === 'recording') {
+      speakRecorderRef.current.stop(); // triggers onstop → transcribes and sends final text
+    }
   }, []);
 
   const cancelSpeaking = useCallback(() => {
-    speakRecRef.current?.abort();
+    if (speakRecorderRef.current?.state === 'recording') {
+      speakRecorderRef.current.onstop = null; // Prevent transcription from running
+      speakRecorderRef.current.stop();
+    }
     setSpeaking(false);
     setIsSpotlight(false);
     speakTextRef.current = '';
@@ -741,6 +881,7 @@ export default function LiveRoom() {
   }, []);
 
   const sendQuestion = () => {
+    audioQueueRef.current.unlock();
     const q = question.trim();
     if (!q || wsRef.current?.readyState !== WebSocket.OPEN) return;
 
@@ -962,11 +1103,13 @@ export default function LiveRoom() {
                   total={progress.total || transcript.length}
                   active={true}
                   ragBase={RAG_BASE}
+                  audioProgress={audioProgress && !audioProgress.isPriority ? audioProgress.progress : null}
                   avatarSlot={
                     <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border-2 border-white shadow-xl bg-white/30 backdrop-blur-sm">
                       <AIAvatarAnime
                         isSpeaking={isSpeaking}
                         isThinking={isThinking}
+                        audioVolume={audioVolume}
                         className="w-full h-full"
                         name=""
                       />
@@ -977,18 +1120,32 @@ export default function LiveRoom() {
             ) : (
               /* Pre-lesson / ended: large centered avatar */
               <div className="flex flex-col items-center gap-3 py-6 px-4">
-                <AIAvatarAnime isSpeaking={isSpeaking} isThinking={isThinking} className="w-44 h-52" name="AI Sensei" />
+                <AIAvatarAnime 
+                  isSpeaking={isSpeaking} 
+                  isThinking={isThinking} 
+                  audioVolume={audioVolume}
+                  className="w-44 h-52" 
+                  name="AI Sensei" 
+                />
               </div>
             )}
 
             {/* Controls strip below stage */}
             <div className="px-4 py-3 flex flex-col items-center gap-2 border-t border-slate-100">
               {/* Status line */}
-              <div className="text-center min-h-[1.25rem]">
+              <div className="text-center min-h-[1.25rem] flex flex-col items-center justify-center">
                 {isThinking && !isSpeaking && (
                   <p className="text-sm text-indigo-500 font-medium animate-pulse">{t('room.preparing')}</p>
                 )}
-                {isWaiting && (
+                {isSpeaking && (
+                  <button
+                    onClick={() => audioQueueRef.current.clear()}
+                    className="flex items-center gap-1 px-3 py-0.5 bg-red-50 text-red-600 rounded-full text-[11px] font-semibold border border-red-200 hover:bg-red-100 transition-colors"
+                  >
+                    <StopCircle className="w-3 h-3" /> Stop AI
+                  </button>
+                )}
+                {isWaiting && !isSpeaking && (
                   <p className="text-sm text-slate-400">
                     {isHost ? t('room.waitingHost') : t('room.waitingStudent')}
                   </p>
@@ -1024,7 +1181,10 @@ export default function LiveRoom() {
               {isHost && isWaiting && (
                 <Button
                   className="bg-indigo-600 hover:bg-indigo-700 gap-2 mt-1"
-                  onClick={() => wsRef.current?.send(JSON.stringify({ type: 'start_lesson' }))}
+                  onClick={() => {
+                    audioQueueRef.current.unlock();
+                    wsRef.current?.send(JSON.stringify({ type: 'start_lesson' }));
+                  }}
                 >
                   <PlayCircle className="w-4 h-4" /> {t('room.startLesson')}
                 </Button>
@@ -1189,7 +1349,9 @@ export default function LiveRoom() {
                         </div>
                         <div className="max-w-[80%] bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
                           <p className="text-[11px] text-slate-400 mb-0.5">{t('room.chat.answerLabel', { name: msg.user_name })}</p>
-                          <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap break-words">{msg.answer}</p>
+                          <div className="text-sm text-slate-800 leading-relaxed break-words prose prose-sm prose-slate max-w-none dark:prose-invert">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.answer}</ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     )}

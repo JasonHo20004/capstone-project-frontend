@@ -22,6 +22,7 @@ interface Props {
   ragBase: string;
   /** Optional teacher avatar to overlay in the top-right corner of the slide */
   avatarSlot?: ReactNode;
+  audioProgress?: number | null;
 }
 
 /**
@@ -30,7 +31,7 @@ interface Props {
  * - Slide-in animation when becoming active
  * - Optional avatar PIP in the top-right
  */
-export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }: Props) {
+export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot, audioProgress }: Props) {
   const { t } = useTranslation('livestream');
   const hasSlideData = !!(
     (chunk.key_points && chunk.key_points.length) ||
@@ -194,6 +195,7 @@ export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }
         text={chunk.content}
         target="vi"
         ragBase={ragBase}
+        audioProgress={active ? audioProgress : null}
         className={cn(
           'text-sm leading-relaxed block',
           active ? 'text-slate-700' : 'text-slate-500',

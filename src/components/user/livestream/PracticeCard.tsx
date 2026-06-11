@@ -4,27 +4,7 @@ import { Mic, MicOff, RotateCcw, CheckCircle2, XCircle, Sparkles } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-// Web Speech API shims (Chrome / Edge)
-interface ISpeechRecognitionEvent {
-  results: { [i: number]: { [i: number]: { transcript: string } }; length: number };
-}
-interface ISpeechRecognition extends EventTarget {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onresult: ((e: ISpeechRecognitionEvent) => void) | null;
-  onend:    (() => void) | null;
-  onerror:  (() => void) | null;
-}
-declare global {
-  interface Window {
-    SpeechRecognition?:       new () => ISpeechRecognition;
-    webkitSpeechRecognition?: new () => ISpeechRecognition;
-  }
-}
+// Web Speech API removed in favor of MediaRecorder + Whisper API
 
 interface Props {
   phrase: string;
@@ -37,18 +17,55 @@ function normalize(s: string) {
   return s.toLowerCase().replace(STRIP_RE, ' ').replace(/\s+/g, ' ').trim();
 }
 
-/** Word-overlap similarity 0-100. Lightweight; good enough for friendly feedback. */
-function scoreMatch(target: string, said: string): number {
+/** Word-level Levenshtein distance for accurate grading */
+function levenshteinDistance(a: string[], b: string[]): number {
+  const matrix = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,      // deletion
+        matrix[i][j - 1] + 1,      // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+}
+
+function scoreMatch(target: string, said: string): { score: number; details: { word: string; correct: boolean }[] } {
   const tWords = normalize(target).split(' ').filter(Boolean);
   const sWords = normalize(said).split(' ').filter(Boolean);
-  if (!tWords.length) return 0;
-  let hits = 0;
-  const used = new Set<number>();
-  for (const w of sWords) {
-    const idx = tWords.findIndex((t, i) => !used.has(i) && t === w);
-    if (idx >= 0) { used.add(idx); hits++; }
+  
+  if (!tWords.length) return { score: 0, details: [] };
+  if (!sWords.length) {
+    return { score: 0, details: tWords.map(w => ({ word: w, correct: false })) };
   }
-  return Math.round((hits / tWords.length) * 100);
+
+  const distance = levenshteinDistance(tWords, sWords);
+  const maxLen = Math.max(tWords.length, sWords.length);
+  const score = Math.round(Math.max(0, 1 - distance / maxLen) * 100);
+  
+  // Basic marking: if a target word is found in said words (in order-ish), mark correct
+  // A true alignment would require backtracking the matrix, but for UI feedback:
+  let sIdx = 0;
+  const details = tWords.map(tWord => {
+    let correct = false;
+    // Look ahead a few words to find a match
+    for (let i = 0; i < 3 && sIdx + i < sWords.length; i++) {
+      if (sWords[sIdx + i] === tWord) {
+        correct = true;
+        sIdx += i + 1;
+        break;
+      }
+    }
+    return { word: tWord, correct };
+  });
+
+  return { score, details };
 }
 
 /**
@@ -60,44 +77,73 @@ export function PracticeCard({ phrase, onResult }: Props) {
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState('');
   const [score, setScore] = useState<number | null>(null);
-  const recRef = useRef<ISpeechRecognition | null>(null);
-  const supported = typeof window !== 'undefined' && !!(window.SpeechRecognition ?? window.webkitSpeechRecognition);
+  const [wordDetails, setWordDetails] = useState<{ word: string; correct: boolean }[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const supported = typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 
   const stop = useCallback(() => {
-    recRef.current?.stop();
-    setListening(false);
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
   }, []);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (!supported) return;
     setHeard('');
     setScore(null);
-    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SR) return;
-    const rec = new SR();
-    rec.lang = 'en-US';
-    rec.continuous = false;
-    rec.interimResults = true;
-    rec.onresult = (e: ISpeechRecognitionEvent) => {
-      const t = Array.from({ length: e.results.length }, (_, i) => e.results[i][0].transcript).join('');
-      setHeard(t);
-    };
-    rec.onend = () => {
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        setHeard('Đang xử lý...'); // Processing indicator
+        try {
+          const { ragService } = await import('@/lib/api/services/rag.service');
+          const data = await ragService.transcribeDictation(audioBlob, 'en');
+          if (data && data.success && data.sentences) {
+            const finalTranscript = data.sentences.map((s: any) => s.text).join(' ');
+            setHeard(finalTranscript);
+            const { score: s, details } = scoreMatch(phrase, finalTranscript);
+            setScore(s);
+            setWordDetails(details);
+            if (finalTranscript) onResult(finalTranscript, s);
+          } else {
+            setHeard('Không nhận diện được giọng nói.');
+          }
+        } catch (e) {
+          console.error(e);
+          setHeard('Lỗi kết nối.');
+        } finally {
+          setListening(false);
+        }
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setListening(true);
+    } catch (err) {
+      console.error('Mic access denied', err);
       setListening(false);
-      setHeard(prev => {
-        const s = scoreMatch(phrase, prev);
-        setScore(s);
-        if (prev) onResult(prev, s);
-        return prev;
-      });
-    };
-    rec.onerror = () => setListening(false);
-    recRef.current = rec;
-    rec.start();
-    setListening(true);
+    }
   }, [phrase, supported, onResult]);
 
-  useEffect(() => () => { recRef.current?.abort(); }, []);
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, []);
 
   const feedback = score === null ? null
     : score >= 80 ? { color: 'text-emerald-600', icon: <CheckCircle2 className="w-4 h-4" />, label: t('practice.feedback.great') }
@@ -118,10 +164,24 @@ export function PracticeCard({ phrase, onResult }: Props) {
         <Sparkles className="w-3 h-3 text-indigo-600" />
         <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">{t('practice.label')}</span>
       </div>
+      {/* Original Phrase */}
+      <div className="text-center min-h-[4rem] flex flex-col items-center justify-center p-3">
+        {score === null || wordDetails.length === 0 ? (
+          <p className="text-xl sm:text-2xl font-bold text-slate-800 leading-snug">
+            "{phrase}"
+          </p>
+        ) : (
+          <p className="text-xl sm:text-2xl font-bold text-slate-800 leading-snug flex flex-wrap justify-center gap-x-1.5">
+            {wordDetails.map((wd, i) => (
+              <span key={i} className={wd.correct ? 'text-green-600' : 'text-rose-500 underline decoration-rose-300 decoration-2 underline-offset-4'}>
+                {wd.word}
+              </span>
+            ))}
+          </p>
+        )}
+      </div>
 
-      <div className="px-3 py-3 space-y-2">
-        <p className="text-base font-semibold text-slate-800 leading-snug">"{phrase}"</p>
-
+      <div className="px-3 py-3 space-y-2 border-t border-indigo-100">
         {heard && (
           <p className="text-xs text-slate-500">
             {t('practice.youSaid')} <span className="italic">"{heard}"</span>
