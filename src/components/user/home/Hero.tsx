@@ -1,8 +1,12 @@
+import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Star, Users, BookOpen, TrendingUp, CheckCircle, Mic, Flame } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+
+// Lazy so three.js stays out of the initial Hero/landing bundle.
+const PenguinHero3D = lazy(() => import("@/components/user/home/PenguinHero3D"));
 
 const Hero = () => {
   const reduce = useReducedMotion();
@@ -125,14 +129,28 @@ const Hero = () => {
           {/* Decorative frame ring */}
           <div aria-hidden className="absolute inset-[-24px] hidden rounded-[2rem] border border-white/5 lg:block" />
 
-          <div className="relative overflow-hidden rounded-[2rem] shadow-[0_32px_80px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
-            <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop"
-              alt={t("hero.imgAlt")}
-              className="h-full w-full object-cover"
-              loading="eager"
+          <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-gradient-to-b from-[#0a1f44] via-primary/30 to-[#06122c] shadow-[0_32px_80px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+            {/* Radial spotlight behind the mascot */}
+            <div
+              aria-hidden
+              className="absolute inset-0"
+              style={{ background: "radial-gradient(circle at 50% 40%, rgba(43,134,255,0.38), transparent 62%)" }}
             />
-            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-primary-dark/60 via-transparent to-transparent" />
+            {/* Dot grid for depth */}
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-[0.07]"
+              style={{ backgroundImage: "radial-gradient(circle at 1.5px 1.5px, white 1.5px, transparent 0)", backgroundSize: "26px 26px" }}
+            />
+            {/* Soft ground shadow under the penguin */}
+            <div aria-hidden className="absolute left-1/2 top-[64%] h-32 w-56 -translate-x-1/2 rounded-[50%] bg-black/40 blur-2xl" />
+
+            {/* 3D brand mascot — lazy-loaded */}
+            <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-[7rem]">🐧</div>}>
+              <PenguinHero3D className="absolute inset-0 h-full w-full" />
+            </Suspense>
+
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#06122c]/70 via-transparent to-transparent" />
 
             {/* Floating enroll card with growth chip */}
             <div className="glass absolute bottom-6 left-6 right-6 rounded-2xl p-5 shadow-md">

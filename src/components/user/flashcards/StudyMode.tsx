@@ -15,6 +15,7 @@ import {
 
 import { useGetReviewQueue, useSubmitReview } from '@/hooks/api/use-flashcards';
 import type { ReviewQuality } from '@/lib/api/services/user/flashcard/flashcard.service';
+import { Celebration } from '@/components/ui/celebration';
 
 interface StudyModeProps {
   deckId: string;
@@ -541,6 +542,8 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
           </div>
         ) : (
           <div className="relative z-10 py-8 text-center space-y-6">
+            {/* Big celebration shower for completing the whole deck */}
+            <Celebration />
             <div className="kahoot-trophy mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-xl shadow-amber-500/30">
               <Trophy className="w-12 h-12 text-white" />
             </div>

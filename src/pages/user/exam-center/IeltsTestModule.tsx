@@ -7,6 +7,7 @@ import apiClient from "@/lib/api/config";
 import { useSubmitWriting, useWritingEvaluation, useWritingAssistant } from "@/hooks/api/use-ai-evaluation";
 import { useBeforeUnload } from "@/hooks/use-before-unload";
 import SpeakingTestLayout from "./SpeakingTestLayout";
+import { Celebration } from "@/components/ui/celebration";
 
 // ─── Dictionary lookup (word double-click → translate via rag-service) ────────
 const RAG_BASE = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:3000';
@@ -929,6 +930,8 @@ export default function IeltsTestModule() {
     if (showWritingResult) {
       return (
         <div className="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
+          {/* Confetti for a strong estimated writing band */}
+          <Celebration fire={writingEvaluation?.status === 'COMPLETED' && Number(writingEvaluation.overallBand) >= 7} />
           <header className="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-emerald-600">edit_note</span>

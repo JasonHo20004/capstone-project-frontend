@@ -7,6 +7,7 @@ import {
   useUserSpeakingSessions,
 } from "@/hooks/api/use-ai-evaluation";
 import { aiEvaluationService } from "@/lib/api/services/user/ai-evaluation/ai-evaluation.service";
+import { Celebration } from "@/components/ui/celebration";
 import {
   getBandColor,
   getBandBg,
@@ -275,6 +276,9 @@ export default function SpeakingResultPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
+      {/* Confetti for a strong speaking band */}
+      <Celebration fire={(result.overallBand ?? 0) >= 7} />
+
       <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center text-white shrink-0">

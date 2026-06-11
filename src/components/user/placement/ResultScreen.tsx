@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import { Celebration } from "@/components/ui/celebration";
 import type { PlacementResult } from "@/lib/api/services/user/placement/placement.service";
 
 const LEVEL_GRADIENTS: Record<string, string> = {
@@ -68,6 +69,7 @@ export function ResultScreen({ result, onRetake }: ResultScreenProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-10 px-6 py-12">
+      <Celebration />
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
