@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   motion,
   useMotionValue,
@@ -9,6 +9,21 @@ import {
 } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+/** True only when a precise pointer (mouse/trackpad) is available — so the
+ *  tilt never fights touch scrolling on phones/tablets. */
+function useFinePointer() {
+  const [fine, setFine] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: fine)');
+    const on = () => setFine(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  return fine;
+}
+
 interface TiltCardProps {
   children: ReactNode;
   className?: string;
@@ -18,6 +33,8 @@ interface TiltCardProps {
   scale?: number;
   /** Show the moving light glare. */
   glare?: boolean;
+  /** Optional click handler (so the whole card can be clickable). */
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 /**
@@ -35,8 +52,10 @@ export function TiltCard({
   maxTilt = 7,
   scale = 1.03,
   glare = true,
+  onClick,
 }: TiltCardProps) {
   const reduce = useReducedMotion();
+  const finePointer = useFinePointer();
   const ref = useRef<HTMLDivElement>(null);
 
   const px = useMotionValue(0.5);
@@ -52,8 +71,13 @@ export function TiltCard({
   const glareY = useTransform(sy, [0, 1], ['0%', '100%']);
   const glareBg = useMotionTemplate`radial-gradient(circle at ${glareX} ${glareY}, rgba(255,255,255,0.35), transparent 50%)`;
 
-  if (reduce) {
-    return <div className={className}>{children}</div>;
+  // No tilt for reduced-motion users or touch devices — just a plain card.
+  if (reduce || !finePointer) {
+    return (
+      <div className={className} onClick={onClick}>
+        {children}
+      </div>
+    );
   }
 
   const handleMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -67,6 +91,7 @@ export function TiltCard({
   return (
     <motion.div
       ref={ref}
+      onClick={onClick}
       onPointerMove={handleMove}
       onPointerEnter={() => opacity.set(1)}
       onPointerLeave={() => {

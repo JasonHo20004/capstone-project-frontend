@@ -289,10 +289,33 @@ export function PenguinHero3D({ className }: { className?: string }) {
     return () => mq.removeEventListener('change', on);
   }, []);
 
+  // Pause the render loop while the mascot is scrolled out of view so an
+  // off-screen decorative canvas costs no GPU/battery.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      rootMargin: '120px',
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Reduced-motion → render a single static frame; otherwise only animate
+  // while on-screen.
+  const frameloop: 'always' | 'demand' | 'never' = reduced
+    ? 'demand'
+    : inView
+      ? 'always'
+      : 'never';
+
   return (
-    <div className={cn('relative', className)} aria-label="Penguin mascot" role="img">
+    <div ref={wrapRef} className={cn('relative', className)} aria-label="Penguin mascot" role="img">
       <ThreeErrorBoundary fallback={<PenguinFallback />}>
         <Canvas
+          frameloop={frameloop}
           camera={{ position: [0, 0.1, 4.6], fov: 42 }}
           dpr={[1, 2]}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}

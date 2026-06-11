@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/api/config";
+import { TiltCard } from "@/components/ui/tilt-card";
 
 interface TestSummary {
   id: string;
@@ -127,7 +128,7 @@ export default function ExamCenter() {
             const cfg = skillConfig[primarySkill] || skillConfig.READING;
             const skillLabel = t(`examCenter.skills.${primarySkill}`);
             return (
-            <div key={test.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+            <TiltCard key={test.id} maxTilt={6} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
               <div className={`h-28 bg-gradient-to-br ${cfg.gradient} relative overflow-hidden`}>
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
                 <div className="absolute top-4 left-4">
@@ -169,7 +170,7 @@ export default function ExamCenter() {
                   <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                 </Link>
               </div>
-            </div>
+            </TiltCard>
           )})}
         </div>
       )}

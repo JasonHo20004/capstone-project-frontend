@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Celebration } from "@/components/ui/celebration";
 import { InfoCallout } from "./shared";
 import type {
   GeneratedPlan,
@@ -71,6 +72,9 @@ export default function PlanResult({
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* The AI just finished building a personalized plan — celebrate it */}
+      <Celebration pieceCount={90} durationMs={3600} />
+
       {/* ── 1. Summary ─────────────────────────────────────────────────── */}
       <section
         aria-labelledby="plan-summary-heading"

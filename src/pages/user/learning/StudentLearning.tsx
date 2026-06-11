@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Menu, Columns } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -32,7 +32,11 @@ import {
   isForbiddenError,
 } from "@/hooks/api/use-student-learning";
 import { CertificateModal } from "@/components/user/certificate/CertificateModal";
+import { Celebration } from "@/components/ui/celebration";
 import { studentLearningService } from "@/lib/api/services/user/learning/student-learning.service";
+
+// Lazy so three.js stays out of the initial bundle.
+const PenguinHero3D = lazy(() => import("@/components/user/home/PenguinHero3D"));
 
 const DEFAULT_TAB: LearningTabId = "overview";
 
@@ -112,6 +116,19 @@ const StudentLearningPage = () => {
   const { data: certificate } = useCertificate(courseId);
   const [showCertificate, setShowCertificate] = useState(false);
 
+  // Celebrate the moment the course hits 100% — but only on the live transition
+  // during this session, not on every revisit of an already-finished course.
+  const [celebrateCompletion, setCelebrateCompletion] = useState(false);
+  const prevProgressRef = useRef<number | null>(null);
+  useEffect(() => {
+    const pct = context?.progress?.progressPercentage;
+    if (pct == null) return;
+    if (prevProgressRef.current != null && prevProgressRef.current < 100 && pct === 100) {
+      setCelebrateCompletion(true);
+    }
+    prevProgressRef.current = pct;
+  }, [context?.progress?.progressPercentage]);
+
   const handleTabChange = (tab: LearningTabId) => {
     searchParams.set("tab", tab);
     setSearchParams(searchParams, { replace: true });
@@ -156,12 +173,24 @@ const StudentLearningPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Course completed — celebrate the milestone */}
+      <Celebration fire={celebrateCompletion} pieceCount={140} durationMs={5000} />
+
       <Navbar />
 
       <main className="pt-20 pb-12">
         <section className="relative overflow-hidden bg-hero-gradient py-12 text-white">
-          <div aria-hidden className="absolute -right-20 top-0 h-72 w-72 rounded-full bg-secondary/25 blur-3xl" />
-          <div aria-hidden className="absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-primary-light/35 blur-3xl" />
+          <div aria-hidden className="absolute -right-20 top-0 h-72 w-72 rounded-full bg-secondary/25 blur-3xl motion-safe:animate-float-slow" />
+          <div aria-hidden className="absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-primary-light/35 blur-3xl motion-safe:animate-aurora" />
+          {/* Brand mascot peeking from the right */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute right-6 top-1/2 hidden h-44 w-44 -translate-y-1/2 lg:block lg:right-16 xl:h-52 xl:w-52"
+          >
+            <Suspense fallback={null}>
+              <PenguinHero3D className="h-full w-full" />
+            </Suspense>
+          </div>
           <div className="container relative z-10 mx-auto px-4">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -174,6 +203,21 @@ const StudentLearningPage = () => {
                 <p className="mt-2 text-white/80">
                   {t("studentLearning.hero.subtitle")}
                 </p>
+
+                {/* Course progress — visible at a glance */}
+                {context && (
+                  <div className="mt-5 flex max-w-sm items-center gap-3">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/15">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-secondary to-secondary-light transition-all duration-700"
+                        style={{ width: `${context.progress.progressPercentage}%` }}
+                      />
+                    </div>
+                    <span className="shrink-0 text-sm font-bold tabular-nums text-white">
+                      {Math.round(context.progress.progressPercentage)}%
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3 md:hidden">
                 <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -263,9 +307,9 @@ const StudentLearningPage = () => {
                       <div className="mt-4 px-1">
                         <button
                           onClick={() => setShowCertificate(true)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 shadow-sm shadow-amber-200/60 hover:from-amber-100 hover:to-yellow-100 hover:shadow-md transition-all"
                         >
-                          <span className="text-xl">🏅</span>
+                          <span className="text-xl motion-safe:animate-bounce">🏅</span>
                           <span className="text-sm font-semibold text-amber-800">{t("studentLearning.certificate.viewButton")}</span>
                           <span className="ml-auto text-amber-400">›</span>
                         </button>
