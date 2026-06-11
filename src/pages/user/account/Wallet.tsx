@@ -269,6 +269,27 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
 
   const localeForDate = i18n.language?.startsWith('vi') ? 'vi-VN' : 'en-GB';
 
+  const getFormattedDescription = () => {
+    const desc = transaction.description;
+    if (!desc) {
+      return t(isDeposit ? 'wallet.transactions.walletTopup' : 'wallet.transactions.coursePayment');
+    }
+
+    // Check Stripe Topup pattern in Vietnamese or English
+    const stripeMatch = desc.match(/^(?:Nạp tiền qua Stripe|Deposit via Stripe)\s*\(Order:\s*(.+)\)$/i);
+    if (stripeMatch) {
+      return t('wallet.transactions.stripeDepositDetail', { orderId: stripeMatch[1] });
+    }
+
+    // Check payment pattern in Vietnamese or English
+    const paymentMatch = desc.match(/^(?:Payment for order|Thanh toán đơn hàng)\s*(.+)$/i);
+    if (paymentMatch) {
+      return t('wallet.transactions.paymentOrderDetail', { orderId: paymentMatch[1] });
+    }
+
+    return desc;
+  };
+
   return (
     <div className="group flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-white/90 px-5 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md sm:flex-row sm:items-center sm:justify-between animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-start gap-4">
@@ -280,7 +301,7 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
           {isDeposit ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
         </div>
         <div>
-          <p className="font-medium text-slate-950">{transaction.description || t(isDeposit ? 'wallet.transactions.walletTopup' : 'wallet.transactions.coursePayment')}</p>
+          <p className="font-medium text-slate-950">{getFormattedDescription()}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <span>{new Date(transaction.createdAt).toLocaleString(localeForDate)}</span>
             <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${statusTone}`}>

@@ -187,40 +187,52 @@ export default function Notifications() {
   return (
     <div className="bg-background space-y-6">
       {/* Header */}
-      <section className="bg-white border border-slate-200 rounded-3xl py-8 px-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <Bell className="w-5 h-5 text-white" />
+      <section className="relative overflow-hidden rounded-3xl bg-hero-gradient p-8 text-white md:p-10 shadow-md">
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+        <div aria-hidden className="absolute -right-16 top-0 h-80 w-80 rounded-full bg-secondary/30 blur-3xl pointer-events-none" />
+        <div aria-hidden className="absolute -left-16 bottom-0 h-60 w-60 rounded-full bg-primary-light/40 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center ring-1 ring-white/20 shadow-xl shadow-black/10">
+              <Bell className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">
+              <h1 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">
                 {t('notifications.header.title')}
               </h1>
-              <p className="text-slate-500 text-sm">
+              <p className="text-white/80 text-sm mt-1">
                 {unreadCount > 0
                   ? t('notifications.header.unreadCount', { count: unreadCount })
                   : t('notifications.header.allRead')}
               </p>
             </div>
           </div>
-          <div className="flex gap-2 items-center">
-            <Button variant="outline" onClick={() => navigate(-1)}>
+          <div className="flex flex-wrap gap-2 items-center">
+            <Button variant="glass" onClick={() => navigate(-1)} className="bg-white/10 text-white hover:bg-white/20 border-white/20 rounded-xl">
               {t('notifications.header.back')}
             </Button>
             {isMuted ? (
               <Button
-                variant="outline"
+                variant="glass"
                 onClick={() => applyMute(null)}
                 title={t('notifications.header.mutedTitle', {
                   time: mutedUntil ? formatTime(mutedUntil) : '',
                 })}
+                className="bg-white/10 text-white hover:bg-white/20 border-white/20 rounded-xl"
               >
                 <BellOff className="w-4 h-4 mr-2" /> {t('notifications.header.unmute')}
               </Button>
             ) : (
-              <div className="inline-flex rounded-md border bg-white">
-                <span className="px-2 py-1.5 text-xs text-slate-500 self-center">
+              <div className="inline-flex rounded-xl border border-white/20 bg-white/10 backdrop-blur-md overflow-hidden shadow-sm">
+                <span className="px-3 py-1.5 text-xs text-white/80 font-medium self-center border-r border-white/10">
                   {t('notifications.header.muteLabel')}
                 </span>
                 {MUTE_PRESETS.map((p) => (
@@ -228,7 +240,7 @@ export default function Notifications() {
                     key={p.key}
                     variant="ghost"
                     size="sm"
-                    className="text-xs h-8 rounded-none border-l first:border-l-0"
+                    className="text-xs h-9 rounded-none border-r border-white/10 last:border-r-0 text-white hover:bg-white/20 hover:text-white"
                     onClick={() => applyMute(p.hours)}
                   >
                     {t(`notifications.mute.presets.${p.key}`)}
@@ -239,6 +251,7 @@ export default function Notifications() {
             {unreadCount > 0 && (
               <Button
                 variant="secondary"
+                className="bg-white text-primary hover:bg-white/90 shadow-lg rounded-xl font-bold"
                 onClick={() => {
                   markAllReadMutation(undefined);
                   markAllAIRead();
@@ -256,17 +269,17 @@ export default function Notifications() {
         <div
           role="tablist"
           aria-label={t('notifications.view.ariaLabel')}
-          className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+          className="inline-flex gap-2 rounded-2xl border border-border/10 bg-surface-lowest/80 p-1.5 shadow-sm backdrop-blur-md relative overflow-hidden"
         >
           <button
             type="button"
             role="tab"
             aria-selected={view === 'inbox'}
             onClick={() => setView('inbox')}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`relative inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 ease-out ${
               view === 'inbox'
-                ? 'bg-primary text-primary-foreground shadow'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-primary text-white shadow-md shadow-primary/20 scale-100'
+                : 'bg-transparent text-slate-500 hover:bg-surface-low hover:text-slate-900 scale-95 hover:scale-100'
             }`}
           >
             <Inbox className="w-4 h-4" /> {t('notifications.view.inbox')}
@@ -276,10 +289,10 @@ export default function Notifications() {
             role="tab"
             aria-selected={view === 'saved'}
             onClick={() => setView('saved')}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`relative inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 ease-out ${
               view === 'saved'
-                ? 'bg-primary text-primary-foreground shadow'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-primary text-white shadow-md shadow-primary/20 scale-100'
+                : 'bg-transparent text-slate-500 hover:bg-surface-low hover:text-slate-900 scale-95 hover:scale-100'
             }`}
           >
             <BookmarkCheck className="w-4 h-4" /> {t('notifications.view.saved')}
@@ -291,7 +304,7 @@ export default function Notifications() {
       <section className="container mx-auto px-0">
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           {/* Sidebar filters */}
-          <div className="md:col-span-1 bg-white border border-slate-200 rounded-2xl p-5 h-fit space-y-5">
+          <div className="md:col-span-1 sticky top-24 z-10 bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl p-6 h-fit space-y-6 shadow-lg shadow-slate-200/40">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-slate-400" />
               <span className="text-sm font-medium text-slate-700">
@@ -311,7 +324,7 @@ export default function Notifications() {
                     variant={statusFilter === key ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setStatusFilter(key)}
-                    className="text-xs"
+                    className="text-xs rounded-full transition-all duration-300"
                   >
                     {t(`notifications.status.${key}`)}
                   </Button>
@@ -331,7 +344,7 @@ export default function Notifications() {
                     variant={typeFilter === key ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setTypeFilter(key)}
-                    className="text-xs"
+                    className="text-xs rounded-full transition-all duration-300"
                   >
                     {t(`notifications.types.${key}`)}
                   </Button>
@@ -357,7 +370,7 @@ export default function Notifications() {
           </div>
 
           {/* Notification list */}
-          <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="md:col-span-2 bg-transparent p-0">
             <div className="space-y-2">
 
               {/* ── AI Insights section ── */}
@@ -370,13 +383,19 @@ export default function Notifications() {
                   <div
                     key={insight.id}
                     onClick={() => markAIRead(insight.id)}
-                    className={`border rounded-xl p-4 flex items-start gap-4 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                    className={`relative overflow-hidden border rounded-3xl p-5 flex items-start gap-4 transition-all duration-300 cursor-pointer group hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10 ${
                       insight.isRead
-                        ? 'bg-white border-slate-200'
-                        : 'bg-blue-50/50 border-blue-200/60'
+                        ? 'bg-white border-slate-100'
+                        : 'bg-blue-50/40 border-blue-200/50 shadow-sm'
                     }`}
                   >
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${colors.bg}`}>
+                    {!insight.isRead && (
+                       <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-500/80 to-blue-300/30" />
+                    )}
+                    <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500">
+                      <Sparkles className={`w-32 h-32 ${colors.text} -translate-y-8 translate-x-8`} />
+                    </div>
+                    <div className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${colors.bg} ring-4 ring-white shadow-sm`}>
                       <Sparkles className={`h-5 w-5 ${colors.text}`} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -447,15 +466,18 @@ export default function Notifications() {
                   <div
                     key={n.id}
                     onClick={() => handleNotificationClick(n)}
-                    className={`border rounded-xl p-4 flex items-start gap-4 transition-all duration-200 group ${
+                    className={`relative overflow-hidden border rounded-3xl p-5 flex items-start gap-4 transition-all duration-300 group ${
                       link
-                        ? 'cursor-pointer hover:shadow-md hover:border-slate-300'
+                        ? 'cursor-pointer hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-300/30 hover:border-slate-300/50'
                         : 'cursor-default'
-                    } ${n.isRead ? 'bg-white border-slate-200' : 'bg-primary/5 border-primary/20'}`}
+                    } ${n.isRead ? 'bg-white border-slate-100' : 'bg-primary/5 border-primary/20 shadow-sm'}`}
                   >
+                    {!n.isRead && (
+                       <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/60 to-primary/20" />
+                    )}
                     {/* Icon */}
                     <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                      className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-colors ring-4 ring-white shadow-sm ${
                         n.isRead
                           ? typeConfig.bgColor
                           : typeConfig.bgColorUnread

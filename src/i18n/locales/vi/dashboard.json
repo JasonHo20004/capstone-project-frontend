@@ -1,6 +1,7 @@
 {
   "hero": {
     "eyebrow": "Khu vực học tập",
+    "welcome": "Chào mừng trở lại,",
     "title": "Học mọi nơi,",
     "titleAccent": "tiến bộ mỗi ngày",
     "subtitle": "Khám phá khoá học, theo dõi tiến độ và học theo nhịp của bạn với giao diện trực quan hơn.",
@@ -17,10 +18,49 @@
     "decksValue": "{{count}} bộ thẻ",
     "decksEmpty": "Chưa có bộ thẻ"
   },
+  "streak": {
+    "title": "Chuỗi học tập",
+    "days": "{{count}} ngày liên tiếp",
+    "dailyGoal": "Mục tiêu ngày: {{xp}}/{{target}} XP",
+    "encouragement": "Đang làm rất tốt! Giữ vững ngọn lửa học tập nhé! 🔥"
+  },
+  "enrolled": {
+    "title": "Khóa học của bạn",
+    "subtitle": "Tiếp tục bài học dở dang để không gián đoạn lộ trình học tập",
+    "continue": "Học tiếp bài học",
+    "empty": "Bạn chưa đăng ký khóa học nào.",
+    "explore": "Khám phá khóa học ngay",
+    "lessonsCompleted": "{{completed}}/{{total}} bài học đã xong",
+    "completed": "Hoàn thành khóa học"
+  },
+  "advisor": {
+    "title": "Đề xuất từ Trợ lý AI",
+    "evidence": "Phân tích từ dữ liệu học tập",
+    "cta": "Học ngay lập tức",
+    "tip": "Mẹo học tập:"
+  },
+  "hub": {
+    "title": "Bản đồ học tập & Tiện ích AI",
+    "subtitle": "Các công cụ thông minh giúp bạn tối ưu hóa điểm số IELTS hiệu quả",
+    "exam": "Luyện thi IELTS",
+    "examDesc": "Đầy đủ 4 kỹ năng mô phỏng cấu trúc thi thực tế",
+    "skillTree": "Cây kỹ năng chuẩn CEFR",
+    "skillTreeDesc": "Theo dõi từ vựng & ngữ pháp trực quan trực tiếp",
+    "dictation": "Luyện nghe chép chính tả",
+    "dictationDesc": "Cải thiện phản xạ âm và viết từ vựng chính xác",
+    "learningPath": "Lộ trình học AI",
+    "learningPathDesc": "Lộ trình học cá nhân hóa thiết kế riêng cho bạn",
+    "live": "Lớp học trực tuyến",
+    "liveDesc": "Tương tác trực tiếp và học cùng giảng viên",
+    "flashcards": "Thẻ từ vựng thông minh",
+    "flashcardsDesc": "Học từ vựng nhanh chóng qua thẻ lặp lại ngắt quãng"
+  },
   "placement": {
     "title": "Kiểm tra trình độ tiếng Anh",
     "subtitle": "50 câu hỏi · ~40 phút · Xác định cấp độ CEFR A1–C2 và nhận lộ trình học phù hợp",
-    "cta": "Làm bài kiểm tra"
+    "cta": "Làm bài kiểm tra",
+    "noLevelDesc": "Hãy thực hiện làm bài kiểm tra trình độ để AI định hình lộ trình học cá nhân hóa cho bạn.",
+    "currentLevel": "Trình độ hiện tại của bạn là {{level}}."
   },
   "popular": {
     "title": "Khoá học nổi bật",

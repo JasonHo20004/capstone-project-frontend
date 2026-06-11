@@ -21,17 +21,17 @@ type LearningTabsProps = {
 export const LearningTabs = ({ activeTab, onTabChange }: LearningTabsProps) => {
   const { t } = useTranslation("courses");
   return (
-    <div className="flex flex-wrap gap-3 rounded-2xl border bg-muted/40 p-4">
+    <div className="relative flex flex-wrap gap-2 rounded-2xl border border-border/10 bg-surface-lowest/80 p-2 shadow-sm backdrop-blur-md">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
           onClick={() => onTabChange(tab.id)}
           className={cn(
-            "rounded-full px-5 py-2 text-sm font-semibold transition",
+            "relative rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 ease-out",
             activeTab === tab.id
-              ? "bg-primary text-primary-foreground shadow-lg"
-              : "bg-background text-muted-foreground hover:bg-primary/10"
+              ? "bg-primary text-white shadow-md shadow-primary/20 scale-100"
+              : "bg-transparent text-muted-foreground hover:bg-surface-low hover:text-foreground scale-95 hover:scale-100"
           )}
         >
           {t(`studentLearning.learningTabs.${tab.labelKey}`)}

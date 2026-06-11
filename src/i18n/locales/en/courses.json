@@ -366,6 +366,10 @@
       "issuedDate": "Issue date",
       "signatory": "Board of Directors",
       "certificateNumber": "Certificate ID"
+    },
+    "focusMode": {
+      "showSyllabus": "Show lesson list",
+      "enterFocus": "Focus Mode"
     }
   }
 }

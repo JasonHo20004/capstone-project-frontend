@@ -78,17 +78,20 @@ export const VideoSection = ({
   }, [storageKey, videoAsset?.assetUrl]);
 
   return (
-    <div className="rounded-3xl border bg-background shadow-lg">
-      <div className="p-2 sm:p-4">
+    <div className="group relative overflow-hidden rounded-3xl border border-border/10 bg-surface-lowest shadow-2xl transition-all duration-500 hover:shadow-primary/5">
+      {/* Cinematic Ambient Glow */}
+      <div className="pointer-events-none absolute left-1/2 top-1/4 -z-0 h-[400px] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 opacity-30 blur-[120px] transition-opacity duration-1000 group-hover:opacity-60" />
+      
+      <div className="relative z-10 p-2 sm:p-3 bg-slate-950/5">
         {isLoading ? (
           <Skeleton className="aspect-video w-full rounded-2xl" />
         ) : (
-          <AspectRatio ratio={16 / 9}>
+          <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden shadow-inner ring-1 ring-white/10 dark:ring-white/5">
             {isVideoLesson ? (
               <video
                 ref={videoRef}
                 controls
-                className="h-full w-full rounded-2xl bg-black object-cover"
+                className="h-full w-full bg-black object-cover"
                 src={videoAsset?.assetUrl}
                 poster="/placeholder.svg"
                 onEnded={() => {

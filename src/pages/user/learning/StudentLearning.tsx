@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, Columns } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import Navbar from "@/components/user/layout/Navbar";
 import Footer from "@/components/user/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
 import {
   Drawer,
   DrawerContent,
@@ -40,6 +42,24 @@ const StudentLearningPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { t } = useTranslation("courses");
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("learning_sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("learning_sidebar_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const activeTab = (searchParams.get("tab") as LearningTabId | null) ?? DEFAULT_TAB;
 
@@ -189,7 +209,33 @@ const StudentLearningPage = () => {
 
         <section className="py-8">
           <div className="container mx-auto px-4">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
+            {/* Immersive Controls Bar for Desktop */}
+            <div className="mb-4 hidden lg:flex items-center justify-between bg-surface-lowest p-3 border border-border/10 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wide text-primary bg-primary/5 px-2.5 py-1 rounded-full border border-primary/10">
+                  {context?.course?.category || "Course"}
+                </span>
+                <span className="text-sm font-bold text-foreground truncate max-w-lg">
+                  {context?.course?.title}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-surface-low rounded-xl px-4 py-1.5 h-8 border border-border/10 hover:border-border/30 transition-all duration-300"
+              >
+                <Columns className="h-4 w-4" />
+                {isSidebarCollapsed ? t("studentLearning.focusMode.showSyllabus") : t("studentLearning.focusMode.enterFocus")}
+              </Button>
+            </div>
+
+            <div className={cn(
+              "grid gap-6 transition-all duration-500 ease-soft",
+              isSidebarCollapsed
+                ? "grid-cols-1"
+                : "lg:grid-cols-[minmax(0,3fr)_minmax(280px,1fr)]"
+            )}>
               <div className="space-y-6">
                 {lesson?.testId ? (
                   <LessonTestRunner
@@ -249,14 +295,16 @@ const StudentLearningPage = () => {
                 {activeTab === "reviews" && <CourseReviews ratings={ratings} />}
               </div>
 
-              <div className="hidden lg:block">
-                <SyllabusSidebar
-                  lessons={context?.syllabus}
-                  currentLessonId={effectiveLessonId}
-                  onSelectLesson={handleSelectLesson}
-                  isLoading={loadingContext}
-                />
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="hidden lg:block animate-in fade-in slide-in-from-right duration-300">
+                  <SyllabusSidebar
+                    lessons={context?.syllabus}
+                    currentLessonId={effectiveLessonId}
+                    onSelectLesson={handleSelectLesson}
+                    isLoading={loadingContext}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </section>

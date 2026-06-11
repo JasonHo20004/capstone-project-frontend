@@ -366,6 +366,10 @@
       "issuedDate": "Ngày cấp",
       "signatory": "Ban Giám đốc",
       "certificateNumber": "Mã chứng chỉ"
+    },
+    "focusMode": {
+      "showSyllabus": "Hiển thị danh sách bài học",
+      "enterFocus": "Chế độ tập trung (Focus)"
     }
   }
 }
