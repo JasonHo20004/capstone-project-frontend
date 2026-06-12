@@ -1378,6 +1378,10 @@
       },
       "close": "Đóng",
       "studying": "Đang học",
+      "swipeHint": "Vuốt thẻ hoặc dùng các nút bên dưới",
+      "streakBanner": "Chuỗi {{count}}!",
+      "soundOn": "Bật âm thanh",
+      "soundOff": "Tắt âm thanh",
       "cancel": "Hủy",
       "cancelTitle": "Hủy phiên học",
       "cancelDialog": {
@@ -1422,6 +1426,9 @@
         "subtitle": "Bạn đã hoàn thành tất cả {{count}} thẻ trong phiên này.",
         "cardsLearned": "Thẻ đã học",
         "duration": "Thời gian",
+        "accuracy": "Độ chính xác",
+        "bestStreak": "Chuỗi dài nhất",
+        "replay": "Học lại",
         "cta": "Kết thúc bài học"
       }
     }
@@ -1777,6 +1784,10 @@
       "highlightOffTitle": "Bật highlight (phím h)",
       "highlightOn": "BẬT",
       "highlightLabel": "Highlight",
+      "dictOnTitle": "Tra từ đang BẬT — nhấp đúp một từ để xem nghĩa tiếng Việt. Bấm để tắt.",
+      "dictOffTitle": "Tra từ đang TẮT — bấm để bật tra từ bằng cách nhấp đúp.",
+      "dictLabel": "Tra từ",
+      "dictOn": "Tra từ: BẬT",
       "clearHighlightsTitle": "Xóa tất cả highlight",
       "highlightHintSelect": "Bôi đen chữ → chọn màu",
       "highlightHintRemove": "Click highlight để xóa",
@@ -1795,6 +1806,8 @@
       "selectAnswer": "-- Chọn đáp án --",
       "matchingPlaceholder": "Nhập đáp án (VD: A, B, C)...",
       "questionNavigator": "Điều hướng câu hỏi",
+      "nextUnanswered": "Câu chưa làm",
+      "nextUnansweredTitle": "Nhảy tới câu chưa trả lời tiếp theo",
       "navOk": "(đã làm)",
       "navFlagged": "(đánh dấu)",
       "sectionFallback": "Phần {{n}}",

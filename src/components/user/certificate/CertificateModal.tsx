@@ -28,6 +28,47 @@ function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+/**
+ * Spacing (standalone) diacritic characters that some records store *instead of*
+ * a combining tone mark. Because they don't combine, a serif font shows them as
+ * stray glyphs ("Trâ`n" instead of "Trần"). Each maps to the code point of its
+ * combining equivalent so it can stack onto the preceding vowel after NFC.
+ */
+const SPACING_TO_COMBINING: Record<string, number> = {
+  '`': 0x0300, // `  grave accent           → huyền
+  'ˋ': 0x0300, // ˋ  modifier letter grave  → huyền
+  '´': 0x0301, // ´  acute accent           → sắc
+  'ˊ': 0x0301, // ˊ  modifier letter acute  → sắc
+  '^': 0x0302, // ^  circumflex             → â/ê/ô
+  'ˆ': 0x0302, // ˆ  modifier circumflex
+  '~': 0x0303, // ~  tilde                  → ngã
+  '˜': 0x0303, // ˜  small tilde
+  '¨': 0x0308, // ¨  diaeresis
+};
+
+/**
+ * Repairs broken Vietnamese names for display:
+ *  1. A stray spacing diacritic that directly follows a letter (a misplaced tone
+ *     mark, e.g. "â`") is converted to its combining form so it stacks correctly.
+ *  2. The result is composed to NFC, turning decomposed sequences such as
+ *     "â" + U+0300 into the precomposed "ầ" (U+1EA7) that every font can render.
+ * The "follows a letter" guard keeps legitimate symbols (e.g. "C~", "A ^ B") intact.
+ */
+function toNFC(text?: string | null) {
+  if (!text) return '';
+  let out = '';
+  for (const ch of text) {
+    const code = SPACING_TO_COMBINING[ch];
+    const prev = out.length ? out[out.length - 1] : '';
+    if (code && prev && /\p{L}/u.test(prev)) {
+      out += String.fromCharCode(code);
+    } else {
+      out += ch;
+    }
+  }
+  return out.normalize('NFC');
+}
+
 export function CertificateModal({ certificate, onClose }: Props) {
   const { t, i18n } = useTranslation('courses');
   const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'vi-VN';
@@ -183,7 +224,7 @@ export function CertificateModal({ certificate, onClose }: Props) {
                   {/* Right ribbon tail */}
                   <path d="M65,60 L75,95 L55,85 Z" fill="#b45309" />
                   <path d="M65,60 L75,95 L55,85 Z" fill="url(#ribbonGrad)" />
-                  
+
                   <defs>
                     <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#d97706" />
@@ -231,7 +272,7 @@ export function CertificateModal({ certificate, onClose }: Props) {
               {t('studentLearning.certificate.certifyThat')}
             </p>
             <h2 style={{ textAlign: 'center', fontSize: '36px', fontWeight: 700, color: '#1c1917', marginBottom: '8px', fontFamily: 'Georgia,serif', fontStyle: 'italic' }}>
-              {certificate.userName}
+              {toNFC(certificate.userName)}
             </h2>
             <p style={{ textAlign: 'center', fontFamily: 'system-ui,sans-serif', fontSize: '14px', color: '#78350f', marginBottom: '28px' }}>
               {t('studentLearning.certificate.completedExcellently')}
@@ -240,7 +281,7 @@ export function CertificateModal({ certificate, onClose }: Props) {
             {/* Course name */}
             <div style={{ textAlign: 'center', background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)', borderRadius: '8px', padding: '16px 24px', marginBottom: '28px' }}>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#92400e', lineHeight: 1.3, fontFamily: 'Georgia,serif' }}>
-                {certificate.courseName}
+                {toNFC(certificate.courseName)}
               </h3>
               {certificate.courseLevel && (
                 <p style={{ fontFamily: 'system-ui,sans-serif', fontSize: '13px', color: '#b45309', marginTop: '6px', fontWeight: 500 }}>

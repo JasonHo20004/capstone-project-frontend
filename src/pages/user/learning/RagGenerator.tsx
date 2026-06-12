@@ -19,9 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ragService, type FlashcardItem } from "@/lib/api/services/rag.service";
-import { useGetDecks } from "@/hooks/api/use-flashcards";
+import { useGetDecks, flashcardKeys } from "@/hooks/api/use-flashcards";
 import { useNavigate } from "react-router-dom";
 import {
   Upload,
@@ -59,6 +59,7 @@ interface RagGeneratorProps {
 
 export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t } = useTranslation("flashcards");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -109,6 +110,12 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
       sourcePages: data.source_pages,
       chunksUsed: data.chunks_used,
     });
+    // Làm mới cache để thẻ AI tạo xuất hiện ngay (không cần reload trang)
+    queryClient.invalidateQueries({ queryKey: flashcardKeys.allDecks });
+    if (data.deck_id) {
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(data.deck_id) });
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(data.deck_id) });
+    }
     setChatMessages([{
       role: "assistant",
       content: t("ragGenerator.result.stats", {

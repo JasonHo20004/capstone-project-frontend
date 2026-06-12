@@ -111,8 +111,9 @@ import UserAppLayout from "./components/user/layout/UserAppLayout";
 const App = () => (
   <ThemeProvider
     attribute="class"
-    defaultTheme="system"
-    enableSystem
+    forcedTheme="light"
+    defaultTheme="light"
+    enableSystem={false}
     disableTransitionOnChange
     storageKey="vibecoding-theme"
   >

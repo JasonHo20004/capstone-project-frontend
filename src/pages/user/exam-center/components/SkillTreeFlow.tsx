@@ -95,8 +95,8 @@ const EDGE_PAD = 120;
 const SECTION_SIZE = 4;
 const BANNER_HEIGHT = 110;
 
-// Idea 7: remedial side-quest spacing
-const REMEDIAL_OFFSET_X = H_GAP * 0.8;
+// Idea 7: horizontal spacing between side-quest (remedial/practice) nodes
+const SIDE_GAP = 190;
 
 const SECTION_THEMES: Array<{ labelKey: string; gradient: string; accent: string }> = [
   { labelKey: "foundations",        gradient: "from-indigo-500/70 to-blue-500/70",   accent: "#818cf8" },
@@ -142,18 +142,44 @@ function computeTreeLayout(
     inEdges.get(e.target)!.push(e.source);
   });
 
-  // Idea 7: remedial nodes ride along their parent and don't participate in the
-  // main BFS row layout. Exclude them up-front; we'll position them last.
-  const remedialIds = new Set(nodes.filter((n) => n.type === "remedial").map((n) => n.id));
-  const mainNodes = nodes.filter((n) => !remedialIds.has(n.id));
+  // Side-quest nodes: AI-generated supplementary nodes from the branch flow
+  // ("remedial" / "practice") lie HORIZONTALLY beside their parent; only main
+  // nodes (root/lesson/challenge/checkpoint/chest) form the vertical tower.
+  const sideIds = new Set(
+    nodes.filter((n) => n.type === "remedial" || n.type === "practice").map((n) => n.id)
+  );
+  const mainNodes = nodes.filter((n) => !sideIds.has(n.id));
 
-  // BFS depth from nodes with no incoming MAIN edges (true roots).
-  const inDegreeMain = new Map<string, number>();
+  // The backend splices side nodes INTO the chain (parent → side_1 → … → next,
+  // replacing the direct edge), so contract those chains into effective main
+  // edges parent → next. Without this, every main node downstream of a branch
+  // loses its parent and collapses to depth 0 (the overlap bug).
+  const effChildren = new Map<string, string[]>();
+  const effParents = new Map<string, string[]>();
   mainNodes.forEach((n) => {
-    const incoming = (inEdges.get(n.id) ?? []).filter((p) => !remedialIds.has(p));
-    inDegreeMain.set(n.id, incoming.length);
+    effChildren.set(n.id, []);
+    effParents.set(n.id, []);
   });
-  const roots = mainNodes.filter((n) => (inDegreeMain.get(n.id) ?? 0) === 0);
+  mainNodes.forEach((n) => {
+    const reached: string[] = [];
+    const visited = new Set<string>();
+    const stack = [...(outEdges.get(n.id) ?? [])];
+    while (stack.length > 0) {
+      const t = stack.pop()!;
+      if (visited.has(t)) continue;
+      visited.add(t);
+      if (sideIds.has(t)) {
+        stack.push(...(outEdges.get(t) ?? []));
+      } else {
+        reached.push(t);
+      }
+    }
+    effChildren.set(n.id, reached);
+    reached.forEach((c) => effParents.get(c)!.push(n.id));
+  });
+
+  // BFS depth over main nodes only, following effective edges
+  const roots = mainNodes.filter((n) => (effParents.get(n.id) ?? []).length === 0);
   const startSeeds = roots.length > 0 ? roots.map((n) => n.id) : [mainNodes[0]?.id].filter(Boolean) as string[];
 
   const depthOf = new Map<string, number>();
@@ -163,8 +189,7 @@ function computeTreeLayout(
     const prev = depthOf.get(id);
     if (prev !== undefined && prev <= depth) continue;
     depthOf.set(id, depth);
-    for (const child of outEdges.get(id) ?? []) {
-      if (remedialIds.has(child)) continue;
+    for (const child of effChildren.get(id) ?? []) {
       queue.push({ id: child, depth: depth + 1 });
     }
   }
@@ -203,7 +228,7 @@ function computeTreeLayout(
 
     const desired = new Map<string, number>();
     ids.forEach((id) => {
-      const parents = (inEdges.get(id) ?? []).filter((p) => posMap.has(p) && !remedialIds.has(p));
+      const parents = (effParents.get(id) ?? []).filter((p) => posMap.has(p));
       if (parents.length === 0) {
         desired.set(id, 0);
         return;
@@ -231,34 +256,70 @@ function computeTreeLayout(
     sortedIds.forEach((id) => posMap.set(id, { x: tempX.get(id)! + rowShift, y }));
   }
 
-  // Idea 7: place remedial nodes beside their primary parent (same Y, x - offset)
-  nodes.forEach((n) => {
-    if (!remedialIds.has(n.id)) return;
-    const parents = (inEdges.get(n.id) ?? []).filter((p) => posMap.has(p));
-    if (parents.length === 0) {
-      // Orphan remedial — drop below the tree
-      posMap.set(n.id, { x: 0, y: yForDepth(maxDepth + 1) });
-      return;
-    }
-    const parent = parents[0];
-    const parentPos = posMap.get(parent)!;
-    posMap.set(n.id, { x: parentPos.x - REMEDIAL_OFFSET_X, y: parentPos.y });
+  // Place side-quest chains horizontally beside their parent:
+  // parent → side_1 → side_2 extends sideways on the SAME row.
+  mainNodes.forEach((p) => {
+    const parentPos = posMap.get(p.id);
+    if (!parentPos) return;
+    const heads = (outEdges.get(p.id) ?? []).filter((t) => sideIds.has(t) && !posMap.has(t));
+    if (heads.length === 0) return;
+
+    // Walk the chains in order (across multiple heads, slots keep advancing)
+    const chainNodes: string[] = [];
+    const seen = new Set<string>();
+    heads.forEach((head) => {
+      let cur: string | undefined = head;
+      while (cur && sideIds.has(cur) && !seen.has(cur)) {
+        seen.add(cur);
+        chainNodes.push(cur);
+        cur = (outEdges.get(cur) ?? []).find((t) => sideIds.has(t));
+      }
+    });
+
+    // Prefer extending right; flip left if a main node in this row blocks it
+    const span = (chainNodes.length + 0.5) * SIDE_GAP;
+    const rowXs = mainNodes
+      .filter((m) => m.id !== p.id)
+      .map((m) => posMap.get(m.id))
+      .filter((pp): pp is { x: number; y: number } => !!pp && Math.abs(pp.y - parentPos.y) < 1)
+      .map((pp) => pp.x);
+    const blockedRight = rowXs.some((x) => x > parentPos.x && x < parentPos.x + span);
+    const blockedLeft = rowXs.some((x) => x < parentPos.x && x > parentPos.x - span);
+    const dir = blockedRight && !blockedLeft ? -1 : 1;
+
+    chainNodes.forEach((id, i) => {
+      posMap.set(id, { x: parentPos.x + dir * (i + 1) * SIDE_GAP, y: parentPos.y });
+    });
   });
 
-  // Idea 2: tag each node with its section index based on depth
+  // Orphan side nodes (no reachable main parent) drop below the tree
   nodes.forEach((n) => {
-    if (remedialIds.has(n.id)) {
-      // Inherit from parent so remedials don't break section grouping
-      const parents = (inEdges.get(n.id) ?? []);
-      const parent = parents.find((p) => depthOf.has(p));
-      if (parent) {
-        sectionOf.set(n.id, Math.floor(depthOf.get(parent)! / SECTION_SIZE));
-        return;
+    if (!posMap.has(n.id)) posMap.set(n.id, { x: 0, y: yForDepth(maxDepth + 1) });
+  });
+
+  // Idea 2: tag each node with its section index based on depth; side-quest
+  // nodes inherit the section of their nearest main ancestor.
+  const sideSection = (id: string): number => {
+    const seen = new Set<string>();
+    let cur: string | undefined = id;
+    while (cur && !seen.has(cur)) {
+      seen.add(cur);
+      const parents = inEdges.get(cur) ?? [];
+      const mainParent = parents.find((p) => !sideIds.has(p));
+      if (mainParent !== undefined) {
+        return Math.floor((depthOf.get(mainParent) ?? 0) / SECTION_SIZE);
       }
-      sectionOf.set(n.id, 0);
-      return;
+      cur = parents.find((p) => sideIds.has(p));
     }
-    sectionOf.set(n.id, Math.floor((depthOf.get(n.id) ?? 0) / SECTION_SIZE));
+    return 0;
+  };
+  nodes.forEach((n) => {
+    sectionOf.set(
+      n.id,
+      sideIds.has(n.id)
+        ? sideSection(n.id)
+        : Math.floor((depthOf.get(n.id) ?? 0) / SECTION_SIZE)
+    );
   });
 
   // Idea 2: compute banner Y positions — banner sits between section boundaries
@@ -383,7 +444,7 @@ function DottedTrail({ x1, y1, x2, y2, completed, animated }: {
   completed: boolean; animated: boolean;
 }) {
   const path = curvePath(x1, y1, x2, y2);
-  const color = completed ? "#34d399" : animated ? "#fbbf24" : "#334155";
+  const color = completed ? "#34d399" : animated ? "#fbbf24" : "#cbd5e1";
   return (
     <g>
       {/* Glow behind */}
@@ -472,6 +533,17 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
 
   const nodeMap = useMemo(() => new Map(layoutNodes.map((n) => [n.id, n])), [layoutNodes]);
 
+  // Step numbers follow visual (top-to-bottom) order over MAIN nodes only —
+  // side-quest nodes (remedial/practice) don't consume a step number.
+  const stepNumberOf = useMemo(() => {
+    const ordered = [...layoutNodes]
+      .filter((n) => n.data.type !== "remedial" && n.data.type !== "practice")
+      .sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
+    const m = new Map<string, number>();
+    ordered.forEach((n, i) => m.set(n.id, i + 1));
+    return m;
+  }, [layoutNodes]);
+
   const { canvasW, canvasH } = useMemo(() => {
     if (layoutNodes.length === 0) return { canvasW: 440, canvasH: 600 };
     const xs = layoutNodes.map((n) => n.pos.x);
@@ -502,10 +574,10 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
           {/* Ambient vertical line along main path */}
           <line
             x1={rootX} y1={0} x2={rootX} y2={canvasH}
-            stroke="#1e293b"
+            stroke="#cbd5e1"
             strokeWidth={1}
             strokeDasharray="4 8"
-            opacity={0.5}
+            opacity={0.7}
           />
           {rawEdges.map((edge) => {
             const src = nodeMap.get(edge.source);
@@ -568,13 +640,14 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
         })}
 
         {/* ── Node Layer ── */}
-        {layoutNodes.map((node, idx) => {
+        {layoutNodes.map((node) => {
           const { data, theme, pos, shape, sizing } = node;
           const isActive = data.status === "active";
           const isCompleted = data.status === "completed";
           const isLocked = data.status === "locked";
           const isNew = data.status === "new";
           const isRemedial = data.type === "remedial";
+          const isSideQuest = isRemedial || data.type === "practice";
           const isRoot = data.type === "root";
           const isChest = data.type === "chest";
 
@@ -657,32 +730,6 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                 </span>
               </button>
 
-              {/* ── Remedial side-quest arrow connector (Idea 7) ── */}
-              {isRemedial && !isLocked && (
-                <svg
-                  className="absolute pointer-events-none"
-                  style={{
-                    left: pos.x + sizing.r,
-                    top: pos.y - 1,
-                    width: REMEDIAL_OFFSET_X - sizing.r - NODE_R,
-                    height: 2,
-                    overflow: "visible",
-                  }}
-                  aria-hidden="true"
-                >
-                  <line
-                    x1={0}
-                    y1={1}
-                    x2={REMEDIAL_OFFSET_X - sizing.r - NODE_R}
-                    y2={1}
-                    stroke="#f87171"
-                    strokeWidth={2}
-                    strokeDasharray="4 4"
-                    opacity={0.55}
-                  />
-                </svg>
-              )}
-
               {/* ── Ambient glow below active / chest / root node ── */}
               {(isActive || isChest) && (
                 <div
@@ -698,8 +745,9 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                 />
               )}
 
-              {/* ── Step number badge (skip for remedial — uses review chip instead) ── */}
-              {!isRemedial && (
+              {/* ── Step number badge (skip for side-quest nodes — they don't
+                     consume a step in the main chain) ── */}
+              {!isSideQuest && (
                 <div
                   aria-hidden="true"
                   className="absolute pointer-events-none"
@@ -720,7 +768,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   }}
                 >
                   <span className="text-[9px] font-black text-white leading-none">
-                    {idx + 1}
+                    {stepNumberOf.get(node.id)}
                   </span>
                 </div>
               )}
@@ -755,9 +803,10 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   <p
                     className="text-[10px] font-bold leading-snug line-clamp-2 px-2 py-1 rounded-md flex items-center gap-1 mx-auto"
                     style={{
-                      backgroundColor: "rgba(127, 29, 29, 0.7)",
-                      color: "#fecaca",
+                      backgroundColor: "rgba(254, 226, 226, 0.92)",
+                      color: "#b91c1c",
                       backdropFilter: "blur(2px)",
+                      boxShadow: "0 1px 3px rgba(15,23,42,0.1)",
                       maxWidth: "100%",
                     }}
                   >
@@ -766,10 +815,11 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   </p>
                 ) : (
                   <p
-                    className="text-[11px] font-bold text-white leading-snug line-clamp-2 px-2 py-0.5 rounded-md"
+                    className="text-[11px] font-bold text-slate-700 leading-snug line-clamp-2 px-2 py-0.5 rounded-md"
                     style={{
-                      backgroundColor: "rgba(15, 23, 42, 0.72)",
+                      backgroundColor: "rgba(255, 255, 255, 0.88)",
                       backdropFilter: "blur(2px)",
+                      boxShadow: "0 1px 3px rgba(15,23,42,0.12)",
                       maxWidth: "100%",
                     }}
                   >
@@ -785,7 +835,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   </span>
                 )}
                 {(isActive && !isNew && !isRemedial) && (
-                  <span className="mt-1 text-[10px] text-slate-300 font-medium px-1.5 py-0.5 rounded bg-slate-900/60">
+                  <span className="mt-1 text-[10px] text-slate-600 font-medium px-1.5 py-0.5 rounded bg-white/80 shadow-sm">
                     {t("skillTree.flow.tapToStart")}
                   </span>
                 )}

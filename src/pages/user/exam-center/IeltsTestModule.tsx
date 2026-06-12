@@ -304,6 +304,20 @@ export default function IeltsTestModule() {
   } | null>(null);
   const dictCacheRef = useRef<Map<string, DictResult>>(new Map());
 
+  // Whether double-click word lookup is enabled. Persisted so the learner's
+  // choice sticks across reloads/sessions; defaults to on.
+  const [dictMode, setDictMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('ielts_dict_mode') !== 'off'; } catch { return true; }
+  });
+  const toggleDictMode = useCallback(() => {
+    setDictMode((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('ielts_dict_mode', next ? 'on' : 'off'); } catch { /* ignore */ }
+      return next;
+    });
+    setDictPopover(null);
+  }, []);
+
   // Close dictionary popover when clicking outside it
   useEffect(() => {
     if (!dictPopover) return;
@@ -646,6 +660,32 @@ export default function IeltsTestModule() {
     setCurrentSectionIdx(next);
   }, [snapshotCurrentHighlights]);
 
+  // ─── Jump to a question (navigator dots / "next unanswered") ─────────────────
+  // Centralises: switch section if needed → smooth-scroll into view → a brief
+  // focus flash so the eye lands on the target. The flash is CSS-driven and
+  // honours prefers-reduced-motion.
+  const [flashQuestionId, setFlashQuestionId] = useState<string | null>(null);
+  const flashTimerRef = useRef<number | null>(null);
+  const jumpToQuestion = useCallback((questionId: string, secIdx: number) => {
+    const crossSection = secIdx !== currentSectionIdx;
+    if (crossSection) navigateToSection(secIdx);
+    window.setTimeout(() => {
+      document.getElementById(`question-${questionId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, crossSection ? 120 : 0);
+    setFlashQuestionId(questionId);
+    if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = window.setTimeout(() => setFlashQuestionId(null), 1200);
+  }, [currentSectionIdx, navigateToSection]);
+  useEffect(() => () => { if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current); }, []);
+
+  const jumpToFirstUnanswered = useCallback(() => {
+    for (let s = 0; s < sections.length; s++) {
+      const q = sections[s].questions.find((item) => !questionAnswered(item));
+      if (q) { jumpToQuestion(q.id, s); return; }
+    }
+  }, [sections, questionAnswered, jumpToQuestion]);
+
   // ─── Navigation ─────────────────────────────────────────────────────────────
   const goNext = () => {
     if (currentSectionIdx < sections.length - 1) navigateToSection(prev => prev + 1);
@@ -693,6 +733,8 @@ export default function IeltsTestModule() {
   }, [highlightMode]);
 
   const handleWordLookup = useCallback((e: React.MouseEvent) => {
+    // Respect the learner's toggle — skip lookup entirely when disabled.
+    if (!dictMode) return;
     // Only run on double-click inside the passage area
     const word = window.getSelection()?.toString().trim().replace(/[^A-Za-z'-]/g, '') ?? '';
     if (!word || word.length > 60) return;
@@ -721,7 +763,7 @@ export default function IeltsTestModule() {
           ? { ...p, loading: false, result: { word, meaning: '—', pronunciation: '', example: '' } }
           : p);
       });
-  }, []);
+  }, [dictMode]);
 
   const applyHighlight = useCallback((color: string) => {
     if (!highlightPopover?.range) return;
@@ -1360,13 +1402,21 @@ export default function IeltsTestModule() {
                   <span className="material-symbols-outlined text-[16px]">text_increase</span>
                 </button>
               </div>
-              <span
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] text-indigo-500 bg-indigo-50 border border-indigo-100 select-none"
-                title="Double-click any word in the passage to look up its Vietnamese meaning"
+              <button
+                onClick={toggleDictMode}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  dictMode
+                    ? 'bg-indigo-100 text-indigo-700 border border-indigo-300 shadow-sm'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent'
+                }`}
+                title={dictMode ? t('ieltsTestModule.test.dictOnTitle') : t('ieltsTestModule.test.dictOffTitle')}
+                aria-pressed={dictMode}
               >
-                <span className="material-symbols-outlined text-[14px]">book_2</span>
-                <span className="hidden sm:inline">Double-click a word</span>
-              </span>
+                <span className="material-symbols-outlined text-[16px]">book_2</span>
+                <span className="hidden sm:inline">
+                  {dictMode ? t('ieltsTestModule.test.dictOn') : t('ieltsTestModule.test.dictLabel')}
+                </span>
+              </button>
               <button
                 onClick={() => { setHighlightMode(!highlightMode); setHighlightPopover(null); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -1627,7 +1677,7 @@ export default function IeltsTestModule() {
                   flaggedQuestions.has(q.id)
                     ? 'border-amber-400 ring-1 ring-amber-200'
                     : questionAnswered(q) ? 'border-indigo-300 shadow-sm' : 'border-slate-200'
-                }`}>
+                }${flashQuestionId === q.id ? ' q-flash' : ''}`}>
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <p className="font-medium text-sm text-slate-800">
                       <span className="text-slate-500 font-bold mr-2">{questionNumber[q.id] ?? q.questionOrder}.</span>
@@ -1693,17 +1743,26 @@ export default function IeltsTestModule() {
 
                   {qType === "MULTIPLE_CHOICE" && qOptions.length > 0 && (
                     <div className="space-y-2">
-                      {qOptions.map((opt, idx) => (
-                        <label key={idx} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                          answers[q.id] === opt ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-200"
-                        }`}>
-                          <input type="radio" name={q.id} value={opt} checked={answers[q.id] === opt}
-                            onChange={() => setAnswer(q.id, opt)} className="accent-indigo-600" />
-                          <span className="text-sm text-slate-700">
-                            <span className="font-bold text-indigo-600 mr-1">{String.fromCharCode(65 + idx)}.</span> {opt}
-                          </span>
-                        </label>
-                      ))}
+                      {qOptions.map((opt, idx) => {
+                        const isSelected = answers[q.id] === opt;
+                        return (
+                          <label key={idx} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                            isSelected ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-200 hover:bg-slate-50/60"
+                          }`}>
+                            <input type="radio" name={q.id} value={opt} checked={isSelected}
+                              onChange={() => setAnswer(q.id, opt)} className="sr-only" />
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-colors ${
+                              isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 text-slate-500"
+                            }`}>
+                              {String.fromCharCode(65 + idx)}
+                            </span>
+                            <span className="flex-1 text-sm text-slate-700">{opt}</span>
+                            {isSelected && (
+                              <span className="material-symbols-outlined text-[18px] text-indigo-600 shrink-0">check</span>
+                            )}
+                          </label>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -1715,16 +1774,22 @@ export default function IeltsTestModule() {
                         const isChecked = currentAns.includes(idxStr);
                         return (
                           <label key={idx} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                            isChecked ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-200"
+                            isChecked ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-200 hover:bg-slate-50/60"
                           }`}>
                             <input type="checkbox" name={q.id} value={idxStr} checked={isChecked}
                               onChange={() => {
                                 const newAns = isChecked ? currentAns.filter(i => i !== idxStr) : [...currentAns, idxStr].sort();
                                 setAnswer(q.id, newAns.join(','));
-                              }} className="accent-indigo-600 rounded" />
-                            <span className="text-sm text-slate-700">
-                              <span className="font-bold text-indigo-600 mr-1">{String.fromCharCode(65 + idx)}.</span> {opt}
+                              }} className="sr-only" />
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors ${
+                              isChecked ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 text-slate-500"
+                            }`}>
+                              {String.fromCharCode(65 + idx)}
                             </span>
+                            <span className="flex-1 text-sm text-slate-700">{opt}</span>
+                            {isChecked && (
+                              <span className="material-symbols-outlined text-[18px] text-indigo-600 shrink-0">check</span>
+                            )}
                           </label>
                         );
                       })}
@@ -1793,11 +1858,11 @@ export default function IeltsTestModule() {
           {/* ─── Question Navigator Panel (sticky bottom) ─────────────────── */}
           <div className={`bg-white border-t border-slate-200 transition-all duration-300 ${showNavigator ? 'max-h-[220px]' : 'max-h-10'}`}>
             {/* Toggle bar */}
-            <button
-              onClick={() => setShowNavigator(!showNavigator)}
-              className="w-full flex items-center justify-between px-4 py-2 hover:bg-slate-50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
+            <div className="w-full flex items-center justify-between px-4 py-2">
+              <button
+                onClick={() => setShowNavigator(!showNavigator)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+              >
                 <span className="material-symbols-outlined text-[16px] text-indigo-600">grid_view</span>
                 <span className="text-xs font-bold text-slate-600">{t("ieltsTestModule.test.questionNavigator")}</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">
@@ -1809,11 +1874,29 @@ export default function IeltsTestModule() {
                     {flaggedQuestions.size}
                   </span>
                 )}
+              </button>
+              <div className="flex items-center gap-2">
+                {!submitted && totalAnswered < allQuestions.length && (
+                  <button
+                    onClick={jumpToFirstUnanswered}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer"
+                    title={t("ieltsTestModule.test.nextUnansweredTitle")}
+                  >
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    <span className="hidden sm:inline">{t("ieltsTestModule.test.nextUnanswered")}</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowNavigator(!showNavigator)}
+                  className="p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                  aria-label={t("ieltsTestModule.test.questionNavigator")}
+                >
+                  <span className={`material-symbols-outlined text-[16px] text-slate-400 transition-transform ${showNavigator ? 'rotate-180' : ''}`}>
+                    expand_less
+                  </span>
+                </button>
               </div>
-              <span className={`material-symbols-outlined text-[16px] text-slate-400 transition-transform ${showNavigator ? 'rotate-180' : ''}`}>
-                expand_less
-              </span>
-            </button>
+            </div>
 
             {showNavigator && (
               <div className="px-4 pb-3 overflow-y-auto max-h-[170px]">
@@ -1830,13 +1913,7 @@ export default function IeltsTestModule() {
                         return (
                           <button
                             key={q.id}
-                            onClick={() => {
-                              if (secIdx !== currentSectionIdx) navigateToSection(secIdx);
-                              setTimeout(() => {
-                                const el = document.getElementById(`question-${q.id}`);
-                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                              }, 100);
-                            }}
+                            onClick={() => jumpToQuestion(q.id, secIdx)}
                             className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer relative
                               ${isAnswered
                                 ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'

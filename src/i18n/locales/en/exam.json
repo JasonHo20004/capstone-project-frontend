@@ -1378,6 +1378,10 @@
       },
       "close": "Close",
       "studying": "Studying",
+      "swipeHint": "Swipe the card or use the buttons",
+      "streakBanner": "{{count}} streak!",
+      "soundOn": "Sound on",
+      "soundOff": "Sound off",
       "cancel": "Cancel",
       "cancelTitle": "Cancel session",
       "cancelDialog": {
@@ -1422,6 +1426,9 @@
         "subtitle": "You finished all {{count}} cards in this session.",
         "cardsLearned": "Cards reviewed",
         "duration": "Duration",
+        "accuracy": "Accuracy",
+        "bestStreak": "Best streak",
+        "replay": "Study again",
         "cta": "Finish session"
       }
     }
@@ -1777,6 +1784,10 @@
       "highlightOffTitle": "Turn on highlight (key h)",
       "highlightOn": "ON",
       "highlightLabel": "Highlight",
+      "dictOnTitle": "Word lookup is ON — double-click a word for its Vietnamese meaning. Click to turn off.",
+      "dictOffTitle": "Word lookup is OFF — click to enable double-click dictionary lookup.",
+      "dictLabel": "Look up word",
+      "dictOn": "Look up: ON",
       "clearHighlightsTitle": "Clear all highlights",
       "highlightHintSelect": "Select text → choose color",
       "highlightHintRemove": "Click a highlight to remove",
@@ -1795,6 +1806,8 @@
       "selectAnswer": "-- Select an answer --",
       "matchingPlaceholder": "Enter answer (e.g. A, B, C)...",
       "questionNavigator": "Question Navigator",
+      "nextUnanswered": "Next unanswered",
+      "nextUnansweredTitle": "Jump to the next unanswered question",
       "navOk": "(ok)",
       "navFlagged": "(flagged)",
       "sectionFallback": "Section {{n}}",

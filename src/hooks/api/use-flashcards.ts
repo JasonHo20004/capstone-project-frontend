@@ -95,6 +95,8 @@ export const useCreateCard = () => {
       const deckId = response.data.deckId;
       // Fetch lại danh sách thẻ của bộ này
       queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(deckId) });
+      // Làm mới hàng đợi học để thẻ mới xuất hiện ngay (không cần reload trang)
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
       toast.success('Tạo thẻ thành công!');
     },
   });
@@ -109,6 +111,8 @@ export const useUpdateCard = () => {
       const deckId = response.data.deckId;
       // Fetch lại danh sách thẻ của bộ này
       queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(deckId) });
+      // Nội dung thẻ đổi → đồng bộ luôn hàng đợi học
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
       toast.success('Cập nhật thẻ thành công!');
     },
   });
@@ -124,6 +128,8 @@ export const useDeleteCard = () => {
       const { deckId } = variables;
       // Fetch lại danh sách thẻ của bộ này
       queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(deckId) });
+      // Thẻ bị xóa → loại khỏi hàng đợi học ngay
+      queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(deckId) });
       toast.success('Đã xóa thẻ!');
     },
   });
