@@ -1378,6 +1378,10 @@
       },
       "close": "Đóng",
       "studying": "Đang học",
+      "swipeHint": "Vuốt thẻ hoặc dùng các nút bên dưới",
+      "streakBanner": "Chuỗi {{count}}!",
+      "soundOn": "Bật âm thanh",
+      "soundOff": "Tắt âm thanh",
       "cancel": "Hủy",
       "cancelTitle": "Hủy phiên học",
       "cancelDialog": {
@@ -1422,6 +1426,9 @@
         "subtitle": "Bạn đã hoàn thành tất cả {{count}} thẻ trong phiên này.",
         "cardsLearned": "Thẻ đã học",
         "duration": "Thời gian",
+        "accuracy": "Độ chính xác",
+        "bestStreak": "Chuỗi dài nhất",
+        "replay": "Học lại",
         "cta": "Kết thúc bài học"
       }
     }
@@ -1528,7 +1535,34 @@
     "tree": {
       "level": "Trình độ {{level}}",
       "change": "Đổi",
-      "startQuiz": "Bắt đầu Quiz"
+      "startQuiz": "Bắt đầu Quiz",
+      "practiceAgain": "Luyện lại",
+      "reviewNoXp": "Chế độ ôn tập — không cộng XP",
+      "reviewDone": "Ôn tập hoàn tất! 💪"
+    },
+    "errors": {
+      "generateFailed": "AI chưa tạo được lộ trình — kiểm tra mạng rồi thử lại nhé.",
+      "updateFailed": "Không lưu được tiến độ — kết quả quiz chưa được ghi nhận. Thử lại nhé."
+    },
+    "generating": {
+      "title": "AI đang xây cây kỹ năng…",
+      "hint": "Thường mất 10–20 giây",
+      "steps": {
+        "1": "Phân tích chủ đề & trình độ",
+        "2": "Thiết kế lộ trình bài học",
+        "3": "Gắn quiz cho từng chặng",
+        "4": "Hoàn thiện bản đồ…"
+      }
+    },
+    "treeComplete": {
+      "title": "Chinh phục hoàn tất!",
+      "subtitle": "Bạn đã hoàn thành toàn bộ cây kỹ năng {{topic}} — quá đỉnh!",
+      "newTopic": "Khám phá thế giới mới",
+      "stay": "Ở lại ôn tập"
+    },
+    "carousel": {
+      "prev": "Cuộn sang trái",
+      "next": "Cuộn sang phải"
     },
     "flow": {
       "section": "Chặng {{num}}",
@@ -1536,6 +1570,7 @@
       "review": "Ôn lại: {{label}}",
       "new": "MỚI",
       "tapToStart": "Chạm để bắt đầu",
+      "lockedHint": "Hoàn thành bài phía trước để mở khoá nút này 🔒",
       "completedCount": "{{done}} / {{total}} đã hoàn thành",
       "sections": {
         "foundations": "Nền tảng",
@@ -1577,6 +1612,11 @@
       "answered": "Đã trả lời {{count}}"
     },
     "loading": "Đang tạo câu hỏi...",
+    "errors": {
+      "generate": "Không tạo được quiz — kiểm tra mạng rồi thử lại nhé.",
+      "submit": "Nộp bài thất bại — câu trả lời vẫn còn, hãy bấm Nộp lại."
+    },
+    "retry": "Thử lại",
     "result": {
       "excellent": "Xuất sắc!",
       "keepPracticing": "Hãy luyện tập thêm!",
@@ -1777,6 +1817,10 @@
       "highlightOffTitle": "Bật highlight (phím h)",
       "highlightOn": "BẬT",
       "highlightLabel": "Highlight",
+      "dictOnTitle": "Tra từ đang BẬT — nhấp đúp một từ để xem nghĩa tiếng Việt. Bấm để tắt.",
+      "dictOffTitle": "Tra từ đang TẮT — bấm để bật tra từ bằng cách nhấp đúp.",
+      "dictLabel": "Tra từ",
+      "dictOn": "Tra từ: BẬT",
       "clearHighlightsTitle": "Xóa tất cả highlight",
       "highlightHintSelect": "Bôi đen chữ → chọn màu",
       "highlightHintRemove": "Click highlight để xóa",
@@ -1795,6 +1839,8 @@
       "selectAnswer": "-- Chọn đáp án --",
       "matchingPlaceholder": "Nhập đáp án (VD: A, B, C)...",
       "questionNavigator": "Điều hướng câu hỏi",
+      "nextUnanswered": "Câu chưa làm",
+      "nextUnansweredTitle": "Nhảy tới câu chưa trả lời tiếp theo",
       "navOk": "(đã làm)",
       "navFlagged": "(đánh dấu)",
       "sectionFallback": "Phần {{n}}",

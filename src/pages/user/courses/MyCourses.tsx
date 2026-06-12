@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { usePurchases } from '@/context/PurchasesContext';
 import { Button } from '@/components/ui/button';
+import { TiltCard } from '@/components/ui/tilt-card';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import {
@@ -19,6 +20,9 @@ import {
 import { useCourseContext } from '@/hooks/api/use-student-learning';
 import type { Course } from '@/domain';
 import { cn } from '@/lib/utils';
+
+// Lazy so three.js stays out of the initial bundle.
+const PenguinHero3D = lazy(() => import('@/components/user/home/PenguinHero3D'));
 
 
 // ─── Custom Card for Purchased Courses (displays progress) ─────────────
@@ -118,10 +122,7 @@ const PurchasedCourseCard = ({ course, viewMode = 'grid' }: { course: Course; vi
   // Grid view (Standard card)
   return (
     <Link to={`/learning/courses/${course.id}/lessons`} className="block h-full">
-      <motion.div
-        whileHover={reduce ? undefined : { y: -6 }}
-        className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface-lowest p-5 border border-border/15 shadow-sm hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30 transition-all duration-500 ease-out"
-      >
+      <TiltCard maxTilt={6} className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface-lowest p-5 border border-border/15 shadow-sm hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30 transition-shadow duration-500 ease-out">
         {/* Top Image */}
         <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-xl bg-surface-low border border-border/10">
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
@@ -176,7 +177,7 @@ const PurchasedCourseCard = ({ course, viewMode = 'grid' }: { course: Course; vi
             </Button>
           </div>
         </div>
-      </motion.div>
+      </TiltCard>
     </Link>
   );
 };
@@ -324,10 +325,14 @@ export default function MyCourses() {
       {totalCourses === 0 ? (
         <section className="overflow-hidden rounded-2xl bg-surface-lowest shadow-md ring-1 ring-border/10">
           <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-            <div className="relative mb-8">
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/10">
-                <BookOpen className="h-12 w-12 text-primary/60" />
-              </div>
+            <div className="relative mb-6 h-44 w-44">
+              <Suspense
+                fallback={
+                  <div className="flex h-full w-full items-center justify-center text-[5rem]">🐧</div>
+                }
+              >
+                <PenguinHero3D className="h-full w-full" />
+              </Suspense>
             </div>
 
             <h2 className="mb-2 font-display text-2xl font-bold">{t('myCourses.emptyTitle')}</h2>

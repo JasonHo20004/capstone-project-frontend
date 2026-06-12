@@ -1,8 +1,20 @@
 import type { Flashcard } from "@/domain";
+import { FlashcardStatus } from "@/domain/enums";
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, BookOpen, MessageSquare, Volume2 } from 'lucide-react';
-import { useCallback, useRef } from 'react';
+import {
+  Edit,
+  Trash2,
+  MessageSquare,
+  Volume2,
+  Sparkles,
+  GraduationCap,
+  RefreshCw,
+  Repeat,
+} from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion, useReducedMotion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface CardListProps {
   cards: Flashcard[];
@@ -11,20 +23,23 @@ interface CardListProps {
   readOnly?: boolean;
 }
 
-const CARD_COLORS = [
-  'from-blue-500/8 to-indigo-500/4 hover:from-blue-500/12 hover:to-indigo-500/8 border-blue-200/60',
-  'from-emerald-500/8 to-teal-500/4 hover:from-emerald-500/12 hover:to-teal-500/8 border-emerald-200/60',
-  'from-amber-500/8 to-orange-500/4 hover:from-amber-500/12 hover:to-orange-500/8 border-amber-200/60',
-  'from-rose-500/8 to-pink-500/4 hover:from-rose-500/12 hover:to-pink-500/8 border-rose-200/60',
-  'from-cyan-500/8 to-sky-500/4 hover:from-cyan-500/12 hover:to-sky-500/8 border-cyan-200/60',
-  'from-indigo-500/8 to-blue-500/4 hover:from-indigo-500/12 hover:to-blue-500/8 border-indigo-200/60',
+/** Per-card colour theme — front is a vibrant gradient, back stays clean white with matching accents. */
+const THEMES = [
+  { front: 'from-indigo-500 via-blue-500 to-indigo-600', glow: 'group-hover:shadow-indigo-500/40', accent: 'text-indigo-600', chip: 'bg-indigo-100 text-indigo-700', edge: 'before:bg-indigo-500' },
+  { front: 'from-emerald-500 via-teal-500 to-emerald-600', glow: 'group-hover:shadow-emerald-500/40', accent: 'text-emerald-600', chip: 'bg-emerald-100 text-emerald-700', edge: 'before:bg-emerald-500' },
+  { front: 'from-amber-500 via-orange-500 to-amber-600', glow: 'group-hover:shadow-amber-500/40', accent: 'text-amber-600', chip: 'bg-amber-100 text-amber-700', edge: 'before:bg-amber-500' },
+  { front: 'from-rose-500 via-pink-500 to-rose-600', glow: 'group-hover:shadow-rose-500/40', accent: 'text-rose-600', chip: 'bg-rose-100 text-rose-700', edge: 'before:bg-rose-500' },
+  { front: 'from-cyan-500 via-sky-500 to-cyan-600', glow: 'group-hover:shadow-cyan-500/40', accent: 'text-cyan-600', chip: 'bg-cyan-100 text-cyan-700', edge: 'before:bg-cyan-500' },
+  { front: 'from-violet-500 via-purple-500 to-violet-600', glow: 'group-hover:shadow-violet-500/40', accent: 'text-violet-600', chip: 'bg-violet-100 text-violet-700', edge: 'before:bg-violet-500' },
 ];
 
-const ACCENT_DOTS = [
-  'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500',
-];
+const STATUS_ICON: Record<FlashcardStatus, typeof Sparkles> = {
+  [FlashcardStatus.NEW]: Sparkles,
+  [FlashcardStatus.LEARNING]: GraduationCap,
+  [FlashcardStatus.REVIEW]: RefreshCw,
+};
 
-function AudioButton({ audioUrl }: { audioUrl: string }) {
+function AudioButton({ audioUrl, onColor = false }: { audioUrl: string; onColor?: boolean }) {
   const { t } = useTranslation('exam');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -46,76 +61,189 @@ function AudioButton({ audioUrl }: { audioUrl: string }) {
   }, [audioUrl]);
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-indigo-400 hover:text-indigo-600 transition-colors"
+    <button
+      type="button"
+      className={cn(
+        'inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 active:scale-90',
+        onColor
+          ? 'bg-white/20 text-white hover:bg-white/35 backdrop-blur-sm'
+          : 'text-indigo-400 hover:bg-indigo-100/80 hover:text-indigo-600',
+      )}
       onClick={handlePlay}
       title={t('flashcards.cardList.playAudioTitle')}
       aria-label={t('flashcards.cardList.playAudioAria')}
     >
-      <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
-    </Button>
+      <Volume2 className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
+
+function FlipCard({
+  card,
+  index,
+  theme,
+  readOnly,
+  reduceMotion,
+  onEditCard,
+  onDeleteCard,
+}: {
+  card: Flashcard;
+  index: number;
+  theme: (typeof THEMES)[number];
+  readOnly: boolean;
+  reduceMotion: boolean;
+  onEditCard: (card: Flashcard) => void;
+  onDeleteCard: (card: Flashcard) => void;
+}) {
+  const { t } = useTranslation('flashcards');
+  const [flipped, setFlipped] = useState(false);
+
+  const status = card.queueType;
+  const StatusIcon = status ? STATUS_ICON[status] : null;
+
+  return (
+    <motion.div
+      initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, delay: reduceMotion ? 0 : index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+      className="group [perspective:1400px]"
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        aria-pressed={flipped}
+        aria-label={card.frontContent}
+        onClick={() => setFlipped((f) => !f)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setFlipped((f) => !f);
+          }
+        }}
+        className={cn(
+          'relative h-[188px] w-full cursor-pointer rounded-2xl outline-none [transform-style:preserve-3d]',
+          'transition-transform [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2',
+          reduceMotion ? '[transition-duration:0ms]' : '[transition-duration:600ms]',
+        )}
+        style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+      >
+        {/* ── FRONT ──────────────────────────────────────────── */}
+        <div
+          className={cn(
+            'absolute inset-0 flex flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br p-5 text-white shadow-lg [backface-visibility:hidden] [-webkit-backface-visibility:hidden]',
+            'shadow-slate-900/10 transition-shadow duration-300',
+            theme.front,
+            theme.glow,
+          )}
+        >
+          {/* decorative bloom */}
+          <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/15 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-6 h-28 w-28 rounded-full bg-black/10 blur-2xl" />
+
+          <div className="relative z-10 flex items-center justify-between">
+            <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-white/20 px-2 text-xs font-black tabular-nums backdrop-blur-sm">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <div className="flex items-center gap-1.5">
+              {StatusIcon && (
+                <span className="flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold backdrop-blur-sm">
+                  <StatusIcon className="h-3 w-3" aria-hidden="true" />
+                  {t(`cardList.status.${status}`)}
+                </span>
+              )}
+              {card.audioUrl && <AudioButton audioUrl={card.audioUrl} onColor />}
+            </div>
+          </div>
+
+          <div className="relative z-10">
+            <p className="line-clamp-2 text-2xl font-black leading-tight tracking-tight drop-shadow-sm">
+              {card.frontContent}
+            </p>
+          </div>
+
+          <div className="relative z-10 flex items-center gap-1.5 text-[11px] font-semibold text-white/70">
+            <Repeat className="h-3 w-3" aria-hidden="true" />
+            {t('cardList.flipHint')}
+          </div>
+        </div>
+
+        {/* ── BACK ───────────────────────────────────────────── */}
+        <div
+          className={cn(
+            'absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-lg [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)]',
+            // coloured left edge accent
+            "before:absolute before:inset-y-0 before:left-0 before:w-1.5",
+            theme.edge,
+          )}
+        >
+          <div className="flex items-center justify-between pl-2">
+            <span className={cn('text-[11px] font-black uppercase tracking-wider', theme.accent)}>
+              {t('cardList.meaning')}
+            </span>
+            {card.audioUrl && <AudioButton audioUrl={card.audioUrl} />}
+          </div>
+
+          <p className="mt-1 flex-1 overflow-hidden pl-2 text-[15px] font-semibold leading-snug text-slate-800 line-clamp-3">
+            {card.backContent}
+          </p>
+
+          {card.exampleSentence && (
+            <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-slate-50 p-2 pl-2.5 text-xs italic text-slate-500">
+              <MessageSquare className="mt-0.5 h-3 w-3 flex-shrink-0" aria-hidden="true" />
+              <span className="line-clamp-2">{card.exampleSentence}</span>
+            </div>
+          )}
+
+          {!readOnly && (
+            <div className="mt-2 flex items-center justify-end gap-1 pl-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditCard(card);
+                }}
+              >
+                <Edit className="h-3.5 w-3.5" /> {t('cardList.edit')}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 rounded-lg p-0 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteCard(card);
+                }}
+                aria-label={t('cardList.delete')}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
 export function CardList({ cards, onEditCard, onDeleteCard, readOnly = false }: CardListProps) {
+  const reduceMotion = useReducedMotion() ?? false;
+
   return (
-    <div className="grid md:grid-cols-2 gap-3">
-      {cards.map((card, i) => {
-        const colorClass = CARD_COLORS[i % CARD_COLORS.length];
-        const dotClass = ACCENT_DOTS[i % ACCENT_DOTS.length];
-
-        return (
-          <div
-            key={card.id}
-            className={`kahoot-slide-up group relative rounded-xl p-4 border bg-gradient-to-br ${colorClass}
-              transition-all duration-300 hover:shadow-md hover:scale-[1.01]`}
-            style={{ animationDelay: `${i * 0.04}s` }}
-          >
-            {/* Accent dot */}
-            <div className={`absolute top-3 left-3 w-2 h-2 rounded-full ${dotClass} opacity-60`} />
-
-            <div className="flex items-start justify-between pl-5">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                  <span className="font-bold text-slate-800 truncate">{card.frontContent}</span>
-                  {card.audioUrl && <AudioButton audioUrl={card.audioUrl} />}
-                </div>
-                <p className="text-sm text-slate-600 line-clamp-2">{card.backContent}</p>
-                {card.exampleSentence && (
-                  <div className="flex items-start gap-1.5 mt-2 text-xs text-slate-400 italic">
-                    <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                    <span className="line-clamp-1">{card.exampleSentence}</span>
-                  </div>
-                )}
-              </div>
-
-              {!readOnly && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 rounded-lg hover:bg-indigo-100/80 text-slate-400 hover:text-indigo-600"
-                    onClick={() => onEditCard(card)}
-                  >
-                    <Edit className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 rounded-lg hover:bg-red-100/80 text-slate-400 hover:text-red-500"
-                    onClick={() => onDeleteCard(card)}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {cards.map((card, i) => (
+        <FlipCard
+          key={card.id}
+          card={card}
+          index={i}
+          theme={THEMES[i % THEMES.length]}
+          readOnly={readOnly}
+          reduceMotion={reduceMotion}
+          onEditCard={onEditCard}
+          onDeleteCard={onDeleteCard}
+        />
+      ))}
     </div>
   );
 }

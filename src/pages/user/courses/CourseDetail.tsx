@@ -285,8 +285,12 @@ const CourseDetail = () => {
               }}
             />
           </div>
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px] -translate-y-1/3 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/4" />
+          <div className="absolute top-0 right-0 -translate-y-1/3 translate-x-1/4">
+            <div className="w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px] motion-safe:animate-aurora" />
+          </div>
+          <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4">
+            <div className="w-80 h-80 bg-blue-500/10 rounded-full blur-[100px] motion-safe:animate-float-slow" />
+          </div>
 
           <div className="relative z-10 container mx-auto px-4 py-14 md:py-16">
             <div className="max-w-4xl">

@@ -37,7 +37,7 @@
     },
     "recordings": {
       "empty": "No recordings yet",
-      "emptyHint": "Completed sessions are saved for 7 days.",
+      "emptyHint": "Completed sessions are saved here.",
       "sections": "{{count}} sections",
       "qas": "{{count}} Q&As",
       "hostLabel": "Host:",
@@ -80,6 +80,8 @@
       "chat": "Q&A"
     },
     "unlockAudio": "Tap to enable AI audio",
+    "unlockAudioCta": "Tap here",
+    "stopAi": "Stop AI",
     "preparing": "Preparing the lesson…",
     "waitingHost": "Press \"Start lesson\" when ready",
     "waitingStudent": "Waiting for the teacher to start the lesson…",
@@ -95,6 +97,7 @@
       "start": "Start speaking",
       "submit": "Done, send",
       "cancel": "Cancel",
+      "recordingLive": "Recording…",
       "unsupported": "Your browser doesn't support speaking. You can still type in the Q&A panel."
     },
     "hand": {
@@ -128,11 +131,15 @@
       "recordAria": "Record question",
       "placeholder": {
         "listening": "Listening… speak your question",
+        "transcribing": "Processing your voice…",
         "ended": "Session ended",
         "connecting": "Connecting…",
         "noQuota": "Out of quota — wait 1 minute",
         "default": "Ask a question or tap the mic to speak…"
       },
+      "voiceFailed": "Couldn't recognize your speech — try again or type your question.",
+      "voiceError": "Connection error while processing your voice.",
+      "serverRateLimited": "Too many questions — please wait a moment.",
       "footer": {
         "withMic": "Mic · Up to {{max}} questions/min · Enter to send",
         "withoutMic": "Up to {{max}} questions/min · Enter to send"
@@ -153,10 +160,24 @@
       "roomEnded": "The classroom has ended.",
       "speakerInvitedSelf": "The teacher invited you to speak!",
       "speakerInvitedOther": "The teacher invited {{name}} to speak",
-      "practiceResult": "{{icon}} {{name}} practiced: \"{{phrase}}\" ({{score}}/100)"
+      "joined": "👋 {{name}} joined the class",
+      "lessonError": "The AI hit an error while generating the lesson. The host can press \"Start lesson\" to retry."
     },
     "explainAgainPart": "Explain the \"{{title}}\" part again for me",
-    "practiceAvailable": "Practice speaking available ↓"
+    "quiz": {
+      "badge": "Quick check {{ordinal}}/{{total}}",
+      "answered": "{{count}} answered",
+      "pickOne": "Pick an answer before time runs out!",
+      "lockedIn": "Locked in — waiting for the reveal…",
+      "closing": "Time's up — counting the votes…",
+      "timeLeft": "{{secs}} seconds left",
+      "correct": "Correct! Nice one 🎉",
+      "incorrect": "Not quite — see why below",
+      "noAnswer": "Time ran out — here's the answer",
+      "explanation": "Why",
+      "you": "You",
+      "score": "{{correct}}/{{total}}"
+    }
   },
   "replay": {
     "loading": "Loading recording…",
@@ -168,7 +189,14 @@
     "seekHint": "Click to seek to a section",
     "qaTitle": "Q&A from this session ({{count}})",
     "noQa": "No questions were asked in this session.",
-    "playAudio": "Play audio"
+    "playAudio": "Play audio",
+    "sectionsTitle": "Lesson contents",
+    "slideCount": "{{count}} slides",
+    "restart": "Restart from the beginning",
+    "play": "Play",
+    "pause": "Pause",
+    "quizTitle": "In-lesson quick check",
+    "quizAnswered": "{{count}} answered"
   },
   "participants": {
     "heading": "People in the room",
@@ -180,22 +208,6 @@
     "inviteTitle": "Invite this student to speak",
     "invite": "Invite",
     "handPosition": "Position {{n}}"
-  },
-  "practice": {
-    "label": "Practice speaking",
-    "youSaid": "You said:",
-    "feedback": {
-      "great": "Excellent!",
-      "close": "Close — try again",
-      "tryAgain": "Keep going! Try once more"
-    },
-    "buttons": {
-      "tryAloud": "Read aloud",
-      "again": "Try again",
-      "stop": "Stop",
-      "clear": "Clear"
-    },
-    "unsupported": "This browser doesn't support speech practice. Please use Chrome or Edge."
   },
   "translate": {
     "loading": "Translating…",

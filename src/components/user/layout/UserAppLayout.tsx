@@ -27,7 +27,6 @@ import { AIAdvisorBanner } from "./AIAdvisorBanner";
 import { useAIAdvisor } from "@/hooks/use-ai-advisor";
 import { useAIInsights } from "@/hooks/use-ai-insights";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import ThemeToggle from "@/components/ThemeToggle";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { UpgradeToProButton } from "./UpgradeToProButton";
@@ -199,7 +198,6 @@ export default function UserAppLayout() {
             <div className="flex items-center gap-2">
               {!isProUser && <UpgradeToProButton />}
               <LanguageSwitcher />
-              <ThemeToggle />
               <NotificationDropdown userId={user?.id} />
               <CartDropdown />
               <div className="h-8 w-px bg-border/60 mx-1 hidden sm:block" />
@@ -240,7 +238,7 @@ export default function UserAppLayout() {
           className={cn(
             "flex-1 overflow-y-auto scroll-smooth",
             location.pathname.startsWith("/skill-tree")
-              ? "bg-slate-950 p-0 dark-scrollbar"
+              ? "bg-background p-0"
               : "bg-background p-6 lg:p-8",
           )}
         >

@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Pause, Volume2, Check, CheckCircle2, MousePointerClick, X, PartyPopper, FileText } from "lucide-react";
 import apiClient from "@/lib/api/config";
 
@@ -272,9 +273,15 @@ export default function MiniQuizDialog({
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
 
+  // Tracks a failed generation. Without it, the render-time auto-start below
+  // saw (!quizId && !loading && no questions) again after every failure and
+  // re-fired the API call in an infinite loop.
+  const [failed, setFailed] = useState(false);
+
   // Generate quiz on open
   const generateQuiz = async () => {
     setLoading(true);
+    setFailed(false);
     try {
       const resp = await apiClient.post("/ai/mini-quiz/generate", {
         userId,
@@ -297,6 +304,8 @@ export default function MiniQuizDialog({
       }
     } catch (err) {
       console.error("Failed to generate quiz:", err);
+      setFailed(true);
+      toast.error(t("miniQuiz.errors.generate"));
     } finally {
       setLoading(false);
     }
@@ -321,13 +330,16 @@ export default function MiniQuizDialog({
       onQuizComplete(data?.wrongAnswers || []);
     } catch (err) {
       console.error("Failed to submit quiz:", err);
+      // Answers are kept — the user can press Submit again.
+      toast.error(t("miniQuiz.errors.submit"));
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Start quiz when dialog opens
-  if (open && !quizId && !loading && questions.length === 0) {
+  // Start quiz when dialog opens (never auto-retry after a failure — that
+  // looped the generate call forever; the error panel offers a manual retry)
+  if (open && !quizId && !loading && !failed && questions.length === 0) {
     generateQuiz();
   }
 
@@ -337,6 +349,7 @@ export default function MiniQuizDialog({
     setCurrentIndex(0);
     setAnswers({});
     setResult(null);
+    setFailed(false);
     onClose();
   };
 
@@ -388,6 +401,20 @@ export default function MiniQuizDialog({
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
               <p className="mt-4 text-sm text-slate-500">{t("miniQuiz.loading")}</p>
+            </div>
+          )}
+
+          {/* Generation failed — manual retry (auto-retry would loop the API) */}
+          {failed && !loading && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <FileText size={40} className="text-slate-300" />
+              <p className="text-sm text-slate-500 text-center px-6">{t("miniQuiz.errors.generate")}</p>
+              <button
+                onClick={generateQuiz}
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors"
+              >
+                {t("miniQuiz.retry")}
+              </button>
             </div>
           )}
 

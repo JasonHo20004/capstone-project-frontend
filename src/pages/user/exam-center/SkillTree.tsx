@@ -7,12 +7,15 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import apiClient from "@/lib/api/config";
 import SkillTreeFlow, { type SkillTreeNodeData, NODE_THEME } from "./components/SkillTreeFlow";
 import MiniQuizDialog from "./components/MiniQuizDialog";
+import { playNodeComplete, playTreeComplete } from "./components/skill-sounds";
 import {
   Globe, Pizza, Briefcase, Hospital, Laptop, BookOpen, Home, Leaf,
-  Map, ArrowRight, BookMarked, Flame, Heart, Zap, Sparkles, ChevronRight,
+  Map, ArrowRight, BookMarked, Flame, Zap, Sparkles, ChevronRight, ChevronLeft,
+  CheckCircle2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -117,6 +120,85 @@ function readLastVisitedCache(): LastVisitedCache | null {
   }
 }
 
+// ─── Count-up number ─────────────────────────────────────────────────────────
+// Animates the XP figure in the header so a reward visibly "lands" instead of
+// the number silently jumping.
+
+function CountUpNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(value);
+  const prevRef = useRef(value);
+
+  useEffect(() => {
+    const from = prevRef.current;
+    const to = value;
+    prevRef.current = value;
+    if (from === to) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(to);
+      return;
+    }
+    const dur = 600;
+    const t0 = performance.now();
+    let raf: number;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(from + (to - from) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+
+  return <>{display}</>;
+}
+
+// ─── AI-generation waiting overlay ───────────────────────────────────────────
+// Tree generation is an LLM call (~10-20s). A bare button spinner reads as
+// "frozen"; this overlay shows a fake-but-honest stepper so the wait feels
+// purposeful. Steps advance on a timer and the last one holds until the
+// request actually resolves (the overlay unmounts).
+
+function GeneratingOverlay() {
+  const { t } = useTranslation("exam");
+  const [stepIdx, setStepIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setStepIdx((i) => Math.min(i + 1, 3)), 2400);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" role="status" aria-live="polite">
+      <div className="absolute inset-0 bg-slate-950/60" style={{ backdropFilter: "blur(6px)" }} />
+      <div className="relative bg-white rounded-3xl shadow-2xl px-8 py-8 w-[min(92vw,380px)] text-center">
+        <div className="text-5xl mb-3 select-none animate-bounce motion-reduce:animate-none">🐧</div>
+        <h3 className="text-lg font-black text-slate-900 mb-1">{t("skillTree.generating.title")}</h3>
+        <p className="text-xs text-slate-500 mb-5">{t("skillTree.generating.hint")}</p>
+        <div className="space-y-2.5 text-left">
+          {[1, 2, 3, 4].map((n, i) => (
+            <div
+              key={n}
+              className={`flex items-center gap-2.5 text-sm transition-opacity duration-300 ${i <= stepIdx ? "opacity-100" : "opacity-35"}`}
+            >
+              {i < stepIdx ? (
+                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+              ) : i === stepIdx ? (
+                <span className="inline-block w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin shrink-0" />
+              ) : (
+                <span className="inline-block w-4 h-4 rounded-full border-2 border-slate-200 shrink-0" />
+              )}
+              <span className={i === stepIdx ? "font-semibold text-slate-800" : "text-slate-500"}>
+                {t(`skillTree.generating.steps.${n}`)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function SkillTree() {
@@ -144,9 +226,18 @@ export default function SkillTree() {
   const [lastVisitedTreeId, setLastVisitedTreeId] = useState<string | null>(null);
 
   // ── Gamification (Sprint 5) ───────────────────────────────────────────────
+  // (Hearts were removed: they rendered a static ❤️×3 that never changed —
+  // a fake mechanic. Re-add only together with a real lives system.)
   const [xp, setXp] = useState<number>(() => readLocalXP());
   const [streak, setStreak] = useState<number>(() => readLocalStreak());
-  const [hearts] = useState<number>(3);
+
+  // ── Full-tree completion moment ───────────────────────────────────────────
+  const [treeComplete, setTreeComplete] = useState(false);
+  const prevPctRef = useRef(0);
+  const lastTreeIdRef = useRef<string | null>(null);
+
+  // ── Topic carousel (desktop arrows) ───────────────────────────────────────
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // ── Celebration (Sprint 7) ────────────────────────────────────────────────
   const [celebration, setCelebration] = useState<CelebrationState | null>(null);
@@ -227,11 +318,37 @@ export default function SkillTree() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ─── Full-tree completion detection ───────────────────────────────────────
+  // Fires only on the TRANSITION to 100% within a session — a tree that loads
+  // already complete (resume) sets the baseline without celebrating again.
+
+  useEffect(() => {
+    if (!treeData) {
+      lastTreeIdRef.current = null;
+      return;
+    }
+    const total = treeData.nodes.length || 1;
+    const done = treeData.nodes.filter((n: any) => n.status === "completed").length;
+    const pct = Math.round((done / total) * 100);
+    if (lastTreeIdRef.current !== treeData.id) {
+      lastTreeIdRef.current = treeData.id;
+      prevPctRef.current = pct;
+      return;
+    }
+    if (prevPctRef.current < 100 && pct === 100 && total > 1) {
+      setTreeComplete(true);
+      playTreeComplete();
+    }
+    prevPctRef.current = pct;
+  }, [treeData]);
+
   // ─── Node click → detail panel ────────────────────────────────────────────
 
   const handleNodeClick = useCallback(
     (nodeId: string, nodeData: SkillTreeNodeData) => {
-      if (nodeData.status === "completed" || nodeData.status === "locked") return;
+      // Locked clicks are handled (shake + hint) inside SkillTreeFlow.
+      // Completed nodes open as a REVIEW: replayable quiz, no XP.
+      if (nodeData.status === "locked") return;
       setDetailNode({ id: nodeId, data: nodeData });
     },
     []
@@ -263,6 +380,8 @@ export default function SkillTree() {
       }
     } catch (err) {
       console.error("Failed to generate skill tree:", err);
+      // Surface the failure — a silently dying spinner reads as a frozen app.
+      toast.error(t("skillTree.errors.generateFailed"));
     } finally {
       setLoading(false);
     }
@@ -299,6 +418,7 @@ export default function SkillTree() {
       }
     } catch (err) {
       console.error("Failed to resume skill tree:", err);
+      toast.error(t("skillTree.errors.generateFailed"));
     } finally {
       setResumingId(null);
     }
@@ -309,6 +429,14 @@ export default function SkillTree() {
   const handleQuizComplete = useCallback(
     async (wrongAnswers: any[]) => {
       if (!treeData || !quizNode || !selectedTopic || !selectedLevel) return;
+
+      // Review of an already-completed node: pure practice — no XP, no server
+      // mutation (re-completing would no-op; branching would graft remedial
+      // nodes onto a finished chain).
+      if (quizNode.data.status === "completed") {
+        toast.success(t("skillTree.tree.reviewDone"), { id: "skilltree-review" });
+        return;
+      }
 
       try {
         if (wrongAnswers.length === 0) {
@@ -325,6 +453,7 @@ export default function SkillTree() {
           setCelebration({
             message: t(`skillTree.celebrationMessages.${messageIndex}`),
           });
+          playNodeComplete();
           const dismissDelay = prefersReducedMotion ? 2500 : 1600;
           celebrationTimerRef.current = setTimeout(() => setCelebration(null), dismissDelay);
 
@@ -357,6 +486,9 @@ export default function SkillTree() {
         }
       } catch (err) {
         console.error("Failed to update tree after quiz:", err);
+        // XP/celebration already fired — tell the user the PROGRESS save
+        // failed so they don't think it's lost silently.
+        toast.error(t("skillTree.errors.updateFailed"));
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -382,22 +514,25 @@ export default function SkillTree() {
     const hasResumable = !savedTreesLoading && sortedTrees.length > 0;
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 font-sans relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50 font-sans relative overflow-hidden">
+        {/* AI is rebuilding a saved tree — block input with the stepper overlay */}
+        {resumingId && <GeneratingOverlay />}
+
         {/* Starfield ambient backdrop */}
         <div className="pointer-events-none absolute inset-0 opacity-40"
           style={{
-            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.5) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(199,210,254,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,0.4) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.5) 50%, transparent 51%)",
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(99,102,241,0.25) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(129,140,248,0.2) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(99,102,241,0.22) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(129,140,248,0.18) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(99,102,241,0.2) 50%, transparent 51%)",
             backgroundSize: "600px 600px",
           }}
         />
-        <header className="relative z-10 bg-slate-950/70 backdrop-blur border-b border-slate-800/50 h-16 flex items-center justify-between px-6">
+        <header className="relative z-10 bg-white/70 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-white text-lg">{t("skillTree.header.title")}</h1>
+            <h1 className="font-bold text-slate-900 text-lg">{t("skillTree.header.title")}</h1>
           </div>
-          <Link to="/dashboard" className="text-sm text-indigo-300 hover:text-indigo-100 font-medium">
+          <Link to="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
             {t("skillTree.header.back")}
           </Link>
         </header>
@@ -408,8 +543,8 @@ export default function SkillTree() {
           {hasResumable && (
             <div className="mb-12">
               <div className="mb-6">
-                <h2 className="text-2xl font-black text-white mb-1">{t("skillTree.resume.heading")}</h2>
-                <p className="text-slate-400 text-sm">{t("skillTree.resume.subtitle")}</p>
+                <h2 className="text-2xl font-black text-slate-900 mb-1">{t("skillTree.resume.heading")}</h2>
+                <p className="text-slate-500 text-sm">{t("skillTree.resume.subtitle")}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -425,10 +560,10 @@ export default function SkillTree() {
                       key={tree.id}
                       onClick={() => handleResumeTree(tree)}
                       disabled={!!resumingId}
-                      className={`group relative bg-slate-900/60 backdrop-blur rounded-2xl border-2 p-5 text-left transition-all duration-300
+                      className={`group relative bg-white rounded-2xl border-2 p-5 text-left transition-all duration-300
                         ${isResuming
-                          ? "border-indigo-400/70 shadow-lg shadow-indigo-500/20"
-                          : "border-slate-700/60 hover:border-indigo-400/60 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5"
+                          ? "border-indigo-400 shadow-lg shadow-indigo-500/20"
+                          : "border-slate-200 hover:border-indigo-400/60 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5"
                         }
                         ${resumingId && !isResuming ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
@@ -441,14 +576,14 @@ export default function SkillTree() {
                         {/* Header row */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
-                            {tInfo && <tInfo.icon size={16} className="text-slate-300 shrink-0" />}
-                            <span className="font-bold text-white text-sm truncate">
+                            {tInfo && <tInfo.icon size={16} className="text-slate-600 shrink-0" />}
+                            <span className="font-bold text-slate-900 text-sm truncate">
                               {tInfo ? topicLabel(tInfo.id) : tree.topic}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 ml-2 shrink-0">
                             {isLastVisited && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200">
                                 {t("skillTree.resume.lastVisited")}
                               </span>
                             )}
@@ -463,7 +598,7 @@ export default function SkillTree() {
 
                         {/* Progress bar */}
                         <div className="mb-2.5">
-                          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
@@ -478,16 +613,16 @@ export default function SkillTree() {
 
                         {/* Stats + CTA */}
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-slate-400 font-medium tabular-nums">
+                          <span className="text-[11px] text-slate-500 font-medium tabular-nums">
                             {progress.completed}/{progress.total} · {progress.percentage}%
                           </span>
                           {isResuming ? (
-                            <span className="flex items-center gap-1.5 text-[11px] text-indigo-300 font-semibold">
-                              <span className="inline-block w-3 h-3 border border-indigo-300 border-t-indigo-100 rounded-full animate-spin" />
+                            <span className="flex items-center gap-1.5 text-[11px] text-indigo-600 font-semibold">
+                              <span className="inline-block w-3 h-3 border border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
                               {t("skillTree.resume.loading")}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-indigo-300 font-semibold group-hover:text-indigo-100 transition-colors">
+                            <span className="text-[11px] text-indigo-600 font-semibold group-hover:text-indigo-800 transition-colors">
                               {t("skillTree.resume.tapToResume")}
                             </span>
                           )}
@@ -505,21 +640,40 @@ export default function SkillTree() {
             <div className={`mb-6 ${hasResumable ? "" : "text-center"}`}>
               {hasResumable ? (
                 <>
-                  <h2 className="text-2xl font-black text-white mb-1">{t("skillTree.newTopic.headingResumable")}</h2>
-                  <p className="text-slate-400 text-sm">{t("skillTree.newTopic.subtitleResumable")}</p>
+                  <h2 className="text-2xl font-black text-slate-900 mb-1">{t("skillTree.newTopic.headingResumable")}</h2>
+                  <p className="text-slate-500 text-sm">{t("skillTree.newTopic.subtitleResumable")}</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-3xl font-black text-white mb-3">{t("skillTree.newTopic.heading")}</h2>
-                  <p className="text-slate-400 text-lg">{t("skillTree.newTopic.subtitle")}</p>
+                  <h2 className="text-3xl font-black text-slate-900 mb-3">{t("skillTree.newTopic.heading")}</h2>
+                  <p className="text-slate-500 text-lg">{t("skillTree.newTopic.subtitle")}</p>
                 </>
               )}
             </div>
 
-            <div
-              className="flex gap-5 overflow-x-auto overflow-y-visible pt-2 pb-6 -mx-6 px-6 snap-x snap-mandatory"
-              style={{ scrollbarWidth: "thin" }}
-            >
+            <div className="relative">
+              {/* Desktop affordance: mouse users can't easily scroll sideways,
+                  and without arrows half the topics were effectively hidden */}
+              <button
+                onClick={() => carouselRef.current?.scrollBy({ left: -320, behavior: "smooth" })}
+                aria-label={t("skillTree.carousel.prev")}
+                className="hidden md:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => carouselRef.current?.scrollBy({ left: 320, behavior: "smooth" })}
+                aria-label={t("skillTree.carousel.next")}
+                className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+              >
+                <ChevronRight size={20} />
+              </button>
+
+              <div
+                ref={carouselRef}
+                className="flex gap-5 overflow-x-auto overflow-y-visible pt-2 pb-6 -mx-6 px-6 snap-x snap-mandatory"
+                style={{ scrollbarWidth: "thin" }}
+              >
               {TOPICS.map((topic) => (
                 <button
                   key={topic.id}
@@ -580,6 +734,7 @@ export default function SkillTree() {
                   </div>
                 </button>
               ))}
+              </div>
             </div>
           </div>
         </div>
@@ -593,24 +748,27 @@ export default function SkillTree() {
 
   if (step === "level") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 font-sans relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50 font-sans relative overflow-hidden">
+        {/* AI is generating the tree — show the stepper overlay over the page */}
+        {loading && <GeneratingOverlay />}
+
         {/* Starfield backdrop */}
         <div className="pointer-events-none absolute inset-0 opacity-40"
           style={{
-            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.5) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(199,210,254,0.6) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,0.4) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.5) 50%, transparent 51%)",
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(99,102,241,0.25) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(129,140,248,0.2) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(99,102,241,0.22) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(129,140,248,0.18) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(99,102,241,0.2) 50%, transparent 51%)",
             backgroundSize: "600px 600px",
           }}
         />
-        <header className="relative z-10 bg-slate-950/70 backdrop-blur border-b border-slate-800/50 h-16 flex items-center justify-between px-6">
+        <header className="relative z-10 bg-white/70 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-white text-lg">{t("skillTree.header.title")}</h1>
+            <h1 className="font-bold text-slate-900 text-lg">{t("skillTree.header.title")}</h1>
           </div>
           <button
             onClick={() => setStep("topic")}
-            className="text-sm text-indigo-300 hover:text-indigo-100 font-medium"
+            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
           >
             {t("skillTree.header.changeTopic")}
           </button>
@@ -618,12 +776,12 @@ export default function SkillTree() {
 
         <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900/60 backdrop-blur rounded-full shadow-lg border border-slate-700/60 mb-4 text-slate-100">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full shadow-lg border border-slate-200 mb-4 text-slate-700">
               {topicInfo && <topicInfo.icon size={18} />}
               <span className="font-bold">{topicInfo ? topicLabel(topicInfo.id) : ""}</span>
             </div>
-            <h2 className="text-3xl font-black text-white mb-3">{t("skillTree.level.selectTitle")}</h2>
-            <p className="text-slate-400">{t("skillTree.level.cefrScale")}</p>
+            <h2 className="text-3xl font-black text-slate-900 mb-3">{t("skillTree.level.selectTitle")}</h2>
+            <p className="text-slate-500">{t("skillTree.level.cefrScale")}</p>
           </div>
 
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-10">
@@ -631,17 +789,17 @@ export default function SkillTree() {
               <button
                 key={level.id}
                 onClick={() => setSelectedLevel(level.id)}
-                className={`rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105 border-2 backdrop-blur ${
+                className={`rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105 border-2 ${
                   selectedLevel === level.id
-                    ? "border-indigo-400 shadow-lg shadow-indigo-500/30 bg-slate-900/80"
-                    : "border-slate-700/60 bg-slate-900/40 hover:border-slate-500/80"
+                    ? "border-indigo-400 shadow-lg shadow-indigo-500/30 bg-indigo-50"
+                    : "border-slate-200 bg-white hover:border-slate-300"
                 }`}
               >
                 <div className="text-2xl font-black mb-0.5" style={{ color: level.color }}>
                   {level.label}
                 </div>
-                <div className="text-[10px] text-slate-200 font-semibold leading-tight">{t(`skillTree.levels.${level.id}.description`)}</div>
-                <div className="text-[8px] text-slate-400 mt-1 leading-snug">{t(`skillTree.levels.${level.id}.subtext`)}</div>
+                <div className="text-[10px] text-slate-700 font-semibold leading-tight">{t(`skillTree.levels.${level.id}.description`)}</div>
+                <div className="text-[8px] text-slate-500 mt-1 leading-snug">{t(`skillTree.levels.${level.id}.subtext`)}</div>
               </button>
             ))}
           </div>
@@ -649,7 +807,7 @@ export default function SkillTree() {
           <div className="text-center mb-4">
             <Link
               to="/placement-test"
-              className="text-sm text-indigo-300 hover:text-indigo-100 font-medium transition-colors"
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
             >
               {t("skillTree.level.placementHint")}
             </Link>
@@ -688,36 +846,31 @@ export default function SkillTree() {
   const progressPct    = Math.round((completedCount / totalNodes) * 100);
 
   return (
-    <div className="bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 font-sans">
+    <div className="bg-gradient-to-b from-slate-50 via-white to-indigo-50 font-sans">
 
       {/* ── Sprint 6: Gamification header ─────────────────────────────── */}
-      <header className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 px-4 py-3 sticky top-0 z-30">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-3 sticky top-0 z-30">
         <div className="flex items-center justify-between gap-2 mb-2">
 
           {/* Topic info */}
           <div className="flex items-center gap-2 min-w-0 shrink">
-            {topicInfo && <topicInfo.icon size={16} className="text-slate-300 shrink-0" />}
+            {topicInfo && <topicInfo.icon size={16} className="text-slate-600 shrink-0" />}
             <div className="min-w-0">
-              <div className="font-bold text-white text-sm leading-tight truncate">{topicInfo ? topicLabel(topicInfo.id) : ""}</div>
+              <div className="font-bold text-slate-900 text-sm leading-tight truncate">{topicInfo ? topicLabel(topicInfo.id) : ""}</div>
               <div className="text-[10px] text-slate-500">{t("skillTree.tree.level", { level: levelInfo?.label })}</div>
             </div>
           </div>
 
           {/* Gamification stats */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <span className="flex items-center gap-1 text-orange-400">
+            <span className="flex items-center gap-1 text-orange-500">
               <Flame size={13} />
               <span className="text-xs font-bold tabular-nums">{streak}</span>
             </span>
-            <span className="text-slate-700 text-xs">·</span>
-            <span className="flex items-center gap-1 text-rose-400">
-              <Heart size={12} fill="currentColor" />
-              <span className="text-xs font-bold tabular-nums">{hearts}</span>
-            </span>
-            <span className="text-slate-700 text-xs">·</span>
-            <span className="flex items-center gap-1 text-amber-400">
+            <span className="text-slate-300 text-xs">·</span>
+            <span className="flex items-center gap-1 text-amber-500">
               <Zap size={12} fill="currentColor" />
-              <span className="text-xs font-bold tabular-nums">{xp}</span>
+              <span className="text-xs font-bold tabular-nums"><CountUpNumber value={xp} /></span>
             </span>
           </div>
 
@@ -735,8 +888,9 @@ export default function SkillTree() {
                 setTreeData(null);
                 setSelectedTopic(null);
                 setSelectedLevel(null);
+                setTreeComplete(false);
               }}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
             >
               {t("skillTree.tree.change")}
             </button>
@@ -745,7 +899,7 @@ export default function SkillTree() {
 
         {/* Progress bar */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
@@ -791,8 +945,8 @@ export default function SkillTree() {
                 background: `linear-gradient(90deg, ${NODE_THEME[detailNode.data.type]?.bg || "#3b82f6"}, ${NODE_THEME[detailNode.data.type]?.bgDark || "#2563eb"})`,
               }}
             />
-            <div className="bg-slate-900 p-6">
-              <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5" />
+            <div className="bg-white p-6">
+              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-5" />
               <div className="flex items-start gap-4">
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg"
@@ -806,21 +960,21 @@ export default function SkillTree() {
                   })()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-white text-lg leading-tight">{detailNode.data.label}</h3>
+                  <h3 className="font-bold text-slate-900 text-lg leading-tight">{detailNode.data.label}</h3>
                   {detailNode.data.description && (
-                    <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">{detailNode.data.description}</p>
+                    <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{detailNode.data.description}</p>
                   )}
                   <div className="flex gap-1.5 mt-3 flex-wrap">
                     {detailNode.data.mixedSkills.map((skill) => {
                       const skillColors: Record<string, string> = {
-                        grammar:    "bg-blue-500/20 text-blue-300 border-blue-500/30",
-                        vocabulary: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-                        listening:  "bg-amber-500/20 text-amber-300 border-amber-500/30",
+                        grammar:    "bg-blue-100 text-blue-700 border-blue-200",
+                        vocabulary: "bg-emerald-100 text-emerald-700 border-emerald-200",
+                        listening:  "bg-amber-100 text-amber-700 border-amber-200",
                       };
                       return (
                         <span
                           key={skill}
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${skillColors[skill] || "bg-slate-700 text-slate-300 border-slate-600"}`}
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${skillColors[skill] || "bg-slate-100 text-slate-600 border-slate-200"}`}
                         >
                           {skill}
                         </span>
@@ -837,11 +991,18 @@ export default function SkillTree() {
                 }}
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  <span className="text-xl">🎮</span>
-                  {t("skillTree.tree.startQuiz")}
+                  <span className="text-xl">{detailNode.data.status === "completed" ? "🔁" : "🎮"}</span>
+                  {detailNode.data.status === "completed"
+                    ? t("skillTree.tree.practiceAgain")
+                    : t("skillTree.tree.startQuiz")}
                 </span>
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
+              {detailNode.data.status === "completed" && (
+                <p className="text-center text-[11px] text-slate-400 mt-2">
+                  {t("skillTree.tree.reviewNoXp")}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -863,6 +1024,71 @@ export default function SkillTree() {
           userId={getUserId()}
           onQuizComplete={handleQuizComplete}
         />
+      )}
+
+      {/* ── Full-tree completion moment — the emotional peak of the feature ── */}
+      {treeComplete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden" role="dialog" aria-modal="true">
+          <div
+            className={`absolute inset-0 ${prefersReducedMotion ? "bg-slate-950/85" : "bg-slate-950/80 skill-fade-in"}`}
+            style={{ backdropFilter: "blur(8px)" }}
+          />
+
+          {/* Star burst (reuses the celebration keyframes below) */}
+          {!prefersReducedMotion && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
+              {Array.from({ length: 12 }).map((_, i) => {
+                const angle = (i / 12) * Math.PI * 2;
+                const colors = ["#fbbf24", "#fde68a", "#a78bfa", "#f472b6", "#34d399"];
+                const color = colors[i % colors.length];
+                return (
+                  <Sparkles
+                    key={i}
+                    size={i % 3 === 0 ? 30 : 20}
+                    className="absolute skill-burst-star"
+                    style={{
+                      color,
+                      filter: `drop-shadow(0 0 8px ${color})`,
+                      ["--dx" as never]: `${Math.cos(angle) * 260}px`,
+                      ["--dy" as never]: `${Math.sin(angle) * 260}px`,
+                      animationDelay: `${i * 35}ms`,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          <div className="relative text-center px-6 max-w-md">
+            <div className="text-7xl mb-4 select-none">🏆</div>
+            <h2 className="text-4xl md:text-5xl font-black text-amber-400 drop-shadow-[0_0_24px_rgba(251,191,36,0.7)] mb-3">
+              {t("skillTree.treeComplete.title")}
+            </h2>
+            <p className="text-slate-200 text-base mb-8">
+              {t("skillTree.treeComplete.subtitle", { topic: topicInfo ? topicLabel(topicInfo.id) : "" })}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => {
+                  setTreeComplete(false);
+                  setStep("topic");
+                  setTreeData(null);
+                  setSelectedTopic(null);
+                  setSelectedLevel(null);
+                }}
+                className="px-7 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/40 hover:scale-105 transition-transform"
+              >
+                {t("skillTree.treeComplete.newTopic")}
+              </button>
+              <button
+                onClick={() => setTreeComplete(false)}
+                className="px-7 py-3 rounded-xl font-bold text-slate-200 border border-slate-500 hover:bg-white/10 transition-colors"
+              >
+                {t("skillTree.treeComplete.stay")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Idea 4: Full-screen node-completion celebration ──────────── */}

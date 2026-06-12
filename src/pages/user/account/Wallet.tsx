@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { TiltCard } from '@/components/ui/tilt-card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -39,7 +40,8 @@ interface BalanceCardProps {
 function BalanceCard({ currentBalance, monthlyTopupAmount, monthlySuccessfulTransactions }: BalanceCardProps) {
   const { t } = useTranslation('account');
   return (
-    <Card className="group relative overflow-hidden rounded-[32px] border border-slate-200/70 bg-[linear-gradient(145deg,hsl(224_71%_18%)_0%,hsl(214_78%_25%)_48%,hsl(196_79%_34%)_100%)] p-6 text-white shadow-[0_28px_90px_-36px_rgba(15,23,42,0.7)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_36px_110px_-42px_rgba(15,23,42,0.76)] animate-in fade-in slide-in-from-bottom-3">
+    <TiltCard maxTilt={5} glare={false} className="rounded-[32px]">
+    <Card className="group relative overflow-hidden rounded-[32px] border border-slate-200/70 bg-[linear-gradient(145deg,hsl(224_71%_18%)_0%,hsl(214_78%_25%)_48%,hsl(196_79%_34%)_100%)] p-6 text-white shadow-[0_28px_90px_-36px_rgba(15,23,42,0.7)] transition-all duration-500 hover:shadow-[0_36px_110px_-42px_rgba(15,23,42,0.76)] animate-in fade-in slide-in-from-bottom-3">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_30%)]" />
       <div className="absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl transition-transform duration-700 group-hover:scale-110" />
@@ -76,6 +78,7 @@ function BalanceCard({ currentBalance, monthlyTopupAmount, monthlySuccessfulTran
         </div>
       </div>
     </Card>
+    </TiltCard>
   );
 }
 

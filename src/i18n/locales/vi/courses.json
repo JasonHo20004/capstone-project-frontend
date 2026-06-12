@@ -222,6 +222,18 @@
       "progressPercentDone": "Bạn đã hoàn thành {{percent}}% khóa học này.",
       "instructor": "Giảng viên",
       "ratingsFromLearners": "{{count}} đánh giá từ học viên",
+      "verifiedInstructor": "Giảng viên đã xác minh",
+      "stats": {
+        "progress": "Tiến độ",
+        "lessons": "Bài học",
+        "duration": "Thời lượng",
+        "minutesUnit": "phút"
+      },
+      "features": {
+        "video": "Video bài giảng HD",
+        "materials": "Tài liệu tải về",
+        "qa": "Hỏi đáp cộng đồng"
+      },
       "whatYouLearnTitle": "Bạn sẽ học được gì?",
       "whatYouLearnDesc": "Sử dụng danh sách bài học ở bên phải để điều hướng qua từng nội dung chi tiết. Mỗi bài học có thể bao gồm video, tài liệu đính kèm và khu vực hỏi đáp để bạn tương tác với cộng đồng.",
       "lastUpdated": "Cập nhật lần cuối: {{date}}"
@@ -229,6 +241,7 @@
     "syllabusSidebar": {
       "lessonsLabel": "Danh sách bài học",
       "title": "Danh sách bài học",
+      "completedOfTotal": "{{completed}}/{{total}} đã hoàn thành",
       "empty": "Khóa học chưa có bài học nào.",
       "noDescription": "Không có mô tả",
       "minutes": "{{count}} phút",

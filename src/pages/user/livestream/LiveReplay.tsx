@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AIAvatarAnime } from "@/components/user/livestream/AIAvatarAnime";
+
+// 3D hologram teacher — lazy-chunked like PenguinHero3D; orb is the fallback.
+// No audioVolume here (replay plays plain <audio>), so the 3D mouth uses its
+// built-in sine animation while isSpeaking.
+const AIAvatar3D = lazy(() => import("@/components/user/livestream/AIAvatar3D"));
 import { LessonSlide } from "@/components/user/livestream/LessonSlide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +15,22 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft, Play, Pause, RotateCcw, Volume2, BookOpen, MessageSquare, Check, PlaySquare,
+  Zap, Users,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // Routes through the api-gateway (proxies /api/livestream/* to rag-service).
 const API_BASE = import.meta.env.VITE_GATEWAY_URL ?? "http://localhost:3000";
+
+interface ReplayQuiz {
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation?: string;
+  counts?: number[];
+  total_answered?: number;
+}
 
 interface ReplaySection {
   index: number;
@@ -25,8 +42,9 @@ interface ReplaySection {
   key_points?: string[];
   keywords?: { term: string; meaning: string }[];
   example?: string;
-  practice_phrase?: string;
   image_url?: string;
+  // Room events that ran after this slide, kept in the recording.
+  quiz?: ReplayQuiz;
 }
 
 interface ReplayQA {
@@ -80,11 +98,11 @@ export default function LiveReplay() {
   useEffect(() => {
     fetch(`${API_BASE}/api/livestream/recordings/${roomId}`)
       .then((r) => {
-        if (!r.ok) throw new Error("Không tìm thấy bản ghi");
+        if (!r.ok) throw new Error("notFound"); // localized at render time
         return r.json();
       })
       .then(setRecording)
-      .catch((e) => setError(e.message))
+      .catch(() => setError("notFound"))
       .finally(() => setLoading(false));
   }, [roomId]);
 
@@ -203,6 +221,9 @@ export default function LiveReplay() {
   }
 
   function playQAAnswer(qa: ReplayQA) {
+    // Pause the lesson narration first so the two clips don't play over each
+    // other; the user can resume the lesson with the Play button afterwards.
+    if (audioRef.current && !audioRef.current.paused) handlePause();
     qaAudioRef.current?.pause();
     const audio = new Audio(qa.audio_url);
     qaAudioRef.current = audio;
@@ -228,7 +249,7 @@ export default function LiveReplay() {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)] bg-slate-50">
         <div className="text-center space-y-4">
-          <p className="text-rose-500 text-lg">{error || t("replay.notFound")}</p>
+          <p className="text-rose-500 text-lg">{t("replay.notFound")}</p>
           <Button variant="outline" onClick={() => navigate("/live")}>
             <ArrowLeft className="h-4 w-4 mr-2" /> {t("replay.backToRooms")}
           </Button>
@@ -279,21 +300,68 @@ export default function LiveReplay() {
             {/* Stage */}
             <div className="bg-gradient-to-b from-indigo-50 to-white px-3 pt-3 pb-3 border-b border-slate-100">
               {activeSection ? (
-                <LessonSlide
-                  chunk={activeSection}
-                  index={currentSection}
-                  total={recording.sections.length}
-                  active={true}
-                  ragBase={API_BASE}
-                  avatarSlot={
-                    <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border-2 border-white shadow-xl bg-white/30 backdrop-blur-sm">
-                      <AIAvatarAnime isSpeaking={isSpeaking} className="w-full h-full" name="" />
+                <>
+                  <LessonSlide
+                    chunk={activeSection}
+                    index={currentSection}
+                    total={recording.sections.length}
+                    active={true}
+                    ragBase={API_BASE}
+                    avatarSlot={
+                      <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border-2 border-white shadow-xl bg-white/30 backdrop-blur-sm">
+                        <AIAvatarAnime isSpeaking={isSpeaking} className="w-full h-full" name="" />
+                      </div>
+                    }
+                  />
+
+                  {/* Quiz checkpoint that ran after this slide — static recap
+                      of the question, the room's votes and the explanation */}
+                  {activeSection.quiz && (
+                    <div className="mt-3 rounded-xl border border-indigo-100 bg-white p-3 space-y-2">
+                      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-500">
+                        <Zap className="w-3 h-3" />
+                        {t("replay.quizTitle")}
+                        {(activeSection.quiz.total_answered ?? 0) > 0 && (
+                          <span className="ml-auto flex items-center gap-1 font-medium normal-case tracking-normal text-slate-400">
+                            <Users className="w-3 h-3" />
+                            {t("replay.quizAnswered", { count: activeSection.quiz.total_answered })}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-800">{activeSection.quiz.question}</p>
+                      <div className="space-y-1">
+                        {activeSection.quiz.options.map((opt, i) => {
+                          const isCorrect = i === activeSection.quiz!.correct_index;
+                          const count = activeSection.quiz!.counts?.[i] ?? 0;
+                          return (
+                            <div
+                              key={i}
+                              className={cn(
+                                "flex items-center gap-2 text-xs rounded-lg px-2 py-1",
+                                isCorrect
+                                  ? "bg-emerald-50 ring-1 ring-emerald-200 text-emerald-800 font-semibold"
+                                  : "bg-slate-50 text-slate-600",
+                              )}
+                            >
+                              {isCorrect && <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600" />}
+                              <span className="flex-1 leading-tight">{opt}</span>
+                              <span className="tabular-nums text-slate-400 shrink-0">{count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {activeSection.quiz.explanation && (
+                        <p className="text-xs text-slate-500 leading-relaxed">{activeSection.quiz.explanation}</p>
+                      )}
                     </div>
-                  }
-                />
+                  )}
+
+                </>
               ) : (
                 <div className="flex flex-col items-center gap-3 py-8">
-                  <AIAvatarAnime isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />
+                  <Suspense fallback={<AIAvatarAnime isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />}>
+                    <AIAvatar3D isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />
+                  </Suspense>
                   <p className="text-sm text-slate-400">{t("replay.clickPlay")}</p>
                 </div>
               )}
@@ -302,8 +370,8 @@ export default function LiveReplay() {
             {/* Section list */}
             <div className="flex items-center gap-1.5 px-4 py-2 border-b border-slate-100 bg-white/95 backdrop-blur-sm sticky top-0 z-10">
               <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-xs font-medium text-slate-500">Nội dung bài học</span>
-              <span className="ml-auto text-[10px] text-slate-400">{recording.sections.length} slide</span>
+              <span className="text-xs font-medium text-slate-500">{t("replay.sectionsTitle")}</span>
+              <span className="ml-auto text-[10px] text-slate-400">{t("replay.slideCount", { count: recording.sections.length })}</span>
             </div>
             <div className="px-4 py-3 space-y-2">
               {recording.sections.map((section, i) => {
@@ -378,7 +446,7 @@ export default function LiveReplay() {
                 size="icon"
                 className="text-slate-500 hover:text-slate-800"
                 onClick={handleRestart}
-                aria-label="Phát lại từ đầu"
+                aria-label={t("replay.restart")}
               >
                 <RotateCcw className="h-5 w-5" />
               </Button>
@@ -387,7 +455,7 @@ export default function LiveReplay() {
                   size="icon"
                   className="bg-indigo-600 hover:bg-indigo-700 rounded-full h-10 w-10"
                   onClick={handlePause}
-                  aria-label="Tạm dừng"
+                  aria-label={t("replay.pause")}
                 >
                   <Pause className="h-5 w-5" />
                 </Button>
@@ -396,7 +464,7 @@ export default function LiveReplay() {
                   size="icon"
                   className="bg-indigo-600 hover:bg-indigo-700 rounded-full h-10 w-10"
                   onClick={handlePlay}
-                  aria-label="Phát"
+                  aria-label={t("replay.play")}
                 >
                   <Play className="h-5 w-5 ml-0.5" />
                 </Button>
@@ -436,9 +504,11 @@ export default function LiveReplay() {
                         <span className="text-white text-[9px] font-bold">AI</span>
                       </div>
                       <div className="max-w-[85%] bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
-                        <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap break-words">
-                          {item.answer}
-                        </p>
+                        {/* Answers are generated as Markdown — render it like the
+                            live chat does instead of showing raw ** and # marks */}
+                        <div className="text-sm text-slate-800 leading-relaxed break-words prose prose-sm prose-slate max-w-none">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.answer}</ReactMarkdown>
+                        </div>
                         {item.audio_url && (
                           <button
                             onClick={() => playQAAnswer(item)}

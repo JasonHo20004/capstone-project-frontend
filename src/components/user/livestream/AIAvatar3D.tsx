@@ -2,6 +2,7 @@ import { useRef, useMemo, useEffect, Suspense, Component, type ReactNode, type E
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { cn } from '@/lib/utils';
+import { AIAvatarAnime } from './AIAvatarAnime';
 
 class ThreeErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { errored: boolean }> {
   state = { errored: false };
@@ -14,6 +15,11 @@ interface AIAvatar3DProps {
   isSpeaking: boolean;
   isThinking?: boolean;
   className?: string;
+  /** Shown on the badge below the character (mirror of AIAvatarAnime). */
+  name?: string;
+  /** Live TTS amplitude 0..1 from the Web Audio analyser — drives the mouth
+   *  and halo. Falls back to a sine-wave mouth when absent (e.g. replay). */
+  audioVolume?: number;
   accentColor?: string;
 }
 
@@ -21,11 +27,12 @@ interface CharacterProps {
   isSpeaking: boolean;
   isThinking: boolean;
   accentColor: string;
+  audioVolume: number;
 }
 
 // ─── Hologram Character ──────────────────────────────────────────────────────
 
-function HoloCharacter({ isSpeaking, isThinking, accentColor }: CharacterProps) {
+function HoloCharacter({ isSpeaking, isThinking, accentColor, audioVolume }: CharacterProps) {
   const groupRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Mesh>(null);
   const haloRef = useRef<THREE.Mesh>(null);
@@ -64,29 +71,36 @@ function HoloCharacter({ isSpeaking, isThinking, accentColor }: CharacterProps) 
       groupRef.current.rotation.z += (0 - groupRef.current.rotation.z) * 0.08;
     }
 
-    // Halo pulse
+    // Halo pulse — real TTS amplitude makes it breathe with the voice
     if (haloRef.current) {
       const pulse = isSpeaking ? 0.12 : 0.04;
       const speed = isSpeaking ? 6 : 2;
-      haloRef.current.scale.setScalar(1.35 + Math.sin(t * speed) * pulse);
+      haloRef.current.scale.setScalar(1.35 + Math.sin(t * speed) * pulse + audioVolume * 0.15);
       const mat = haloRef.current.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity = isSpeaking ? 1.4 + Math.sin(t * speed) * 0.4 : 0.6;
+      mat.emissiveIntensity = isSpeaking
+        ? 1.2 + audioVolume * 1.2 + Math.sin(t * speed) * 0.3
+        : 0.6;
     }
 
     // Head emissive
     if (headRef.current) {
       const mat = headRef.current.material as THREE.MeshStandardMaterial;
-      const target = isSpeaking ? 0.9 : isThinking ? 0.7 : 0.55;
+      const target = isSpeaking ? 0.75 + audioVolume * 0.5 : isThinking ? 0.7 : 0.55;
       mat.emissiveIntensity += (target - mat.emissiveIntensity) * 0.1;
       mat.emissive.copy(isSpeaking ? speakingEmissive : idleEmissive);
     }
 
-    // Mouth animation
+    // Mouth animation — driven by the real audio amplitude when the analyser
+    // provides it (live room); otherwise a layered sine wave (replay, muted).
     if (mouthRef.current) {
       let target = 0.15;
       if (isSpeaking) {
-        const v = 0.55 + 0.35 * Math.sin(t * 14) + 0.25 * Math.sin(t * 23 + 1.3) + 0.15 * Math.sin(t * 9 + 0.7);
-        target = Math.max(0.2, Math.min(1.4, v));
+        if (audioVolume > 0.01) {
+          target = Math.max(0.2, Math.min(1.4, 0.25 + audioVolume * 1.6 + 0.08 * Math.sin(t * 18)));
+        } else {
+          const v = 0.55 + 0.35 * Math.sin(t * 14) + 0.25 * Math.sin(t * 23 + 1.3) + 0.15 * Math.sin(t * 9 + 0.7);
+          target = Math.max(0.2, Math.min(1.4, v));
+        }
       } else if (isThinking) {
         target = 0.2 + Math.abs(Math.sin(t * 2)) * 0.05;
       }
@@ -210,14 +224,14 @@ function ParticleField({ count = 80, accentColor }: { count?: number; accentColo
 
 // ─── Scene ───────────────────────────────────────────────────────────────────
 
-function Scene({ isSpeaking, isThinking, accentColor }: { isSpeaking: boolean; isThinking: boolean; accentColor: string }) {
+function Scene({ isSpeaking, isThinking, accentColor, audioVolume }: CharacterProps) {
   return (
     <>
       <ambientLight intensity={0.4} />
       <pointLight position={[3, 4, 4]} intensity={1.2} color={accentColor} />
       <pointLight position={[-3, -2, 3]} intensity={0.6} color="#ff5cd2" />
       <directionalLight position={[0, 5, 5]} intensity={0.5} />
-      <HoloCharacter isSpeaking={isSpeaking} isThinking={isThinking} accentColor={accentColor} />
+      <HoloCharacter isSpeaking={isSpeaking} isThinking={isThinking} accentColor={accentColor} audioVolume={audioVolume} />
       <ParticleField accentColor={accentColor} />
     </>
   );
@@ -225,27 +239,89 @@ function Scene({ isSpeaking, isThinking, accentColor }: { isSpeaking: boolean; i
 
 // ─── Public component ────────────────────────────────────────────────────────
 
-export function AIAvatar3D({ isSpeaking, isThinking = false, className, accentColor = '#7dd3fc' }: AIAvatar3DProps) {
+export function AIAvatar3D({
+  isSpeaking,
+  isThinking = false,
+  className,
+  name = 'AI Sensei',
+  audioVolume = 0,
+  accentColor = '#7dd3fc',
+}: AIAvatar3DProps) {
+  // prefers-reduced-motion → serve the calmer 2D orb instead of a constantly
+  // animating WebGL scene. Also the fallback when WebGL fails (boundary below).
+  const reduceMotion = useMemo(
+    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+    [],
+  );
+  const orbFallback = (
+    <AIAvatarAnime
+      isSpeaking={isSpeaking}
+      isThinking={isThinking}
+      audioVolume={audioVolume}
+      className={className}
+      name={name}
+    />
+  );
+  if (reduceMotion) return orbFallback;
+
   return (
-    <div className={cn('relative', className)} aria-label="Trợ giảng AI 3D" role="img">
-      <ThreeErrorBoundary
-        fallback={
-          <div className="flex items-center justify-center w-full h-full text-xs text-muted-foreground">
-            3D unavailable
-          </div>
-        }
+    <ThreeErrorBoundary fallback={orbFallback}>
+      {/* Same dark card + ambient glow as the 2D orb so the two variants are
+          visually interchangeable (Suspense/error swaps don't "jump"). */}
+      <div
+        className={cn(
+          'relative flex flex-col items-center justify-center overflow-hidden rounded-2xl select-none bg-zinc-950',
+          className,
+        )}
+        aria-label={name || 'AI teacher'}
+        role="img"
       >
+        <div
+          className={cn(
+            'absolute inset-0 transition-opacity duration-700 opacity-20',
+            isSpeaking ? 'bg-fuchsia-900/40' : isThinking ? 'bg-blue-900/40' : 'bg-indigo-900/40',
+          )}
+          style={{ filter: 'blur(40px)' }}
+        />
+
         <Canvas
           camera={{ position: [0, 0, 3.2], fov: 38 }}
-          dpr={[1, 2]}
+          dpr={[1, 1.5]}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           style={{ background: 'transparent' }}
         >
           <Suspense fallback={null}>
-            <Scene isSpeaking={isSpeaking} isThinking={isThinking} accentColor={accentColor} />
+            <Scene
+              isSpeaking={isSpeaking}
+              isThinking={isThinking}
+              accentColor={accentColor}
+              audioVolume={audioVolume}
+            />
           </Suspense>
         </Canvas>
-      </ThreeErrorBoundary>
-    </div>
+
+        {/* Name badge — mirror of AIAvatarAnime's */}
+        {name && (
+          <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-1 pointer-events-none">
+            <span
+              className="text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg"
+              style={{
+                background: 'rgba(24, 24, 27, 0.7)',
+                color: '#f4f4f5',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {name}
+            </span>
+          </div>
+        )}
+      </div>
+    </ThreeErrorBoundary>
   );
 }
+
+// Default export so pages can React.lazy() this component and keep three.js
+// out of their main chunk (same convention as PenguinHero3D).
+export default AIAvatar3D;

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import CourseCard from '@/components/user/course/CourseCard';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +31,9 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { StatPill } from '@/components/ui/stat-pill';
 import type { Course } from '@/domain';
+
+// Lazy so three.js stays out of the dashboard's initial bundle.
+const PenguinHero3D = lazy(() => import('@/components/user/home/PenguinHero3D'));
 
 // ─── Enrolled Course Progress Card Component ─────────────────────────────
 const EnrolledCourseProgressCard = ({ course }: { course: Course }) => {
@@ -444,6 +448,17 @@ const Index = () => {
                 transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
                 className="absolute -bottom-20 -left-10 h-80 w-80 rounded-full bg-primary-light/35 blur-3xl pointer-events-none"
               />
+
+              {/* Brand mascot greeting — peeks from the right on large screens */}
+              <div aria-hidden className="pointer-events-none absolute -right-2 top-1/2 hidden h-56 w-56 -translate-y-1/2 rounded-full bg-white/10 blur-2xl lg:block xl:right-6 xl:h-64 xl:w-64" />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute right-0 top-1/2 hidden h-52 w-52 -translate-y-1/2 lg:block xl:right-8 xl:h-60 xl:w-60"
+              >
+                <Suspense fallback={null}>
+                  <PenguinHero3D className="h-full w-full" />
+                </Suspense>
+              </div>
 
               <div className="relative z-10">
                 <p className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-glass ring-1 ring-white/15">

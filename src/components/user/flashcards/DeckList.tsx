@@ -1,6 +1,7 @@
 import type { FlashcardDeck } from "@/domain";
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { TiltCard } from '@/components/ui/tilt-card';
 import { Edit, Trash2, Layers, Globe, Lock } from 'lucide-react';
 
 interface DeckListProps {
@@ -36,17 +37,15 @@ export function DeckList({
         const accent = ACCENT_COLORS[i % ACCENT_COLORS.length];
 
         return (
-          <div
+          <TiltCard
             key={deck.id}
-            className={`group relative rounded-2xl p-5 cursor-pointer transition-all duration-300 border overflow-hidden flex flex-col h-[180px]
+            maxTilt={8}
+            onClick={() => onSelectDeck(deck.id)}
+            className={`group relative rounded-2xl p-5 cursor-pointer transition-shadow duration-300 border overflow-hidden flex flex-col h-[180px]
               ${isSelected
                 ? `bg-gradient-to-br ${accent.from}/10 ${accent.to}/5 border-indigo-500/40 shadow-lg ${accent.shadow}`
-                : 'bg-white border-slate-200 hover:border-indigo-300/50 hover:shadow-xl hover:-translate-y-1'
+                : 'bg-white border-slate-200 hover:border-indigo-300/50 hover:shadow-xl'
               }`}
-            style={{
-              animationDelay: `${i * 0.05}s`,
-            }}
-            onClick={() => onSelectDeck(deck.id)}
           >
             {/* Active indicator bar */}
             {isSelected && (
@@ -110,7 +109,7 @@ export function DeckList({
               </div>
             </div>
           </div>
-          </div>
+          </TiltCard>
         );
       })}
     </div>
