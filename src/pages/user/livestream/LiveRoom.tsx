@@ -7,6 +7,8 @@ import { ReactionLayer, ReactionBar, type FloatingReaction } from '@/components/
 import { ParticipantPanel, type Participant } from '@/components/user/livestream/ParticipantPanel';
 import { PracticeCard } from '@/components/user/livestream/PracticeCard';
 import { LessonSlide } from '@/components/user/livestream/LessonSlide';
+import { QuizOverlay, type ActiveQuiz } from '@/components/user/livestream/QuizOverlay';
+import { PracticeBattle, type ActiveBattle, type BattleScore } from '@/components/user/livestream/PracticeBattle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -18,7 +20,7 @@ import {
   Users, Send, PlayCircle, StopCircle, ArrowLeft,
   MessageSquare, BookOpen, Volume2, VolumeX, WifiOff,
   RotateCcw, PlaySquare, Mic, MicOff, RefreshCw, Hand,
-  Mic2, Star, CheckCircle, Check,
+  Mic2, Star, CheckCircle, Check, Sparkles,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -30,7 +32,10 @@ const WS_BASE = RAG_BASE.replace(/^http/, 'ws');
 const MAX_RECONNECT_DELAY = 16000;
 const MAX_QUESTION_LENGTH = 200;
 const QUESTIONS_PER_MIN = 6;
-const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5] as const;
+// No sub-1× preset: the server paces slides by the REAL audio length at 1×, so
+// slower playback made narration lag further behind the slides/quizzes every
+// section. Faster rates only add a little silence, which is harmless.
+const PLAYBACK_RATES = [1, 1.25, 1.5] as const;
 
 // Quick-reply chips: `value` is always English (sent to AI), `key` resolves the
 // translated display label via i18n. Keeping them separate prevents Vietnamese
@@ -58,6 +63,9 @@ interface RoomInfo {
   host_name: string;
   status: string;
   transcript: TranscriptChunk[];
+  /** Planned slide count — set once generation finishes; lets a reconnect
+   *  restore the progress bar before the next chunk arrives. */
+  total_sections?: number;
 }
 
 interface TranscriptChunk {
@@ -71,7 +79,10 @@ interface TranscriptChunk {
 }
 
 interface ChatMessage {
-  type: 'question' | 'answer' | 'system' | 'error';
+  type: 'question' | 'answer' | 'system' | 'error' | 'aside';
+  /** Server id tying an answer bubble to its question — lets two answers
+   *  stream concurrently without clobbering each other's bubble. */
+  qa_id?: string;
   user_name?: string;
   question?: string;
   answer?: string;
@@ -315,6 +326,22 @@ function userIdFromToken(token: string): string | null {
   }
 }
 
+/**
+ * Locate the chat bubble for an in-flight AI answer. Prefers the server's
+ * qa_id; falls back to the old trailing-message heuristic for servers that
+ * don't send one.
+ */
+function findAnswerIndex(chat: ChatMessage[], qaId: string | undefined, userName: string): number {
+  if (qaId) {
+    for (let i = chat.length - 1; i >= 0; i--) {
+      if (chat[i].type === 'answer' && chat[i].qa_id === qaId) return i;
+    }
+    return -1;
+  }
+  const last = chat[chat.length - 1];
+  return last && last.type === 'answer' && last.user_name === userName ? chat.length - 1 : -1;
+}
+
 const LEVEL_COLORS: Record<string, string> = {
   beginner:     'bg-emerald-100 text-emerald-700',
   intermediate: 'bg-blue-100 text-blue-700',
@@ -337,6 +364,11 @@ export default function LiveRoom() {
     'AI is preparing the lesson…':                   t('room.system.lessonGenerating'),
     'Lesson complete! You can still ask questions.': t('room.system.qaStart', { mins: 5 }),
     'The classroom has ended.':                      t('room.system.roomEnded'),
+  }), [t]);
+
+  // Same idea for server-sent error strings (stable English keys → local copy).
+  const errMessages = useMemo<Record<string, string>>(() => ({
+    'Too many questions — please wait.': t('room.chat.serverRateLimited'),
   }), [t]);
 
   const wsRef           = useRef<WebSocket | null>(null);
@@ -371,9 +403,14 @@ export default function LiveRoom() {
   const [muted, setMuted]                   = useState(false);
   const [questionsLeft, setQuestionsLeft]   = useState(QUESTIONS_PER_MIN);
   const [isListening, setIsListening]       = useState(false);
+  // Voice input runs on MediaRecorder + the Whisper endpoint — NOT the Web
+  // Speech API — so feature-detect the APIs actually used (the old
+  // SpeechRecognition check wrongly hid the mic on Firefox).
   const [voiceSupported]                    = useState(
-    () => !!(window.SpeechRecognition ?? window.webkitSpeechRecognition),
+    () => !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder),
   );
+  // True while a recorded question is being transcribed by the server.
+  const [transcribing, setTranscribing]     = useState(false);
   const [qaDeadline, setQaDeadline]         = useState<number | null>(null);
   const [qaCountdown, setQaCountdown]       = useState(0);
   const [participants, setParticipants]     = useState<Participant[]>([]);
@@ -391,6 +428,15 @@ export default function LiveRoom() {
   const [audioProgress, setAudioProgress]   = useState<{ progress: number; isPriority: boolean } | null>(null);
   const [unreadChat, setUnreadChat]         = useState(0);
   const [rateLimitSecs, setRateLimitSecs]   = useState(0);
+  const [quiz, setQuiz]                     = useState<ActiveQuiz | null>(null);
+  const [quizScore, setQuizScore]           = useState({ correct: 0, total: 0 });
+  // Mirror of quiz.myAnswer readable inside handleMessage (which closes over
+  // stale state) — set optimistically on tap, confirmed by quiz_answer_ack.
+  const quizAnswerRef                       = useRef<number | null>(null);
+  const [battle, setBattle]                 = useState<ActiveBattle | null>(null);
+  // Transient stage banner for the teacher's between-slide remark.
+  const [aside, setAside]                   = useState<string | null>(null);
+  const asideTimerRef                       = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rateLimitTimerRef                   = useRef<ReturnType<typeof setInterval> | null>(null);
   const spotlightPanelRef                   = useRef<HTMLDivElement>(null);
   const reactionIdRef = useRef(0);
@@ -400,9 +446,13 @@ export default function LiveRoom() {
   const speakRecorderRef = useRef<MediaRecorder | null>(null);
   const speakChunksRef = useRef<Blob[]>([]);
   const speakTextRef = useRef('');
+  // Mirror of mobileTab readable inside handleMessage (which closes over
+  // stale state) — used to gate the unread-chat badge.
+  const mobileTabRef = useRef<'stage' | 'chat'>('stage');
 
   // Keep the ref in sync with the latest profile (used by `connect` for name).
   useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => { mobileTabRef.current = mobileTab; }, [mobileTab]);
 
   // Sync mute + playback rate to audio queue
   useEffect(() => { audioQueueRef.current.setMuted(muted); }, [muted]);
@@ -460,6 +510,20 @@ export default function LiveRoom() {
     return () => clearInterval(id);
   }, [qaDeadline]);
 
+  // Stop the spotlight recorder WITHOUT transcribing, always releasing the
+  // mic. MediaRecorder has no abort(); and nulling onstop before stop() (the
+  // old approach) skipped the track cleanup inside it, leaving the browser's
+  // recording indicator on until a full page reload.
+  const abortSpeakRecorder = useCallback(() => {
+    const rec = speakRecorderRef.current;
+    if (rec) {
+      rec.onstop = () => rec.stream.getTracks().forEach(tr => tr.stop());
+      if (rec.state === 'recording') rec.stop();
+      else rec.stream.getTracks().forEach(tr => tr.stop());
+    }
+    speakRecorderRef.current = null;
+  }, []);
+
   const handleMessage = useCallback((msg: Record<string, unknown>) => {
     switch (msg.type) {
       case 'room_state': {
@@ -470,12 +534,21 @@ export default function LiveRoom() {
         setParticipantCount(msg.participant_count as number);
         const tr = r.transcript ?? [];
         setTranscript(tr);
-        // On reconnect mid-lesson, restore the active slide so the stage isn't
-        // blank until the next chunk arrives.
-        if (r.status === 'live' && tr.length > 0) setCurrentChunkIndex(tr.length - 1);
+        // On reconnect mid-lesson, restore the active slide (and progress bar)
+        // so the stage isn't blank until the next chunk arrives.
+        if (r.status === 'live' && tr.length > 0) {
+          setCurrentChunkIndex(tr.length - 1);
+          setProgress({ current: tr.length, total: r.total_sections ?? tr.length });
+        }
         break;
       }
       case 'participant_join':
+        setParticipantCount(msg.participant_count as number);
+        // Greet joiners by name — makes the (waiting) room feel inhabited.
+        if (msg.user_name) {
+          setChat(p => [...p, { type: 'system', text: t('room.system.joined', { name: msg.user_name as string }) }]);
+        }
+        break;
       case 'participant_leave':
         setParticipantCount(msg.participant_count as number);
         break;
@@ -521,7 +594,7 @@ export default function LiveRoom() {
         setSpotlight(null);
         if (msg.user_id === currentUserIdRef.current) {
           setIsSpotlight(false);
-          speakRecorderRef.current?.abort();
+          abortSpeakRecorder();
           setSpeaking(false);
         }
         break;
@@ -549,8 +622,17 @@ export default function LiveRoom() {
           setChat(p => [...p, { type: 'system', text: t('room.system.lessonFallback') }]);
         }
         break;
+      case 'lesson_error':
+        // Generation crashed server-side; the room was rolled back to
+        // "waiting" so the host can simply press Start again.
+        setIsThinking(false);
+        setStatus('waiting');
+        setChat(p => [...p, { type: 'error', text: t('room.system.lessonError') }]);
+        break;
       case 'lesson_chunk': {
         setIsThinking(false);
+        setQuiz(null);   // next slide arriving dismisses any quiz overlay
+        setBattle(null); // …and any battle podium
         const chunk: TranscriptChunk = {
           title: msg.title as string,
           content: msg.content as string,
@@ -582,6 +664,8 @@ export default function LiveRoom() {
         setStatus('completed');
         setQaDeadline(null);
         setCurrentChunkIndex(-1);
+        setQuiz(null);
+        setBattle(null);
         setChat(p => [...p, { type: 'system', text: t('room.system.lessonAutoComplete') }]);
         break;
       case 'question_asked':
@@ -592,46 +676,156 @@ export default function LiveRoom() {
       case 'ai_answer_chunk': {
         setIsThinking(false); // Once streaming starts, orb can pulse or at least not say PROCESSING
         setAiTyping(true);
+        const chunkQaId = msg.qa_id as string | undefined;
+        let isNewBubble = false;
         setChat(p => {
-          const lastMsg = p[p.length - 1];
-          if (lastMsg && lastMsg.type === 'answer' && lastMsg.user_name === msg.user_name) {
+          // Match the bubble by qa_id so two answers streaming at once each
+          // keep their own bubble — matching on "the last message's user_name"
+          // spawned a new bubble per chunk whenever streams interleaved.
+          const idx = findAnswerIndex(p, chunkQaId, msg.user_name as string);
+          if (idx >= 0) {
             const copy = [...p];
-            copy[copy.length - 1] = { ...lastMsg, answer: msg.text_so_far as string };
+            copy[idx] = { ...copy[idx], answer: msg.text_so_far as string };
             return copy;
           }
-          return [...p, { type: 'answer', user_name: msg.user_name as string, answer: msg.text_so_far as string }];
+          isNewBubble = true;
+          return [...p, { type: 'answer', qa_id: chunkQaId, user_name: msg.user_name as string, answer: msg.text_so_far as string }];
         });
-        setUnreadChat(n => n + 1);
+        // One unread per answer (not per streamed chunk), and only while the
+        // user is away from the chat tab.
+        if (isNewBubble && mobileTabRef.current !== 'chat') setUnreadChat(n => n + 1);
         break;
       }
-      case 'ai_answer':
+      case 'ai_answer': {
         setIsThinking(false);
         setAiTyping(false);
+        const answerQaId = msg.qa_id as string | undefined;
         // If ai_answer_chunk handled the text, just update the final text if needed
         setChat(p => {
-          const lastMsg = p[p.length - 1];
-          if (lastMsg && lastMsg.type === 'answer' && lastMsg.user_name === msg.user_name) {
+          const idx = findAnswerIndex(p, answerQaId, msg.user_name as string);
+          if (idx >= 0) {
             const copy = [...p];
-            copy[copy.length - 1] = { ...lastMsg, answer: msg.answer as string };
+            copy[idx] = { ...copy[idx], answer: msg.answer as string };
             return copy;
           }
-          return [...p, { type: 'answer', user_name: msg.user_name as string, answer: msg.answer as string }];
+          return [...p, { type: 'answer', qa_id: answerQaId, user_name: msg.user_name as string, answer: msg.answer as string }];
         });
         // Answers jump ahead of the slide narration: the current slide is paused,
         // the answer plays immediately, then the slide resumes (see AudioQueue).
         if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
-        // Increment unread counter when user is watching the stage tab on mobile
         break;
+      }
+      case 'quiz_start': {
+        const duration = (msg.duration_seconds as number) ?? 15;
+        quizAnswerRef.current = null;
+        setQuiz({
+          id: msg.quiz_id as number,
+          ordinal: (msg.ordinal as number) ?? 1,
+          total: (msg.total as number) ?? 1,
+          question: msg.question as string,
+          options: (msg.options as string[]) ?? [],
+          durationSeconds: duration,
+          deadline: Date.now() + duration * 1000,
+          myAnswer: null,
+          answered: 0,
+          result: null,
+        });
+        // The poll lives on the stage — pull mobile users away from the chat
+        // tab so nobody misses the answer window.
+        setMobileTab('stage');
+        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        break;
+      }
+      case 'quiz_progress':
+        setQuiz(q => (q && q.id === msg.quiz_id ? { ...q, answered: msg.answered as number } : q));
+        break;
+      case 'quiz_answer_ack': {
+        const locked = msg.option_index as number;
+        quizAnswerRef.current = locked;
+        setQuiz(q => (q && q.id === msg.quiz_id ? { ...q, myAnswer: locked } : q));
+        break;
+      }
+      case 'quiz_result': {
+        const correctIndex = msg.correct_index as number;
+        setQuiz(q => (q && q.id === msg.quiz_id ? {
+          ...q,
+          result: {
+            counts: (msg.counts as number[]) ?? [],
+            totalAnswered: (msg.total_answered as number) ?? 0,
+            correctIndex,
+            explanation: (msg.explanation as string) ?? '',
+          },
+        } : q));
+        setQuizScore(s => ({
+          correct: s.correct + (quizAnswerRef.current === correctIndex ? 1 : 0),
+          total: s.total + 1,
+        }));
+        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        break;
+      }
+      case 'battle_start': {
+        setMobileTab('stage'); // the battle lives on the stage — make it visible
+        setBattle({
+          id: msg.battle_id as number,
+          phrase: msg.phrase as string,
+          countdownSeconds: (msg.countdown_seconds as number) ?? 5,
+          recordSeconds: (msg.record_seconds as number) ?? 12,
+          startedAt: Date.now(),
+          scores: [],
+          end: null,
+        });
+        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        break;
+      }
+      case 'battle_score': {
+        const entry: BattleScore = {
+          userId: msg.user_id as string,
+          userName: msg.user_name as string,
+          score: msg.score as number,
+        };
+        setBattle(b => {
+          if (!b || b.id !== msg.battle_id) return b;
+          if (b.scores.some(s => s.userId === entry.userId)) return b;
+          return { ...b, scores: [...b.scores, entry] };
+        });
+        break;
+      }
+      case 'battle_end': {
+        const leaderboard: BattleScore[] =
+          ((msg.leaderboard as { user_id: string; user_name: string; score: number }[]) ?? [])
+            .map(e => ({ userId: e.user_id, userName: e.user_name, score: e.score }));
+        setBattle(b => (b && b.id === msg.battle_id
+          ? { ...b, end: { leaderboard, participants: (msg.participants as number) ?? leaderboard.length } }
+          : b));
+        if (leaderboard.length > 0) {
+          setChat(p => [...p, {
+            type: 'system',
+            text: t('room.system.battleWinner', { name: leaderboard[0].userName, score: leaderboard[0].score }),
+          }]);
+        }
+        break;
+      }
+      case 'teacher_aside': {
+        const text = msg.text as string;
+        setChat(p => [...p, { type: 'aside', text }]);
+        setAside(text);
+        if (asideTimerRef.current) clearTimeout(asideTimerRef.current);
+        asideTimerRef.current = setTimeout(() => setAside(null), 15000);
+        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        break;
+      }
       case 'error':
         setChat(p => [...p, { type: 'error', text: msg.message as string }]);
         break;
       case 'room_ended':
         setStatus('ended');
+        setQuiz(null);
+        setBattle(null);
         setChat(p => [...p, { type: 'system', text: t('room.system.roomEnded') }]);
         audioQueueRef.current.clear();
         break;
     }
-  }, [t]);
+  }, [t, abortSpeakRecorder]);
 
   // WebSocket connect with exponential backoff
   const connect = useCallback(() => {
@@ -735,20 +929,26 @@ export default function LiveRoom() {
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
-        setQuestion('Đang xử lý giọng nói...');
+
+        // Status/errors must never land in the question input — the user could
+        // accidentally send "connection error" to the AI as a question.
+        setTranscribing(true);
         try {
           const { ragService } = await import('@/lib/api/services/rag.service');
           const data = await ragService.transcribeDictation(audioBlob, room?.language || 'vi');
-          if (data && data.success && data.sentences) {
-            const text = data.sentences.map(s => s.text).join(' ');
+          const text = data?.success && data.sentences
+            ? data.sentences.map(s => s.text).join(' ').trim()
+            : '';
+          if (text) {
             setQuestion(text.slice(0, MAX_QUESTION_LENGTH));
           } else {
-            setQuestion('Không thể nhận diện giọng nói.');
+            setChat(p => [...p, { type: 'error', text: t('room.chat.voiceFailed') }]);
           }
         } catch (e) {
           console.error(e);
-          setQuestion('Lỗi kết nối.');
+          setChat(p => [...p, { type: 'error', text: t('room.chat.voiceError') }]);
+        } finally {
+          setTranscribing(false);
         }
       };
 
@@ -759,7 +959,7 @@ export default function LiveRoom() {
       console.error('Mic access denied', err);
       setIsListening(false);
     }
-  }, [isListening, room?.language]);
+  }, [isListening, room?.language, t]);
 
   // Stop mics if user navigates away
   useEffect(() => {
@@ -806,12 +1006,13 @@ export default function LiveRoom() {
       recorder.start();
       speakRecorderRef.current = recorder;
       setSpeaking(true);
-      // Let the room know we're processing audio internally
-      wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text: 'Đang ghi âm và xử lý giọng nói (Vibe)...', final: false }));
+      // Let the room know we're recording (sent in the speaker's UI language —
+      // the server relays it verbatim as the live caption).
+      wsRef.current?.send(JSON.stringify({ type: 'speaker_transcript', text: t('room.spotlight.recordingLive'), final: false }));
     } catch (err) {
       console.error('Mic access denied for spotlight', err);
     }
-  }, [room?.language]);
+  }, [room?.language, t]);
 
   const stopSpeaking = useCallback(() => {
     if (speakRecorderRef.current?.state === 'recording') {
@@ -820,15 +1021,14 @@ export default function LiveRoom() {
   }, []);
 
   const cancelSpeaking = useCallback(() => {
-    if (speakRecorderRef.current?.state === 'recording') {
-      speakRecorderRef.current.onstop = null; // Prevent transcription from running
-      speakRecorderRef.current.stop();
-    }
+    // abortSpeakRecorder swaps onstop for a track-cleanup-only handler — the
+    // old `onstop = null` skipped that cleanup and left the mic live.
+    abortSpeakRecorder();
     setSpeaking(false);
     setIsSpotlight(false);
     speakTextRef.current = '';
     wsRef.current?.send(JSON.stringify({ type: 'end_speaking' }));
-  }, []);
+  }, [abortSpeakRecorder]);
 
   const startRateLimitCountdown = useCallback((secsLeft: number) => {
     if (rateLimitTimerRef.current) clearInterval(rateLimitTimerRef.current);
@@ -874,6 +1074,25 @@ export default function LiveRoom() {
   const sendPracticeResult = useCallback((phrase: string, transcript: string, score: number) => {
     if (wsRef.current?.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(JSON.stringify({ type: 'practice_result', phrase, transcript, score }));
+  }, []);
+
+  const sendQuizAnswer = useCallback((quizId: number, optionIndex: number) => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    // Optimistic lock — the server ack (first-answer-wins) is authoritative.
+    quizAnswerRef.current = optionIndex;
+    setQuiz(q => (q && q.id === quizId && q.myAnswer === null && !q.result
+      ? { ...q, myAnswer: optionIndex }
+      : q));
+    wsRef.current.send(JSON.stringify({ type: 'quiz_answer', quiz_id: quizId, option_index: optionIndex }));
+  }, []);
+
+  const sendBattleSubmit = useCallback((battleId: number, transcript: string, score: number) => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    wsRef.current.send(JSON.stringify({ type: 'battle_submit', battle_id: battleId, transcript, score }));
+  }, []);
+
+  useEffect(() => () => {
+    if (asideTimerRef.current) clearTimeout(asideTimerRef.current);
   }, []);
 
   const expireReaction = useCallback((id: number) => {
@@ -1068,7 +1287,7 @@ export default function LiveRoom() {
             onClick={enableAudio}
             className="ml-2 px-3 py-1 rounded-full bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 active:scale-95 transition-all"
           >
-            Tap here
+            {t('room.unlockAudioCta')}
           </button>
         </div>
       )}
@@ -1084,6 +1303,30 @@ export default function LiveRoom() {
           {/* ── Stage ── */}
           <div ref={stageRef} className="relative shrink-0 bg-gradient-to-b from-indigo-50 to-white">
             <ReactionLayer reactions={reactions} onExpire={expireReaction} />
+
+            {/* Live comprehension checkpoint — covers the stage while the
+                whole room answers, then shows the vote chart + explanation */}
+            {quiz && !isEnded && (
+              <QuizOverlay quiz={quiz} score={quizScore} onAnswer={sendQuizAnswer} />
+            )}
+
+            {/* Choral speaking battle — countdown, simultaneous recording,
+                live scores, then the podium */}
+            {battle && !isEnded && (
+              <PracticeBattle
+                battle={battle}
+                currentUserId={currentUserIdRef.current}
+                onSubmit={sendBattleSubmit}
+              />
+            )}
+
+            {/* Teacher aside — the AI's between-slide remark about the room */}
+            {aside && !spotlight && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-[90%] flex items-center gap-2 bg-white/95 border border-indigo-200 text-indigo-900 px-3 py-1.5 rounded-full shadow-lg">
+                <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+                <span className="text-xs line-clamp-2">{aside}</span>
+              </div>
+            )}
 
             {/* Live spotlight caption — what the invited student is saying, shown to everyone */}
             {spotlight && (
@@ -1142,7 +1385,7 @@ export default function LiveRoom() {
                     onClick={() => audioQueueRef.current.clear()}
                     className="flex items-center gap-1 px-3 py-0.5 bg-red-50 text-red-600 rounded-full text-[11px] font-semibold border border-red-200 hover:bg-red-100 transition-colors"
                   >
-                    <StopCircle className="w-3 h-3" /> Stop AI
+                    <StopCircle className="w-3 h-3" /> {t('room.stopAi')}
                   </button>
                 )}
                 {isWaiting && !isSpeaking && (
@@ -1190,16 +1433,20 @@ export default function LiveRoom() {
                 </Button>
               )}
 
-              {/* Session ended CTA */}
+              {/* Session ended CTA. The replay button only shows when at least
+                  one slide was delivered — a room ended from "waiting" has no
+                  recording, and the link would land on a 404. */}
               {isEnded && (
                 <div className="flex gap-2 mt-1">
-                  <Button
-                    size="sm" variant="outline"
-                    className="gap-1.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
-                    onClick={() => navigate(`/live/replay/${roomId}`)}
-                  >
-                    <PlaySquare className="w-3.5 h-3.5" /> {t('room.watchReplay')}
-                  </Button>
+                  {transcript.length > 0 && (
+                    <Button
+                      size="sm" variant="outline"
+                      className="gap-1.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                      onClick={() => navigate(`/live/replay/${roomId}`)}
+                    >
+                      <PlaySquare className="w-3.5 h-3.5" /> {t('room.watchReplay')}
+                    </Button>
+                  )}
                   <Button
                     size="sm" variant="outline"
                     className="gap-1.5"
@@ -1330,8 +1577,16 @@ export default function LiveRoom() {
                     {msg.type === 'error' && (
                       <div className="flex justify-center">
                         <span className="text-xs text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-100">
-                          {msg.text}
+                          {errMessages[msg.text ?? ''] ?? msg.text}
                         </span>
+                      </div>
+                    )}
+                    {msg.type === 'aside' && (
+                      <div className="flex justify-center">
+                        <div className="max-w-[90%] flex items-start gap-1.5 text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl">
+                          <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />
+                          <span className="italic">{msg.text}</span>
+                        </div>
                       </div>
                     )}
                     {msg.type === 'question' && (
@@ -1404,13 +1659,13 @@ export default function LiveRoom() {
               {voiceSupported && !isEnded && (
                 <button
                   onClick={toggleVoice}
-                  disabled={!connected || questionsLeft === 0}
+                  disabled={!connected || questionsLeft === 0 || transcribing}
                   className={cn(
                     'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
                     isListening
                       ? 'bg-red-500 text-white animate-pulse'
                       : 'border border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500',
-                    (!connected || questionsLeft === 0) && 'opacity-40 cursor-not-allowed',
+                    (!connected || questionsLeft === 0 || transcribing) && 'opacity-40 cursor-not-allowed',
                   )}
                   title={isListening ? t('room.chat.stopMic') : (room?.language === 'en' ? t('room.chat.speakEn') : t('room.chat.speakVi'))}
                   aria-label={isListening ? t('room.chat.stopMic') : t('room.chat.recordAria')}
@@ -1422,6 +1677,7 @@ export default function LiveRoom() {
               <Input
                 placeholder={
                   isListening            ? t('room.chat.placeholder.listening')
+                  : transcribing         ? t('room.chat.placeholder.transcribing')
                   : isEnded              ? t('room.chat.placeholder.ended')
                   : !connected           ? t('room.chat.placeholder.connecting')
                   : rateLimitSecs > 0    ? t('room.chat.rateLimitWait', { secs: rateLimitSecs })

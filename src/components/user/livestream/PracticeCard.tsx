@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Mic, MicOff, RotateCcw, CheckCircle2, XCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { scoreMatch } from './practice-scoring';
 
 // Web Speech API removed in favor of MediaRecorder + Whisper API
 
@@ -10,62 +11,6 @@ interface Props {
   phrase: string;
   /** Called when the student finishes — provides the transcript + 0-100 score */
   onResult: (transcript: string, score: number) => void;
-}
-
-const STRIP_RE = /[^a-z0-9 ']/g;
-function normalize(s: string) {
-  return s.toLowerCase().replace(STRIP_RE, ' ').replace(/\s+/g, ' ').trim();
-}
-
-/** Word-level Levenshtein distance for accurate grading */
-function levenshteinDistance(a: string[], b: string[]): number {
-  const matrix = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
-  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
-  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
-
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,      // deletion
-        matrix[i][j - 1] + 1,      // insertion
-        matrix[i - 1][j - 1] + cost // substitution
-      );
-    }
-  }
-  return matrix[a.length][b.length];
-}
-
-function scoreMatch(target: string, said: string): { score: number; details: { word: string; correct: boolean }[] } {
-  const tWords = normalize(target).split(' ').filter(Boolean);
-  const sWords = normalize(said).split(' ').filter(Boolean);
-  
-  if (!tWords.length) return { score: 0, details: [] };
-  if (!sWords.length) {
-    return { score: 0, details: tWords.map(w => ({ word: w, correct: false })) };
-  }
-
-  const distance = levenshteinDistance(tWords, sWords);
-  const maxLen = Math.max(tWords.length, sWords.length);
-  const score = Math.round(Math.max(0, 1 - distance / maxLen) * 100);
-  
-  // Basic marking: if a target word is found in said words (in order-ish), mark correct
-  // A true alignment would require backtracking the matrix, but for UI feedback:
-  let sIdx = 0;
-  const details = tWords.map(tWord => {
-    let correct = false;
-    // Look ahead a few words to find a match
-    for (let i = 0; i < 3 && sIdx + i < sWords.length; i++) {
-      if (sWords[sIdx + i] === tWord) {
-        correct = true;
-        sIdx += i + 1;
-        break;
-      }
-    }
-    return { word: tWord, correct };
-  });
-
-  return { score, details };
 }
 
 /**
@@ -76,6 +21,10 @@ export function PracticeCard({ phrase, onResult }: Props) {
   const { t } = useTranslation('livestream');
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState('');
+  // Transcription progress/errors live here, NOT in `heard` — stuffing status
+  // strings into the transcript field showed them as `You said: "Processing…"`
+  // (and always in Vietnamese, ignoring the UI language).
+  const [status, setStatus] = useState<'idle' | 'processing' | 'noSpeech' | 'error'>('idle');
   const [score, setScore] = useState<number | null>(null);
   const [wordDetails, setWordDetails] = useState<{ word: string; correct: boolean }[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -92,7 +41,8 @@ export function PracticeCard({ phrase, onResult }: Props) {
     if (!supported) return;
     setHeard('');
     setScore(null);
-    
+    setStatus('idle');
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
@@ -105,24 +55,27 @@ export function PracticeCard({ phrase, onResult }: Props) {
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
-        setHeard('Đang xử lý...'); // Processing indicator
+
+        setStatus('processing');
         try {
           const { ragService } = await import('@/lib/api/services/rag.service');
           const data = await ragService.transcribeDictation(audioBlob, 'en');
-          if (data && data.success && data.sentences) {
-            const finalTranscript = data.sentences.map((s: any) => s.text).join(' ');
+          const finalTranscript = data?.success && data.sentences
+            ? data.sentences.map((s: { text: string }) => s.text).join(' ').trim()
+            : '';
+          if (finalTranscript) {
             setHeard(finalTranscript);
+            setStatus('idle');
             const { score: s, details } = scoreMatch(phrase, finalTranscript);
             setScore(s);
             setWordDetails(details);
-            if (finalTranscript) onResult(finalTranscript, s);
+            onResult(finalTranscript, s);
           } else {
-            setHeard('Không nhận diện được giọng nói.');
+            setStatus('noSpeech');
           }
         } catch (e) {
           console.error(e);
-          setHeard('Lỗi kết nối.');
+          setStatus('error');
         } finally {
           setListening(false);
         }
@@ -188,6 +141,22 @@ export function PracticeCard({ phrase, onResult }: Props) {
           </p>
         )}
 
+        {status !== 'idle' && (
+          <p
+            className={cn(
+              'text-xs',
+              status === 'processing' ? 'text-slate-400 animate-pulse' : 'text-amber-600',
+            )}
+            role="status"
+          >
+            {status === 'processing'
+              ? t('practice.processing')
+              : status === 'noSpeech'
+                ? t('practice.noSpeech')
+                : t('practice.connectionError')}
+          </p>
+        )}
+
         {feedback && (
           <div className={cn('flex items-center gap-1.5 text-xs font-medium', feedback.color)}>
             {feedback.icon}
@@ -216,7 +185,7 @@ export function PracticeCard({ phrase, onResult }: Props) {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => { setHeard(''); setScore(null); }}
+              onClick={() => { setHeard(''); setScore(null); setStatus('idle'); }}
               className="gap-1.5 text-slate-500"
             >
               <RotateCcw className="w-3.5 h-3.5" />
