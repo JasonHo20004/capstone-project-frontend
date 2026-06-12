@@ -160,27 +160,10 @@
       "roomEnded": "The classroom has ended.",
       "speakerInvitedSelf": "The teacher invited you to speak!",
       "speakerInvitedOther": "The teacher invited {{name}} to speak",
-      "practiceResult": "{{icon}} {{name}} practiced: \"{{phrase}}\" ({{score}}/100)",
       "joined": "👋 {{name}} joined the class",
-      "battleWinner": "🏆 {{name}} wins the speaking battle — {{score}}/100!",
       "lessonError": "The AI hit an error while generating the lesson. The host can press \"Start lesson\" to retry."
     },
     "explainAgainPart": "Explain the \"{{title}}\" part again for me",
-    "practiceAvailable": "Practice speaking available ↓",
-    "battle": {
-      "badge": "Speaking battle",
-      "getReady": "Get ready to speak…",
-      "speakNow": "Your turn — read the phrase aloud!",
-      "tapToStart": "Tap the mic to record",
-      "tapToFinish": "Recording… tap when you're done",
-      "processing": "Scoring your attempt…",
-      "yourScore": "Your score: {{score}}/100 — waiting for the others…",
-      "waiting": "Counting the scores…",
-      "joinedCount": "{{count}} joined",
-      "leaderboard": "Leaderboard",
-      "noPlayers": "No one took the mic this round 😅",
-      "you": "You"
-    },
     "quiz": {
       "badge": "Quick check {{ordinal}}/{{total}}",
       "answered": "{{count}} answered",
@@ -213,9 +196,7 @@
     "play": "Play",
     "pause": "Pause",
     "quizTitle": "In-lesson quick check",
-    "quizAnswered": "{{count}} answered",
-    "battleTitle": "Speaking battle",
-    "battleNoPlayers": "No one joined this round."
+    "quizAnswered": "{{count}} answered"
   },
   "participants": {
     "heading": "People in the room",
@@ -227,25 +208,6 @@
     "inviteTitle": "Invite this student to speak",
     "invite": "Invite",
     "handPosition": "Position {{n}}"
-  },
-  "practice": {
-    "label": "Practice speaking",
-    "youSaid": "You said:",
-    "feedback": {
-      "great": "Excellent!",
-      "close": "Close — try again",
-      "tryAgain": "Keep going! Try once more"
-    },
-    "buttons": {
-      "tryAloud": "Read aloud",
-      "again": "Try again",
-      "stop": "Stop",
-      "clear": "Clear"
-    },
-    "processing": "Scoring your attempt…",
-    "noSpeech": "Couldn't hear you — try again.",
-    "connectionError": "Connection error — please try again.",
-    "unsupported": "This browser doesn't support audio recording, so speech practice is unavailable."
   },
   "translate": {
     "loading": "Translating…",

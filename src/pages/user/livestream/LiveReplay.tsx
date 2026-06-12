@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AIAvatarAnime } from "@/components/user/livestream/AIAvatarAnime";
+
+// 3D hologram teacher — lazy-chunked like PenguinHero3D; orb is the fallback.
+// No audioVolume here (replay plays plain <audio>), so the 3D mouth uses its
+// built-in sine animation while isSpeaking.
+const AIAvatar3D = lazy(() => import("@/components/user/livestream/AIAvatar3D"));
 import { LessonSlide } from "@/components/user/livestream/LessonSlide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +15,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft, Play, Pause, RotateCcw, Volume2, BookOpen, MessageSquare, Check, PlaySquare,
-  Zap, Swords, Users,
+  Zap, Users,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -27,12 +32,6 @@ interface ReplayQuiz {
   total_answered?: number;
 }
 
-interface ReplayBattle {
-  phrase: string;
-  participants?: number;
-  leaderboard?: { user_id: string; user_name: string; score: number }[];
-}
-
 interface ReplaySection {
   index: number;
   title: string;
@@ -43,11 +42,9 @@ interface ReplaySection {
   key_points?: string[];
   keywords?: { term: string; meaning: string }[];
   example?: string;
-  practice_phrase?: string;
   image_url?: string;
   // Room events that ran after this slide, kept in the recording.
   quiz?: ReplayQuiz;
-  battle?: ReplayBattle;
 }
 
 interface ReplayQA {
@@ -359,35 +356,12 @@ export default function LiveReplay() {
                     </div>
                   )}
 
-                  {/* Speaking battle that ran after this slide — final podium */}
-                  {activeSection.battle && (
-                    <div className="mt-3 rounded-xl border border-rose-100 bg-white p-3 space-y-2">
-                      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-500">
-                        <Swords className="w-3 h-3" />
-                        {t("replay.battleTitle")}
-                      </p>
-                      <p className="text-sm font-semibold text-slate-800">"{activeSection.battle.phrase}"</p>
-                      {(activeSection.battle.leaderboard?.length ?? 0) === 0 ? (
-                        <p className="text-xs text-slate-400">{t("replay.battleNoPlayers")}</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {activeSection.battle.leaderboard!.slice(0, 3).map((e, rank) => (
-                            <div key={e.user_id} className="flex items-center gap-2 text-xs text-slate-700">
-                              <span className="w-5 text-center shrink-0" aria-hidden>
-                                {["🥇", "🥈", "🥉"][rank]}
-                              </span>
-                              <span className="flex-1 truncate">{e.user_name}</span>
-                              <span className="tabular-nums font-bold shrink-0">{e.score}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </>
               ) : (
                 <div className="flex flex-col items-center gap-3 py-8">
-                  <AIAvatarAnime isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />
+                  <Suspense fallback={<AIAvatarAnime isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />}>
+                    <AIAvatar3D isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />
+                  </Suspense>
                   <p className="text-sm text-slate-400">{t("replay.clickPlay")}</p>
                 </div>
               )}

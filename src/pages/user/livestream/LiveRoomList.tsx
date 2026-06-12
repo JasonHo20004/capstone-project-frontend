@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -25,6 +25,10 @@ import {
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AIAvatarAnime } from '@/components/user/livestream/AIAvatarAnime';
 import { Users, Radio, Plus, LogIn, Clock, PlayCircle, BookOpen } from 'lucide-react';
+
+// Lazy: this page ships in the main bundle, so the 3D avatar (three.js) must
+// stay in its own chunk — same convention as PenguinHero3D.
+const AIAvatar3D = lazy(() => import('@/components/user/livestream/AIAvatar3D'));
 
 // Routes through the api-gateway (proxies /api/livestream/* to rag-service).
 const RAG_BASE = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:3000';
@@ -355,7 +359,9 @@ export default function LiveRoomList() {
         </div>
       ) : rooms.length === 0 ? (
         <div className="flex flex-col items-center gap-5 py-20 text-center">
-          <AIAvatarAnime isSpeaking={false} className="w-28 h-28" />
+          <Suspense fallback={<AIAvatarAnime isSpeaking={false} className="w-28 h-28" name="" />}>
+            <AIAvatar3D isSpeaking={false} className="w-28 h-28" name="" />
+          </Suspense>
           <div>
             <p className="font-medium text-slate-700">{t('list.rooms.empty')}</p>
             <p className="text-sm text-slate-400 mt-1">{t('list.rooms.emptyHint')}</p>

@@ -10,7 +10,6 @@ export interface SlideChunk {
   key_points?: string[];
   keywords?: { term: string; meaning: string }[];
   example?: string;
-  practice_phrase?: string;
   image_url?: string;
 }
 

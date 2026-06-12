@@ -1535,7 +1535,34 @@
     "tree": {
       "level": "Level {{level}}",
       "change": "Change",
-      "startQuiz": "Start Quiz"
+      "startQuiz": "Start Quiz",
+      "practiceAgain": "Practice again",
+      "reviewNoXp": "Review mode — no XP awarded",
+      "reviewDone": "Review complete! 💪"
+    },
+    "errors": {
+      "generateFailed": "The AI couldn't build your path — check your connection and try again.",
+      "updateFailed": "Couldn't save your progress — the quiz result wasn't recorded. Please try again."
+    },
+    "generating": {
+      "title": "The AI is growing your skill tree…",
+      "hint": "This usually takes 10–20 seconds",
+      "steps": {
+        "1": "Analyzing topic & level",
+        "2": "Designing the lesson path",
+        "3": "Attaching quizzes to each step",
+        "4": "Finishing the map…"
+      }
+    },
+    "treeComplete": {
+      "title": "Tree mastered!",
+      "subtitle": "You completed the entire {{topic}} skill tree — amazing!",
+      "newTopic": "Explore a new world",
+      "stay": "Stay & review"
+    },
+    "carousel": {
+      "prev": "Scroll left",
+      "next": "Scroll right"
     },
     "flow": {
       "section": "Section {{num}}",
@@ -1543,6 +1570,7 @@
       "review": "Review: {{label}}",
       "new": "NEW",
       "tapToStart": "Tap to start",
+      "lockedHint": "Complete the previous lesson to unlock this one 🔒",
       "completedCount": "{{done}} / {{total}} completed",
       "sections": {
         "foundations": "Foundations",
@@ -1584,6 +1612,11 @@
       "answered": "{{count}} answered"
     },
     "loading": "Generating questions...",
+    "errors": {
+      "generate": "Couldn't generate the quiz — check your connection and try again.",
+      "submit": "Submission failed — your answers are kept, press Submit again."
+    },
+    "retry": "Try again",
     "result": {
       "excellent": "Excellent!",
       "keepPracticing": "Keep practicing!",

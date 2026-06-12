@@ -160,27 +160,10 @@
       "roomEnded": "Phòng học đã kết thúc.",
       "speakerInvitedSelf": "Giảng viên mời bạn phát biểu!",
       "speakerInvitedOther": "Giảng viên mời {{name}} phát biểu",
-      "practiceResult": "{{icon}} {{name}} luyện nói: \"{{phrase}}\" ({{score}}/100)",
       "joined": "👋 {{name}} vừa vào lớp",
-      "battleWinner": "🏆 {{name}} thắng đấu trường luyện nói — {{score}}/100!",
       "lessonError": "AI gặp lỗi khi tạo bài giảng. Giảng viên có thể bấm \"Bắt đầu bài học\" để thử lại."
     },
     "explainAgainPart": "Giải thích lại phần \"{{title}}\" cho tôi",
-    "practiceAvailable": "Có bài luyện nói ↓",
-    "battle": {
-      "badge": "Đấu trường luyện nói",
-      "getReady": "Chuẩn bị nói…",
-      "speakNow": "Đến lượt bạn — đọc to câu mẫu!",
-      "tapToStart": "Nhấn mic để ghi âm",
-      "tapToFinish": "Đang ghi âm… nhấn khi đọc xong",
-      "processing": "Đang chấm điểm…",
-      "yourScore": "Điểm của bạn: {{score}}/100 — chờ các bạn khác…",
-      "waiting": "Đang tổng hợp điểm…",
-      "joinedCount": "{{count}} đã tham gia",
-      "leaderboard": "Bảng xếp hạng",
-      "noPlayers": "Chưa ai cầm mic vòng này 😅",
-      "you": "Bạn"
-    },
     "quiz": {
       "badge": "Kiểm tra nhanh {{ordinal}}/{{total}}",
       "answered": "{{count}} đã trả lời",
@@ -213,9 +196,7 @@
     "play": "Phát",
     "pause": "Tạm dừng",
     "quizTitle": "Kiểm tra nhanh trong buổi học",
-    "quizAnswered": "{{count}} lượt trả lời",
-    "battleTitle": "Đấu trường luyện nói",
-    "battleNoPlayers": "Không có ai tham gia vòng này."
+    "quizAnswered": "{{count}} lượt trả lời"
   },
   "participants": {
     "heading": "Người trong phòng",
@@ -227,25 +208,6 @@
     "inviteTitle": "Mời học viên phát biểu",
     "invite": "Mời",
     "handPosition": "Vị trí {{n}}"
-  },
-  "practice": {
-    "label": "Luyện nói",
-    "youSaid": "Bạn nói:",
-    "feedback": {
-      "great": "Tuyệt vời!",
-      "close": "Gần đúng — thử lại nhé",
-      "tryAgain": "Cố lên! Đọc lại lần nữa"
-    },
-    "buttons": {
-      "tryAloud": "Đọc theo",
-      "again": "Thử lại",
-      "stop": "Dừng",
-      "clear": "Xoá"
-    },
-    "processing": "Đang chấm điểm…",
-    "noSpeech": "Không nhận diện được giọng nói — thử lại nhé.",
-    "connectionError": "Lỗi kết nối — thử lại sau.",
-    "unsupported": "Trình duyệt không hỗ trợ ghi âm nên chưa dùng được luyện nói."
   },
   "translate": {
     "loading": "Đang dịch…",

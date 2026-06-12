@@ -3,8 +3,9 @@
 // Premium UI: large circle nodes, dotted trail, ambient glow, progress ring
 // =============================================================================
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { BookOpen, Zap, Trophy, Wrench, Pencil, CheckCircle2, Lock, Crown, Gift, RefreshCw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -357,7 +358,7 @@ function curvePath(x1: number, y1: number, x2: number, y2: number): string {
 
 // ─── Injected styles ────────────────────────────────────────────────────────────
 
-const STYLE_ID = "skill-tower-styles-v2";
+const STYLE_ID = "skill-tower-styles-v3";
 
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
@@ -407,6 +408,31 @@ function injectStyles() {
     }
     .tower-chest-shimmer {
       animation: tower-chest-shimmer 2.2s ease-in-out infinite;
+    }
+    /* Locked-node feedback. --shape-rot keeps diamond nodes rotated while the
+       animation owns the transform property. */
+    @keyframes tower-shake {
+      0%, 100% { transform: translateX(0) rotate(var(--shape-rot, 0deg)); }
+      20% { transform: translateX(-5px) rotate(var(--shape-rot, 0deg)); }
+      40% { transform: translateX(5px) rotate(var(--shape-rot, 0deg)); }
+      60% { transform: translateX(-4px) rotate(var(--shape-rot, 0deg)); }
+      80% { transform: translateX(4px) rotate(var(--shape-rot, 0deg)); }
+    }
+    .tower-shake {
+      animation: tower-shake 0.4s ease-in-out;
+    }
+    @keyframes tower-mascot-bob {
+      0%, 100% { transform: translateY(0) rotate(-8deg); }
+      50% { transform: translateY(-6px) rotate(4deg); }
+    }
+    .tower-mascot {
+      animation: tower-mascot-bob 2.2s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tower-active, .tower-float, .tower-edge-flow, .tower-glow-pulse,
+      .tower-chest-shimmer, .tower-shake, .tower-mascot, .tower-new-node {
+        animation: none;
+      }
     }
   `;
   document.head.appendChild(s);
@@ -492,6 +518,13 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
   const { t } = useTranslation("exam");
   injectStyles();
 
+  const wrapperRef = useRef<HTMLDivElement>(null); // horizontal scroll container
+  const canvasRef = useRef<HTMLDivElement>(null);  // positioned canvas (for page Y)
+  const autoScrolledRef = useRef(false);
+  const [shakeId, setShakeId] = useState<string | null>(null);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(shakeTimerRef.current), []);
+
   // Defend against duplicate ids from the backend (causes React key collisions
   // and overlapping nodes at identical layout positions).
   const dedupedNodes = useMemo(() => {
@@ -554,10 +587,38 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
     };
   }, [layoutNodes]);
 
-  const handleClick = (node: typeof layoutNodes[0]) => {
-    if (onNodeClick && node.data.status !== "locked") {
-      onNodeClick(node.id, node.data);
+  // Auto-center the node the learner should do next — resuming a long tree
+  // used to land at the very top, far from where they left off.
+  useEffect(() => {
+    if (autoScrolledRef.current || layoutNodes.length === 0) return;
+    const target =
+      layoutNodes.find((n) => n.data.status === "active") ??
+      layoutNodes.find((n) => n.data.status === "new");
+    if (!target) return;
+    autoScrolledRef.current = true;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const behavior: ScrollBehavior = reduce ? "auto" : "smooth";
+
+    const canvasTop = canvasRef.current?.getBoundingClientRect().top ?? 0;
+    const targetY = canvasTop + window.scrollY + target.pos.y - window.innerHeight / 2;
+    if (targetY > 80) window.scrollTo({ top: targetY, behavior });
+
+    const wrapper = wrapperRef.current;
+    if (wrapper && wrapper.scrollWidth > wrapper.clientWidth) {
+      wrapper.scrollTo({ left: Math.max(0, target.pos.x - wrapper.clientWidth / 2), behavior });
     }
+  }, [layoutNodes]);
+
+  const handleClick = (node: typeof layoutNodes[0]) => {
+    if (node.data.status === "locked") {
+      // Feedback instead of a dead click: shake the node + explain why.
+      setShakeId(node.id);
+      clearTimeout(shakeTimerRef.current);
+      shakeTimerRef.current = setTimeout(() => setShakeId(null), 450);
+      toast(t("skillTree.flow.lockedHint"), { id: "skilltree-locked" });
+      return;
+    }
+    onNodeClick?.(node.id, node.data);
   };
 
   const rootX = layoutNodes[0]?.pos.x ?? canvasW / 2;
@@ -566,8 +627,8 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
   // shown beside the banner). One chest per banner = one per section boundary.
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="relative mx-auto" style={{ width: canvasW, height: canvasH }}>
+    <div className="w-full overflow-x-auto" ref={wrapperRef}>
+      <div className="relative mx-auto" ref={canvasRef} style={{ width: canvasW, height: canvasH }}>
 
         {/* ── SVG Layer: trails ── */}
         <svg className="absolute inset-0 pointer-events-none" width={canvasW} height={canvasH}>
@@ -651,9 +712,10 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
           const isRoot = data.type === "root";
           const isChest = data.type === "chest";
 
-          // Idea 5: shape-specific button styling
+          // Idea 5: shape-specific button styling. --shape-rot feeds the
+          // tower-shake keyframes so a shaking diamond keeps its rotation.
           const shapeStyle: React.CSSProperties = (() => {
-            if (shape === "diamond")        return { borderRadius: 14, transform: "rotate(45deg)" };
+            if (shape === "diamond")        return { borderRadius: 14, transform: "rotate(45deg)", ["--shape-rot" as never]: "45deg" };
             if (shape === "shield")         return { borderRadius: 0, clipPath: SHIELD_CLIP };
             if (shape === "rounded-square") return { borderRadius: 18 };
             return { borderRadius: "50%" };
@@ -667,7 +729,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
               {/* ── Node Button ── */}
               <button
                 onClick={() => handleClick(node)}
-                disabled={isLocked}
+                aria-disabled={isLocked}
                 aria-label={`${data.label} — ${
                   isCompleted ? t("skillTree.flow.aria.completed")
                     : isLocked ? t("skillTree.flow.aria.locked")
@@ -680,6 +742,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   ${isActive ? "tower-active" : ""}
                   ${isNew ? "tower-new-node" : ""}
                   ${isChest ? "tower-chest-shimmer" : ""}
+                  ${shakeId === node.id ? "tower-shake" : ""}
                   ${isLocked ? "cursor-not-allowed" : "cursor-pointer"}
                   ${!isActive && !isLocked && !isNew ? "hover:scale-110" : ""}
                 `}
@@ -729,6 +792,24 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                     : <theme.icon size={isRoot ? 30 : isRemedial ? 18 : 22} />}
                 </span>
               </button>
+
+              {/* ── Brand mascot perched beside the node the learner is on ── */}
+              {isActive && (
+                <div
+                  aria-hidden="true"
+                  className="absolute pointer-events-none select-none tower-mascot"
+                  style={{
+                    left: pos.x - sizing.r - 30,
+                    top: pos.y - sizing.r - 22,
+                    fontSize: 26,
+                    lineHeight: 1,
+                    zIndex: 5,
+                    filter: "drop-shadow(0 2px 4px rgba(15,23,42,0.35))",
+                  }}
+                >
+                  🐧
+                </div>
+              )}
 
               {/* ── Ambient glow below active / chest / root node ── */}
               {(isActive || isChest) && (

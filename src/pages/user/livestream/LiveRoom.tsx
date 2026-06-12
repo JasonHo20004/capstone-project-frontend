@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '@/hooks/api/use-user';
 import { AIAvatarAnime } from '@/components/user/livestream/AIAvatarAnime';
+
+// 3D hologram teacher — lazy so three.js stays out of this route's main chunk
+// (same convention as PenguinHero3D). The 2D orb doubles as Suspense fallback.
+const AIAvatar3D = lazy(() => import('@/components/user/livestream/AIAvatar3D'));
 import { ReactionLayer, ReactionBar, type FloatingReaction } from '@/components/user/livestream/ReactionLayer';
 import { ParticipantPanel, type Participant } from '@/components/user/livestream/ParticipantPanel';
-import { PracticeCard } from '@/components/user/livestream/PracticeCard';
 import { LessonSlide } from '@/components/user/livestream/LessonSlide';
 import { QuizOverlay, type ActiveQuiz } from '@/components/user/livestream/QuizOverlay';
-import { PracticeBattle, type ActiveBattle, type BattleScore } from '@/components/user/livestream/PracticeBattle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -71,7 +73,6 @@ interface RoomInfo {
 interface TranscriptChunk {
   title: string;
   content: string;
-  practice_phrase?: string;
   key_points?: string[];
   keywords?: { term: string; meaning: string }[];
   example?: string;
@@ -433,7 +434,6 @@ export default function LiveRoom() {
   // Mirror of quiz.myAnswer readable inside handleMessage (which closes over
   // stale state) — set optimistically on tap, confirmed by quiz_answer_ack.
   const quizAnswerRef                       = useRef<number | null>(null);
-  const [battle, setBattle]                 = useState<ActiveBattle | null>(null);
   // Transient stage banner for the teacher's between-slide remark.
   const [aside, setAside]                   = useState<string | null>(null);
   const asideTimerRef                       = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -599,16 +599,6 @@ export default function LiveRoom() {
         }
         break;
       }
-      case 'practice_result': {
-        const isMe = msg.user_id === currentUserIdRef.current;
-        const score = msg.score as number;
-        if (!isMe) {
-          const name = msg.user_name as string;
-          const icon = score >= 80 ? '🌟' : score >= 50 ? '👍' : '💪';
-          setChat(p => [...p, { type: 'system', text: t('room.system.practiceResult', { icon, name, phrase: msg.phrase as string, score }) }]);
-        }
-        break;
-      }
       case 'lesson_start':
         setStatus('live');
         setChat(p => [...p, { type: 'system', text: t('room.system.lessonStart') }]);
@@ -631,12 +621,10 @@ export default function LiveRoom() {
         break;
       case 'lesson_chunk': {
         setIsThinking(false);
-        setQuiz(null);   // next slide arriving dismisses any quiz overlay
-        setBattle(null); // …and any battle podium
+        setQuiz(null); // next slide arriving dismisses any quiz overlay
         const chunk: TranscriptChunk = {
           title: msg.title as string,
           content: msg.content as string,
-          practice_phrase: (msg.practice_phrase as string) || '',
           key_points: (msg.key_points as string[]) || [],
           keywords: (msg.keywords as { term: string; meaning: string }[]) || [],
           example: (msg.example as string) || '',
@@ -665,7 +653,6 @@ export default function LiveRoom() {
         setQaDeadline(null);
         setCurrentChunkIndex(-1);
         setQuiz(null);
-        setBattle(null);
         setChat(p => [...p, { type: 'system', text: t('room.system.lessonAutoComplete') }]);
         break;
       case 'question_asked':
@@ -763,48 +750,6 @@ export default function LiveRoom() {
         if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
         break;
       }
-      case 'battle_start': {
-        setMobileTab('stage'); // the battle lives on the stage — make it visible
-        setBattle({
-          id: msg.battle_id as number,
-          phrase: msg.phrase as string,
-          countdownSeconds: (msg.countdown_seconds as number) ?? 5,
-          recordSeconds: (msg.record_seconds as number) ?? 12,
-          startedAt: Date.now(),
-          scores: [],
-          end: null,
-        });
-        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
-        break;
-      }
-      case 'battle_score': {
-        const entry: BattleScore = {
-          userId: msg.user_id as string,
-          userName: msg.user_name as string,
-          score: msg.score as number,
-        };
-        setBattle(b => {
-          if (!b || b.id !== msg.battle_id) return b;
-          if (b.scores.some(s => s.userId === entry.userId)) return b;
-          return { ...b, scores: [...b.scores, entry] };
-        });
-        break;
-      }
-      case 'battle_end': {
-        const leaderboard: BattleScore[] =
-          ((msg.leaderboard as { user_id: string; user_name: string; score: number }[]) ?? [])
-            .map(e => ({ userId: e.user_id, userName: e.user_name, score: e.score }));
-        setBattle(b => (b && b.id === msg.battle_id
-          ? { ...b, end: { leaderboard, participants: (msg.participants as number) ?? leaderboard.length } }
-          : b));
-        if (leaderboard.length > 0) {
-          setChat(p => [...p, {
-            type: 'system',
-            text: t('room.system.battleWinner', { name: leaderboard[0].userName, score: leaderboard[0].score }),
-          }]);
-        }
-        break;
-      }
       case 'teacher_aside': {
         const text = msg.text as string;
         setChat(p => [...p, { type: 'aside', text }]);
@@ -820,7 +765,6 @@ export default function LiveRoom() {
       case 'room_ended':
         setStatus('ended');
         setQuiz(null);
-        setBattle(null);
         setChat(p => [...p, { type: 'system', text: t('room.system.roomEnded') }]);
         audioQueueRef.current.clear();
         break;
@@ -1071,11 +1015,6 @@ export default function LiveRoom() {
     wsRef.current.send(JSON.stringify({ type: 'invite_speaker', target_user_id: targetUserId }));
   }, []);
 
-  const sendPracticeResult = useCallback((phrase: string, transcript: string, score: number) => {
-    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
-    wsRef.current.send(JSON.stringify({ type: 'practice_result', phrase, transcript, score }));
-  }, []);
-
   const sendQuizAnswer = useCallback((quizId: number, optionIndex: number) => {
     if (wsRef.current?.readyState !== WebSocket.OPEN) return;
     // Optimistic lock — the server ack (first-answer-wins) is authoritative.
@@ -1084,11 +1023,6 @@ export default function LiveRoom() {
       ? { ...q, myAnswer: optionIndex }
       : q));
     wsRef.current.send(JSON.stringify({ type: 'quiz_answer', quiz_id: quizId, option_index: optionIndex }));
-  }, []);
-
-  const sendBattleSubmit = useCallback((battleId: number, transcript: string, score: number) => {
-    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
-    wsRef.current.send(JSON.stringify({ type: 'battle_submit', battle_id: battleId, transcript, score }));
   }, []);
 
   useEffect(() => () => {
@@ -1310,16 +1244,6 @@ export default function LiveRoom() {
               <QuizOverlay quiz={quiz} score={quizScore} onAnswer={sendQuizAnswer} />
             )}
 
-            {/* Choral speaking battle — countdown, simultaneous recording,
-                live scores, then the podium */}
-            {battle && !isEnded && (
-              <PracticeBattle
-                battle={battle}
-                currentUserId={currentUserIdRef.current}
-                onSubmit={sendBattleSubmit}
-              />
-            )}
-
             {/* Teacher aside — the AI's between-slide remark about the room */}
             {aside && !spotlight && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-[90%] flex items-center gap-2 bg-white/95 border border-indigo-200 text-indigo-900 px-3 py-1.5 rounded-full shadow-lg">
@@ -1361,15 +1285,28 @@ export default function LiveRoom() {
                 />
               </div>
             ) : (
-              /* Pre-lesson / ended: large centered avatar */
+              /* Pre-lesson / ended: large centered avatar — 3D hologram with
+                 the 2D orb as Suspense fallback while the chunk loads */
               <div className="flex flex-col items-center gap-3 py-6 px-4">
-                <AIAvatarAnime 
-                  isSpeaking={isSpeaking} 
-                  isThinking={isThinking} 
-                  audioVolume={audioVolume}
-                  className="w-44 h-52" 
-                  name="AI Sensei" 
-                />
+                <Suspense
+                  fallback={
+                    <AIAvatarAnime
+                      isSpeaking={isSpeaking}
+                      isThinking={isThinking}
+                      audioVolume={audioVolume}
+                      className="w-44 h-52"
+                      name="AI Sensei"
+                    />
+                  }
+                >
+                  <AIAvatar3D
+                    isSpeaking={isSpeaking}
+                    isThinking={isThinking}
+                    audioVolume={audioVolume}
+                    className="w-44 h-52"
+                    name="AI Sensei"
+                  />
+                </Suspense>
               </div>
             )}
 
@@ -1488,16 +1425,6 @@ export default function LiveRoom() {
                       {t('room.spotlight.unsupported')}
                     </p>
                   )}
-                </div>
-              )}
-
-              {/* Practice card for the active slide */}
-              {hasActiveSlide && activeChunk?.practice_phrase && (
-                <div className="w-full max-w-xl my-2 px-4 z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <PracticeCard
-                    phrase={activeChunk.practice_phrase}
-                    onResult={(t, s) => sendPracticeResult(activeChunk.practice_phrase!, t, s)}
-                  />
                 </div>
               )}
 

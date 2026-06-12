@@ -76,20 +76,22 @@ export function AIAvatarAnime({
         )}
       </div>
 
-      {/* ── Name badge ── */}
+      {/* ── Name badge (hidden when name is empty, e.g. the slide PIP) ── */}
       <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-1 pointer-events-none">
-        <span
-          className="text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg"
-          style={{
-            background: 'rgba(24, 24, 27, 0.7)',
-            color: '#f4f4f5',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            letterSpacing: '0.05em'
-          }}
-        >
-          {name}
-        </span>
+        {name && (
+          <span
+            className="text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg"
+            style={{
+              background: 'rgba(24, 24, 27, 0.7)',
+              color: '#f4f4f5',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              letterSpacing: '0.05em'
+            }}
+          >
+            {name}
+          </span>
+        )}
 
         {isThinking && !isSpeaking && (
           <span className="text-[10px] text-zinc-400 mt-1 uppercase tracking-widest font-bold animate-pulse">
