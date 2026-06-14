@@ -177,11 +177,32 @@
       "explanation": "Giải thích",
       "you": "Bạn",
       "score": "{{correct}}/{{total}}"
+    },
+    "battle": {
+      "badge": "Đồng thanh {{ordinal}}/{{total}}",
+      "getReady": "Chuẩn bị đọc to cùng nhau nào!",
+      "go": "BẮT ĐẦU!",
+      "readAloud": "Đọc to ngay bây giờ",
+      "recordingNow": "🎙️ {{count}} người đang đọc",
+      "doneSpeaking": "Tôi đọc xong",
+      "micBlocked": "Không dùng được micro — hãy cổ vũ cả phòng nhé",
+      "scoring": "Đang chấm điểm giọng của bạn…",
+      "understoodAs": "Mức độ AI nghe rõ bạn",
+      "bandPerfect": "Đồng thanh hoàn hảo! 🎉",
+      "bandGreat": "Tuyệt — rõ ràng, sắc nét",
+      "bandGood": "Tốt — giữ nhịp nhé",
+      "bandKeepGoing": "Cố lên — đọc lại một lần nữa",
+      "podium": "Dẫn đầu phòng học",
+      "you": "Bạn",
+      "placement": "Bạn vượt {{beaten}}/{{total}} người!",
+      "soloEncouragement": "Bạn đầu tiên trong phòng — hãy đặt chuẩn mực! 🎤",
+      "submitted": "{{count}}/{{total}} đã xong"
     }
   },
   "replay": {
     "loading": "Đang tải bản ghi…",
     "notFound": "Không tìm thấy bản ghi",
+    "badge": "Xem lại",
     "back": "Quay lại",
     "backToRooms": "Về danh sách phòng",
     "recordedBy": "Giảng viên {{name}} • {{date}}",
@@ -196,7 +217,10 @@
     "play": "Phát",
     "pause": "Tạm dừng",
     "quizTitle": "Kiểm tra nhanh trong buổi học",
-    "quizAnswered": "{{count}} lượt trả lời"
+    "quizAnswered": "{{count}} lượt trả lời",
+    "battleTitle": "Trận đồng thanh phát âm",
+    "battleScore": "Điểm cao nhất {{score}}/100",
+    "battleNoPlayers": "Không có ai tham gia vòng này."
   },
   "participants": {
     "heading": "Người trong phòng",

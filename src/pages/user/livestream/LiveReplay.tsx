@@ -15,7 +15,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft, Play, Pause, RotateCcw, Volume2, BookOpen, MessageSquare, Check, PlaySquare,
-  Zap, Users,
+  Zap, Users, Trophy,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -32,6 +32,12 @@ interface ReplayQuiz {
   total_answered?: number;
 }
 
+interface ReplayBattle {
+  phrase: string;
+  total_submitted?: number;
+  leaderboard?: { user_id: string; name: string; score: number }[];
+}
+
 interface ReplaySection {
   index: number;
   title: string;
@@ -45,6 +51,7 @@ interface ReplaySection {
   image_url?: string;
   // Room events that ran after this slide, kept in the recording.
   quiz?: ReplayQuiz;
+  battle?: ReplayBattle;
 }
 
 interface ReplayQA {
@@ -352,6 +359,32 @@ export default function LiveReplay() {
                       </div>
                       {activeSection.quiz.explanation && (
                         <p className="text-xs text-slate-500 leading-relaxed">{activeSection.quiz.explanation}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Choral battle podium that ran after this slide */}
+                  {activeSection.battle && (
+                    <div className="mt-3 rounded-xl border border-fuchsia-100 bg-white p-3 space-y-2">
+                      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-500">
+                        <Trophy className="w-3 h-3" />
+                        {t("replay.battleTitle")}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-800">"{activeSection.battle.phrase}"</p>
+                      {(activeSection.battle.leaderboard?.length ?? 0) === 0 ? (
+                        <p className="text-xs text-slate-400">{t("replay.battleNoPlayers")}</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {activeSection.battle.leaderboard!.slice(0, 3).map((e, rank) => (
+                            <div key={e.user_id} className="flex items-center gap-2 text-xs text-slate-700">
+                              <span className="w-5 text-center shrink-0" aria-hidden>
+                                {["🥇", "🥈", "🥉"][rank]}
+                              </span>
+                              <span className="flex-1 truncate">{e.name}</span>
+                              <span className="tabular-nums font-bold shrink-0">{e.score}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   )}

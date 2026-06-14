@@ -11,6 +11,7 @@ import { ReactionLayer, ReactionBar, type FloatingReaction } from '@/components/
 import { ParticipantPanel, type Participant } from '@/components/user/livestream/ParticipantPanel';
 import { LessonSlide } from '@/components/user/livestream/LessonSlide';
 import { QuizOverlay, type ActiveQuiz } from '@/components/user/livestream/QuizOverlay';
+import { BattleOverlay, type ActiveBattle, type BattleLeader } from '@/components/user/livestream/BattleOverlay';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -88,6 +89,17 @@ interface ChatMessage {
   question?: string;
   answer?: string;
   text?: string;
+}
+
+/** Map a server battle leaderboard (snake_case user_id) to the overlay's
+ *  camelCase BattleLeader shape — the raw WS payload can't be cast directly. */
+function toLeaders(raw: unknown): BattleLeader[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((e: { user_id?: string; name?: string; score?: number }) => ({
+    userId: String(e.user_id ?? ''),
+    name: String(e.name ?? ''),
+    score: Number(e.score ?? 0),
+  }));
 }
 
 // ── Audio queue ───────────────────────────────────────────────────────────────
@@ -431,6 +443,7 @@ export default function LiveRoom() {
   const [rateLimitSecs, setRateLimitSecs]   = useState(0);
   const [quiz, setQuiz]                     = useState<ActiveQuiz | null>(null);
   const [quizScore, setQuizScore]           = useState({ correct: 0, total: 0 });
+  const [battle, setBattle]                 = useState<ActiveBattle | null>(null);
   // Mirror of quiz.myAnswer readable inside handleMessage (which closes over
   // stale state) — set optimistically on tap, confirmed by quiz_answer_ack.
   const quizAnswerRef                       = useRef<number | null>(null);
@@ -621,7 +634,8 @@ export default function LiveRoom() {
         break;
       case 'lesson_chunk': {
         setIsThinking(false);
-        setQuiz(null); // next slide arriving dismisses any quiz overlay
+        setQuiz(null);   // next slide arriving dismisses any quiz overlay
+        setBattle(null); // …and any battle podium
         const chunk: TranscriptChunk = {
           title: msg.title as string,
           content: msg.content as string,
@@ -653,6 +667,7 @@ export default function LiveRoom() {
         setQaDeadline(null);
         setCurrentChunkIndex(-1);
         setQuiz(null);
+        setBattle(null);
         setChat(p => [...p, { type: 'system', text: t('room.system.lessonAutoComplete') }]);
         break;
       case 'question_asked':
@@ -750,6 +765,52 @@ export default function LiveRoom() {
         if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
         break;
       }
+      case 'battle_start': {
+        const duration = (msg.duration_seconds as number) ?? 16;
+        setBattle({
+          id: msg.battle_id as number,
+          ordinal: (msg.ordinal as number) ?? 1,
+          total: (msg.total as number) ?? 1,
+          phrase: msg.phrase as string,
+          durationSeconds: duration,
+          deadline: Date.now() + duration * 1000,
+          recordingCount: 0,
+          myScore: null,
+          liveBoard: [],
+          result: null,
+        });
+        // The battle owns the stage — pull mobile users off the chat tab.
+        setMobileTab('stage');
+        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        break;
+      }
+      case 'battle_recording_count':
+        setBattle(b => (b && b.id === msg.battle_id
+          ? { ...b, recordingCount: msg.recording as number }
+          : b));
+        break;
+      case 'battle_progress':
+        setBattle(b => (b && b.id === msg.battle_id
+          ? { ...b, liveBoard: toLeaders(msg.leaderboard) }
+          : b));
+        break;
+      case 'battle_answer_ack':
+        setBattle(b => (b && b.id === msg.battle_id
+          ? { ...b, myScore: msg.score as number }
+          : b));
+        break;
+      case 'battle_result': {
+        const leaderboard = toLeaders(msg.leaderboard);
+        setBattle(b => (b && b.id === msg.battle_id ? {
+          ...b,
+          result: {
+            leaderboard,
+            totalSubmitted: (msg.total_submitted as number) ?? leaderboard.length,
+          },
+        } : b));
+        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        break;
+      }
       case 'teacher_aside': {
         const text = msg.text as string;
         setChat(p => [...p, { type: 'aside', text }]);
@@ -765,6 +826,7 @@ export default function LiveRoom() {
       case 'room_ended':
         setStatus('ended');
         setQuiz(null);
+        setBattle(null);
         setChat(p => [...p, { type: 'system', text: t('room.system.roomEnded') }]);
         audioQueueRef.current.clear();
         break;
@@ -1025,6 +1087,16 @@ export default function LiveRoom() {
     wsRef.current.send(JSON.stringify({ type: 'quiz_answer', quiz_id: quizId, option_index: optionIndex }));
   }, []);
 
+  const sendBattleSubmit = useCallback((battleId: number, score: number) => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    wsRef.current.send(JSON.stringify({ type: 'battle_submit', battle_id: battleId, score }));
+  }, []);
+
+  const sendBattleRecording = useCallback((battleId: number) => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    wsRef.current.send(JSON.stringify({ type: 'battle_recording', battle_id: battleId }));
+  }, []);
+
   useEffect(() => () => {
     if (asideTimerRef.current) clearTimeout(asideTimerRef.current);
   }, []);
@@ -1242,6 +1314,19 @@ export default function LiveRoom() {
                 whole room answers, then shows the vote chart + explanation */}
             {quiz && !isEnded && (
               <QuizOverlay quiz={quiz} score={quizScore} onAnswer={sendQuizAnswer} />
+            )}
+
+            {/* Synchronized choral pronunciation battle — countdown, everyone
+                reads aloud at once, live leaderboard, podium ceremony */}
+            {battle && !isEnded && (
+              <BattleOverlay
+                battle={battle}
+                audioUnlocked={!audioBlocked}
+                currentUserId={currentUserIdRef.current}
+                onSubmit={sendBattleSubmit}
+                onStartRecording={sendBattleRecording}
+                onReact={sendReaction}
+              />
             )}
 
             {/* Teacher aside — the AI's between-slide remark about the room */}

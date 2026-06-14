@@ -177,11 +177,32 @@
       "explanation": "Why",
       "you": "You",
       "score": "{{correct}}/{{total}}"
+    },
+    "battle": {
+      "badge": "Choral battle {{ordinal}}/{{total}}",
+      "getReady": "Get ready to read it aloud together!",
+      "go": "GO!",
+      "readAloud": "Read it aloud now",
+      "recordingNow": "🎙️ {{count}} reading now",
+      "doneSpeaking": "I'm done",
+      "micBlocked": "Mic unavailable — cheer the room on instead",
+      "scoring": "Scoring your voice…",
+      "understoodAs": "How clearly the AI heard you",
+      "bandPerfect": "Perfect chorus! 🎉",
+      "bandGreat": "Great — crisp and clear",
+      "bandGood": "Good — keep the rhythm",
+      "bandKeepGoing": "Keep going — say it once more",
+      "podium": "Top of the room",
+      "you": "You",
+      "placement": "You beat {{beaten}} of {{total}}!",
+      "soloEncouragement": "You're first in the room — set the bar! 🎤",
+      "submitted": "{{count}}/{{total}} done"
     }
   },
   "replay": {
     "loading": "Loading recording…",
     "notFound": "Recording not found",
+    "badge": "Replay",
     "back": "Back",
     "backToRooms": "Back to Live Rooms",
     "recordedBy": "Recorded by {{name}} • {{date}}",
@@ -196,7 +217,10 @@
     "play": "Play",
     "pause": "Pause",
     "quizTitle": "In-lesson quick check",
-    "quizAnswered": "{{count}} answered"
+    "quizAnswered": "{{count}} answered",
+    "battleTitle": "Pronunciation battle",
+    "battleScore": "Top score {{score}}/100",
+    "battleNoPlayers": "No one joined this round."
   },
   "participants": {
     "heading": "People in the room",
