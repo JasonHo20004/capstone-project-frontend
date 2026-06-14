@@ -104,9 +104,11 @@ function toLeaders(raw: unknown): BattleLeader[] {
 
 // ── Audio queue ───────────────────────────────────────────────────────────────
 
+type QueueItem = { url: string; onStart?: () => void };
+
 class AudioQueue {
-  private queue: string[] = [];          // lecture (slide) narration, FIFO
-  private priorityQueue: string[] = [];  // AI answers — jump ahead of slides
+  private queue: QueueItem[] = [];          // lecture (slide) narration, FIFO
+  private priorityQueue: QueueItem[] = [];  // AI answers — jump ahead of slides
   private playing = false;
   private current: HTMLAudioElement | null = null;
   // A slide narration paused mid-way to let an AI answer through; resumed once
@@ -171,10 +173,15 @@ class AudioQueue {
     if (this.onVolumeChange) this.onVolumeChange(0);
   }
 
-  /** Queue a slide narration clip (plays after anything already queued). */
-  push(url: string) {
+  /**
+   * Queue a slide narration clip (plays after anything already queued).
+   * `onStart` fires the moment this clip actually begins playing — used to
+   * advance the on-screen slide in lock-step with the voice, so the visual can
+   * never drift ahead of (or behind) the audio.
+   */
+  push(url: string, onStart?: () => void) {
     if (!url) return;
-    this.queue.push(url);
+    this.queue.push({ url, onStart });
     if (!this.playing && !this._blocked) this._next();
   }
 
@@ -184,9 +191,9 @@ class AudioQueue {
    * the slide resumes once every queued answer has finished. This is what lets
    * the AI reply to a question without waiting for the current slide to end.
    */
-  pushPriority(url: string) {
+  pushPriority(url: string, onStart?: () => void) {
     if (!url) return;
-    this.priorityQueue.push(url);
+    this.priorityQueue.push({ url, onStart });
     if (this._blocked) return; // resumes via unlock()
     if (this.playing && this.current && !this.currentIsPriority) {
       // Interrupt the slide narration and remember it so we can resume later.
@@ -201,10 +208,11 @@ class AudioQueue {
     // If an answer is already playing, the new one just waits in priorityQueue.
   }
 
-  private _play(q: string[], isPriority: boolean) {
+  private _play(q: QueueItem[], isPriority: boolean) {
     this.playing = true;
     this.currentIsPriority = isPriority;
-    const url = q[0]; // peek — only drop the item once it actually plays/ends
+    const item = q[0]; // peek — only drop the item once it actually plays/ends
+    const url = item.url;
     const audio = new Audio(url);
     audio.crossOrigin = "anonymous"; // crucial for Web Audio API with external URLs
     audio.muted = this._muted;
@@ -223,11 +231,17 @@ class AudioQueue {
 
     // onPlay fires on the real `play` event, so the avatar only "speaks" when
     // audio is genuinely audible (not when playback was silently blocked).
-    audio.onplay   = () => { 
-      this._blocked = false; 
-      this.onPlay?.(); 
+    audio.onplay   = () => {
+      this._blocked = false;
+      this.onPlay?.();
       if (this.audioCtx?.state === 'suspended') this.audioCtx.resume();
       this.startVolumeLoop();
+      // Advance the slide in sync with the voice — but only on the FIRST play of
+      // this clip, not when it resumes after an answer/quiz interruption.
+      if (!(audio as any)._startFired) {
+        (audio as any)._startFired = true;
+        item.onStart?.();
+      }
     };
     audio.onended  = () => { 
       this.stopVolumeLoop();
@@ -450,6 +464,10 @@ export default function LiveRoom() {
   // Transient stage banner for the teacher's between-slide remark.
   const [aside, setAside]                   = useState<string | null>(null);
   const asideTimerRef                       = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Warm welcome card shown on the stage while the teacher greets the class,
+  // before the first slide. Cleared when slide 1 arrives (or a fallback timer).
+  const [intro, setIntro]                   = useState<string | null>(null);
+  const introTimerRef                       = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rateLimitTimerRef                   = useRef<ReturnType<typeof setInterval> | null>(null);
   const spotlightPanelRef                   = useRef<HTMLDivElement>(null);
   const reactionIdRef = useRef(0);
@@ -632,10 +650,25 @@ export default function LiveRoom() {
         setStatus('waiting');
         setChat(p => [...p, { type: 'error', text: t('room.system.lessonError') }]);
         break;
+      case 'lesson_intro': {
+        // Warm class greeting before slide 1 — shown as a welcome card on the
+        // stage AND spoken. The card appears the instant the greeting audio
+        // starts (not on message receipt) so the text and the voice stay in sync.
+        const text = (msg.text as string) || '';
+        setIsThinking(false);
+        if (!text) break;
+        const showIntro = () => {
+          setIntro(text);
+          setChat(p => [...p, { type: 'aside', text }]);
+          if (introTimerRef.current) clearTimeout(introTimerRef.current);
+          introTimerRef.current = setTimeout(() => setIntro(null), 60000);
+        };
+        if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string, showIntro);
+        else showIntro();
+        break;
+      }
       case 'lesson_chunk': {
         setIsThinking(false);
-        setQuiz(null);   // next slide arriving dismisses any quiz overlay
-        setBattle(null); // …and any battle podium
         const chunk: TranscriptChunk = {
           title: msg.title as string,
           content: msg.content as string,
@@ -645,15 +678,26 @@ export default function LiveRoom() {
           image_url: (msg.image_url as string) || '',
         };
         const idx = msg.index as number;
-        // Replace-at-index (not blind append) so a chunk re-sent after a
-        // reconnect doesn't create a duplicate slide.
+        const total = msg.total as number;
+        // Store the slide data immediately (so it exists when its audio starts),
+        // but DON'T reveal it yet. Replace-at-index (not blind append) so a chunk
+        // re-sent after a reconnect doesn't create a duplicate slide.
         setTranscript(p => {
           if (idx < p.length) { const c = [...p]; c[idx] = chunk; return c; }
           return [...p, chunk];
         });
-        setCurrentChunkIndex(idx);
-        setProgress({ current: idx + 1, total: msg.total as number });
-        if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string);
+        // Reveal the slide exactly when its narration clip begins playing, so the
+        // visual and the voice advance in lock-step (no drift). If the slide has
+        // no audio (TTS failed), reveal it right away so it can't get stuck.
+        const showSlide = () => {
+          setIntro(null);  // greeting card clears once the first slide speaks
+          setQuiz(null);   // a new slide speaking dismisses any quiz overlay
+          setBattle(null); // …and any battle podium
+          setCurrentChunkIndex(idx);
+          setProgress({ current: idx + 1, total });
+        };
+        if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string, showSlide);
+        else showSlide();
         break;
       }
       case 'qa_period_start': {
@@ -1099,6 +1143,7 @@ export default function LiveRoom() {
 
   useEffect(() => () => {
     if (asideTimerRef.current) clearTimeout(asideTimerRef.current);
+    if (introTimerRef.current) clearTimeout(introTimerRef.current);
   }, []);
 
   const expireReaction = useCallback((id: number) => {
@@ -1392,6 +1437,22 @@ export default function LiveRoom() {
                     name="AI Sensei"
                   />
                 </Suspense>
+
+                {/* Warm welcome card — the teacher's spoken greeting, shown on
+                    screen before slide 1 begins. */}
+                {intro && (
+                  <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="relative rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white px-5 py-4 shadow-xl">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
+                        <span className="text-xs font-bold uppercase tracking-wide opacity-90">
+                          {t('room.intro.badge', 'AI Sensei')}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-relaxed">{intro}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

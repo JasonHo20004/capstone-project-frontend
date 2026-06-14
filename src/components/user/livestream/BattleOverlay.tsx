@@ -512,6 +512,7 @@ export function BattleOverlay({
               result={battle.result}
               currentUserId={currentUserId}
               myScore={myScore}
+              wordDetails={wordDetails}
               reduceMotion={reduceMotion}
               onReact={onReact}
               t={t}
@@ -574,6 +575,7 @@ interface PodiumProps {
   result: { leaderboard: BattleLeader[]; totalSubmitted: number };
   currentUserId: string;
   myScore: number | null;
+  wordDetails: WordMark[];
   reduceMotion: boolean;
   onReact: (emoji: string) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
@@ -584,7 +586,7 @@ const PEDESTAL_H = ['h-16', 'h-24', 'h-12'];
 const MEDALS = ['🥇', '🥈', '🥉'];
 const PODIUM_REACTIONS = ['👏', '🔥', '🎉'];
 
-function Podium({ result, currentUserId, myScore, reduceMotion, onReact, t }: PodiumProps) {
+function Podium({ result, currentUserId, myScore, wordDetails, reduceMotion, onReact, t }: PodiumProps) {
   const lb = result.leaderboard;
   const top3 = lb.slice(0, 3);
   const myRank = lb.findIndex(e => e.userId === currentUserId);
@@ -593,13 +595,52 @@ function Podium({ result, currentUserId, myScore, reduceMotion, onReact, t }: Po
   return (
     <div className="flex flex-col items-center gap-3 py-1">
       <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-500">
-        <Trophy className="w-3.5 h-3.5" /> {t('room.battle.podium')}
+        <Trophy className="w-3.5 h-3.5" /> {solo ? t('room.battle.yourResult') : t('room.battle.podium')}
       </p>
 
       {solo ? (
-        <p className="text-sm font-semibold text-indigo-700 text-center py-2">
-          {t('room.battle.soloEncouragement')}
-        </p>
+        // Alone in the room there's no leaderboard to rank against, so the score
+        // IS the result — lead with it (the transient reveal act can be skipped
+        // entirely if transcription lands after battle_result). When we never
+        // captured a score, say so honestly rather than show a hollow cheer.
+        <div className="flex flex-col items-center gap-2 py-1 w-full">
+          {myScore !== null ? (
+            <>
+              <div className="text-5xl font-black tabular-nums text-slate-900">
+                {myScore}
+                <span className="text-2xl text-slate-400">/100</span>
+              </div>
+              <p className={cn(
+                'text-sm font-bold',
+                myScore >= 75 ? 'text-emerald-600' : myScore >= 50 ? 'text-amber-600' : 'text-rose-600',
+              )}>
+                {t(bandKey(myScore))}
+              </p>
+              {wordDetails.length > 0 && (
+                <p className="flex flex-wrap justify-center gap-1.5 mt-1">
+                  {wordDetails.map((w, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        'text-sm font-semibold px-1.5 py-0.5 rounded',
+                        w.correct ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700 line-through',
+                      )}
+                    >
+                      {w.word}
+                    </span>
+                  ))}
+                </p>
+              )}
+              <p className="text-xs font-semibold text-indigo-600 text-center mt-1">
+                {t('room.battle.soloEncouragement')}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm font-medium text-slate-500 text-center py-2">
+              {t('room.battle.soloNoCapture')}
+            </p>
+          )}
+        </div>
       ) : (
         <>
           {/* Pedestals: 2nd · 1st · 3rd */}
