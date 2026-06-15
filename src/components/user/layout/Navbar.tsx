@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/api/use-auth';
 import { useUser } from '@/hooks/api/use-user';
 import { NotificationDropdown } from './NotificationDropdown';
 import { CartDropdown } from './CartDropdown';
-import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { cn } from '@/lib/utils';
 
@@ -126,7 +125,6 @@ const Navbar = () => {
 
         <div className="hidden lg:flex items-center gap-1">
           <LanguageSwitcher />
-          <ThemeToggle />
           {isLoggedIn ? (
             <>
               <NotificationDropdown userId={user?.id} />
@@ -238,7 +236,6 @@ const Navbar = () => {
             <div className="pt-3 mt-3 border-t border-slate-200 space-y-1">
               <div className="flex items-center gap-2 px-3 py-2">
                 <LanguageSwitcher variant="default" />
-                <ThemeToggle variant="default" />
               </div>
               {isLoggedIn ? (
                 <>

@@ -27,7 +27,6 @@ import { AIAdvisorBanner } from "./AIAdvisorBanner";
 import { useAIAdvisor } from "@/hooks/use-ai-advisor";
 import { useAIInsights } from "@/hooks/use-ai-insights";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import ThemeToggle from "@/components/ThemeToggle";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { UpgradeToProButton } from "./UpgradeToProButton";
@@ -183,7 +182,7 @@ export default function UserAppLayout() {
 
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         {!location.pathname.startsWith("/skill-tree") && (
-          <header className="flex items-center justify-between px-6 py-4 bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border/60">
+          <header className="flex h-16 items-center justify-between px-6 bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border/60">
             <div className="flex items-center gap-4">
               <button
                 type="button"
@@ -199,7 +198,6 @@ export default function UserAppLayout() {
             <div className="flex items-center gap-2">
               {!isProUser && <UpgradeToProButton />}
               <LanguageSwitcher />
-              <ThemeToggle />
               <NotificationDropdown userId={user?.id} />
               <CartDropdown />
               <div className="h-8 w-px bg-border/60 mx-1 hidden sm:block" />
@@ -240,7 +238,7 @@ export default function UserAppLayout() {
           className={cn(
             "flex-1 overflow-y-auto scroll-smooth",
             location.pathname.startsWith("/skill-tree")
-              ? "bg-slate-950 p-0 dark-scrollbar"
+              ? "bg-background p-0"
               : "bg-background p-6 lg:p-8",
           )}
         >

@@ -166,50 +166,74 @@ const CartPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex justify-center items-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
       <main className="flex-1">
-        <section className="bg-white border border-slate-200 rounded-3xl py-8 shadow-sm">
-          <div className="container mx-auto px-4">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900">{t('cart.title')}</h1>
-            <p className="text-slate-500">{t('cart.subtitle')}</p>
+        {/* Enhanced Hero Section matching MyCourses / Flashcards */}
+        <section className="relative overflow-hidden rounded-3xl bg-hero-gradient p-8 text-white md:p-10 mb-8 shadow-md">
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+              backgroundSize: '24px 24px',
+            }}
+          />
+          <div aria-hidden className="absolute -right-16 top-0 h-80 w-80 rounded-full bg-secondary/30 blur-3xl pointer-events-none" />
+          <div aria-hidden className="absolute -left-16 bottom-0 h-60 w-60 rounded-full bg-primary-light/40 blur-3xl pointer-events-none" />
+
+          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none transform translate-x-4 -translate-y-4">
+             <ShoppingCart className="w-48 h-48 text-white" />
+          </div>
+
+          <div className="relative z-10">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl mb-3 text-white">
+              {t('cart.title')}
+            </h1>
+            <p className="max-w-md text-sm leading-relaxed text-white/80">
+              {t('cart.subtitle')}
+            </p>
           </div>
         </section>
 
-        <section className="py-6">
-          <div className="container mx-auto px-0 grid lg:grid-cols-3 gap-6">
-            <Card className="p-6 lg:col-span-2 space-y-4">
+        <section>
+          <div className="container mx-auto px-0 grid lg:grid-cols-3 gap-8">
+            {/* Cart Items List */}
+            <div className="lg:col-span-2 space-y-6">
               {cartItems.length === 0 ? (
-                <div className="flex flex-col items-center text-center py-12">
-                    <ShoppingCart className="w-12 h-12 text-slate-300 mb-3" />
-                    <p className="text-slate-500">{t('cart.empty')}</p>
-                    <p className="text-sm text-slate-500 mt-1">{t('cart.emptyHint')}</p>
-                    <Button asChild className="mt-4">
+                <div className="flex flex-col items-center justify-center text-center py-20 px-4 bg-surface-low/50 rounded-3xl border border-dashed border-border">
+                    <div className="w-24 h-24 bg-surface-lowest rounded-full flex items-center justify-center shadow-sm border border-border/60 mb-6 hover:scale-110 transition-transform duration-500">
+                      <ShoppingCart className="w-10 h-10 text-primary/40" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-foreground mb-2">{t('cart.empty')}</h3>
+                    <p className="text-muted-foreground mb-8 max-w-md mx-auto">{t('cart.emptyHint')}</p>
+                    <Button asChild size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:-translate-y-1">
                       <Link to="/courses">{t('cart.exploreCourses')}</Link>
                     </Button>
                 </div>
               ) : (
-                <>
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                    <div className="flex items-center gap-2">
+                <Card className="p-6 md:p-8 rounded-3xl border-border shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/60 pb-6 mb-6 gap-4">
+                    <div className="flex items-center gap-3">
                       <Checkbox
                           checked={allSelected}
                           onCheckedChange={(v) => toggleSelectAll(Boolean(v))}
                           id="select-all"
+                          className="w-5 h-5 rounded data-[state=checked]:bg-primary"
                       />
-                      <label htmlFor="select-all" className="text-sm cursor-pointer select-none">
+                      <label htmlFor="select-all" className="text-base font-medium text-foreground cursor-pointer select-none">
                           {t('cart.selectAll', { count: cartItems.length })}
                       </label>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full px-4 h-9"
                       disabled={clearMutation.isPending}
                       onClick={() => setClearConfirmOpen(true)}
                     >
@@ -224,134 +248,166 @@ const CartPage = () => {
 
                   <div className="space-y-4">
                     {cartItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between border-b border-slate-200 pb-4 last:border-none last:pb-0">
-                        <div className="flex items-start gap-3">
-                            <Checkbox
-                            checked={isSelected(item.id)}
-                            onCheckedChange={(v) => toggleSelect(item.id, Boolean(v))}
-                            aria-label={t('cart.selectItem', { title: item.course.title })}
-                            />
-                            <div>
-                            <h3 className="font-semibold line-clamp-1">{item.course.title}</h3>
-                            <p className="text-slate-500 text-sm">{formatVND(item.priceAtTime)}</p>
-                            </div>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            disabled={removeMutation.isPending && removeMutation.variables === item.id}
-                            onClick={() => {
-                              removeMutation.mutate(item.id, {
-                                onSuccess: () => {
-                                  setSelectedIds((prev) => prev.filter((x) => x !== item.id));
-                                },
-                              });
-                            }}
-                        >
-                            {removeMutation.isPending && removeMutation.variables === item.id ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4 mr-2" />
-                            )}
-                            {t('cart.remove')}
-                        </Button>
+                        <div key={item.id} className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition-all duration-300 ${isSelected(item.id) ? 'border-primary/40 bg-primary/5 shadow-sm' : 'border-border/60 bg-surface-lowest hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-md'}`}>
+                          <div className="flex items-start gap-4 flex-1">
+                              <div className="pt-2 sm:pt-6">
+                                <Checkbox
+                                  checked={isSelected(item.id)}
+                                  onCheckedChange={(v) => toggleSelect(item.id, Boolean(v))}
+                                  aria-label={t('cart.selectItem', { title: item.course.title })}
+                                  className="w-5 h-5 rounded data-[state=checked]:bg-primary"
+                                />
+                              </div>
+                              <div className="flex flex-1 gap-4 items-center">
+                                {item.course.thumbnailUrl ? (
+                                  <div className="w-24 h-16 sm:w-36 sm:h-24 rounded-xl overflow-hidden shrink-0 border border-border shadow-sm relative">
+                                    <img src={item.course.thumbnailUrl} alt={item.course.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                  </div>
+                                ) : (
+                                  <div className="w-24 h-16 sm:w-36 sm:h-24 rounded-xl bg-surface-low shrink-0 border border-border shadow-sm flex items-center justify-center">
+                                    <ShoppingCart className="w-6 h-6 text-muted-foreground/40" />
+                                  </div>
+                                )}
+                                <div className="flex flex-col justify-center gap-1.5 flex-1 pr-2">
+                                  <h3 className="font-semibold text-base sm:text-lg text-foreground line-clamp-2 leading-tight">{item.course.title}</h3>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="bg-primary/10 text-primary font-medium border-0 px-2.5 py-0.5">{formatVND(item.priceAtTime)}</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                          </div>
+                          
+                          <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0 self-end sm:self-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-10 w-10 sm:w-auto sm:px-4"
+                              disabled={removeMutation.isPending && removeMutation.variables === item.id}
+                              onClick={() => {
+                                removeMutation.mutate(item.id, {
+                                  onSuccess: () => {
+                                    setSelectedIds((prev) => prev.filter((x) => x !== item.id));
+                                  },
+                                });
+                              }}
+                          >
+                              {removeMutation.isPending && removeMutation.variables === item.id ? (
+                                <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4 sm:mr-1.5" />
+                              )}
+                              <span className="hidden sm:inline font-medium">{t('cart.remove')}</span>
+                          </Button>
                         </div>
                     ))}
                   </div>
-                </>
+                </Card>
               )}
-            </Card>
+            </div>
 
-            <Card className="p-6 space-y-4 h-fit sticky top-24">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">{t('cart.subtotalCount', { count: selectedItems.length })}</span>
-                  <span className="font-medium">{formatVND(selectedTotal)}</span>
-                </div>
-                {appliedDiscount > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-emerald-600 flex items-center gap-1">
-                      <Ticket className="h-3.5 w-3.5" /> {t('cart.discount')}
-                    </span>
-                    <span className="font-medium text-emerald-600">
-                      -{formatVND(appliedDiscount)}
-                    </span>
+            {/* Elevated Summary Sidebar */}
+            <div className="lg:col-span-1 h-fit sticky top-24">
+              <Card className="p-6 sm:p-8 space-y-6 bg-surface-lowest/80 backdrop-blur-xl border-border shadow-xl shadow-foreground/5 rounded-3xl overflow-hidden relative">
+                {/* Decorative blob */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div aria-hidden className="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div className="relative z-10 space-y-6">
+                  <h3 className="text-xl font-bold text-foreground">{t('cart.summary')}</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-muted-foreground">
+                      <span>{t('cart.subtotalCount', { count: selectedItems.length })}</span>
+                      <span className="font-semibold text-foreground">{formatVND(selectedTotal)}</span>
+                    </div>
+                    {appliedDiscount > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-emerald-600 flex items-center gap-1.5 font-medium bg-emerald-50 px-2.5 py-1 rounded-md text-sm border border-emerald-100">
+                          <Ticket className="h-3.5 w-3.5" /> {t('cart.discount')}
+                        </span>
+                        <span className="font-bold text-emerald-600">
+                          -{formatVND(appliedDiscount)}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="flex items-center justify-between border-t pt-2">
-                  <span className="text-slate-500">{t('cart.grandTotal')}</span>
-                  <span className="text-xl font-semibold text-primary">
-                    {formatVND(finalTotal)}
-                  </span>
-                </div>
-              </div>
 
-              {/* Coupon input */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                  <Ticket className="h-3.5 w-3.5" /> {t('cart.couponLabel')}
-                </label>
-                {coupon && couponMatchesSubtotal ? (
-                  <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-50 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="border-emerald-500/40 bg-white">
-                        {coupon.code}
-                      </Badge>
-                      <span className="text-xs text-emerald-700">
-                        {coupon.discountType === 'PERCENT'
-                          ? `-${coupon.discountValue}%`
-                          : `-${formatVND(coupon.discountValue)}`}
+                  <div className="pt-5 border-t border-border/60">
+                    <div className="flex items-end justify-between mb-1.5">
+                      <span className="text-muted-foreground font-medium">{t('cart.grandTotal')}</span>
+                      <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-light tracking-tight">
+                        {formatVND(finalTotal)}
                       </span>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleRemoveCoupon}
-                      className="h-7 w-7 p-0"
-                      title={t('cart.removeCoupon')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder={t('cart.couponPlaceholder')}
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                      className="font-mono uppercase"
-                      disabled={validating || selectedIds.length === 0}
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleApplyCoupon}
-                      disabled={validating || selectedIds.length === 0}
-                    >
-                      {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : t('cart.applyCoupon')}
-                    </Button>
-                  </div>
-                )}
-                {!coupon && selectedIds.length === 0 && (
-                  <p className="text-[11px] text-slate-400">
-                    {t('cart.selectBeforeApply')}
-                  </p>
-                )}
-              </div>
 
-              <div className="flex flex-col gap-2">
-                <Button
-                  className="w-full bg-primary shadow-lg shadow-primary/20"
-                  disabled={selectedIds.length === 0 || isProcessing}
-                  onClick={handleCheckoutClick}
-                >
-                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  {t('cart.checkout')}
-                </Button>
-              </div>
-            </Card>
+                  {/* Redesigned Coupon input */}
+                  <div className="space-y-3 pt-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-primary" /> {t('cart.couponLabel')}
+                    </label>
+                    {coupon && couponMatchesSubtotal ? (
+                      <div className="flex items-center justify-between rounded-xl border-2 border-emerald-500/30 bg-emerald-50/50 px-4 py-3 transition-all">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="border-emerald-500/40 bg-surface-lowest font-mono text-emerald-700 text-sm py-1 shadow-sm">
+                            {coupon.code}
+                          </Badge>
+                          <span className="text-sm font-semibold text-emerald-700">
+                            {coupon.discountType === 'PERCENT'
+                              ? `-${coupon.discountValue}%`
+                              : `-${formatVND(coupon.discountValue)}`}
+                          </span>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={handleRemoveCoupon}
+                          className="h-8 w-8 rounded-full text-emerald-700 hover:text-destructive hover:bg-destructive/10"
+                          title={t('cart.removeCoupon')}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="relative flex items-center">
+                        <Input
+                          placeholder={t('cart.couponPlaceholder')}
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          className="font-mono uppercase h-12 pr-24 rounded-xl border-border focus-visible:ring-primary/20 bg-surface-low/50 focus:bg-surface-lowest transition-colors"
+                          disabled={validating || selectedIds.length === 0}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleApplyCoupon}
+                          disabled={validating || selectedIds.length === 0 || !couponInput.trim()}
+                          className="absolute right-1.5 h-9 rounded-lg px-4 bg-foreground hover:bg-foreground/90 text-background font-medium disabled:opacity-50 transition-all"
+                        >
+                          {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : t('cart.applyCoupon')}
+                        </Button>
+                      </div>
+                    )}
+                    {!coupon && selectedIds.length === 0 && (
+                      <p className="text-xs text-muted-foreground pl-1">
+                        {t('cart.selectBeforeApply')}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      size="lg"
+                      className="w-full h-14 rounded-xl text-lg font-bold bg-gradient-to-r from-primary to-primary-light shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                      disabled={selectedIds.length === 0 || isProcessing}
+                      onClick={handleCheckoutClick}
+                    >
+                      {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <ShoppingCart className="w-5 h-5 mr-3" />}
+                      {t('cart.checkout')}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
         </section>
       </main>
@@ -372,22 +428,27 @@ const CartPage = () => {
       />
 
       <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('cart.clearConfirm.title')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-xl">{t('cart.clearConfirm.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-muted-foreground">
               {t('cart.clearConfirm.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cart.clearConfirm.cancel')}</AlertDialogCancel>
+          <AlertDialogFooter className="mt-4 gap-2">
+            <AlertDialogCancel className="rounded-xl border-border">{t('cart.clearConfirm.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => { e.preventDefault(); handleClearCart(); }}
               disabled={clearMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl shadow-sm"
             >
               {clearMutation.isPending
-                ? t('cart.clearConfirm.clearing')
+                ? (
+                    <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {t('cart.clearConfirm.clearing')}
+                    </>
+                )
                 : t('cart.clearConfirm.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>

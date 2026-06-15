@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { motion, useReducedMotion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useUser } from '@/hooks/api/use-user';
 import { Button } from '@/components/ui/button';
@@ -23,8 +25,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { AIAvatarAnime } from '@/components/user/livestream/AIAvatarAnime';
 import { Users, Radio, Plus, LogIn, Clock, PlayCircle, BookOpen } from 'lucide-react';
+
+// Lazy: this page ships in the main bundle, so the 3D mascot (three.js) must
+// stay in its own chunk.
+const PenguinHero3D = lazy(() => import('@/components/user/home/PenguinHero3D'));
 
 // Routes through the api-gateway (proxies /api/livestream/* to rag-service).
 const RAG_BASE = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:3000';
@@ -55,14 +60,14 @@ interface Recording {
 
 const LEVEL_COLORS: Record<string, string> = {
   beginner: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  intermediate: 'bg-blue-100 text-blue-700 border-blue-200',
-  advanced: 'bg-violet-100 text-violet-700 border-violet-200',
+  intermediate: 'bg-primary/10 text-primary border-primary/20',
+  advanced: 'bg-secondary/15 text-secondary-foreground border-secondary/30',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   waiting: 'bg-amber-100 text-amber-700',
   live: 'bg-red-100 text-red-600',
-  completed: 'bg-slate-100 text-slate-500',
+  completed: 'bg-muted text-muted-foreground',
 };
 
 export default function LiveRoomList() {
@@ -76,6 +81,7 @@ export default function LiveRoomList() {
   const [language, setLanguage] = useState('en');
   const [tab, setTab] = useState<'live' | 'recordings'>('live');
   const [createError, setCreateError] = useState('');
+  const reduceMotion = useReducedMotion() ?? false;
 
   const statusLabel = (status: string) => {
     if (status === 'waiting') return t('list.status.waiting');
@@ -153,26 +159,36 @@ export default function LiveRoomList() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Radio className="w-5 h-5 text-indigo-500" />
-            <h1 className="text-2xl font-bold text-slate-900">{t('list.title')}</h1>
-          </div>
-          <p className="text-sm text-slate-500">
-            {t('list.subtitle')}
-          </p>
-        </div>
+      {/* Hero */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <section className="relative overflow-hidden rounded-3xl bg-hero-gradient p-7 text-white shadow-md md:p-9">
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-secondary/30 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -left-10 -bottom-16 h-52 w-52 rounded-full bg-primary-light/40 blur-3xl" />
+          <Radio aria-hidden className="pointer-events-none absolute right-4 top-1/2 hidden h-44 w-44 -translate-y-1/2 text-white/10 sm:block" />
 
-        <Dialog open={open} onOpenChange={setOpen}>
+          <div className="relative z-10 flex items-start justify-between gap-4 flex-wrap">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20 backdrop-blur-sm">
+                  <Radio className="h-5 w-5 text-white" />
+                </span>
+                <h1 className="font-display text-2xl font-extrabold tracking-tight md:text-3xl">{t('list.title')}</h1>
+              </div>
+              <p className="max-w-md text-sm text-white/80">
+                {t('list.subtitle')}
+              </p>
+            </div>
+
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+            <Button className="bg-white text-primary hover:bg-white/90 shadow-lg gap-2 rounded-full font-bold">
               <Plus className="w-4 h-4" />
               {t('list.createRoom')}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          </div>
+        </section>
+
+        <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>{t('list.dialog.title')}</DialogTitle>
             </DialogHeader>
@@ -186,14 +202,14 @@ export default function LiveRoomList() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                 />
-                <p className="text-xs text-slate-400">{t('list.dialog.topicHint')}</p>
+                <p className="text-xs text-muted-foreground">{t('list.dialog.topicHint')}</p>
               </div>
 
               {/* Lesson prompt */}
               <div className="space-y-1.5">
                 <Label htmlFor="lesson-prompt">
                   {t('list.dialog.lessonPromptLabel')}
-                  <span className="ml-1.5 text-xs font-normal text-slate-400">{t('list.dialog.lessonPromptOptional')}</span>
+                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">{t('list.dialog.lessonPromptOptional')}</span>
                 </Label>
                 <Textarea
                   id="lesson-prompt"
@@ -203,7 +219,7 @@ export default function LiveRoomList() {
                   rows={4}
                   className="resize-none text-sm"
                 />
-                <p className="text-xs text-slate-400">{t('list.dialog.lessonPromptHint')}</p>
+                <p className="text-xs text-muted-foreground">{t('list.dialog.lessonPromptHint')}</p>
               </div>
 
               {/* Level */}
@@ -234,7 +250,7 @@ export default function LiveRoomList() {
                   </SelectContent>
                 </Select>
                 {language === 'vi' && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {t('list.dialog.languageViHint')}
                   </p>
                 )}
@@ -247,7 +263,7 @@ export default function LiveRoomList() {
               )}
 
               <Button
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                className="w-full bg-primary hover:bg-primary-light"
                 disabled={!topic.trim() || createRoom.isPending}
                 onClick={() => createRoom.mutate()}
               >
@@ -255,31 +271,37 @@ export default function LiveRoomList() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
-      </div>
+      </Dialog>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit">
-        <button
-          onClick={() => setTab('live')}
-          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            tab === 'live'
-              ? 'bg-white text-indigo-700 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <Radio className="w-4 h-4" /> {t('list.tabs.live')}
-        </button>
-        <button
-          onClick={() => setTab('recordings')}
-          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            tab === 'recordings'
-              ? 'bg-white text-indigo-700 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <BookOpen className="w-4 h-4" /> {t('list.tabs.recordings')}
-        </button>
+      <div className="flex gap-1 bg-surface-low p-1 rounded-xl w-fit">
+        {([
+          { id: 'live', icon: Radio, label: t('list.tabs.live') },
+          { id: 'recordings', icon: BookOpen, label: t('list.tabs.recordings') },
+        ] as const).map(({ id, icon: Icon, label }) => {
+          const isActive = tab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              aria-current={isActive ? 'page' : undefined}
+              className={cn(
+                'relative flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="live-tab-pill"
+                  className="absolute inset-0 -z-0 rounded-lg bg-surface-lowest shadow-sm"
+                  transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34 }}
+                />
+              )}
+              <Icon className="relative z-10 w-4 h-4" />
+              <span className="relative z-10">{label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Room grid */}
@@ -290,10 +312,10 @@ export default function LiveRoomList() {
           </div>
         ) : recordings.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-20 text-center">
-            <BookOpen className="w-12 h-12 text-slate-300" />
+            <BookOpen className="w-12 h-12 text-muted-foreground/40" />
             <div>
-              <p className="font-medium text-slate-700">{t('list.recordings.empty')}</p>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="font-medium text-foreground">{t('list.recordings.empty')}</p>
+              <p className="text-sm text-muted-foreground mt-1">
                 {t('list.recordings.emptyHint')}
               </p>
             </div>
@@ -303,21 +325,21 @@ export default function LiveRoomList() {
             {recordings.map((rec) => (
               <div
                 key={rec.room_id}
-                className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 space-y-3"
+                className="bg-surface-lowest border border-border rounded-2xl p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 space-y-3"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">
+                  <h3 className="font-semibold text-foreground leading-snug line-clamp-2 flex-1">
                     {rec.topic}
                   </h3>
                   <Badge
                     variant="outline"
-                    className={`text-xs shrink-0 ${LEVEL_COLORS[rec.level] ?? 'bg-slate-100 text-slate-600'}`}
+                    className={`text-xs shrink-0 ${LEVEL_COLORS[rec.level] ?? 'bg-muted text-muted-foreground'}`}
                   >
                     {rec.level_label}
                   </Badge>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-slate-400">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <BookOpen className="w-3 h-3" />
                     {t('list.recordings.sections', { count: rec.section_count })}
@@ -333,12 +355,12 @@ export default function LiveRoomList() {
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs text-slate-500">
-                    {t('list.recordings.hostLabel')} <span className="font-medium text-slate-700">{rec.host_name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t('list.recordings.hostLabel')} <span className="font-medium text-foreground">{rec.host_name}</span>
                   </span>
                   <Button
                     size="sm"
-                    className="bg-indigo-600 hover:bg-indigo-700 gap-1.5"
+                    className="bg-primary hover:bg-primary-light gap-1.5"
                     onClick={() => navigate(`/live/replay/${rec.room_id}`)}
                   >
                     <PlayCircle className="w-3.5 h-3.5" />
@@ -355,10 +377,12 @@ export default function LiveRoomList() {
         </div>
       ) : rooms.length === 0 ? (
         <div className="flex flex-col items-center gap-5 py-20 text-center">
-          <AIAvatarAnime isSpeaking={false} className="w-28 h-28" />
+          <Suspense fallback={<span className="text-7xl select-none">🐧</span>}>
+            <PenguinHero3D className="w-40 h-40" />
+          </Suspense>
           <div>
-            <p className="font-medium text-slate-700">{t('list.rooms.empty')}</p>
-            <p className="text-sm text-slate-400 mt-1">{t('list.rooms.emptyHint')}</p>
+            <p className="font-medium text-foreground">{t('list.rooms.empty')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('list.rooms.emptyHint')}</p>
           </div>
           <Button variant="outline" onClick={() => setOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" /> {t('list.rooms.createButton')}
@@ -369,15 +393,15 @@ export default function LiveRoomList() {
           {rooms.map((room) => (
             <div
               key={room.id}
-              className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 space-y-3"
+              className="bg-surface-lowest border border-border rounded-2xl p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 leading-snug line-clamp-2">
+                  <h3 className="font-semibold text-foreground leading-snug line-clamp-2">
                     {room.topic}
                   </h3>
                   {room.lesson_prompt && (
-                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{room.lesson_prompt}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{room.lesson_prompt}</p>
                   )}
                 </div>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[room.status]}`}>
@@ -391,31 +415,31 @@ export default function LiveRoomList() {
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge
                   variant="outline"
-                  className={`text-xs ${LEVEL_COLORS[room.level] ?? 'bg-slate-100 text-slate-600'}`}
+                  className={`text-xs ${LEVEL_COLORS[room.level] ?? 'bg-muted text-muted-foreground'}`}
                 >
                   {room.level_label}
                 </Badge>
-                <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                   {room.language === 'vi' ? 'VI' : 'EN'}
                 </span>
-                <span className="text-xs text-slate-400 flex items-center gap-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   {t('list.rooms.joined', { count: room.participant_count })}
                 </span>
-                <span className="text-xs text-slate-400 flex items-center gap-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {timeAgo(room.created_at)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-slate-500">
-                  {t('list.rooms.hostLabel')} <span className="font-medium text-slate-700">{room.host_name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t('list.rooms.hostLabel')} <span className="font-medium text-foreground">{room.host_name}</span>
                 </span>
                 <Button
                   size="sm"
                   variant={room.status === 'live' ? 'default' : 'outline'}
-                  className={room.status === 'live' ? 'bg-indigo-600 hover:bg-indigo-700 gap-1.5' : 'gap-1.5'}
+                  className={room.status === 'live' ? 'bg-primary hover:bg-primary-light gap-1.5' : 'gap-1.5'}
                   disabled={room.status === 'completed'}
                   onClick={() => navigate(`/live/${room.id}`)}
                 >
@@ -431,7 +455,7 @@ export default function LiveRoomList() {
       <div className="flex justify-end">
         <button
           onClick={() => refetch()}
-          className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+          className="text-xs text-muted-foreground hover:text-muted-foreground transition-colors"
         >
           {t('list.refresh')}
         </button>

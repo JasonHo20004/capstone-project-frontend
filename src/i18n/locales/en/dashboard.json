@@ -1,6 +1,7 @@
 {
   "hero": {
     "eyebrow": "Learning Workspace",
+    "welcome": "Welcome back,",
     "title": "Learn anywhere,",
     "titleAccent": "progress every day",
     "subtitle": "Discover courses, track progress and learn at your own pace with a more intuitive interface.",
@@ -17,10 +18,49 @@
     "decksValue": "{{count}} decks",
     "decksEmpty": "No decks yet"
   },
+  "streak": {
+    "title": "Study Streak",
+    "days": "{{count}} Days Streak",
+    "dailyGoal": "Daily goal: {{xp}}/{{target}} XP",
+    "encouragement": "Doing great! Keep the learning flame burning! 🔥"
+  },
+  "enrolled": {
+    "title": "Your Enrolled Courses",
+    "subtitle": "Resume your study and keep moving forward on your learning journey",
+    "continue": "Resume Lesson",
+    "empty": "You are not enrolled in any courses yet.",
+    "explore": "Explore Courses",
+    "lessonsCompleted": "{{completed}}/{{total}} lessons completed",
+    "completed": "Course Completed"
+  },
+  "advisor": {
+    "title": "AI Advisor Suggestion",
+    "evidence": "Analyzing your learning habits",
+    "cta": "Start Studying",
+    "tip": "Learning Tip:"
+  },
+  "hub": {
+    "title": "Learning Hub & AI Utilities",
+    "subtitle": "Smart tools built to optimize and boost your IELTS band score",
+    "exam": "IELTS Exam Center",
+    "examDesc": "Complete 4-skill testing simulating real IELTS formats",
+    "skillTree": "CEFR Skill Tree",
+    "skillTreeDesc": "Track grammar and vocabulary progress live on an interactive map",
+    "dictation": "Dictation Practice",
+    "dictationDesc": "Improve sound reflex and write vocabulary with precision",
+    "learningPath": "AI Learning Path",
+    "learningPathDesc": "Get personalized roadmap customized just for you",
+    "live": "Live Classroom",
+    "liveDesc": "Interact and learn in real time with active instructors",
+    "flashcards": "Smart Flashcards",
+    "flashcardsDesc": "Boost vocabulary memory with spaced repetition decks"
+  },
   "placement": {
     "title": "Take the English placement test",
     "subtitle": "50 questions · ~40 minutes · Determine your CEFR level (A1–C2) and get a tailored learning path.",
-    "cta": "Take the test"
+    "cta": "Take the test",
+    "noLevelDesc": "Please take the placement test so the AI can shape a personalized learning path for you.",
+    "currentLevel": "Your current level is {{level}}."
   },
   "popular": {
     "title": "Popular courses",

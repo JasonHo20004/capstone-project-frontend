@@ -273,6 +273,19 @@ class RagService {
     const resp = await apiClient.post("/rag/find-justification", payload, { timeout: 120000 });
     return resp.data;
   }
+
+  async transcribeDictation(audioBlob: Blob, language: string): Promise<{ success: boolean; sentences: { text: string }[] }> {
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "dictation.webm");
+    formData.append("language", language);
+
+    const response = await apiClient.post(
+      "/rag/transcribe/dictation",
+      formData,
+      { timeout: 120000 },
+    );
+    return response.data;
+  }
 }
 
 export interface FindJustificationResponse {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,9 @@ import { formatVND, formatDate, formatDateForInput } from '@/lib/utils';
 import { useProfile, useUpdateProfile } from '@/hooks/api/use-user';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { walletService } from '@/lib/api/services/user/wallet/wallet.service';
+
+// Lazy so three.js stays out of the initial bundle.
+const PenguinHero3D = lazy(() => import('@/components/user/home/PenguinHero3D'));
 
 const ENGLISH_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
@@ -201,9 +204,15 @@ export default function Profile() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <div className="rounded-3xl border border-slate-200 shadow-sm">
         <div className="h-36 rounded-t-3xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full" />
-          <div className="absolute top-4 left-14 w-16 h-16 bg-white/5 rounded-full" />
-          <div className="absolute -bottom-16 left-1/3 w-64 h-64 bg-indigo-700/30 rounded-full blur-2xl" />
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full motion-safe:animate-float-slow" />
+          <div className="absolute top-4 left-14 w-16 h-16 bg-white/5 rounded-full motion-safe:animate-float" />
+          <div className="absolute -bottom-16 left-1/3 w-64 h-64 bg-indigo-700/30 rounded-full blur-2xl motion-safe:animate-aurora" />
+          {/* Brand mascot peeking from the right */}
+          <div aria-hidden className="pointer-events-none absolute -bottom-3 right-4 hidden h-32 w-32 sm:block">
+            <Suspense fallback={null}>
+              <PenguinHero3D className="h-full w-full" />
+            </Suspense>
+          </div>
         </div>
 
         <div className="bg-white rounded-b-3xl px-6 pb-5">

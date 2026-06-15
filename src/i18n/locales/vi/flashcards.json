@@ -50,6 +50,17 @@
     "emptyMyCardsHint": "Thêm thẻ đầu tiên để bắt đầu học nhé!",
     "addCardNow": "Thêm thẻ ngay"
   },
+  "cardList": {
+    "flipHint": "Chạm để lật thẻ",
+    "meaning": "Nghĩa",
+    "edit": "Sửa",
+    "delete": "Xóa thẻ",
+    "status": {
+      "NEW": "Thẻ mới",
+      "LEARNING": "Đang học",
+      "REVIEW": "Ôn tập"
+    }
+  },
   "dialogs": {
     "createDeck": {
       "title": "Tạo bộ thẻ mới",

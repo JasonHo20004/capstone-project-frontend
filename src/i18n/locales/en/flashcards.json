@@ -50,6 +50,17 @@
     "emptyMyCardsHint": "Add your first card to start studying!",
     "addCardNow": "Add Card Now"
   },
+  "cardList": {
+    "flipHint": "Tap to flip",
+    "meaning": "Meaning",
+    "edit": "Edit",
+    "delete": "Delete card",
+    "status": {
+      "NEW": "New",
+      "LEARNING": "Learning",
+      "REVIEW": "Review"
+    }
+  },
   "dialogs": {
     "createDeck": {
       "title": "Create New Deck",

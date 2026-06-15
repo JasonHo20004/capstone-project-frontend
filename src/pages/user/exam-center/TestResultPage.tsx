@@ -4,6 +4,7 @@ import { useTranslation, Trans } from "react-i18next";
 import apiClient from "@/lib/api/config";
 import DiscussionSection from "@/components/DiscussionSection";
 import AiTutorPanel from "@/components/AiTutorPanel";
+import { Celebration } from "@/components/ui/celebration";
 import { assessmentService } from "@/lib/api/services/user/assessment/assessment.service";
 
 interface QuestionContent {
@@ -799,6 +800,9 @@ export default function TestResultPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900">
+      {/* Confetti when the learner scores a strong band */}
+      <Celebration fire={bandNum >= 7} />
+
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-slate-200 h-16 flex items-center px-6 justify-between">
         <Link

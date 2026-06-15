@@ -222,6 +222,18 @@
       "progressPercentDone": "You have completed {{percent}}% of this course.",
       "instructor": "Instructor",
       "ratingsFromLearners": "{{count}} learner reviews",
+      "verifiedInstructor": "Verified instructor",
+      "stats": {
+        "progress": "Progress",
+        "lessons": "Lessons",
+        "duration": "Duration",
+        "minutesUnit": "min"
+      },
+      "features": {
+        "video": "HD video lessons",
+        "materials": "Downloadable materials",
+        "qa": "Community Q&A"
+      },
       "whatYouLearnTitle": "What will you learn?",
       "whatYouLearnDesc": "Use the lesson list on the right to navigate through each piece of detailed content. Each lesson may include video, downloadable materials, and a Q&A area where you can interact with the community.",
       "lastUpdated": "Last updated: {{date}}"
@@ -229,6 +241,7 @@
     "syllabusSidebar": {
       "lessonsLabel": "List of lessons",
       "title": "List of Lessons",
+      "completedOfTotal": "{{completed}}/{{total}} completed",
       "empty": "This course has no lessons yet.",
       "noDescription": "No description",
       "minutes": "{{count}} minutes",
@@ -366,6 +379,10 @@
       "issuedDate": "Issue date",
       "signatory": "Board of Directors",
       "certificateNumber": "Certificate ID"
+    },
+    "focusMode": {
+      "showSyllabus": "Show lesson list",
+      "enterFocus": "Focus Mode"
     }
   }
 }

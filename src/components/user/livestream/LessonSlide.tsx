@@ -10,7 +10,6 @@ export interface SlideChunk {
   key_points?: string[];
   keywords?: { term: string; meaning: string }[];
   example?: string;
-  practice_phrase?: string;
   image_url?: string;
 }
 
@@ -22,6 +21,7 @@ interface Props {
   ragBase: string;
   /** Optional teacher avatar to overlay in the top-right corner of the slide */
   avatarSlot?: ReactNode;
+  audioProgress?: number | null;
 }
 
 /**
@@ -30,8 +30,11 @@ interface Props {
  * - Slide-in animation when becoming active
  * - Optional avatar PIP in the top-right
  */
-export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }: Props) {
-  const { t } = useTranslation('livestream');
+export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot, audioProgress }: Props) {
+  const { t, i18n } = useTranslation('livestream');
+  // Click-to-translate follows the UI language: Vietnamese UI → VI gloss,
+  // anything else → English definition (it was hardcoded to "vi" before).
+  const dictTarget: 'vi' | 'en' = i18n.language?.toLowerCase().startsWith('vi') ? 'vi' : 'en';
   const hasSlideData = !!(
     (chunk.key_points && chunk.key_points.length) ||
     (chunk.keywords && chunk.keywords.length) ||
@@ -134,7 +137,7 @@ export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }
                     </span>
                     <TranslatableText
                       text={pt}
-                      target="vi"
+                      target={dictTarget}
                       ragBase={ragBase}
                       className="text-sm text-slate-700 leading-snug flex-1"
                     />
@@ -178,7 +181,7 @@ export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }
                 <div className="rounded-lg bg-slate-50 border-l-2 border-indigo-400 px-3 py-2">
                   <TranslatableText
                     text={chunk.example}
-                    target="vi"
+                    target={dictTarget}
                     ragBase={ragBase}
                     className="text-sm italic text-slate-700 leading-snug block"
                   />
@@ -192,8 +195,9 @@ export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot }
       {/* Spoken narration — keep below the slide */}
       <TranslatableText
         text={chunk.content}
-        target="vi"
+        target={dictTarget}
         ragBase={ragBase}
+        audioProgress={active ? audioProgress : null}
         className={cn(
           'text-sm leading-relaxed block',
           active ? 'text-slate-700' : 'text-slate-500',

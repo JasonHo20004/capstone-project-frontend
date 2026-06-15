@@ -37,7 +37,7 @@
     },
     "recordings": {
       "empty": "Chưa có bản ghi nào",
-      "emptyHint": "Buổi học hoàn tất được lưu trong 7 ngày.",
+      "emptyHint": "Buổi học hoàn tất sẽ được lưu tại đây.",
       "sections": "{{count}} phần",
       "qas": "{{count}} câu hỏi",
       "hostLabel": "Giảng viên:",
@@ -80,6 +80,8 @@
       "chat": "Hỏi & Đáp"
     },
     "unlockAudio": "Nhấn để bật tiếng AI",
+    "unlockAudioCta": "Nhấn vào đây",
+    "stopAi": "Dừng AI",
     "preparing": "Đang chuẩn bị bài giảng…",
     "waitingHost": "Nhấn \"Bắt đầu bài học\" khi sẵn sàng",
     "waitingStudent": "Đợi giảng viên bắt đầu bài học…",
@@ -95,6 +97,7 @@
       "start": "Bắt đầu nói",
       "submit": "Xong, gửi",
       "cancel": "Thôi",
+      "recordingLive": "Đang ghi âm…",
       "unsupported": "Trình duyệt không hỗ trợ nói. Bạn có thể gõ câu hỏi ở khung Hỏi & Đáp."
     },
     "hand": {
@@ -128,11 +131,15 @@
       "recordAria": "Ghi âm câu hỏi",
       "placeholder": {
         "listening": "Đang nghe… nói câu hỏi của bạn",
+        "transcribing": "Đang xử lý giọng nói…",
         "ended": "Buổi học đã kết thúc",
         "connecting": "Đang kết nối…",
         "noQuota": "Đã hết lượt — đợi 1 phút",
         "default": "Đặt câu hỏi hoặc nhấn mic để nói…"
       },
+      "voiceFailed": "Không nhận diện được giọng nói — thử lại hoặc gõ câu hỏi.",
+      "voiceError": "Lỗi kết nối khi xử lý giọng nói.",
+      "serverRateLimited": "Bạn hỏi hơi nhanh — chờ một chút nhé.",
       "footer": {
         "withMic": "Mic · Tối đa {{max}} câu/phút · Enter để gửi",
         "withoutMic": "Tối đa {{max}} câu/phút · Enter để gửi"
@@ -153,14 +160,51 @@
       "roomEnded": "Phòng học đã kết thúc.",
       "speakerInvitedSelf": "Giảng viên mời bạn phát biểu!",
       "speakerInvitedOther": "Giảng viên mời {{name}} phát biểu",
-      "practiceResult": "{{icon}} {{name}} luyện nói: \"{{phrase}}\" ({{score}}/100)"
+      "joined": "👋 {{name}} vừa vào lớp",
+      "lessonError": "AI gặp lỗi khi tạo bài giảng. Giảng viên có thể bấm \"Bắt đầu bài học\" để thử lại."
     },
     "explainAgainPart": "Giải thích lại phần \"{{title}}\" cho tôi",
-    "practiceAvailable": "Có bài luyện nói ↓"
+    "quiz": {
+      "badge": "Kiểm tra nhanh {{ordinal}}/{{total}}",
+      "answered": "{{count}} đã trả lời",
+      "pickOne": "Chọn đáp án trước khi hết giờ!",
+      "lockedIn": "Đã chốt — chờ công bố đáp án…",
+      "closing": "Hết giờ — đang đếm phiếu…",
+      "timeLeft": "Còn {{secs}} giây",
+      "correct": "Chính xác! Tuyệt vời 🎉",
+      "incorrect": "Chưa đúng — xem giải thích bên dưới",
+      "noAnswer": "Hết giờ — đáp án đây",
+      "explanation": "Giải thích",
+      "you": "Bạn",
+      "score": "{{correct}}/{{total}}"
+    },
+    "battle": {
+      "badge": "Đồng thanh {{ordinal}}/{{total}}",
+      "getReady": "Chuẩn bị đọc to nào!",
+      "go": "BẮT ĐẦU!",
+      "readAloud": "Đọc to ngay bây giờ",
+      "recordingNow": "🎙️ {{count}} người đang đọc",
+      "doneSpeaking": "Tôi đọc xong",
+      "micBlocked": "Không dùng được micro — hãy cổ vũ cả phòng nhé",
+      "scoring": "Đang chấm điểm giọng của bạn…",
+      "understoodAs": "Mức độ AI nghe rõ bạn",
+      "bandPerfect": "Phát âm hoàn hảo! 🎉",
+      "bandGreat": "Tuyệt — rõ ràng, sắc nét",
+      "bandGood": "Tốt — giữ nhịp nhé",
+      "bandKeepGoing": "Cố lên — đọc lại một lần nữa",
+      "podium": "Dẫn đầu phòng học",
+      "yourResult": "Kết quả phát âm của bạn",
+      "soloNoCapture": "Lần này chưa nghe được giọng bạn — thử lại ở câu sau nhé! 🎤",
+      "you": "Bạn",
+      "placement": "Bạn vượt {{beaten}}/{{total}} người!",
+      "soloEncouragement": "Bạn đầu tiên trong phòng — hãy đặt chuẩn mực! 🎤",
+      "submitted": "{{count}}/{{total}} đã xong"
+    }
   },
   "replay": {
     "loading": "Đang tải bản ghi…",
     "notFound": "Không tìm thấy bản ghi",
+    "badge": "Xem lại",
     "back": "Quay lại",
     "backToRooms": "Về danh sách phòng",
     "recordedBy": "Giảng viên {{name}} • {{date}}",
@@ -168,7 +212,17 @@
     "seekHint": "Nhấn để tua tới đoạn",
     "qaTitle": "Hỏi đáp trong buổi học ({{count}})",
     "noQa": "Buổi học này chưa có câu hỏi nào.",
-    "playAudio": "Phát âm thanh"
+    "playAudio": "Phát âm thanh",
+    "sectionsTitle": "Nội dung bài học",
+    "slideCount": "{{count}} slide",
+    "restart": "Phát lại từ đầu",
+    "play": "Phát",
+    "pause": "Tạm dừng",
+    "quizTitle": "Kiểm tra nhanh trong buổi học",
+    "quizAnswered": "{{count}} lượt trả lời",
+    "battleTitle": "Trận đồng thanh phát âm",
+    "battleScore": "Điểm cao nhất {{score}}/100",
+    "battleNoPlayers": "Không có ai tham gia vòng này."
   },
   "participants": {
     "heading": "Người trong phòng",
@@ -180,22 +234,6 @@
     "inviteTitle": "Mời học viên phát biểu",
     "invite": "Mời",
     "handPosition": "Vị trí {{n}}"
-  },
-  "practice": {
-    "label": "Luyện nói",
-    "youSaid": "Bạn nói:",
-    "feedback": {
-      "great": "Tuyệt vời!",
-      "close": "Gần đúng — thử lại nhé",
-      "tryAgain": "Cố lên! Đọc lại lần nữa"
-    },
-    "buttons": {
-      "tryAloud": "Đọc theo",
-      "again": "Thử lại",
-      "stop": "Dừng",
-      "clear": "Xoá"
-    },
-    "unsupported": "Trình duyệt không hỗ trợ luyện nói. Hãy dùng Chrome/Edge để dùng tính năng này."
   },
   "translate": {
     "loading": "Đang dịch…",

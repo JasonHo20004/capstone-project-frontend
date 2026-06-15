@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Volume2, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TranslationResult {
   word: string;
@@ -15,6 +16,7 @@ interface Props {
   target?: 'vi' | 'en';
   ragBase: string;
   className?: string;
+  audioProgress?: number | null;
 }
 
 // Split text into clickable English words vs. punctuation/whitespace.
@@ -42,7 +44,7 @@ function normalizeIpa(raw: string): string {
  * Renders plain text where each English word can be clicked to open a
  * translation popover. Caches results in-memory.
  */
-export function TranslatableText({ text, target = 'vi', ragBase, className }: Props) {
+export function TranslatableText({ text, target = 'vi', ragBase, className, audioProgress }: Props) {
   const [popover, setPopover] = useState<{ word: string; rect: DOMRect; result?: TranslationResult; loading: boolean } | null>(null);
 
   const openWord = useCallback(async (word: string, target_lang: 'vi' | 'en', el: HTMLElement) => {
@@ -83,20 +85,24 @@ export function TranslatableText({ text, target = 'vi', ragBase, className }: Pr
   return (
     <>
       <span className={className}>
-        {parts.map((p, i) =>
-          p.kind === 'word' ? (
+        {parts.map((p, i) => {
+          const isHighlighted = audioProgress !== null && audioProgress !== undefined && (i / parts.length <= audioProgress);
+          return p.kind === 'word' ? (
             <button
               key={i}
               type="button"
               onClick={e => openWord(p.value, target, e.currentTarget)}
-              className="inline hover:bg-indigo-100 hover:text-indigo-700 rounded px-0.5 transition-colors cursor-pointer"
+              className={cn(
+                "inline rounded px-0.5 transition-colors cursor-pointer",
+                isHighlighted ? "bg-indigo-100 text-indigo-700" : "hover:bg-indigo-100 hover:text-indigo-700"
+              )}
             >
               {p.value}
             </button>
           ) : (
-            <span key={i}>{p.value}</span>
-          ),
-        )}
+            <span key={i} className={isHighlighted ? "text-indigo-700 font-medium transition-colors" : ""}>{p.value}</span>
+          );
+        })}
       </span>
       {popover && <TranslationPopover popover={popover} onClose={close} />}
     </>

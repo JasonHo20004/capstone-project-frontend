@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Star, User, ShoppingCart, Loader2, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import { TiltCard } from '@/components/ui/tilt-card';
 import type { Course } from "@/domain";
 import { formatVND } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,6 @@ interface CourseCardProps {
 
 const CourseCard = ({ course, hideAddToCart = false, purchased = false }: CourseCardProps) => {
   const { user } = useUser();
-  const reduce = useReducedMotion();
   const addToCartMutation = useAddToCart();
   const isInCart = useIsInCart(course.id);
   const { t } = useTranslation('courses');
@@ -45,11 +44,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
 
   return (
     <Link to={purchased ? `/learning/courses/${course.id}/lessons` : `/courses/${course.id}`} className="block h-full">
-      <motion.div
-        whileHover={reduce ? undefined : { y: -4, scale: 1.01 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface-lowest shadow-md ring-1 ring-border/10 transition-shadow duration-300 ease-soft hover:shadow-card-hover"
-      >
+      <TiltCard className="group flex h-full flex-col overflow-hidden rounded-2xl bg-surface-lowest shadow-md ring-1 ring-border/10 transition-shadow duration-300 ease-soft hover:shadow-card-hover">
         {purchased && (
           <div className="absolute right-3 top-3 z-10">
             <Badge className="rounded-full bg-secondary/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground ring-1 ring-secondary/30 hover:bg-secondary/15">
@@ -133,7 +128,7 @@ const CourseCard = ({ course, hideAddToCart = false, purchased = false }: Course
             </div>
           </div>
         </div>
-      </motion.div>
+      </TiltCard>
     </Link>
   );
 };

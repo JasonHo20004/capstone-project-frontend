@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { TiltCard } from '@/components/ui/tilt-card';
 import {
   Mic,
   PenLine,
@@ -165,11 +166,9 @@ export default function ServicesBento() {
 
           {/* Remaining service tiles */}
           {tiles.map((tile, i) => (
-            <motion.div key={tile.key} {...reveal(i + 2, reduce)}>
-              <Link
-                to={tile.to}
-                className="group relative flex h-full flex-col overflow-hidden rounded-3xl bg-surface-lowest p-6 shadow-md ring-1 ring-border/10 transition-all duration-300 ease-soft hover:-translate-y-1 hover:shadow-card-hover"
-              >
+            <motion.div key={tile.key} {...reveal(i + 2, reduce)} className="h-full">
+              <Link to={tile.to} className="block h-full">
+              <TiltCard className="group relative flex h-full flex-col overflow-hidden rounded-3xl bg-surface-lowest p-6 shadow-md ring-1 ring-border/10 transition-shadow duration-300 ease-soft hover:shadow-card-hover">
                 <div className="flex items-start justify-between">
                   <span className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${tile.chip} text-white shadow-md transition-transform duration-300 group-hover:-rotate-6`}>
                     <tile.icon className="h-6 w-6" />
@@ -183,6 +182,7 @@ export default function ServicesBento() {
                   {t(`services.items.${tile.key}.description`)}
                 </p>
                 <div aria-hidden className={`absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r ${tile.chip} transition-all duration-500 group-hover:w-full`} />
+              </TiltCard>
               </Link>
             </motion.div>
           ))}

@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import CourseCard from '@/components/user/course/CourseCard';
 import { usePurchases } from '@/context/PurchasesContext';
 import { Button } from '@/components/ui/button';
+import { TiltCard } from '@/components/ui/tilt-card';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import {
@@ -17,6 +17,170 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react';
+import { useCourseContext } from '@/hooks/api/use-student-learning';
+import type { Course } from '@/domain';
+import { cn } from '@/lib/utils';
+
+// Lazy so three.js stays out of the initial bundle.
+const PenguinHero3D = lazy(() => import('@/components/user/home/PenguinHero3D'));
+
+
+// ─── Custom Card for Purchased Courses (displays progress) ─────────────
+const PurchasedCourseCard = ({ course, viewMode = 'grid' }: { course: Course; viewMode?: 'grid' | 'list' }) => {
+  const { t } = useTranslation('dashboard');
+  const { data: context, isLoading } = useCourseContext(course.id);
+  const reduce = useReducedMotion();
+
+  if (isLoading) {
+    return (
+      <div className={cn(
+        "animate-pulse rounded-2xl bg-surface-lowest p-5 border border-border/10 shadow-sm",
+        viewMode === 'list' ? "flex gap-5 items-center w-full" : "h-[220px] w-full"
+      )}>
+        <div className={cn("bg-surface-container rounded-xl shrink-0", viewMode === 'list' ? "h-16 w-16" : "h-32 w-full")} />
+        <div className="flex-1 space-y-3 mt-2">
+          <div className="h-4 bg-surface-container rounded w-3/4" />
+          <div className="h-3 bg-surface-container rounded w-1/2" />
+          <div className="h-2 bg-surface-container rounded w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  const progress = context?.progress?.progressPercentage ?? 0;
+  const completed = context?.progress?.completedLessons ?? 0;
+  const total = context?.progress?.totalLessons ?? 0;
+  const instructorName = context?.course?.instructor?.fullName || course.sellerName || t('courseCard.unknownInstructor', { ns: 'courses' });
+
+  if (viewMode === 'list') {
+    return (
+      <Link to={`/learning/courses/${course.id}/lessons`} className="block w-full">
+        <motion.div
+          whileHover={reduce ? undefined : { x: 4 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center gap-5 rounded-2xl bg-surface-lowest p-5 border border-border/15 shadow-sm hover:shadow-xl hover:shadow-primary/10 hover:border-primary/20 transition-all duration-500 relative overflow-hidden group w-full"
+        >
+          {/* Left: Thumbnail */}
+          <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-surface-low border border-border/10">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] z-10" />
+            <img
+              src={course.thumbnailUrl || "/placeholder-course.jpg"}
+              alt={course.title}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=200&auto=format&fit=crop";
+              }}
+            />
+          </div>
+
+          {/* Middle: Details */}
+          <div className="flex-1 min-w-0 space-y-1 text-left">
+            <div className="flex items-center gap-2">
+              <span className="inline-block rounded-full bg-primary/5 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary ring-1 ring-primary/20">
+                {course.courseLevel || "All Levels"}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {instructorName}
+              </span>
+            </div>
+            <h3 className="font-display text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1 leading-snug">
+              {course.title}
+            </h3>
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {course.description}
+            </p>
+          </div>
+
+          {/* Right: Progress & Action */}
+          <div className="w-full sm:w-60 flex flex-col gap-3 shrink-0">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-muted-foreground">
+                  {progress === 100 ? t('enrolled.completed') : t('enrolled.lessonsCompleted', { completed, total })}
+                </span>
+                <span className="text-primary tabular-nums font-bold">{progress}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-primary-light rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs font-semibold group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300">
+                {t('enrolled.continue')}
+                <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      </Link>
+    );
+  }
+
+  // Grid view (Standard card)
+  return (
+    <Link to={`/learning/courses/${course.id}/lessons`} className="block h-full">
+      <TiltCard maxTilt={6} className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface-lowest p-5 border border-border/15 shadow-sm hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30 transition-shadow duration-500 ease-out">
+        {/* Top Image */}
+        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-xl bg-surface-low border border-border/10">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
+          <img
+            src={course.thumbnailUrl || "/placeholder-course.jpg"}
+            alt={course.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=200&auto=format&fit=crop";
+            }}
+          />
+          <div className="absolute right-2 top-2 z-10">
+            <span className="rounded-full bg-surface-lowest/90 backdrop-blur-sm px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary ring-1 ring-primary/20">
+              {course.courseLevel || "All Levels"}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-1 flex-col justify-between text-left">
+          <div>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              {instructorName}
+            </span>
+            <h3 className="mt-0.5 mb-1.5 line-clamp-2 font-display text-base font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+              {course.title}
+            </h3>
+            <p className="mb-4 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              {course.description}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-muted-foreground">
+                  {progress === 100 ? t('enrolled.completed') : t('enrolled.lessonsCompleted', { completed, total })}
+                </span>
+                <span className="text-primary font-bold tabular-nums">{progress}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-primary-light rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <Button size="sm" variant="outline" className="w-full h-9 rounded-lg text-xs font-semibold group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300">
+              {t('enrolled.continue')}
+              <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </TiltCard>
+    </Link>
+  );
+};
 
 export default function MyCourses() {
   const { items, isLoading, count } = usePurchases();
@@ -116,7 +280,7 @@ export default function MyCourses() {
 
       {/* Action Bar */}
       {totalCourses > 0 && (
-        <section className="flex flex-col gap-3 rounded-2xl bg-surface-lowest p-4 shadow-md ring-1 ring-border/10 sm:flex-row sm:items-center sm:justify-between">
+        <section className="sticky top-20 z-30 flex flex-col gap-3 rounded-2xl bg-white/80 backdrop-blur-xl p-4 shadow-lg shadow-slate-200/50 ring-1 ring-border/5 sm:flex-row sm:items-center sm:justify-between transition-all duration-300">
           <div className="relative max-w-md flex-1">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -161,10 +325,14 @@ export default function MyCourses() {
       {totalCourses === 0 ? (
         <section className="overflow-hidden rounded-2xl bg-surface-lowest shadow-md ring-1 ring-border/10">
           <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-            <div className="relative mb-8">
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/10">
-                <BookOpen className="h-12 w-12 text-primary/60" />
-              </div>
+            <div className="relative mb-6 h-44 w-44">
+              <Suspense
+                fallback={
+                  <div className="flex h-full w-full items-center justify-center text-[5rem]">🐧</div>
+                }
+              >
+                <PenguinHero3D className="h-full w-full" />
+              </Suspense>
             </div>
 
             <h2 className="mb-2 font-display text-2xl font-bold">{t('myCourses.emptyTitle')}</h2>
@@ -227,7 +395,7 @@ export default function MyCourses() {
           >
             {filteredItems.map(({ id, course }, i) => (
               <motion.div key={id} {...reveal(i)}>
-                <CourseCard course={course} hideAddToCart purchased />
+                <PurchasedCourseCard course={course} viewMode={viewMode} />
               </motion.div>
             ))}
           </div>
