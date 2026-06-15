@@ -100,32 +100,32 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
         };
 
   const features = [
-    { icon: Video, label: t("studentLearning.courseOverview.features.video"), tint: "text-indigo-500 bg-indigo-50" },
+    { icon: Video, label: t("studentLearning.courseOverview.features.video"), tint: "text-primary bg-primary/10" },
     { icon: FileDown, label: t("studentLearning.courseOverview.features.materials"), tint: "text-emerald-500 bg-emerald-50" },
-    { icon: MessagesSquare, label: t("studentLearning.courseOverview.features.qa"), tint: "text-amber-500 bg-amber-50" },
+    { icon: MessagesSquare, label: t("studentLearning.courseOverview.features.qa"), tint: "text-secondary bg-secondary/10" },
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm md:p-8">
+    <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface-lowest p-6 shadow-sm md:p-8">
       {/* decorative blooms */}
-      <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-indigo-500/5 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-emerald-500/5 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/5 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-secondary/5 blur-3xl" />
 
       <div className="relative z-10 space-y-6">
         {/* ── Title + badges ─────────────────────────────────── */}
         <motion.div {...fadeUp(0)}>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900">{course.title}</h2>
+          <h2 className="text-2xl font-black tracking-tight text-foreground">{course.title}</h2>
           {course.description && (
-            <p className="mt-2 text-sm leading-relaxed text-slate-500">{course.description}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{course.description}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
             {course.category && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-1 text-indigo-700 ring-1 ring-indigo-100">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-1 text-primary-dark ring-1 ring-primary/15">
                 <Layers className="h-3 w-3" /> {course.category}
               </span>
             )}
             {levelLabel && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-50 to-purple-50 px-3 py-1 text-violet-700 ring-1 ring-violet-100">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-secondary/15 to-secondary/5 px-3 py-1 text-secondary-foreground ring-1 ring-secondary/20">
                 <Sparkles className="h-3 w-3" /> {levelLabel}
               </span>
             )}
@@ -145,7 +145,7 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
           {/* Progress — radial ring */}
           <motion.div
             {...fadeUp(0.05)}
-            className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-blue-500 to-indigo-600 p-4 text-white shadow-lg shadow-indigo-500/20 transition-shadow duration-300 hover:shadow-indigo-500/40"
+            className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-light to-primary p-4 text-white shadow-lg shadow-primary/20 transition-shadow duration-300 hover:shadow-primary/40"
           >
             <div aria-hidden className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/15 blur-2xl" />
             <RadialProgress value={progress.progressPercentage} reduceMotion={reduceMotion} />
@@ -182,15 +182,15 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
           {/* Duration */}
           <motion.div
             {...fadeUp(0.15)}
-            className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 p-4 text-white shadow-lg shadow-amber-500/20 transition-shadow duration-300 hover:shadow-amber-500/40"
+            className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-secondary via-secondary-light to-secondary p-4 text-secondary-foreground shadow-lg shadow-secondary/20 transition-shadow duration-300 hover:shadow-secondary/40"
           >
-            <div aria-hidden className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/15 blur-2xl" />
-            <div className="relative z-10 flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
+            <div aria-hidden className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+            <div className="relative z-10 flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl bg-white/25 backdrop-blur-sm">
               <Clock className="h-7 w-7" />
             </div>
             <div className="relative z-10">
               <p className="text-3xl font-black leading-none tabular-nums">{totalMinutes || 0}</p>
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-white/70">
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-secondary-foreground/70">
                 {t("studentLearning.courseOverview.stats.duration")} ·{" "}
                 {t("studentLearning.courseOverview.stats.minutesUnit")}
               </p>
@@ -203,24 +203,24 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
           {/* Instructor */}
           <motion.div
             {...fadeUp(0.2)}
-            className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-gradient-to-br from-slate-50 to-white p-4"
+            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-gradient-to-br from-surface-low to-surface-lowest p-4"
           >
             <div className="relative shrink-0">
               <UserAvatar
                 src={course.instructor.profilePicture}
                 name={course.instructor.fullName}
-                className="h-14 w-14 ring-2 ring-indigo-200 ring-offset-2"
+                className="h-14 w-14 ring-2 ring-primary/30 ring-offset-2"
               />
               <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow">
-                <BadgeCheck className="h-4 w-4 text-indigo-500" />
+                <BadgeCheck className="h-4 w-4 text-primary" />
               </span>
             </div>
             <div className="min-w-0 space-y-0.5">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-500">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary">
                 {t("studentLearning.courseOverview.verifiedInstructor")}
               </p>
-              <p className="truncate text-sm font-bold text-slate-900">{course.instructor.fullName}</p>
-              <p className="text-xs text-slate-500">
+              <p className="truncate text-sm font-bold text-foreground">{course.instructor.fullName}</p>
+              <p className="text-xs text-muted-foreground">
                 {t("studentLearning.courseOverview.ratingsFromLearners", { count: course.totalRatings })}
               </p>
             </div>
@@ -229,17 +229,17 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
           {/* What you'll learn */}
           <motion.div
             {...fadeUp(0.25)}
-            className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/50 p-4"
+            className="relative overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/5 via-surface-lowest to-primary/5 p-4"
           >
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500 text-white shadow-sm shadow-indigo-500/30">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
                 <GraduationCap className="h-4 w-4" />
               </span>
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-bold text-foreground">
                 {t("studentLearning.courseOverview.whatYouLearnTitle")}
               </p>
             </div>
-            <p className="mt-2 text-sm leading-relaxed text-slate-500">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {t("studentLearning.courseOverview.whatYouLearnDesc")}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -248,7 +248,7 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
                 return (
                   <span
                     key={f.label}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-surface-lowest px-2.5 py-1 text-xs font-semibold text-muted-foreground ring-1 ring-border/60"
                   >
                     <span className={`flex h-4 w-4 items-center justify-center rounded-full ${f.tint}`}>
                       <Icon className="h-2.5 w-2.5" />
@@ -261,7 +261,7 @@ export const CourseOverview = ({ context }: CourseOverviewProps) => {
           </motion.div>
         </div>
 
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-muted-foreground">
           {t("studentLearning.courseOverview.lastUpdated", { date: formattedDate })}
         </p>
       </div>

@@ -206,19 +206,19 @@ const CartPage = () => {
             {/* Cart Items List */}
             <div className="lg:col-span-2 space-y-6">
               {cartItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-20 px-4 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-6 hover:scale-110 transition-transform duration-500">
+                <div className="flex flex-col items-center justify-center text-center py-20 px-4 bg-surface-low/50 rounded-3xl border border-dashed border-border">
+                    <div className="w-24 h-24 bg-surface-lowest rounded-full flex items-center justify-center shadow-sm border border-border/60 mb-6 hover:scale-110 transition-transform duration-500">
                       <ShoppingCart className="w-10 h-10 text-primary/40" />
                     </div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{t('cart.empty')}</h3>
-                    <p className="text-slate-500 mb-8 max-w-md mx-auto">{t('cart.emptyHint')}</p>
+                    <h3 className="text-2xl font-bold text-foreground mb-2">{t('cart.empty')}</h3>
+                    <p className="text-muted-foreground mb-8 max-w-md mx-auto">{t('cart.emptyHint')}</p>
                     <Button asChild size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:-translate-y-1">
                       <Link to="/courses">{t('cart.exploreCourses')}</Link>
                     </Button>
                 </div>
               ) : (
-                <Card className="p-6 md:p-8 rounded-3xl border-slate-200 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-6 mb-6 gap-4">
+                <Card className="p-6 md:p-8 rounded-3xl border-border shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/60 pb-6 mb-6 gap-4">
                     <div className="flex items-center gap-3">
                       <Checkbox
                           checked={allSelected}
@@ -226,7 +226,7 @@ const CartPage = () => {
                           id="select-all"
                           className="w-5 h-5 rounded data-[state=checked]:bg-primary"
                       />
-                      <label htmlFor="select-all" className="text-base font-medium text-slate-700 cursor-pointer select-none">
+                      <label htmlFor="select-all" className="text-base font-medium text-foreground cursor-pointer select-none">
                           {t('cart.selectAll', { count: cartItems.length })}
                       </label>
                     </div>
@@ -248,7 +248,7 @@ const CartPage = () => {
 
                   <div className="space-y-4">
                     {cartItems.map((item) => (
-                        <div key={item.id} className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition-all duration-300 ${isSelected(item.id) ? 'border-primary/40 bg-primary/5 shadow-sm' : 'border-slate-100 bg-white hover:border-slate-300 hover:shadow-md'}`}>
+                        <div key={item.id} className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition-all duration-300 ${isSelected(item.id) ? 'border-primary/40 bg-primary/5 shadow-sm' : 'border-border/60 bg-surface-lowest hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-md'}`}>
                           <div className="flex items-start gap-4 flex-1">
                               <div className="pt-2 sm:pt-6">
                                 <Checkbox
@@ -260,16 +260,16 @@ const CartPage = () => {
                               </div>
                               <div className="flex flex-1 gap-4 items-center">
                                 {item.course.thumbnailUrl ? (
-                                  <div className="w-24 h-16 sm:w-36 sm:h-24 rounded-xl overflow-hidden shrink-0 border border-slate-200 shadow-sm relative">
+                                  <div className="w-24 h-16 sm:w-36 sm:h-24 rounded-xl overflow-hidden shrink-0 border border-border shadow-sm relative">
                                     <img src={item.course.thumbnailUrl} alt={item.course.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                   </div>
                                 ) : (
-                                  <div className="w-24 h-16 sm:w-36 sm:h-24 rounded-xl bg-slate-50 shrink-0 border border-slate-200 shadow-sm flex items-center justify-center">
-                                    <ShoppingCart className="w-6 h-6 text-slate-300" />
+                                  <div className="w-24 h-16 sm:w-36 sm:h-24 rounded-xl bg-surface-low shrink-0 border border-border shadow-sm flex items-center justify-center">
+                                    <ShoppingCart className="w-6 h-6 text-muted-foreground/40" />
                                   </div>
                                 )}
                                 <div className="flex flex-col justify-center gap-1.5 flex-1 pr-2">
-                                  <h3 className="font-semibold text-base sm:text-lg text-slate-900 line-clamp-2 leading-tight">{item.course.title}</h3>
+                                  <h3 className="font-semibold text-base sm:text-lg text-foreground line-clamp-2 leading-tight">{item.course.title}</h3>
                                   <div className="flex items-center gap-2">
                                     <Badge variant="secondary" className="bg-primary/10 text-primary font-medium border-0 px-2.5 py-0.5">{formatVND(item.priceAtTime)}</Badge>
                                   </div>
@@ -280,7 +280,7 @@ const CartPage = () => {
                           <Button
                               variant="ghost"
                               size="icon"
-                              className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0 self-end sm:self-center text-slate-400 hover:text-destructive hover:bg-destructive/10 rounded-full h-10 w-10 sm:w-auto sm:px-4"
+                              className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0 self-end sm:self-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-10 w-10 sm:w-auto sm:px-4"
                               disabled={removeMutation.isPending && removeMutation.variables === item.id}
                               onClick={() => {
                                 removeMutation.mutate(item.id, {
@@ -306,17 +306,18 @@ const CartPage = () => {
 
             {/* Elevated Summary Sidebar */}
             <div className="lg:col-span-1 h-fit sticky top-24">
-              <Card className="p-6 sm:p-8 space-y-6 bg-white/80 backdrop-blur-xl border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden relative">
+              <Card className="p-6 sm:p-8 space-y-6 bg-surface-lowest/80 backdrop-blur-xl border-border shadow-xl shadow-foreground/5 rounded-3xl overflow-hidden relative">
                 {/* Decorative blob */}
-                <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div aria-hidden className="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
 
                 <div className="relative z-10 space-y-6">
-                  <h3 className="text-xl font-bold text-slate-900">{t('cart.summary')}</h3>
+                  <h3 className="text-xl font-bold text-foreground">{t('cart.summary')}</h3>
                   
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between text-slate-600">
+                    <div className="flex items-center justify-between text-muted-foreground">
                       <span>{t('cart.subtotalCount', { count: selectedItems.length })}</span>
-                      <span className="font-semibold text-slate-900">{formatVND(selectedTotal)}</span>
+                      <span className="font-semibold text-foreground">{formatVND(selectedTotal)}</span>
                     </div>
                     {appliedDiscount > 0 && (
                       <div className="flex items-center justify-between">
@@ -330,10 +331,10 @@ const CartPage = () => {
                     )}
                   </div>
 
-                  <div className="pt-5 border-t border-slate-100">
+                  <div className="pt-5 border-t border-border/60">
                     <div className="flex items-end justify-between mb-1.5">
-                      <span className="text-slate-500 font-medium">{t('cart.grandTotal')}</span>
-                      <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 tracking-tight">
+                      <span className="text-muted-foreground font-medium">{t('cart.grandTotal')}</span>
+                      <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-light tracking-tight">
                         {formatVND(finalTotal)}
                       </span>
                     </div>
@@ -341,13 +342,13 @@ const CartPage = () => {
 
                   {/* Redesigned Coupon input */}
                   <div className="space-y-3 pt-2">
-                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <Ticket className="h-4 w-4 text-primary" /> {t('cart.couponLabel')}
                     </label>
                     {coupon && couponMatchesSubtotal ? (
                       <div className="flex items-center justify-between rounded-xl border-2 border-emerald-500/30 bg-emerald-50/50 px-4 py-3 transition-all">
                         <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="border-emerald-500/40 bg-white font-mono text-emerald-700 text-sm py-1 shadow-sm">
+                          <Badge variant="outline" className="border-emerald-500/40 bg-surface-lowest font-mono text-emerald-700 text-sm py-1 shadow-sm">
                             {coupon.code}
                           </Badge>
                           <span className="text-sm font-semibold text-emerald-700">
@@ -372,7 +373,7 @@ const CartPage = () => {
                           placeholder={t('cart.couponPlaceholder')}
                           value={couponInput}
                           onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                          className="font-mono uppercase h-12 pr-24 rounded-xl border-slate-200 focus-visible:ring-primary/20 bg-slate-50/50 focus:bg-white transition-colors"
+                          className="font-mono uppercase h-12 pr-24 rounded-xl border-border focus-visible:ring-primary/20 bg-surface-low/50 focus:bg-surface-lowest transition-colors"
                           disabled={validating || selectedIds.length === 0}
                         />
                         <Button
@@ -380,14 +381,14 @@ const CartPage = () => {
                           size="sm"
                           onClick={handleApplyCoupon}
                           disabled={validating || selectedIds.length === 0 || !couponInput.trim()}
-                          className="absolute right-1.5 h-9 rounded-lg px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium disabled:opacity-50 transition-all"
+                          className="absolute right-1.5 h-9 rounded-lg px-4 bg-foreground hover:bg-foreground/90 text-background font-medium disabled:opacity-50 transition-all"
                         >
                           {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : t('cart.applyCoupon')}
                         </Button>
                       </div>
                     )}
                     {!coupon && selectedIds.length === 0 && (
-                      <p className="text-xs text-slate-400 pl-1">
+                      <p className="text-xs text-muted-foreground pl-1">
                         {t('cart.selectBeforeApply')}
                       </p>
                     )}
@@ -396,7 +397,7 @@ const CartPage = () => {
                   <div className="pt-2">
                     <Button
                       size="lg"
-                      className="w-full h-14 rounded-xl text-lg font-bold bg-gradient-to-r from-primary to-blue-600 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                      className="w-full h-14 rounded-xl text-lg font-bold bg-gradient-to-r from-primary to-primary-light shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                       disabled={selectedIds.length === 0 || isProcessing}
                       onClick={handleCheckoutClick}
                     >
@@ -430,12 +431,12 @@ const CartPage = () => {
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl">{t('cart.clearConfirm.title')}</AlertDialogTitle>
-            <AlertDialogDescription className="text-base text-slate-500">
+            <AlertDialogDescription className="text-base text-muted-foreground">
               {t('cart.clearConfirm.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 gap-2">
-            <AlertDialogCancel className="rounded-xl border-slate-200">{t('cart.clearConfirm.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-border">{t('cart.clearConfirm.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => { e.preventDefault(); handleClearCart(); }}
               disabled={clearMutation.isPending}

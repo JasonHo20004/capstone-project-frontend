@@ -51,12 +51,12 @@ export const NODE_THEME: Record<string, {
   icon: LucideIcon;
   ring: string;
 }> = {
-  root: { bg: "#fbbf24", bgDark: "#b45309", border: "#fde68a", glow: "rgba(251,191,36,0.55)", icon: Crown, ring: "#fde68a" },
-  lesson: { bg: "#60a5fa", bgDark: "#2563eb", border: "#93c5fd", glow: "rgba(96,165,250,0.4)", icon: BookOpen, ring: "#93c5fd" },
+  root: { bg: "#fbbf24", bgDark: "#d97706", border: "#fde68a", glow: "rgba(251,191,36,0.5)", icon: Crown, ring: "#fde68a" },
+  lesson: { bg: "#0070eb", bgDark: "#0058bc", border: "#7fb5ff", glow: "rgba(0,112,235,0.38)", icon: BookOpen, ring: "#7fb5ff" },
   challenge: { bg: "#fbbf24", bgDark: "#d97706", border: "#fde68a", glow: "rgba(251,191,36,0.4)", icon: Zap, ring: "#fde68a" },
   checkpoint: { bg: "#34d399", bgDark: "#059669", border: "#6ee7b7", glow: "rgba(52,211,153,0.4)", icon: Trophy, ring: "#6ee7b7" },
-  remedial: { bg: "#f87171", bgDark: "#dc2626", border: "#fca5a5", glow: "rgba(248,113,113,0.4)", icon: Wrench, ring: "#fca5a5" },
-  practice: { bg: "#a78bfa", bgDark: "#7c3aed", border: "#c4b5fd", glow: "rgba(167,139,250,0.4)", icon: Pencil, ring: "#c4b5fd" },
+  remedial: { bg: "#fb923c", bgDark: "#ea580c", border: "#fed7aa", glow: "rgba(251,146,60,0.4)", icon: Wrench, ring: "#fed7aa" },
+  practice: { bg: "#2dd4bf", bgDark: "#0d9488", border: "#99f6e4", glow: "rgba(45,212,191,0.4)", icon: Pencil, ring: "#99f6e4" },
   chest: { bg: "#f59e0b", bgDark: "#b45309", border: "#fde68a", glow: "rgba(245,158,11,0.55)", icon: Gift, ring: "#fde68a" },
 };
 
@@ -100,7 +100,7 @@ const BANNER_HEIGHT = 110;
 const SIDE_GAP = 190;
 
 const SECTION_THEMES: Array<{ labelKey: string; gradient: string; accent: string }> = [
-  { labelKey: "foundations",        gradient: "from-indigo-500/70 to-blue-500/70",   accent: "#818cf8" },
+  { labelKey: "foundations",        gradient: "from-primary/70 to-primary-light/70",   accent: "#0070eb" },
   { labelKey: "skillBuilding",      gradient: "from-emerald-500/70 to-teal-500/70",  accent: "#34d399" },
   { labelKey: "realConversations",  gradient: "from-amber-500/70 to-orange-500/70", accent: "#fbbf24" },
   { labelKey: "mastery",            gradient: "from-rose-500/70 to-fuchsia-500/70",  accent: "#f472b6" },
@@ -752,13 +752,13 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   left: pos.x - sizing.r,
                   top: pos.y - sizing.r,
                   background: isCompleted
-                    ? "linear-gradient(135deg, #374151, #1f2937)"
+                    ? "linear-gradient(135deg, #34d399, #059669)"
                     : isLocked
-                      ? "linear-gradient(135deg, #1e293b, #0f172a)"
+                      ? "linear-gradient(135deg, #cbd5e1, #94a3b8)"
                       : `linear-gradient(135deg, ${theme.bg}, ${theme.bgDark})`,
                   border: `${isRoot ? 4 : 3}px solid ${
-                    isCompleted ? "#4b5563"
-                      : isLocked ? "#1e293b"
+                    isCompleted ? "#6ee7b7"
+                      : isLocked ? "#e2e8f0"
                         : isRoot ? "#fde047"
                           : theme.border
                   }`,
@@ -767,10 +767,10 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                     : isActive || isRoot
                       ? `0 0 18px 5px ${theme.glow}`
                       : isCompleted
-                        ? "0 2px 8px rgba(0,0,0,0.3)"
+                        ? "0 4px 14px rgba(5,150,105,0.28)"
                         : "none",
-                  opacity: isLocked ? 0.65 : 1,
-                  filter: isLocked ? "grayscale(0.6)" : "none",
+                  opacity: isLocked ? 0.9 : 1,
+                  filter: "none",
                   ...shapeStyle,
                 }}
               >
@@ -783,7 +783,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                 <span
                   aria-hidden="true"
                   className={`leading-none z-10 flex items-center justify-center ${isActive ? "tower-float" : ""}`}
-                  style={{ filter: isLocked ? "grayscale(1)" : "none", color: "white", ...iconCounterRotate }}
+                  style={{ color: isLocked ? "#475569" : "white", ...iconCounterRotate }}
                 >
                   {isCompleted
                     ? <CheckCircle2 size={isRoot ? 28 : 22} />
@@ -840,8 +840,8 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                     borderRadius: "50%",
                     backgroundColor: isCompleted ? "#059669"
                       : isActive ? theme.bgDark
-                        : "#1e293b",
-                    border: `2px solid ${isCompleted ? "#34d399" : isActive ? theme.border : "#334155"}`,
+                        : "#94a3b8",
+                    border: `2px solid ${isCompleted ? "#34d399" : isActive ? theme.border : "#cbd5e1"}`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -884,8 +884,8 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   <p
                     className="text-[10px] font-bold leading-snug line-clamp-2 px-2 py-1 rounded-md flex items-center gap-1 mx-auto"
                     style={{
-                      backgroundColor: "rgba(254, 226, 226, 0.92)",
-                      color: "#b91c1c",
+                      backgroundColor: "rgba(255, 237, 213, 0.92)",
+                      color: "#c2410c",
                       backdropFilter: "blur(2px)",
                       boxShadow: "0 1px 3px rgba(15,23,42,0.1)",
                       maxWidth: "100%",
@@ -896,7 +896,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   </p>
                 ) : (
                   <p
-                    className="text-[11px] font-bold text-slate-700 leading-snug line-clamp-2 px-2 py-0.5 rounded-md"
+                    className="text-[11px] font-bold text-foreground leading-snug line-clamp-2 px-2 py-0.5 rounded-md"
                     style={{
                       backgroundColor: "rgba(255, 255, 255, 0.88)",
                       backdropFilter: "blur(2px)",
@@ -916,7 +916,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
                   </span>
                 )}
                 {(isActive && !isNew && !isRemedial) && (
-                  <span className="mt-1 text-[10px] text-slate-600 font-medium px-1.5 py-0.5 rounded bg-white/80 shadow-sm">
+                  <span className="mt-1 text-[10px] text-primary font-semibold px-1.5 py-0.5 rounded bg-white/80 shadow-sm">
                     {t("skillTree.flow.tapToStart")}
                   </span>
                 )}
@@ -930,7 +930,7 @@ export default function SkillTreeFlow({ nodes: rawNodes, edges: rawEdges, onNode
           className="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none"
           style={{ bottom: 20 }}
         >
-          <div className="text-slate-600 text-xs font-medium">
+          <div className="text-muted-foreground text-xs font-medium">
             {t("skillTree.flow.completedCount", {
               done: layoutNodes.filter((n) => n.data.status === "completed").length,
               total: layoutNodes.length,

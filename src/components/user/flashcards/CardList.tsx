@@ -25,12 +25,11 @@ interface CardListProps {
 
 /** Per-card colour theme — front is a vibrant gradient, back stays clean white with matching accents. */
 const THEMES = [
-  { front: 'from-indigo-500 via-blue-500 to-indigo-600', glow: 'group-hover:shadow-indigo-500/40', accent: 'text-indigo-600', chip: 'bg-indigo-100 text-indigo-700', edge: 'before:bg-indigo-500' },
+  { front: 'from-primary via-primary-light to-primary', glow: 'group-hover:shadow-primary/40', accent: 'text-primary', chip: 'bg-primary/10 text-primary', edge: 'before:bg-primary' },
   { front: 'from-emerald-500 via-teal-500 to-emerald-600', glow: 'group-hover:shadow-emerald-500/40', accent: 'text-emerald-600', chip: 'bg-emerald-100 text-emerald-700', edge: 'before:bg-emerald-500' },
-  { front: 'from-amber-500 via-orange-500 to-amber-600', glow: 'group-hover:shadow-amber-500/40', accent: 'text-amber-600', chip: 'bg-amber-100 text-amber-700', edge: 'before:bg-amber-500' },
+  { front: 'from-secondary via-secondary-light to-secondary', glow: 'group-hover:shadow-secondary/40', accent: 'text-secondary', chip: 'bg-secondary/10 text-secondary-foreground', edge: 'before:bg-secondary' },
   { front: 'from-rose-500 via-pink-500 to-rose-600', glow: 'group-hover:shadow-rose-500/40', accent: 'text-rose-600', chip: 'bg-rose-100 text-rose-700', edge: 'before:bg-rose-500' },
-  { front: 'from-cyan-500 via-sky-500 to-cyan-600', glow: 'group-hover:shadow-cyan-500/40', accent: 'text-cyan-600', chip: 'bg-cyan-100 text-cyan-700', edge: 'before:bg-cyan-500' },
-  { front: 'from-violet-500 via-purple-500 to-violet-600', glow: 'group-hover:shadow-violet-500/40', accent: 'text-violet-600', chip: 'bg-violet-100 text-violet-700', edge: 'before:bg-violet-500' },
+  { front: 'from-primary-dark via-primary to-primary-dark', glow: 'group-hover:shadow-primary/40', accent: 'text-primary-dark', chip: 'bg-primary/10 text-primary-dark', edge: 'before:bg-primary-dark' },
 ];
 
 const STATUS_ICON: Record<FlashcardStatus, typeof Sparkles> = {
@@ -67,7 +66,7 @@ function AudioButton({ audioUrl, onColor = false }: { audioUrl: string; onColor?
         'inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 active:scale-90',
         onColor
           ? 'bg-white/20 text-white hover:bg-white/35 backdrop-blur-sm'
-          : 'text-indigo-400 hover:bg-indigo-100/80 hover:text-indigo-600',
+          : 'text-primary/70 hover:bg-primary/10 hover:text-primary',
       )}
       onClick={handlePlay}
       title={t('flashcards.cardList.playAudioTitle')}
@@ -122,7 +121,7 @@ function FlipCard({
         }}
         className={cn(
           'relative h-[188px] w-full cursor-pointer rounded-2xl outline-none [transform-style:preserve-3d]',
-          'transition-transform [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2',
+          'transition-transform [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
           reduceMotion ? '[transition-duration:0ms]' : '[transition-duration:600ms]',
         )}
         style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
@@ -170,7 +169,7 @@ function FlipCard({
         {/* ── BACK ───────────────────────────────────────────── */}
         <div
           className={cn(
-            'absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-lg [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)]',
+            'absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-border bg-surface-lowest p-5 shadow-lg [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)]',
             // coloured left edge accent
             "before:absolute before:inset-y-0 before:left-0 before:w-1.5",
             theme.edge,
@@ -183,12 +182,12 @@ function FlipCard({
             {card.audioUrl && <AudioButton audioUrl={card.audioUrl} />}
           </div>
 
-          <p className="mt-1 flex-1 overflow-hidden pl-2 text-[15px] font-semibold leading-snug text-slate-800 line-clamp-3">
+          <p className="mt-1 flex-1 overflow-hidden pl-2 text-[15px] font-semibold leading-snug text-foreground line-clamp-3">
             {card.backContent}
           </p>
 
           {card.exampleSentence && (
-            <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-slate-50 p-2 pl-2.5 text-xs italic text-slate-500">
+            <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-surface-low p-2 pl-2.5 text-xs italic text-muted-foreground">
               <MessageSquare className="mt-0.5 h-3 w-3 flex-shrink-0" aria-hidden="true" />
               <span className="line-clamp-2">{card.exampleSentence}</span>
             </div>
@@ -199,7 +198,7 @@ function FlipCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-primary/5 hover:text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEditCard(card);
@@ -210,7 +209,7 @@ function FlipCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 rounded-lg p-0 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                className="h-8 w-8 rounded-lg p-0 text-muted-foreground hover:bg-red-50 hover:text-red-500"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDeleteCard(card);

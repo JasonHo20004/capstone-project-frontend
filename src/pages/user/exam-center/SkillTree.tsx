@@ -173,8 +173,8 @@ function GeneratingOverlay() {
       <div className="absolute inset-0 bg-slate-950/60" style={{ backdropFilter: "blur(6px)" }} />
       <div className="relative bg-white rounded-3xl shadow-2xl px-8 py-8 w-[min(92vw,380px)] text-center">
         <div className="text-5xl mb-3 select-none animate-bounce motion-reduce:animate-none">🐧</div>
-        <h3 className="text-lg font-black text-slate-900 mb-1">{t("skillTree.generating.title")}</h3>
-        <p className="text-xs text-slate-500 mb-5">{t("skillTree.generating.hint")}</p>
+        <h3 className="text-lg font-black text-foreground mb-1">{t("skillTree.generating.title")}</h3>
+        <p className="text-xs text-muted-foreground mb-5">{t("skillTree.generating.hint")}</p>
         <div className="space-y-2.5 text-left">
           {[1, 2, 3, 4].map((n, i) => (
             <div
@@ -184,11 +184,11 @@ function GeneratingOverlay() {
               {i < stepIdx ? (
                 <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
               ) : i === stepIdx ? (
-                <span className="inline-block w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin shrink-0" />
+                <span className="inline-block w-4 h-4 border-2 border-primary/20 border-t-primary rounded-full animate-spin shrink-0" />
               ) : (
-                <span className="inline-block w-4 h-4 rounded-full border-2 border-slate-200 shrink-0" />
+                <span className="inline-block w-4 h-4 rounded-full border-2 border-border shrink-0" />
               )}
-              <span className={i === stepIdx ? "font-semibold text-slate-800" : "text-slate-500"}>
+              <span className={i === stepIdx ? "font-semibold text-foreground" : "text-muted-foreground"}>
                 {t(`skillTree.generating.steps.${n}`)}
               </span>
             </div>
@@ -514,25 +514,25 @@ export default function SkillTree() {
     const hasResumable = !savedTreesLoading && sortedTrees.length > 0;
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50 font-sans relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-primary/10 via-primary/5 to-primary/10 font-sans relative overflow-hidden">
         {/* AI is rebuilding a saved tree — block input with the stepper overlay */}
         {resumingId && <GeneratingOverlay />}
 
         {/* Starfield ambient backdrop */}
         <div className="pointer-events-none absolute inset-0 opacity-40"
           style={{
-            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(99,102,241,0.25) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(129,140,248,0.2) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(99,102,241,0.22) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(129,140,248,0.18) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(99,102,241,0.2) 50%, transparent 51%)",
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(0,88,188,0.25) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(0,112,235,0.2) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(0,88,188,0.22) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(0,112,235,0.18) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(0,88,188,0.2) 50%, transparent 51%)",
             backgroundSize: "600px 600px",
           }}
         />
-        <header className="relative z-10 bg-white/70 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
+        <header className="relative z-10 bg-surface-lowest/70 backdrop-blur border-b border-border h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary-light rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-slate-900 text-lg">{t("skillTree.header.title")}</h1>
+            <h1 className="font-bold text-foreground text-lg">{t("skillTree.header.title")}</h1>
           </div>
-          <Link to="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link to="/dashboard" className="text-sm text-primary hover:text-primary-dark font-medium">
             {t("skillTree.header.back")}
           </Link>
         </header>
@@ -543,8 +543,8 @@ export default function SkillTree() {
           {hasResumable && (
             <div className="mb-12">
               <div className="mb-6">
-                <h2 className="text-2xl font-black text-slate-900 mb-1">{t("skillTree.resume.heading")}</h2>
-                <p className="text-slate-500 text-sm">{t("skillTree.resume.subtitle")}</p>
+                <h2 className="text-2xl font-black text-foreground mb-1">{t("skillTree.resume.heading")}</h2>
+                <p className="text-muted-foreground text-sm">{t("skillTree.resume.subtitle")}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -562,34 +562,34 @@ export default function SkillTree() {
                       disabled={!!resumingId}
                       className={`group relative bg-white rounded-2xl border-2 p-5 text-left transition-all duration-300
                         ${isResuming
-                          ? "border-indigo-400 shadow-lg shadow-indigo-500/20"
-                          : "border-slate-200 hover:border-indigo-400/60 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5"
+                          ? "border-primary shadow-lg shadow-primary/20"
+                          : "border-border hover:border-primary/60 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5"
                         }
                         ${resumingId && !isResuming ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                       {/* Topic color stripe */}
                       <div
-                        className={`absolute top-0 left-0 right-0 h-1 rounded-t-[14px] bg-gradient-to-r ${tInfo?.color ?? "from-indigo-500 to-purple-500"}`}
+                        className={`absolute top-0 left-0 right-0 h-1 rounded-t-[14px] bg-gradient-to-r ${tInfo?.color ?? "from-primary to-primary-light"}`}
                       />
 
                       <div className="pt-2">
                         {/* Header row */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
-                            {tInfo && <tInfo.icon size={16} className="text-slate-600 shrink-0" />}
-                            <span className="font-bold text-slate-900 text-sm truncate">
+                            {tInfo && <tInfo.icon size={16} className="text-muted-foreground shrink-0" />}
+                            <span className="font-bold text-foreground text-sm truncate">
                               {tInfo ? topicLabel(tInfo.id) : tree.topic}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 ml-2 shrink-0">
                             {isLastVisited && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20">
                                 {t("skillTree.resume.lastVisited")}
                               </span>
                             )}
                             <span
                               className="text-[10px] font-black px-2 py-0.5 rounded-md text-white"
-                              style={{ backgroundColor: lInfo?.color ?? "#6366f1" }}
+                              style={{ backgroundColor: lInfo?.color ?? "#0058bc" }}
                             >
                               {tree.level}
                             </span>
@@ -598,14 +598,14 @@ export default function SkillTree() {
 
                         {/* Progress bar */}
                         <div className="mb-2.5">
-                          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
                                 width: `${progress.percentage}%`,
                                 background: progress.percentage === 100
                                   ? "linear-gradient(90deg,#34d399,#10b981)"
-                                  : "linear-gradient(90deg,#818cf8,#6366f1)",
+                                  : "linear-gradient(90deg,#0070eb,#0058bc)",
                               }}
                             />
                           </div>
@@ -613,16 +613,16 @@ export default function SkillTree() {
 
                         {/* Stats + CTA */}
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-slate-500 font-medium tabular-nums">
+                          <span className="text-[11px] text-muted-foreground font-medium tabular-nums">
                             {progress.completed}/{progress.total} · {progress.percentage}%
                           </span>
                           {isResuming ? (
-                            <span className="flex items-center gap-1.5 text-[11px] text-indigo-600 font-semibold">
-                              <span className="inline-block w-3 h-3 border border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                            <span className="flex items-center gap-1.5 text-[11px] text-primary font-semibold">
+                              <span className="inline-block w-3 h-3 border border-primary/30 border-t-primary rounded-full animate-spin" />
                               {t("skillTree.resume.loading")}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-indigo-600 font-semibold group-hover:text-indigo-800 transition-colors">
+                            <span className="text-[11px] text-primary font-semibold group-hover:text-primary-dark transition-colors">
                               {t("skillTree.resume.tapToResume")}
                             </span>
                           )}
@@ -640,13 +640,13 @@ export default function SkillTree() {
             <div className={`mb-6 ${hasResumable ? "" : "text-center"}`}>
               {hasResumable ? (
                 <>
-                  <h2 className="text-2xl font-black text-slate-900 mb-1">{t("skillTree.newTopic.headingResumable")}</h2>
-                  <p className="text-slate-500 text-sm">{t("skillTree.newTopic.subtitleResumable")}</p>
+                  <h2 className="text-2xl font-black text-foreground mb-1">{t("skillTree.newTopic.headingResumable")}</h2>
+                  <p className="text-muted-foreground text-sm">{t("skillTree.newTopic.subtitleResumable")}</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-3xl font-black text-slate-900 mb-3">{t("skillTree.newTopic.heading")}</h2>
-                  <p className="text-slate-500 text-lg">{t("skillTree.newTopic.subtitle")}</p>
+                  <h2 className="text-3xl font-black text-foreground mb-3">{t("skillTree.newTopic.heading")}</h2>
+                  <p className="text-muted-foreground text-lg">{t("skillTree.newTopic.subtitle")}</p>
                 </>
               )}
             </div>
@@ -657,14 +657,14 @@ export default function SkillTree() {
               <button
                 onClick={() => carouselRef.current?.scrollBy({ left: -320, behavior: "smooth" })}
                 aria-label={t("skillTree.carousel.prev")}
-                className="hidden md:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+                className="hidden md:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-surface-lowest shadow-lg border border-border text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 onClick={() => carouselRef.current?.scrollBy({ left: 320, behavior: "smooth" })}
                 aria-label={t("skillTree.carousel.next")}
-                className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+                className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-surface-lowest shadow-lg border border-border text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
               >
                 <ChevronRight size={20} />
               </button>
@@ -692,7 +692,7 @@ export default function SkillTree() {
 
                   {/* Popular ribbon */}
                   {topic.popular && (
-                    <div className="absolute top-4 right-4 z-10 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-white/95 text-slate-900 rounded-full shadow-lg">
+                    <div className="absolute top-4 right-4 z-10 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-white/95 text-foreground rounded-full shadow-lg">
                       <Sparkles size={11} /> {t("skillTree.topicCard.popular")}
                     </div>
                   )}
@@ -748,27 +748,27 @@ export default function SkillTree() {
 
   if (step === "level") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50 font-sans relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-primary/10 via-primary/5 to-primary/10 font-sans relative overflow-hidden">
         {/* AI is generating the tree — show the stepper overlay over the page */}
         {loading && <GeneratingOverlay />}
 
         {/* Starfield backdrop */}
         <div className="pointer-events-none absolute inset-0 opacity-40"
           style={{
-            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(99,102,241,0.25) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(129,140,248,0.2) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(99,102,241,0.22) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(129,140,248,0.18) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(99,102,241,0.2) 50%, transparent 51%)",
+            backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(0,88,188,0.25) 50%, transparent 51%), radial-gradient(1px 1px at 70% 20%, rgba(0,112,235,0.2) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(0,88,188,0.22) 50%, transparent 51%), radial-gradient(1px 1px at 85% 80%, rgba(0,112,235,0.18) 50%, transparent 51%), radial-gradient(1px 1px at 15% 85%, rgba(0,88,188,0.2) 50%, transparent 51%)",
             backgroundSize: "600px 600px",
           }}
         />
-        <header className="relative z-10 bg-white/70 backdrop-blur border-b border-slate-200 h-16 flex items-center justify-between px-6">
+        <header className="relative z-10 bg-surface-lowest/70 backdrop-blur border-b border-border h-16 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary-light rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/30">
               <Map size={18} />
             </div>
-            <h1 className="font-bold text-slate-900 text-lg">{t("skillTree.header.title")}</h1>
+            <h1 className="font-bold text-foreground text-lg">{t("skillTree.header.title")}</h1>
           </div>
           <button
             onClick={() => setStep("topic")}
-            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            className="text-sm text-primary hover:text-primary-dark font-medium"
           >
             {t("skillTree.header.changeTopic")}
           </button>
@@ -776,12 +776,12 @@ export default function SkillTree() {
 
         <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full shadow-lg border border-slate-200 mb-4 text-slate-700">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full shadow-lg border border-border mb-4 text-foreground">
               {topicInfo && <topicInfo.icon size={18} />}
               <span className="font-bold">{topicInfo ? topicLabel(topicInfo.id) : ""}</span>
             </div>
-            <h2 className="text-3xl font-black text-slate-900 mb-3">{t("skillTree.level.selectTitle")}</h2>
-            <p className="text-slate-500">{t("skillTree.level.cefrScale")}</p>
+            <h2 className="text-3xl font-black text-foreground mb-3">{t("skillTree.level.selectTitle")}</h2>
+            <p className="text-muted-foreground">{t("skillTree.level.cefrScale")}</p>
           </div>
 
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-10">
@@ -791,15 +791,15 @@ export default function SkillTree() {
                 onClick={() => setSelectedLevel(level.id)}
                 className={`rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105 border-2 ${
                   selectedLevel === level.id
-                    ? "border-indigo-400 shadow-lg shadow-indigo-500/30 bg-indigo-50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
+                    ? "border-primary shadow-lg shadow-primary/30 bg-primary/5"
+                    : "border-border bg-surface-lowest hover:border-primary/40"
                 }`}
               >
                 <div className="text-2xl font-black mb-0.5" style={{ color: level.color }}>
                   {level.label}
                 </div>
-                <div className="text-[10px] text-slate-700 font-semibold leading-tight">{t(`skillTree.levels.${level.id}.description`)}</div>
-                <div className="text-[8px] text-slate-500 mt-1 leading-snug">{t(`skillTree.levels.${level.id}.subtext`)}</div>
+                <div className="text-[10px] text-foreground font-semibold leading-tight">{t(`skillTree.levels.${level.id}.description`)}</div>
+                <div className="text-[8px] text-muted-foreground mt-1 leading-snug">{t(`skillTree.levels.${level.id}.subtext`)}</div>
               </button>
             ))}
           </div>
@@ -807,7 +807,7 @@ export default function SkillTree() {
           <div className="text-center mb-4">
             <Link
               to="/placement-test"
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+              className="text-sm text-primary hover:text-primary-dark font-medium transition-colors"
             >
               {t("skillTree.level.placementHint")}
             </Link>
@@ -817,7 +817,7 @@ export default function SkillTree() {
             <button
               onClick={startLearning}
               disabled={!selectedLevel || loading}
-              className="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/40 hover:shadow-indigo-500/60 disabled:opacity-50 transition-all duration-300 hover:scale-105"
+              className="px-8 py-3.5 bg-gradient-to-r from-primary to-primary-light text-white rounded-xl font-bold text-lg shadow-lg shadow-primary/40 hover:shadow-primary/60 disabled:opacity-50 transition-all duration-300 hover:scale-105"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -846,18 +846,18 @@ export default function SkillTree() {
   const progressPct    = Math.round((completedCount / totalNodes) * 100);
 
   return (
-    <div className="bg-gradient-to-b from-slate-50 via-white to-indigo-50 font-sans">
+    <div className="bg-gradient-to-b from-primary/10 via-primary/5 to-primary/10 font-sans">
 
       {/* ── Sprint 6: Gamification header ─────────────────────────────── */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-3 sticky top-0 z-30">
+      <header className="bg-surface-lowest/80 backdrop-blur-md border-b border-border px-4 py-3 sticky top-0 z-30">
         <div className="flex items-center justify-between gap-2 mb-2">
 
           {/* Topic info */}
           <div className="flex items-center gap-2 min-w-0 shrink">
-            {topicInfo && <topicInfo.icon size={16} className="text-slate-600 shrink-0" />}
+            {topicInfo && <topicInfo.icon size={16} className="text-muted-foreground shrink-0" />}
             <div className="min-w-0">
-              <div className="font-bold text-slate-900 text-sm leading-tight truncate">{topicInfo ? topicLabel(topicInfo.id) : ""}</div>
-              <div className="text-[10px] text-slate-500">{t("skillTree.tree.level", { level: levelInfo?.label })}</div>
+              <div className="font-bold text-foreground text-sm leading-tight truncate">{topicInfo ? topicLabel(topicInfo.id) : ""}</div>
+              <div className="text-[10px] text-muted-foreground">{t("skillTree.tree.level", { level: levelInfo?.label })}</div>
             </div>
           </div>
 
@@ -867,7 +867,7 @@ export default function SkillTree() {
               <Flame size={13} />
               <span className="text-xs font-bold tabular-nums">{streak}</span>
             </span>
-            <span className="text-slate-300 text-xs">·</span>
+            <span className="text-border text-xs">·</span>
             <span className="flex items-center gap-1 text-amber-500">
               <Zap size={12} fill="currentColor" />
               <span className="text-xs font-bold tabular-nums"><CountUpNumber value={xp} /></span>
@@ -890,7 +890,7 @@ export default function SkillTree() {
                 setSelectedLevel(null);
                 setTreeComplete(false);
               }}
-              className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               {t("skillTree.tree.change")}
             </button>
@@ -899,18 +899,18 @@ export default function SkillTree() {
 
         {/* Progress bar */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
                 width: `${progressPct}%`,
                 background: progressPct === 100
                   ? "linear-gradient(90deg,#34d399,#10b981)"
-                  : "linear-gradient(90deg,#818cf8,#6366f1)",
+                  : "linear-gradient(90deg,#0070eb,#0058bc)",
               }}
             />
           </div>
-          <span className="text-[10px] font-bold text-slate-500 tabular-nums shrink-0">
+          <span className="text-[10px] font-bold text-muted-foreground tabular-nums shrink-0">
             {completedCount}/{totalNodes}
           </span>
         </div>
@@ -946,7 +946,7 @@ export default function SkillTree() {
               }}
             />
             <div className="bg-white p-6">
-              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-5" />
+              <div className="w-10 h-1 bg-border rounded-full mx-auto mb-5" />
               <div className="flex items-start gap-4">
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg"
@@ -960,9 +960,9 @@ export default function SkillTree() {
                   })()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 text-lg leading-tight">{detailNode.data.label}</h3>
+                  <h3 className="font-bold text-foreground text-lg leading-tight">{detailNode.data.label}</h3>
                   {detailNode.data.description && (
-                    <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{detailNode.data.description}</p>
+                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{detailNode.data.description}</p>
                   )}
                   <div className="flex gap-1.5 mt-3 flex-wrap">
                     {detailNode.data.mixedSkills.map((skill) => {
@@ -974,7 +974,7 @@ export default function SkillTree() {
                       return (
                         <span
                           key={skill}
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${skillColors[skill] || "bg-slate-100 text-slate-600 border-slate-200"}`}
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${skillColors[skill] || "bg-muted text-muted-foreground border-border"}`}
                         >
                           {skill}
                         </span>
@@ -999,7 +999,7 @@ export default function SkillTree() {
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
               {detailNode.data.status === "completed" && (
-                <p className="text-center text-[11px] text-slate-400 mt-2">
+                <p className="text-center text-[11px] text-muted-foreground mt-2">
                   {t("skillTree.tree.reviewNoXp")}
                 </p>
               )}
@@ -1076,7 +1076,7 @@ export default function SkillTree() {
                   setSelectedTopic(null);
                   setSelectedLevel(null);
                 }}
-                className="px-7 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/40 hover:scale-105 transition-transform"
+                className="px-7 py-3 bg-gradient-to-r from-primary to-primary-light text-white rounded-xl font-bold shadow-lg shadow-primary/40 hover:scale-105 transition-transform"
               >
                 {t("skillTree.treeComplete.newTopic")}
               </button>

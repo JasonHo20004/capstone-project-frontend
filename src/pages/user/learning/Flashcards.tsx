@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,6 +90,7 @@ import {
 const Flashcards = () => {
   const { user } = useUser();
   const { t } = useTranslation("flashcards");
+  const reduceMotion = useReducedMotion() ?? false;
 
   // ── Tab ────────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'mine' | 'explore'>('mine');
@@ -301,14 +303,14 @@ const Flashcards = () => {
   // Tag selector shared component
   const renderTagSelector = () => (
     <div className="space-y-2">
-      <Label className="text-slate-700 font-semibold">{t("tags.label")}</Label>
+      <Label className="text-foreground font-semibold">{t("tags.label")}</Label>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={popoverOpen}
-            className="w-full justify-between border-slate-200 hover:border-indigo-300 transition-colors"
+            className="w-full justify-between border-border hover:border-primary/40 transition-colors"
             disabled={isLoadingTags}
           >
             {deckForm.tagIds?.length ?? 0 > 0
@@ -358,7 +360,7 @@ const Flashcards = () => {
         {deckForm.tagIds?.map((id) => {
           const tag = allTags.find((t) => t.id === id);
           return tag ? (
-            <Badge key={id} className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-0 text-xs font-semibold">
+            <Badge key={id} className="bg-primary/10 text-primary hover:bg-primary/20 border-0 text-xs font-semibold">
               {tag.name}
             </Badge>
           ) : null;
@@ -371,20 +373,21 @@ const Flashcards = () => {
     <div className="space-y-6">
       <main>
         {/* Hero Section — Kahoot-style vibrant header */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-6 md:p-8 shadow-xl shadow-indigo-500/20">
+        <section className="relative overflow-hidden rounded-2xl bg-hero-gradient p-6 md:p-8 shadow-xl shadow-primary/20">
           {/* Interactive Gamified Mouse Particles */}
           <MouseParticles />
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-secondary/25 blur-3xl motion-safe:animate-float-slow" />
 
           <div className="relative z-10 max-w-3xl">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                <Zap className="w-5 h-5 text-amber-300" />
+                <Zap className="w-5 h-5 text-secondary-light" />
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
                 {t("page.title")}
               </h1>
             </div>
-            <p className="text-indigo-100 text-base md:text-lg font-medium">
+            <p className="text-white/80 text-base md:text-lg font-medium">
               {t("page.subtitle")}
             </p>
 
@@ -405,27 +408,34 @@ const Flashcards = () => {
         </section>
 
         {/* Tab switcher */}
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit mt-6">
-          <button
-            onClick={() => setActiveTab('mine')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === 'mine'
-                ? 'bg-white text-indigo-700 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Lock className="w-4 h-4" /> {t("tabs.mine")}
-          </button>
-          <button
-            onClick={() => setActiveTab('explore')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === 'explore'
-                ? 'bg-white text-indigo-700 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Globe className="w-4 h-4" /> {t("tabs.explore")}
-          </button>
+        <div className="flex gap-1 bg-surface-low p-1 rounded-xl w-fit mt-6">
+          {([
+            { id: 'mine', icon: Lock, label: t("tabs.mine") },
+            { id: 'explore', icon: Globe, label: t("tabs.explore") },
+          ] as const).map(({ id, icon: Icon, label }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "relative flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="flashcards-tab-pill"
+                    className="absolute inset-0 -z-0 rounded-lg bg-surface-lowest shadow-sm"
+                    transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
+                <Icon className="relative z-10 w-4 h-4" />
+                <span className="relative z-10">{label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* ── Explore tab ──────────────────────────────────────────────────── */}
@@ -433,16 +443,16 @@ const Flashcards = () => {
           <section className="py-8">
             <div className="container mx-auto px-0">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                  <Globe className="w-6 h-6 text-indigo-500" />
+                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Globe className="w-6 h-6 text-primary" />
                   {t("explore.heading")}
                 </h2>
                 <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder={t("explore.searchPlaceholder")}
-                    className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 bg-white"
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 bg-surface-lowest"
                     value={publicSearchInput}
                     onChange={(e) => setPublicSearchInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && setPublicSearch(publicSearchInput)}
@@ -452,13 +462,13 @@ const Flashcards = () => {
 
               {isLoadingPublic ? (
                 <div className="flex justify-center py-16">
-                  <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : !publicDecks || publicDecks.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-20 text-center border-2 border-dashed border-indigo-100 rounded-3xl bg-indigo-50/30">
-                  <Globe className="w-12 h-12 text-indigo-200" />
-                  <p className="font-semibold text-slate-600">{t("explore.empty")}</p>
-                  <p className="text-sm text-slate-400">{t("explore.emptyHint")}</p>
+                <div className="flex flex-col items-center gap-4 py-20 text-center border-2 border-dashed border-primary/20 rounded-3xl bg-primary/5">
+                  <Globe className="w-12 h-12 text-primary/30" />
+                  <p className="font-semibold text-foreground">{t("explore.empty")}</p>
+                  <p className="text-sm text-muted-foreground">{t("explore.emptyHint")}</p>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -467,39 +477,39 @@ const Flashcards = () => {
                     return (
                       <div
                         key={deck.id}
-                        className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                        className="bg-surface-lowest border border-border rounded-2xl p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group"
                         onClick={() => {
                           setSelectedPublicDeckId(deck.id);
                           setIsPublicSheetOpen(true);
                         }}
                       >
                         <div className="flex items-start justify-between gap-2 mb-3">
-                          <h3 className="font-bold text-slate-800 leading-snug line-clamp-2 flex-1 group-hover:text-indigo-700 transition-colors">
+                          <h3 className="font-bold text-foreground leading-snug line-clamp-2 flex-1 group-hover:text-primary transition-colors">
                             {deck.title}
                           </h3>
                           {isOwn ? (
-                            <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full shrink-0">{t("explore.ownBadge")}</span>
+                            <span className="text-xs bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full shrink-0">{t("explore.ownBadge")}</span>
                           ) : (
-                            <Globe className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                            <Globe className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                           )}
                         </div>
                         {deck.description && (
-                          <p className="text-sm text-slate-500 line-clamp-2 mb-3">{deck.description}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{deck.description}</p>
                         )}
                         {deck.deckTags?.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mb-3">
                             {deck.deckTags.slice(0, 3).map((dt: any) => (
-                              <span key={dt.tag?.id ?? dt.id} className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                              <span key={dt.tag?.id ?? dt.id} className="text-xs bg-surface-low text-muted-foreground px-2 py-0.5 rounded-full">
                                 {dt.tag?.name ?? dt.name}
                               </span>
                             ))}
                           </div>
                         )}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                          <span className="text-xs text-slate-400">
+                        <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                          <span className="text-xs text-muted-foreground">
                             {new Date(deck.createdAt).toLocaleDateString('vi-VN')}
                           </span>
-                          <span className="text-xs font-semibold text-indigo-600 group-hover:underline">
+                          <span className="text-xs font-semibold text-primary group-hover:underline">
                             {t("explore.viewAndStudy")}
                           </span>
                         </div>
@@ -517,21 +527,21 @@ const Flashcards = () => {
         <section className="py-8">
           <div className="container mx-auto px-0">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                <Layers className="w-6 h-6 text-indigo-500" />
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Layers className="w-6 h-6 text-primary" />
                 {t("mine.heading")}
               </h2>
               <div className="flex items-center gap-3">
                 <Button
                   onClick={() => setRagDialogOpen(true)}
                   variant="outline"
-                  className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
+                  className="border-secondary/40 text-secondary-foreground hover:bg-secondary/10 hover:border-secondary/60 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
                 >
-                  <Brain className="w-5 h-5 mr-1" /> {t("mine.aiGenerate")}
+                  <Brain className="w-5 h-5 mr-1 text-secondary" /> {t("mine.aiGenerate")}
                 </Button>
                 <Button
                   onClick={openCreateDeck}
-                  className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 shadow-md shadow-indigo-500/20 transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
+                  className="bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary shadow-md shadow-primary/20 transition-all duration-200 hover:scale-105 active:scale-95 font-bold rounded-xl"
                 >
                   <Plus className="w-5 h-5 mr-1" /> {t("mine.addDeck")}
                 </Button>
@@ -539,9 +549,9 @@ const Flashcards = () => {
             </div>
 
             {isLoadingDecks ? (
-              <div className="flex flex-col items-center justify-center p-16 rounded-3xl border border-slate-200 bg-white">
-                <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-                <p className="text-slate-400 mt-4 font-medium">{t("mine.loading")}</p>
+              <div className="flex flex-col items-center justify-center p-16 rounded-3xl border border-border bg-surface-lowest">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <p className="text-muted-foreground mt-4 font-medium">{t("mine.loading")}</p>
               </div>
             ) : decks.length > 0 ? (
               <DeckList
@@ -557,10 +567,10 @@ const Flashcards = () => {
                 formatDate={formatDate}
               />
             ) : (
-              <div className="border-2 border-dashed border-indigo-200 rounded-3xl p-16 text-center bg-indigo-50/50 max-w-2xl mx-auto">
-                <Sparkles className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-700 mb-2">{t("mine.empty")}</h3>
-                <p className="text-slate-500 mb-6">{t("mine.emptyHint")}</p>
+              <div className="border-2 border-dashed border-primary/20 rounded-3xl p-16 text-center bg-primary/5 max-w-2xl mx-auto">
+                <Sparkles className="w-16 h-16 text-primary/30 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-foreground mb-2">{t("mine.empty")}</h3>
+                <p className="text-muted-foreground mb-6">{t("mine.emptyHint")}</p>
                 <Button onClick={openCreateDeck} className="rounded-xl px-8">{t("mine.createNow")}</Button>
               </div>
             )}
@@ -571,7 +581,7 @@ const Flashcards = () => {
 
       {/* ── Public Deck Sheet (Explore / read-only) ───────────────────────── */}
       <Sheet open={isPublicSheetOpen} onOpenChange={setIsPublicSheetOpen}>
-        <SheetContent side="bottom" className="h-[85vh] sm:h-[90vh] rounded-t-2xl p-0 shadow-2xl flex flex-col gap-0 overflow-hidden bg-slate-50/50 backdrop-blur-xl border-none">
+        <SheetContent side="bottom" className="h-[85vh] sm:h-[90vh] rounded-t-2xl p-0 shadow-2xl flex flex-col gap-0 overflow-hidden bg-surface/60 backdrop-blur-xl border-none">
           <div className="bg-white p-6 md:p-8 flex-shrink-0 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
             <div className="relative z-10 max-w-5xl mx-auto flex flex-col md:flex-row gap-6 md:items-end md:justify-between">
@@ -580,17 +590,17 @@ const Flashcards = () => {
                   <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl">
                     <Globe className="w-6 h-6" />
                   </div>
-                  <SheetTitle className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                  <SheetTitle className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
                     {selectedPublicDeck?.title || t("sheet.publicTitle")}
                   </SheetTitle>
                 </div>
-                <SheetDescription className="text-base text-slate-500 mt-2 max-w-2xl text-left">
+                <SheetDescription className="text-base text-muted-foreground mt-2 max-w-2xl text-left">
                   {selectedPublicDeck?.description || t("sheet.noDesc")}
                 </SheetDescription>
                 {selectedPublicDeck?.deckTags?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {selectedPublicDeck.deckTags.map((dt: any) => (
-                      <span key={dt.tag?.id ?? dt.id} className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2.5 py-0.5 rounded-full">
+                      <span key={dt.tag?.id ?? dt.id} className="text-xs bg-primary/10 text-primary font-semibold px-2.5 py-0.5 rounded-full">
                         {dt.tag?.name ?? dt.name}
                       </span>
                     ))}
@@ -602,7 +612,7 @@ const Flashcards = () => {
                       publicQueueCount === 0
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                         : publicHasOnlyNewCards
-                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        ? 'bg-primary/5 border-primary/20 text-primary'
                         : 'bg-amber-50 border-amber-200 text-amber-700'
                     }`}>
                       {publicQueueCount === 0 ? (
@@ -632,7 +642,7 @@ const Flashcards = () => {
                 </Button>
                 {publicQueueCount > 0 && (
                   <span className={`absolute -top-2 -right-2 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
-                    publicHasOnlyNewCards ? 'bg-indigo-500' : 'bg-red-500'
+                    publicHasOnlyNewCards ? 'bg-primary' : 'bg-red-500'
                   }`}>
                     {publicQueueCount}
                   </span>
@@ -643,23 +653,23 @@ const Flashcards = () => {
 
           <div className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
             <div className="max-w-5xl mx-auto space-y-6">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-indigo-500" />
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Layers className="w-5 h-5 text-primary" />
                 {t("sheet.cardList", { count: publicCards.length })}
-                <span className="ml-2 text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{t("sheet.readOnly")}</span>
+                <span className="ml-2 text-xs font-normal text-muted-foreground bg-surface-low px-2 py-0.5 rounded-full">{t("sheet.readOnly")}</span>
               </h3>
 
               {isLoadingPublicCards ? (
                 <div className="flex justify-center p-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               ) : publicCards.length === 0 ? (
-                <div className="border border-dashed border-slate-300 rounded-2xl p-12 text-center">
-                  <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">{t("sheet.emptyCards")}</p>
+                <div className="border border-dashed border-border rounded-2xl p-12 text-center">
+                  <Sparkles className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+                  <p className="text-muted-foreground">{t("sheet.emptyCards")}</p>
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+                <div className="bg-surface-lowest rounded-2xl p-6 md:p-8 shadow-sm border border-border">
                   <CardList
                     cards={publicCards}
                     onEditCard={() => {}}
@@ -698,24 +708,24 @@ const Flashcards = () => {
 
       {/* Kahoot-style Detail Sheet */}
       <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
-        <SheetContent side="bottom" className="h-[85vh] sm:h-[90vh] rounded-t-2xl p-0 shadow-2xl flex flex-col gap-0 overflow-hidden bg-slate-50/50 backdrop-blur-xl border-none">
+        <SheetContent side="bottom" className="h-[85vh] sm:h-[90vh] rounded-t-2xl p-0 shadow-2xl flex flex-col gap-0 overflow-hidden bg-surface/60 backdrop-blur-xl border-none">
           {/* Header Area with vibrant background */}
           <div className="bg-white p-6 md:p-8 flex-shrink-0 relative overflow-hidden">
              {/* Subtle gradient bloblets */}
-             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
-             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-500/5 rounded-full blur-2xl" />
+             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-secondary/5 rounded-full blur-2xl" />
 
              <div className="relative z-10 max-w-5xl mx-auto flex flex-col md:flex-row gap-6 md:items-end md:justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="bg-indigo-100 text-indigo-600 p-2 rounded-xl">
+                    <div className="bg-primary/10 text-primary p-2 rounded-xl">
                       <BookOpen className="w-6 h-6" />
                     </div>
-                    <SheetTitle className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    <SheetTitle className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
                       {selectedDeck?.title}
                     </SheetTitle>
                   </div>
-                  <SheetDescription className="text-base text-slate-500 mt-2 max-w-2xl text-left truncate">
+                  <SheetDescription className="text-base text-muted-foreground mt-2 max-w-2xl text-left truncate">
                     {selectedDeck?.description || t("sheet.noDesc")}
                   </SheetDescription>
 
@@ -723,11 +733,11 @@ const Flashcards = () => {
                     <div className="flex flex-wrap items-center gap-3 mt-4">
                       <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold shadow-sm transition-all duration-300 ${
                           isLoadingQueue
-                            ? 'bg-slate-50 border-slate-200 text-slate-500 animate-pulse'
+                            ? 'bg-surface-low border-border text-muted-foreground animate-pulse'
                             : reviewQueueCount === 0
                             ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                             : hasOnlyNewCards
-                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                            ? 'bg-primary/5 border-primary/20 text-primary'
                             : 'bg-amber-50 border-amber-200 text-amber-700'
                         }`}
                       >
@@ -761,7 +771,7 @@ const Flashcards = () => {
                           variant="outline"
                           size="lg"
                           disabled={!selectedDeckId || resetProgressMutation.isPending}
-                          className="h-14 w-14 md:w-14 rounded-2xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
+                          className="h-14 w-14 md:w-14 rounded-2xl border-border text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
                           aria-label={t("sheet.resetProgress")}
                         >
                           {resetProgressMutation.isPending ? (
@@ -804,7 +814,7 @@ const Flashcards = () => {
                     {reviewQueueCount > 0 && (
                         <span className={`absolute -top-2 -right-2 md:-right-4 min-w-[28px] h-7 flex items-center justify-center text-xs font-black text-white rounded-full px-2 shadow-md animate-pulse pointer-events-none z-10 border-2 border-white ${
                           hasOnlyNewCards
-                            ? 'bg-indigo-500 shadow-indigo-500/40'
+                            ? 'bg-primary shadow-primary/40'
                             : 'bg-red-500 shadow-red-500/40'
                         }`}>
                           {reviewQueueCount}
@@ -817,35 +827,35 @@ const Flashcards = () => {
           <div className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
             <div className="max-w-5xl mx-auto space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-indigo-500" />
+                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-primary" />
                   {t("sheet.cardList", { count: selectedDeckCards.length })}
                 </h3>
                 <Button
                   onClick={openCreateCard}
                   disabled={!selectedDeckId}
                   variant="outline"
-                  className="rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 font-semibold shadow-sm bg-white"
+                  className="rounded-xl border-primary/30 text-primary hover:bg-primary/5 hover:text-primary font-semibold shadow-sm bg-surface-lowest"
                 >
                   <Plus className="w-4 h-4 mr-1" /> {t("sheet.addCard")}
                 </Button>
               </div>
 
               {isLoadingCards && (
-                <div className="flex justify-center p-8 border border-slate-200 bg-white rounded-2xl shadow-sm">
-                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                <div className="flex justify-center p-8 border border-border bg-surface-lowest rounded-2xl shadow-sm">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               )}
 
               {!isLoadingCards && selectedDeckCards.length === 0 ? (
-                <div className="border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white shadow-sm">
-                  <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-lg text-slate-600 font-bold mb-2">{t("sheet.emptyMyCards")}</p>
-                  <p className="text-slate-400 mb-6">{t("sheet.emptyMyCardsHint")}</p>
+                <div className="border border-dashed border-border rounded-2xl p-12 text-center bg-white shadow-sm">
+                  <Sparkles className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+                  <p className="text-lg text-foreground font-bold mb-2">{t("sheet.emptyMyCards")}</p>
+                  <p className="text-muted-foreground mb-6">{t("sheet.emptyMyCardsHint")}</p>
                   <Button onClick={openCreateCard} className="rounded-xl px-6">{t("sheet.addCardNow")}</Button>
                 </div>
               ) : !isLoadingCards && (
-                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+                <div className="bg-surface-lowest rounded-2xl p-6 md:p-8 shadow-sm border border-border">
                   <CardList cards={selectedDeckCards} onEditCard={openEditCard} onDeleteCard={deleteCard} />
                 </div>
               )}
@@ -861,8 +871,8 @@ const Flashcards = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <Plus className="w-4 h-4 text-indigo-600" />
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-primary" />
               </div>
               {t("dialogs.createDeck.title")}
             </DialogTitle>
@@ -870,21 +880,21 @@ const Flashcards = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.nameLabel")}</Label>
+              <Label className="text-foreground font-semibold">{t("dialogs.createDeck.nameLabel")}</Label>
               <Input
                 value={deckForm.title}
                 onChange={(e) => setDeckForm((f) => ({ ...f, title: e.target.value }))}
                 placeholder={t("dialogs.createDeck.namePlaceholder")}
-                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                className="border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
+              <Label className="text-foreground font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
               <Textarea
                 value={deckForm.description}
                 onChange={(e) => setDeckForm((f) => ({ ...f, description: e.target.value }))}
                 placeholder={t("dialogs.createDeck.descPlaceholder")}
-                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                className="border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
             {renderTagSelector()}
@@ -895,7 +905,7 @@ const Flashcards = () => {
                   setDeckForm((f) => ({ ...f, isPublic: !!checked }))
                 }
               />
-              <Label className="text-slate-600">{t("dialogs.createDeck.isPublic")}</Label>
+              <Label className="text-muted-foreground">{t("dialogs.createDeck.isPublic")}</Label>
             </div>
           </div>
           <DialogFooter>
@@ -904,7 +914,7 @@ const Flashcards = () => {
             </Button>
             <Button
               onClick={saveCreateDeck}
-              className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 font-bold"
+              className="bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary font-bold"
               disabled={createDeckMutation.isPending}
             >
               {createDeckMutation.isPending && (
@@ -930,19 +940,19 @@ const Flashcards = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">{t("dialogs.editDeck.nameLabel")}</Label>
+              <Label className="text-foreground font-semibold">{t("dialogs.editDeck.nameLabel")}</Label>
               <Input
                 value={deckForm.title}
                 onChange={(e) => setDeckForm((f) => ({ ...f, title: e.target.value }))}
-                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                className="border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
+              <Label className="text-foreground font-semibold">{t("dialogs.createDeck.descLabel")}</Label>
               <Textarea
                 value={deckForm.description}
                 onChange={(e) => setDeckForm((f) => ({ ...f, description: e.target.value }))}
-                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                className="border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
             {renderTagSelector()}
@@ -953,7 +963,7 @@ const Flashcards = () => {
                   setDeckForm((f) => ({ ...f, isPublic: !!checked }))
                 }
               />
-              <Label className="text-slate-600">{t("dialogs.editDeck.isPublic")}</Label>
+              <Label className="text-muted-foreground">{t("dialogs.editDeck.isPublic")}</Label>
             </div>
           </div>
           <DialogFooter>
@@ -962,7 +972,7 @@ const Flashcards = () => {
             </Button>
             <Button
               onClick={saveEditDeck}
-              className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 font-bold"
+              className="bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary font-bold"
               disabled={updateDeckMutation.isPending}
             >
               {updateDeckMutation.isPending && (
@@ -1023,30 +1033,30 @@ const Flashcards = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.frontLabel")}</Label>
+              <Label className="text-foreground font-semibold">{t("dialogs.createCard.frontLabel")}</Label>
               <Input
                 value={cardForm.frontContent}
                 onChange={(e) => setCardForm((f) => ({ ...f, frontContent: e.target.value }))}
                 placeholder={t("dialogs.createCard.frontPlaceholder")}
-                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                className="border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.backLabel")}</Label>
+              <Label className="text-foreground font-semibold">{t("dialogs.createCard.backLabel")}</Label>
               <Textarea
                 value={cardForm.backContent}
                 onChange={(e) => setCardForm((f) => ({ ...f, backContent: e.target.value }))}
                 placeholder={t("dialogs.createCard.backPlaceholder")}
-                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                className="border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-700 font-semibold">{t("dialogs.createCard.exampleLabel")}</Label>
+              <Label className="text-foreground font-semibold">{t("dialogs.createCard.exampleLabel")}</Label>
               <Textarea
                 value={cardForm.exampleSentence}
                 onChange={(e) => setCardForm((f) => ({ ...f, exampleSentence: e.target.value }))}
                 placeholder={t("dialogs.createCard.examplePlaceholder")}
-                className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                className="border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
           </div>
@@ -1083,27 +1093,27 @@ const Flashcards = () => {
           {editingCard && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.frontLabel")}</Label>
+                <Label className="text-foreground font-semibold">{t("dialogs.editCard.frontLabel")}</Label>
                 <Input
                   value={cardForm.frontContent}
                   onChange={(e) => setCardForm((f) => ({ ...f, frontContent: e.target.value }))}
-                  className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                  className="border-border focus:border-primary focus:ring-primary/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.backLabel")}</Label>
+                <Label className="text-foreground font-semibold">{t("dialogs.editCard.backLabel")}</Label>
                 <Textarea
                   value={cardForm.backContent}
                   onChange={(e) => setCardForm((f) => ({ ...f, backContent: e.target.value }))}
-                  className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                  className="border-border focus:border-primary focus:ring-primary/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 font-semibold">{t("dialogs.editCard.exampleLabel")}</Label>
+                <Label className="text-foreground font-semibold">{t("dialogs.editCard.exampleLabel")}</Label>
                 <Textarea
                   value={cardForm.exampleSentence}
                   onChange={(e) => setCardForm((f) => ({ ...f, exampleSentence: e.target.value }))}
-                  className="border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                  className="border-border focus:border-primary focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -1114,7 +1124,7 @@ const Flashcards = () => {
             </Button>
             <Button
               onClick={saveEditCard}
-              className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 font-bold"
+              className="bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary font-bold"
               disabled={updateCardMutation.isPending}
             >
               {updateCardMutation.isPending && (

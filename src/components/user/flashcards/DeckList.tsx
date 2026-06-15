@@ -14,11 +14,11 @@ interface DeckListProps {
 }
 
 const ACCENT_COLORS = [
-  { from: 'from-blue-500', to: 'to-indigo-600', shadow: 'shadow-blue-500/20', text: 'text-blue-400', bg: 'bg-blue-500' },
-  { from: 'from-emerald-500', to: 'to-teal-600', shadow: 'shadow-emerald-500/20', text: 'text-emerald-400', bg: 'bg-emerald-500' },
-  { from: 'from-amber-500', to: 'to-orange-600', shadow: 'shadow-amber-500/20', text: 'text-amber-400', bg: 'bg-amber-500' },
-  { from: 'from-rose-500', to: 'to-pink-600', shadow: 'shadow-rose-500/20', text: 'text-rose-400', bg: 'bg-rose-500' },
-  { from: 'from-cyan-500', to: 'to-blue-600', shadow: 'shadow-cyan-500/20', text: 'text-cyan-400', bg: 'bg-cyan-500' },
+  { from: 'from-primary', to: 'to-primary-light', shadow: 'shadow-primary/20', text: 'text-primary', bg: 'bg-primary', border: 'border-primary/40' },
+  { from: 'from-emerald-500', to: 'to-teal-600', shadow: 'shadow-emerald-500/20', text: 'text-emerald-500', bg: 'bg-emerald-500', border: 'border-emerald-500/40' },
+  { from: 'from-secondary', to: 'to-secondary-light', shadow: 'shadow-secondary/20', text: 'text-secondary', bg: 'bg-secondary', border: 'border-secondary/40' },
+  { from: 'from-rose-500', to: 'to-pink-600', shadow: 'shadow-rose-500/20', text: 'text-rose-500', bg: 'bg-rose-500', border: 'border-rose-500/40' },
+  { from: 'from-primary-dark', to: 'to-primary', shadow: 'shadow-primary/20', text: 'text-primary-dark', bg: 'bg-primary-dark', border: 'border-primary/40' },
 ];
 
 export function DeckList({
@@ -43,8 +43,8 @@ export function DeckList({
             onClick={() => onSelectDeck(deck.id)}
             className={`group relative rounded-2xl p-5 cursor-pointer transition-shadow duration-300 border overflow-hidden flex flex-col h-[180px]
               ${isSelected
-                ? `bg-gradient-to-br ${accent.from}/10 ${accent.to}/5 border-indigo-500/40 shadow-lg ${accent.shadow}`
-                : 'bg-white border-slate-200 hover:border-indigo-300/50 hover:shadow-xl'
+                ? `bg-gradient-to-br ${accent.from}/10 ${accent.to}/5 ${accent.border} shadow-lg ${accent.shadow}`
+                : 'bg-surface-lowest border-border hover:border-primary/30 hover:shadow-xl'
               }`}
           >
             {/* Active indicator bar */}
@@ -56,15 +56,15 @@ export function DeckList({
               <div className="flex-1 min-w-0 pl-1">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
-                    <Layers className={`w-5 h-5 flex-shrink-0 ${isSelected ? accent.text : 'text-slate-400'} transition-colors`} />
-                    <h3 className={`text-lg font-bold line-clamp-2 leading-tight transition-colors ${isSelected ? 'text-slate-900' : 'text-slate-700 group-hover:text-slate-900'}`}>
+                    <Layers className={`w-5 h-5 flex-shrink-0 ${isSelected ? accent.text : 'text-muted-foreground'} transition-colors`} />
+                    <h3 className={`text-lg font-bold line-clamp-2 leading-tight transition-colors ${isSelected ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'}`}>
                       {deck.title}
                     </h3>
                   </div>
                 </div>
 
                 {deck.description && (
-                  <p className="text-sm text-slate-500 line-clamp-2 mt-2">{deck.description}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{deck.description}</p>
                 )}
               </div>
 
@@ -73,12 +73,12 @@ export function DeckList({
                   <span className={`inline-flex items-center gap-1 w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                     deck.isPublic
                       ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-slate-100 text-slate-500'
+                      : 'bg-surface-low text-muted-foreground'
                   }`}>
                     {deck.isPublic ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
                     {deck.isPublic ? t('flashcards.deckList.public') : t('flashcards.deckList.private')}
                   </span>
-                  <p className="text-[10px] text-slate-400 font-medium">
+                  <p className="text-[10px] text-muted-foreground font-medium">
                     {formatDate(deck.createdAt)}
                   </p>
                 </div>
@@ -87,7 +87,7 @@ export function DeckList({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full hover:bg-slate-100/80 text-slate-400 hover:text-indigo-600 backdrop-blur-sm"
+                  className="h-8 w-8 rounded-full hover:bg-surface-low text-muted-foreground hover:text-primary backdrop-blur-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     onEditDeck(deck);
@@ -98,7 +98,7 @@ export function DeckList({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full hover:bg-red-50/80 text-slate-400 hover:text-red-500 backdrop-blur-sm"
+                  className="h-8 w-8 rounded-full hover:bg-red-50/80 text-muted-foreground hover:text-red-500 backdrop-blur-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeleteDeck(deck);

@@ -34,32 +34,32 @@ export const SyllabusSidebar = ({
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-slate-200/70 bg-white p-4 shadow-lg">
+    <div className="flex h-full min-h-0 flex-col rounded-3xl border border-border/60 bg-surface-lowest p-4 shadow-lg lg:flex-1">
       {/* Header with progress */}
       <div className="mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-500">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-primary">
               {t("studentLearning.syllabusSidebar.lessonsLabel")}
             </p>
-            <h3 className="text-xl font-black tracking-tight text-slate-900">
+            <h3 className="text-xl font-black tracking-tight text-foreground">
               {t("studentLearning.syllabusSidebar.title")}
             </h3>
           </div>
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/30">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-light text-white shadow-md shadow-primary/30">
             <ListChecks className="h-5 w-5" />
           </span>
         </div>
 
         {!isLoading && total > 0 && (
           <div className="mt-3">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
               <span>{t("studentLearning.syllabusSidebar.completedOfTotal", { completed, total })}</span>
-              <span className="tabular-nums text-indigo-600">{pct}%</span>
+              <span className="tabular-nums text-primary">{pct}%</span>
             </div>
-            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
               <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-600"
+                className="h-full rounded-full bg-gradient-to-r from-primary via-primary-light to-primary"
                 initial={reduceMotion ? false : { width: 0 }}
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: reduceMotion ? 0 : 0.9, ease: [0.16, 1, 0.3, 1] }}
@@ -69,16 +69,16 @@ export const SyllabusSidebar = ({
         )}
       </div>
 
-      <ScrollArea className="flex-1 pr-2">
+      <ScrollArea className="min-h-0 flex-1 pr-2">
         <div className="space-y-2.5">
           {isLoading &&
             Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={`skeleton-${index}`}
-                className="animate-pulse rounded-2xl border border-dashed bg-slate-50 p-4"
+                className="animate-pulse rounded-2xl border border-dashed bg-surface-low p-4"
               >
-                <div className="h-4 w-2/3 rounded bg-slate-200" />
-                <div className="mt-3 h-3 w-1/3 rounded bg-slate-200" />
+                <div className="h-4 w-2/3 rounded bg-muted" />
+                <div className="mt-3 h-3 w-1/3 rounded bg-muted" />
               </div>
             ))}
 
@@ -105,8 +105,8 @@ export const SyllabusSidebar = ({
                   className={cn(
                     "group relative w-full rounded-2xl border p-3.5 pl-12 text-left transition-all duration-300",
                     isActive
-                      ? "border-transparent bg-gradient-to-br from-indigo-500 via-blue-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25"
-                      : "border-slate-200/80 bg-white hover:border-indigo-200 hover:bg-indigo-50/40 hover:shadow-md"
+                      ? "border-transparent bg-gradient-to-br from-primary via-primary-light to-primary text-white shadow-lg shadow-primary/25"
+                      : "border-border/60 bg-surface-lowest hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
                   )}
                 >
                   {/* Timeline rail + node */}
@@ -115,7 +115,7 @@ export const SyllabusSidebar = ({
                     className={cn(
                       "absolute left-[22px] top-12 bottom-1 w-0.5",
                       isLast && "hidden",
-                      isActive ? "bg-white/30" : isDone ? "bg-emerald-300" : "bg-slate-200"
+                      isActive ? "bg-white/30" : isDone ? "bg-emerald-300" : "bg-border"
                     )}
                   />
                   <span
@@ -125,7 +125,7 @@ export const SyllabusSidebar = ({
                         ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/40"
                         : isActive
                         ? "bg-white/20 text-white backdrop-blur-sm ring-2 ring-white/40"
-                        : "bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600"
+                        : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                     )}
                   >
                     {isDone ? <CheckCircle2 className="h-4 w-4" /> : lesson.lessonOrder ?? index + 1}
@@ -133,10 +133,10 @@ export const SyllabusSidebar = ({
 
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className={cn("font-bold leading-snug", isActive ? "text-white" : "text-slate-800")}>
+                      <p className={cn("font-bold leading-snug", isActive ? "text-white" : "text-foreground")}>
                         {lesson.title}
                       </p>
-                      <p className={cn("mt-0.5 text-xs line-clamp-1", isActive ? "text-white/75" : "text-slate-400")}>
+                      <p className={cn("mt-0.5 text-xs line-clamp-1", isActive ? "text-white/75" : "text-muted-foreground")}>
                         {lesson.description ?? t("studentLearning.syllabusSidebar.noDescription")}
                       </p>
                     </div>
@@ -150,13 +150,13 @@ export const SyllabusSidebar = ({
                   <div
                     className={cn(
                       "mt-2.5 flex flex-wrap gap-2 text-xs",
-                      isActive ? "text-white/80" : "text-slate-400"
+                      isActive ? "text-white/80" : "text-muted-foreground"
                     )}
                   >
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full px-2 py-0.5",
-                        isActive ? "bg-white/15" : "bg-slate-100/80"
+                        isActive ? "bg-white/15" : "bg-muted"
                       )}
                     >
                       <Clock className="h-3 w-3" />
@@ -165,7 +165,7 @@ export const SyllabusSidebar = ({
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full px-2 py-0.5",
-                        isActive ? "bg-white/15" : "bg-slate-100/80"
+                        isActive ? "bg-white/15" : "bg-muted"
                       )}
                     >
                       <MessageCircle className="h-3 w-3" />

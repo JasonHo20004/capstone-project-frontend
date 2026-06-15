@@ -371,8 +371,8 @@ function findAnswerIndex(chat: ChatMessage[], qaId: string | undefined, userName
 
 const LEVEL_COLORS: Record<string, string> = {
   beginner:     'bg-emerald-100 text-emerald-700',
-  intermediate: 'bg-blue-100 text-blue-700',
-  advanced:     'bg-violet-100 text-violet-700',
+  intermediate: 'bg-primary/10 text-primary',
+  advanced:     'bg-secondary/15 text-secondary-foreground',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -1190,20 +1190,20 @@ export default function LiveRoom() {
   const hasActiveSlide = !!activeChunk && !isEnded;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50">
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-surface-low">
       {/* ── Top bar ── */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 shrink-0">
-        <button onClick={() => navigate('/live')} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors" aria-label={t('room.back')}>
-          <ArrowLeft className="w-4 h-4 text-slate-500" />
+      <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-border shrink-0">
+        <button onClick={() => navigate('/live')} className="p-1.5 rounded-lg hover:bg-muted transition-colors" aria-label={t('room.back')}>
+          <ArrowLeft className="w-4 h-4 text-muted-foreground" />
         </button>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="font-semibold text-slate-900 truncate text-sm">{room.topic}</h2>
+            <h2 className="font-semibold text-foreground truncate text-sm">{room.topic}</h2>
             <Badge variant="outline" className={cn('text-xs', LEVEL_COLORS[room.level])}>
               {room.level_label}
             </Badge>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
               {room.language === 'vi' ? 'VI' : 'EN'}
             </span>
             {isLive && !isQaPeriod && (
@@ -1218,12 +1218,12 @@ export default function LiveRoom() {
                 {t('room.qaTimer', { time: fmtCountdown(qaCountdown) })}
               </span>
             )}
-            {isEnded && <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{t('room.endedBadge')}</span>}
+            {isEnded && <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{t('room.endedBadge')}</span>}
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {t('room.teacher', { name: room.host_name })}
             {room.lesson_prompt && (
-              <span className="ml-2 text-slate-300">·</span>
+              <span className="ml-2 text-muted-foreground/50">·</span>
             )}
             {room.lesson_prompt && (
               <span className="ml-2 italic line-clamp-1" title={room.lesson_prompt}>
@@ -1238,7 +1238,7 @@ export default function LiveRoom() {
             onClick={() => setShowParticipants(s => !s)}
             className={cn(
               'flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors',
-              showParticipants ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-100',
+              showParticipants ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted',
             )}
             title={showParticipants ? t('room.participants.hide') : t('room.participants.show')}
           >
@@ -1257,7 +1257,7 @@ export default function LiveRoom() {
             onClick={() => setMuted(m => !m)}
             className={cn(
               'p-1.5 rounded-lg transition-colors',
-              muted ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'hover:bg-slate-100 text-slate-500',
+              muted ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'hover:bg-muted text-muted-foreground',
             )}
             title={muted ? t('room.mute.unmute') : t('room.mute.mute')}
             aria-label={muted ? t('room.mute.unmute') : t('room.mute.mute')}
@@ -1271,7 +1271,7 @@ export default function LiveRoom() {
               const i = PLAYBACK_RATES.indexOf(r as typeof PLAYBACK_RATES[number]);
               return PLAYBACK_RATES[(i + 1) % PLAYBACK_RATES.length];
             })}
-            className="px-1.5 py-1 rounded-md text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors tabular-nums"
+            className="px-1.5 py-1 rounded-md text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors tabular-nums"
             title={t('room.playbackRate')}
             aria-label={t('room.playbackRate')}
           >
@@ -1283,7 +1283,7 @@ export default function LiveRoom() {
               <WifiOff className="w-3 h-3" /> {t('room.reconnecting')}
             </span>
           ) : (
-            <span className={cn('w-2 h-2 rounded-full shrink-0', connected ? 'bg-emerald-500' : 'bg-slate-300')} />
+            <span className={cn('w-2 h-2 rounded-full shrink-0', connected ? 'bg-emerald-500' : 'bg-muted-foreground/30')} />
           )}
 
           {isHost && isLive && (
@@ -1299,18 +1299,18 @@ export default function LiveRoom() {
       </div>
 
       {/* ── Mobile tab switcher (below lg only) ── */}
-      <div className="lg:hidden flex shrink-0 border-b border-slate-200 bg-white">
+      <div className="lg:hidden flex shrink-0 border-b border-border bg-white">
         <button
           onClick={() => setMobileTab('stage')}
           className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors',
-            mobileTab === 'stage' ? 'text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-400')}
+            mobileTab === 'stage' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground')}
         >
           <BookOpen className="w-3.5 h-3.5" /> {t('room.mobileTabs.stage')}
         </button>
         <button
           onClick={() => { setMobileTab('chat'); setUnreadChat(0); }}
           className={cn('flex-1 relative flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors',
-            mobileTab === 'chat' ? 'text-indigo-700 border-b-2 border-indigo-600' : 'text-slate-400')}
+            mobileTab === 'chat' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground')}
         >
           <MessageSquare className="w-3.5 h-3.5" /> {t('room.mobileTabs.chat')}
           {unreadChat > 0 && mobileTab !== 'chat' && (
@@ -1331,12 +1331,12 @@ export default function LiveRoom() {
 
       {/* Audio unlock banner — shown only when the browser blocked autoplay */}
       {audioBlocked && !muted && (
-        <div className="flex items-center justify-center gap-3 shrink-0 px-4 py-2 bg-indigo-600 text-white">
+        <div className="flex items-center justify-center gap-3 shrink-0 px-4 py-2 bg-primary text-white">
           <Volume2 className="w-4 h-4 shrink-0" />
           <span className="text-sm font-medium">{t('room.unlockAudio')}</span>
           <button
             onClick={enableAudio}
-            className="ml-2 px-3 py-1 rounded-full bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 active:scale-95 transition-all"
+            className="ml-2 px-3 py-1 rounded-full bg-white text-primary text-sm font-semibold hover:bg-primary/10 active:scale-95 transition-all"
           >
             {t('room.unlockAudioCta')}
           </button>
@@ -1348,11 +1348,11 @@ export default function LiveRoom() {
 
         {/* Left: stage (slide + avatar) + transcript — single scrollable column */}
         <div className={cn(
-          'flex-col flex-1 min-w-0 lg:border-r border-slate-200 overflow-y-auto overflow-x-hidden',
+          'flex-col flex-1 min-w-0 lg:border-r border-border overflow-y-auto overflow-x-hidden',
           mobileTab === 'stage' ? 'flex' : 'hidden', 'lg:flex',
         )}>
           {/* ── Stage ── */}
-          <div ref={stageRef} className="relative shrink-0 bg-gradient-to-b from-indigo-50 to-white">
+          <div ref={stageRef} className="relative shrink-0 bg-gradient-to-b from-primary/5 to-surface-lowest">
             <ReactionLayer reactions={reactions} onExpire={expireReaction} />
 
             {/* Live comprehension checkpoint — covers the stage while the
@@ -1376,15 +1376,15 @@ export default function LiveRoom() {
 
             {/* Teacher aside — the AI's between-slide remark about the room */}
             {aside && !spotlight && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-[90%] flex items-center gap-2 bg-white/95 border border-indigo-200 text-indigo-900 px-3 py-1.5 rounded-full shadow-lg">
-                <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-[90%] flex items-center gap-2 bg-white/95 border border-primary/20 text-primary-dark px-3 py-1.5 rounded-full shadow-lg">
+                <Sparkles className="w-3.5 h-3.5 shrink-0 text-primary" />
                 <span className="text-xs line-clamp-2">{aside}</span>
               </div>
             )}
 
             {/* Live spotlight caption — what the invited student is saying, shown to everyone */}
             {spotlight && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-[90%] flex items-center gap-2 bg-indigo-600/95 text-white px-3 py-1.5 rounded-full shadow-lg">
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 max-w-[90%] flex items-center gap-2 bg-primary/95 text-white px-3 py-1.5 rounded-full shadow-lg">
                 <Mic2 className="w-3.5 h-3.5 shrink-0 animate-pulse" />
                 <span className="text-xs font-semibold shrink-0">{spotlight.user_name}:</span>
                 <span className="text-xs truncate">{spotlight.text || '…'}</span>
@@ -1442,7 +1442,7 @@ export default function LiveRoom() {
                     screen before slide 1 begins. */}
                 {intro && (
                   <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <div className="relative rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white px-5 py-4 shadow-xl">
+                    <div className="relative rounded-2xl bg-gradient-to-br from-primary to-primary-light text-white px-5 py-4 shadow-xl">
                       <div className="flex items-center gap-2 mb-1.5">
                         <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
                         <span className="text-xs font-bold uppercase tracking-wide opacity-90">
@@ -1457,11 +1457,11 @@ export default function LiveRoom() {
             )}
 
             {/* Controls strip below stage */}
-            <div className="px-4 py-3 flex flex-col items-center gap-2 border-t border-slate-100">
+            <div className="px-4 py-3 flex flex-col items-center gap-2 border-t border-border/60">
               {/* Status line */}
               <div className="text-center min-h-[1.25rem] flex flex-col items-center justify-center">
                 {isThinking && !isSpeaking && (
-                  <p className="text-sm text-indigo-500 font-medium animate-pulse">{t('room.preparing')}</p>
+                  <p className="text-sm text-primary font-medium animate-pulse">{t('room.preparing')}</p>
                 )}
                 {isSpeaking && (
                   <button
@@ -1472,7 +1472,7 @@ export default function LiveRoom() {
                   </button>
                 )}
                 {isWaiting && !isSpeaking && (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-muted-foreground">
                     {isHost ? t('room.waitingHost') : t('room.waitingStudent')}
                   </p>
                 )}
@@ -1483,20 +1483,20 @@ export default function LiveRoom() {
                   </div>
                 )}
                 {isEnded && !isSpeaking && (
-                  <p className="text-sm text-slate-400">{t('room.ended')}</p>
+                  <p className="text-sm text-muted-foreground">{t('room.ended')}</p>
                 )}
               </div>
 
               {/* Progress bar */}
               {progress.total > 0 && (
                 <div className="w-full max-w-md">
-                  <div className="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                  <div className="flex justify-between text-[10px] text-muted-foreground mb-0.5">
                     <span>{t('room.slideProgress', { current: progress.current, total: progress.total })}</span>
                     <span>{Math.round((progress.current / progress.total) * 100)}%</span>
                   </div>
-                  <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-1 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
+                      className="h-full bg-gradient-to-r from-primary to-primary-light rounded-full transition-all duration-700"
                       style={{ width: `${(progress.current / progress.total) * 100}%` }}
                     />
                   </div>
@@ -1506,7 +1506,7 @@ export default function LiveRoom() {
               {/* Host: start button */}
               {isHost && isWaiting && (
                 <Button
-                  className="bg-indigo-600 hover:bg-indigo-700 gap-2 mt-1"
+                  className="bg-primary hover:bg-primary-light gap-2 mt-1"
                   onClick={() => {
                     audioQueueRef.current.unlock();
                     wsRef.current?.send(JSON.stringify({ type: 'start_lesson' }));
@@ -1524,7 +1524,7 @@ export default function LiveRoom() {
                   {transcript.length > 0 && (
                     <Button
                       size="sm" variant="outline"
-                      className="gap-1.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                      className="gap-1.5 text-primary border-primary/20 hover:bg-primary/10"
                       onClick={() => navigate(`/live/replay/${roomId}`)}
                     >
                       <PlaySquare className="w-3.5 h-3.5" /> {t('room.watchReplay')}
@@ -1542,18 +1542,18 @@ export default function LiveRoom() {
 
               {/* Invited to speak: spotlight speaking panel */}
               {isSpotlight && !isEnded && (
-                <div ref={spotlightPanelRef} className="w-full max-w-md flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-indigo-300 bg-indigo-50">
-                  <p className="text-sm font-semibold text-indigo-700 flex items-center gap-1.5">
+                <div ref={spotlightPanelRef} className="w-full max-w-md flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-primary/30 bg-primary/10">
+                  <p className="text-sm font-semibold text-primary flex items-center gap-1.5">
                     <Mic2 className="w-4 h-4" /> {t('room.spotlight.invited')}
                   </p>
                   {voiceSupported ? (
                     <>
-                      <p className="text-xs text-slate-500 text-center">
+                      <p className="text-xs text-muted-foreground text-center">
                         {t('room.spotlight.hint')}
                       </p>
                       <div className="flex gap-2">
                         {!speaking ? (
-                          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={startSpeaking}>
+                          <Button size="sm" className="bg-primary hover:bg-primary-light gap-1.5" onClick={startSpeaking}>
                             <Mic className="w-4 h-4" /> {t('room.spotlight.start')}
                           </Button>
                         ) : (
@@ -1561,7 +1561,7 @@ export default function LiveRoom() {
                             <CheckCircle className="w-4 h-4" /> {t('room.spotlight.submit')}
                           </Button>
                         )}
-                        <Button size="sm" variant="outline" className="gap-1.5 text-slate-500" onClick={cancelSpeaking}>
+                        <Button size="sm" variant="outline" className="gap-1.5 text-muted-foreground" onClick={cancelSpeaking}>
                           {t('room.spotlight.cancel')}
                         </Button>
                       </div>
@@ -1579,7 +1579,7 @@ export default function LiveRoom() {
                 <button
                   onClick={() => sendChip(t('room.explainAgainPart', { title: activeChunk.title }))}
                   disabled={questionsLeft === 0 || !connected}
-                  className="flex items-center justify-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors my-1 z-10"
+                  className="flex items-center justify-center gap-1 text-xs text-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors my-1 z-10"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   {t('room.transcript.explainAgain')}
@@ -1597,7 +1597,7 @@ export default function LiveRoom() {
                         'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95',
                         handRaised
                           ? 'bg-amber-400 text-white border-amber-400 shadow-md hover:bg-amber-500'
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-amber-300 hover:text-amber-600',
+                          : 'bg-white text-muted-foreground border-border hover:border-amber-300 hover:text-amber-600',
                       )}
                       title={handRaised ? t('room.hand.raisedTitle') : t('room.hand.raiseTitle')}
                     >
@@ -1618,13 +1618,13 @@ export default function LiveRoom() {
           'flex-col flex-1 min-w-0 overflow-hidden',
           mobileTab === 'chat' ? 'flex' : 'hidden', 'lg:flex',
         )}>
-          <div className="flex items-center gap-1.5 px-4 py-2 border-b border-slate-100 bg-white shrink-0">
-            <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-xs font-medium text-slate-500">{t('room.chat.heading')}</span>
+          <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border/60 bg-white shrink-0">
+            <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">{t('room.chat.heading')}</span>
             {!isEnded && (
               <span className={cn(
                 'ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium',
-                questionsLeft === 0 ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-400',
+                questionsLeft === 0 ? 'bg-red-50 text-red-500' : 'bg-muted text-muted-foreground',
               )}>
                 {t('room.chat.questionsLeft', { left: questionsLeft, max: QUESTIONS_PER_MIN })}
               </span>
@@ -1633,7 +1633,7 @@ export default function LiveRoom() {
 
           <ScrollArea className="flex-1 px-3 py-3">
             {chat.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-8">
+              <p className="text-sm text-muted-foreground text-center py-8">
                 {t('room.chat.empty')}
               </p>
             ) : (
@@ -1642,7 +1642,7 @@ export default function LiveRoom() {
                   <div key={i}>
                     {msg.type === 'system' && (
                       <div className="flex justify-center">
-                        <span className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                        <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
                           {sysMessages[msg.text ?? ''] ?? msg.text}
                         </span>
                       </div>
@@ -1656,7 +1656,7 @@ export default function LiveRoom() {
                     )}
                     {msg.type === 'aside' && (
                       <div className="flex justify-center">
-                        <div className="max-w-[90%] flex items-start gap-1.5 text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl">
+                        <div className="max-w-[90%] flex items-start gap-1.5 text-xs text-primary bg-primary/10 border border-primary/15 px-3 py-1.5 rounded-xl">
                           <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />
                           <span className="italic">{msg.text}</span>
                         </div>
@@ -1664,7 +1664,7 @@ export default function LiveRoom() {
                     )}
                     {msg.type === 'question' && (
                       <div className="flex justify-end">
-                        <div className="max-w-[80%] bg-indigo-600 text-white rounded-2xl rounded-br-sm px-3 py-2">
+                        <div className="max-w-[80%] bg-primary text-white rounded-2xl rounded-br-sm px-3 py-2">
                           <p className="text-[11px] font-semibold opacity-70 mb-0.5">{msg.user_name}</p>
                           <p className="text-sm">{msg.question}</p>
                         </div>
@@ -1672,12 +1672,12 @@ export default function LiveRoom() {
                     )}
                     {msg.type === 'answer' && (
                       <div className="flex gap-2 items-start">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center shrink-0 mt-0.5">
                           <span className="text-white text-[9px] font-bold">AI</span>
                         </div>
-                        <div className="max-w-[80%] bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
-                          <p className="text-[11px] text-slate-400 mb-0.5">{t('room.chat.answerLabel', { name: msg.user_name })}</p>
-                          <div className="text-sm text-slate-800 leading-relaxed break-words prose prose-sm prose-slate max-w-none dark:prose-invert">
+                        <div className="max-w-[80%] bg-white border border-border rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
+                          <p className="text-[11px] text-muted-foreground mb-0.5">{t('room.chat.answerLabel', { name: msg.user_name })}</p>
+                          <div className="text-sm text-foreground leading-relaxed break-words prose prose-sm prose-slate max-w-none dark:prose-invert">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.answer}</ReactMarkdown>
                           </div>
                         </div>
@@ -1687,14 +1687,14 @@ export default function LiveRoom() {
                 ))}
                 {aiTyping && (
                   <div className="flex gap-2 items-start">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center shrink-0 mt-0.5">
                       <span className="text-white text-[9px] font-bold">AI</span>
                     </div>
-                    <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
-                      <p className="text-xs text-slate-400 animate-pulse">{t('room.chat.aiTyping')}</p>
+                    <div className="bg-white border border-border rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
+                      <p className="text-xs text-muted-foreground animate-pulse">{t('room.chat.aiTyping')}</p>
                       <div className="flex gap-1 mt-1">
                         {[0,1,2].map(i => (
-                          <span key={i} className="w-1.5 h-1.5 rounded-full bg-slate-300"
+                          <span key={i} className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"
                             style={{ animation: `bounce 1s ease-in-out ${i * 0.15}s infinite` }} />
                         ))}
                       </div>
@@ -1707,7 +1707,7 @@ export default function LiveRoom() {
           </ScrollArea>
 
           {/* Question input */}
-          <div className="p-3 border-t border-slate-200 bg-white shrink-0 space-y-2">
+          <div className="p-3 border-t border-border bg-white shrink-0 space-y-2">
             {/* Quick chips */}
             {!isEnded && connected && (
               <div className="flex gap-1.5 flex-wrap">
@@ -1716,8 +1716,8 @@ export default function LiveRoom() {
                     key={key}
                     onClick={() => sendChip(value)}
                     disabled={questionsLeft === 0 || rateLimitSecs > 0}
-                    className="text-[11px] px-2 py-0.5 rounded-full border border-indigo-200 text-indigo-600
-                               bg-indigo-50 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed
+                    className="text-[11px] px-2 py-0.5 rounded-full border border-primary/20 text-primary
+                               bg-primary/10 hover:bg-primary/15 disabled:opacity-40 disabled:cursor-not-allowed
                                transition-colors whitespace-nowrap"
                   >
                     {t(`room.chat.quickChips.${key}`)}
@@ -1737,7 +1737,7 @@ export default function LiveRoom() {
                     'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
                     isListening
                       ? 'bg-red-500 text-white animate-pulse'
-                      : 'border border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500',
+                      : 'border border-border text-muted-foreground hover:border-primary/30 hover:text-primary',
                     (!connected || questionsLeft === 0 || transcribing) && 'opacity-40 cursor-not-allowed',
                   )}
                   title={isListening ? t('room.chat.stopMic') : (room?.language === 'en' ? t('room.chat.speakEn') : t('room.chat.speakVi'))}
@@ -1765,7 +1765,7 @@ export default function LiveRoom() {
               />
               <Button
                 size="icon"
-                className="bg-indigo-600 hover:bg-indigo-700 shrink-0"
+                className="bg-primary hover:bg-primary-light shrink-0"
                 onClick={sendQuestion}
                 disabled={!question.trim() || isEnded || !connected || questionsLeft === 0 || rateLimitSecs > 0}
                 aria-label={t('room.chat.send')}
@@ -1780,13 +1780,13 @@ export default function LiveRoom() {
                   {t('room.chat.rateLimitWait', { secs: rateLimitSecs })}
                 </p>
               ) : (
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-muted-foreground">
                   {voiceSupported
                     ? t('room.chat.footer.withMic', { max: QUESTIONS_PER_MIN })
                     : t('room.chat.footer.withoutMic', { max: QUESTIONS_PER_MIN })}
                 </p>
               )}
-              <span className={cn('text-[11px]', charsLeft < 30 ? 'text-amber-500' : 'text-slate-300')}>
+              <span className={cn('text-[11px]', charsLeft < 30 ? 'text-amber-500' : 'text-muted-foreground/50')}>
                 {charsLeft}
               </span>
             </div>

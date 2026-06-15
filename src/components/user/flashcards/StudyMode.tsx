@@ -274,7 +274,7 @@ const SwipeCard = forwardRef<SwipeCardHandle, SwipeCardProps>(function SwipeCard
               </h2>
             </div>
 
-            <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-indigo-300/70 flex items-center gap-1.5 animate-pulse font-medium z-10 whitespace-nowrap pointer-events-none">
+            <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-white/70 flex items-center gap-1.5 animate-pulse font-medium z-10 whitespace-nowrap pointer-events-none">
               <RotateCw className="w-3.5 h-3.5" /> {t('flashcards.studyMode.tapToFlip')}
             </p>
 
@@ -289,16 +289,16 @@ const SwipeCard = forwardRef<SwipeCardHandle, SwipeCardProps>(function SwipeCard
           {/* BACK */}
           <div className="flip-card-back relative">
             <div className="flex flex-col items-center gap-4 w-full px-4 relative z-10">
-              <div className="text-sm text-indigo-300/60 border-b border-indigo-400/20 pb-2 mb-2 w-full text-center font-medium">
+              <div className="text-sm text-muted-foreground border-b border-border pb-2 mb-2 w-full text-center font-medium">
                 {card.frontContent}
               </div>
 
-              <h2 className="text-2xl md:text-3xl font-black text-emerald-400 text-center drop-shadow-sm">
+              <h2 className="text-2xl md:text-3xl font-black text-emerald-600 text-center">
                 {card.backContent}
               </h2>
 
               {card.exampleSentence && (
-                <div className="mt-2 p-3 bg-white/5 backdrop-blur-sm rounded-xl text-base italic text-indigo-200/80 text-center border border-white/5">
+                <div className="mt-2 p-3 bg-surface-low rounded-xl text-base italic text-muted-foreground text-center border border-border">
                   "{card.exampleSentence}"
                 </div>
               )}
@@ -482,7 +482,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
   const renderStatusBadge = useCallback((type?: string) => {
     const baseClass = 'text-xs font-bold px-3 py-1 rounded-full border-0 shadow-sm';
     switch (type) {
-      case 'NEW': return <Badge className={`${baseClass} bg-blue-500/90 text-white`}><Zap className="w-3 h-3 mr-1" /> {t('flashcards.studyMode.status.new')}</Badge>;
+      case 'NEW': return <Badge className={`${baseClass} bg-primary/90 text-white`}><Zap className="w-3 h-3 mr-1" /> {t('flashcards.studyMode.status.new')}</Badge>;
       case 'LEARNING': return <Badge className={`${baseClass} bg-amber-500/90 text-white`}><RotateCw className="w-3 h-3 mr-1" /> {t('flashcards.studyMode.status.learning')}</Badge>;
       case 'REVIEW': return <Badge className={`${baseClass} bg-emerald-500/90 text-white`}><Star className="w-3 h-3 mr-1" /> {t('flashcards.studyMode.status.review')}</Badge>;
       default: return <Badge className={`${baseClass} bg-slate-500/90 text-white`}>{t('flashcards.studyMode.status.other')}</Badge>;
@@ -541,26 +541,26 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-indigo-500/20 animate-ping absolute inset-0" />
-          <Loader2 className="w-16 h-16 animate-spin text-indigo-400 relative" />
+          <div className="w-16 h-16 rounded-full bg-primary/15 animate-ping absolute inset-0" />
+          <Loader2 className="w-16 h-16 animate-spin text-primary relative" />
         </div>
-        <p className="text-indigo-300 font-medium animate-pulse">{t('flashcards.studyMode.loadingCards')}</p>
+        <p className="text-muted-foreground font-medium animate-pulse">{t('flashcards.studyMode.loadingCards')}</p>
       </div>
     );
   }
 
   if (!isLoadingQueue && (!queueData || queueData.length === 0)) {
     return (
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 p-8 text-center space-y-4">
-        <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-          <Star className="w-8 h-8 text-emerald-400" />
+      <div className="rounded-2xl bg-gradient-to-br from-surface-low via-surface-lowest to-surface-low border border-border p-8 text-center space-y-4">
+        <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
+          <Star className="w-8 h-8 text-emerald-600" />
         </div>
-        <h3 className="text-xl font-bold text-white">{t('flashcards.studyMode.empty.title')}</h3>
-        <p className="text-indigo-300 text-sm">{t('flashcards.studyMode.empty.subtitle')}</p>
+        <h3 className="text-xl font-bold text-foreground">{t('flashcards.studyMode.empty.title')}</h3>
+        <p className="text-muted-foreground text-sm">{t('flashcards.studyMode.empty.subtitle')}</p>
         <button
           className="mx-auto flex items-center gap-2 h-12 px-8 rounded-xl font-bold text-white
-            bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500
-            shadow-xl shadow-indigo-500/30 transition-all duration-200 hover:scale-105 active:scale-95"
+            bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary
+            shadow-xl shadow-primary/30 transition-all duration-200 hover:scale-105 active:scale-95"
           onClick={onClose}
         >
           {t('flashcards.studyMode.close')}
@@ -574,7 +574,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
 
   return (
     <div className="relative" ref={cardContainerRef}>
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 p-5 md:p-6 space-y-5 overflow-hidden relative">
+      <div className="rounded-2xl bg-gradient-to-br from-surface-low via-surface-lowest to-surface-low border border-border p-5 md:p-6 space-y-5 overflow-hidden relative">
 
         {/* Aurora ambient background */}
         <div className="study-aurora" aria-hidden="true" />
@@ -602,30 +602,30 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
         {/* HEADER */}
         <div className="relative z-10 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Zap className="w-5 h-5 text-amber-400" />
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Zap className="w-5 h-5 text-secondary" />
               {t('flashcards.studyMode.studying')}
             </h3>
 
             <div className="flex items-center gap-2">
               {/* Streak chip */}
               {streak > 0 && (
-                <div className="flex items-center gap-1.5 text-sm font-bold text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
-                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                <div className="flex items-center gap-1.5 text-sm font-bold text-amber-600 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
+                  <Flame className="w-3.5 h-3.5 text-amber-500" />
                   <span key={streak} className="study-streak-pop inline-block">{streak}</span>
                 </div>
               )}
 
               {/* Session timer */}
-              <div className="flex items-center gap-1.5 text-sm font-mono font-semibold text-indigo-300 bg-indigo-500/10 px-3 py-1.5 rounded-full border border-indigo-500/20">
-                <Timer className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="flex items-center gap-1.5 text-sm font-mono font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
+                <Timer className="w-3.5 h-3.5 text-primary" />
                 {formatTime(elapsedSeconds)}
               </div>
 
               {/* Sound toggle */}
               <button
                 onClick={toggleMute}
-                className="flex items-center justify-center w-9 h-9 rounded-full text-slate-300 bg-slate-800/60 hover:bg-indigo-500/20 hover:text-indigo-300 border border-slate-700/50 transition-all duration-200"
+                className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground bg-surface-low hover:bg-primary/10 hover:text-primary border border-border transition-all duration-200"
                 title={muted ? t('flashcards.studyMode.soundOff') : t('flashcards.studyMode.soundOn')}
                 aria-label={muted ? t('flashcards.studyMode.soundOff') : t('flashcards.studyMode.soundOn')}
               >
@@ -636,25 +636,25 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <button
-                    className="flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-800/60 hover:bg-red-500/20 hover:text-red-400 px-3 py-1.5 rounded-full border border-slate-700/50 hover:border-red-500/30 transition-all duration-200"
+                    className="flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-surface-low hover:bg-red-500/10 hover:text-red-500 px-3 py-1.5 rounded-full border border-border hover:border-red-500/30 transition-all duration-200"
                     title={t('flashcards.studyMode.cancelTitle')}
                   >
                     <X className="w-3.5 h-3.5" />
                     {t('flashcards.studyMode.cancel')}
                   </button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
+                <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2 text-white">
-                      <AlertTriangle className="w-5 h-5 text-amber-400" />
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-amber-500" />
                       {t('flashcards.studyMode.cancelDialog.title')}
                     </AlertDialogTitle>
-                    <AlertDialogDescription className="text-slate-400">
+                    <AlertDialogDescription>
                       {t('flashcards.studyMode.cancelDialog.description')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white">
+                    <AlertDialogCancel>
                       {t('flashcards.studyMode.cancelDialog.keep')}
                     </AlertDialogCancel>
                     <AlertDialogAction
@@ -671,31 +671,31 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
 
           {/* Stats badges row */}
           <div className="flex gap-3 text-sm font-semibold">
-            <span className="flex items-center gap-1 text-blue-400 bg-blue-400/10 px-2.5 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               {stats.new} {t('flashcards.studyMode.statsShort.new')}
             </span>
-            <span className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full">
               {stats.learning} {t('flashcards.studyMode.statsShort.learning')}
             </span>
-            <span className="flex items-center gap-1 text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full">
               {stats.review} {t('flashcards.studyMode.statsShort.review')}
             </span>
           </div>
 
           {/* Progress bar */}
-          <div className="relative h-3 w-full bg-slate-800/80 rounded-full overflow-hidden border border-slate-700/50">
+          <div className="relative h-3 w-full bg-surface-low rounded-full overflow-hidden border border-border">
             <div
               className="h-full rounded-full relative"
               style={{
                 width: `${progressPercent}%`,
-                background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7)',
+                background: 'linear-gradient(90deg, #0058bc, #0070eb, #4ea3ff)',
                 transition: 'width 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
             </div>
           </div>
-          <p className="text-xs text-slate-500 text-right font-medium">
+          <p className="text-xs text-muted-foreground text-right font-medium">
             {t('flashcards.studyMode.progress', { current: idx, total: sessionQueue.length })}
           </p>
         </div>
@@ -731,7 +731,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               {feedbackText && (
                 <div
                   className="kahoot-feedback-chip absolute left-1/2 top-0 inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-white text-sm shadow-2xl whitespace-nowrap border border-white/20 backdrop-blur-sm"
-                  style={{ background: 'linear-gradient(90deg, #6366f1, #8b5cf6)' }}
+                  style={{ background: 'linear-gradient(90deg, #0058bc, #0070eb)' }}
                 >
                   <Star className="w-4 h-4" aria-hidden="true" />
                   {feedbackText}
@@ -741,7 +741,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
 
             {/* Swipe hint */}
             {!reduced && (
-              <p className="text-center text-xs text-slate-500 font-medium -mt-1">
+              <p className="text-center text-xs text-muted-foreground font-medium -mt-1">
                 {t('flashcards.studyMode.swipeHint')}
               </p>
             )}
@@ -783,8 +783,8 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
             </div>
 
             <div className="space-y-2 kahoot-score-pop" style={{ animationDelay: '0.3s' }}>
-              <h3 className="text-3xl font-black text-white">{t('flashcards.studyMode.finish.title')}</h3>
-              <p className="text-indigo-300 text-lg font-medium">
+              <h3 className="text-3xl font-black text-foreground">{t('flashcards.studyMode.finish.title')}</h3>
+              <p className="text-muted-foreground text-lg font-medium">
                 {t('flashcards.studyMode.finish.subtitle', { count: gradedCount })}
               </p>
             </div>
@@ -793,7 +793,7 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
             <div className="flex flex-wrap justify-center items-center gap-4 kahoot-score-pop" style={{ animationDelay: '0.5s' }}>
               <div className="relative w-32 h-32">
                 <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="10" />
                   <circle
                     cx="60" cy="60" r="52" fill="none" stroke="url(#accGrad)" strokeWidth="10" strokeLinecap="round"
                     strokeDasharray={RING_C}
@@ -808,32 +808,32 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-black text-white">{accuracy}%</span>
-                  <span className="text-[10px] text-indigo-300 font-semibold flex items-center gap-1">
+                  <span className="text-3xl font-black text-foreground">{accuracy}%</span>
+                  <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
                     <Target className="w-3 h-3" /> {t('flashcards.studyMode.finish.accuracy')}
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-3">
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10 min-w-[140px]">
-                  <p className="text-2xl font-black text-white">{shownCount}</p>
-                  <p className="text-xs text-indigo-300 font-medium">{t('flashcards.studyMode.finish.cardsLearned')}</p>
+                <div className="bg-surface-low rounded-xl px-5 py-3 border border-border min-w-[140px]">
+                  <p className="text-2xl font-black text-foreground">{shownCount}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t('flashcards.studyMode.finish.cardsLearned')}</p>
                 </div>
                 <div className="flex gap-3">
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10 flex-1">
+                  <div className="bg-surface-low rounded-xl px-4 py-3 border border-border flex-1">
                     <div className="flex items-center gap-1.5 justify-center">
-                      <Flame className="w-4 h-4 text-amber-400" />
-                      <p className="text-xl font-black text-white">{bestStreak}</p>
+                      <Flame className="w-4 h-4 text-amber-500" />
+                      <p className="text-xl font-black text-foreground">{bestStreak}</p>
                     </div>
-                    <p className="text-[10px] text-indigo-300 font-medium">{t('flashcards.studyMode.finish.bestStreak')}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">{t('flashcards.studyMode.finish.bestStreak')}</p>
                   </div>
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10 flex-1">
+                  <div className="bg-surface-low rounded-xl px-4 py-3 border border-border flex-1">
                     <div className="flex items-center gap-1.5 justify-center">
-                      <Clock className="w-4 h-4 text-indigo-400" />
-                      <p className="text-xl font-black text-white">{formatTime(elapsedSeconds)}</p>
+                      <Clock className="w-4 h-4 text-primary" />
+                      <p className="text-xl font-black text-foreground">{formatTime(elapsedSeconds)}</p>
                     </div>
-                    <p className="text-[10px] text-indigo-300 font-medium">{t('flashcards.studyMode.finish.duration')}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">{t('flashcards.studyMode.finish.duration')}</p>
                   </div>
                 </div>
               </div>
@@ -841,8 +841,8 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
 
             <div className="flex justify-center gap-3 kahoot-score-pop" style={{ animationDelay: '0.7s' }}>
               <button
-                className="flex items-center gap-2 h-12 px-6 rounded-xl font-bold text-indigo-200 border border-indigo-400/30
-                  bg-indigo-500/10 hover:bg-indigo-500/20 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 h-12 px-6 rounded-xl font-bold text-primary border border-primary/30
+                  bg-primary/5 hover:bg-primary/10 transition-all duration-200 hover:scale-105 active:scale-95"
                 onClick={replay}
               >
                 <RotateCcw className="w-5 h-5" />
@@ -850,8 +850,8 @@ export default function StudyMode({ deckId, onClose }: StudyModeProps) {
               </button>
               <button
                 className="flex items-center gap-2 h-12 px-8 rounded-xl font-bold text-white
-                  bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500
-                  shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-200 hover:scale-105 active:scale-95"
+                  bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary
+                  shadow-xl shadow-primary/30 hover:shadow-primary/50 transition-all duration-200 hover:scale-105 active:scale-95"
                 onClick={onClose}
               >
                 <Star className="w-5 h-5" />

@@ -182,7 +182,7 @@ export default function UserAppLayout() {
 
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         {!location.pathname.startsWith("/skill-tree") && (
-          <header className="flex items-center justify-between px-6 py-4 bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border/60">
+          <header className="flex h-16 items-center justify-between px-6 bg-card/80 backdrop-blur-md sticky top-0 z-10 border-b border-border/60">
             <div className="flex items-center gap-4">
               <button
                 type="button"

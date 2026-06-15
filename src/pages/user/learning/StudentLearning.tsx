@@ -340,7 +340,7 @@ const StudentLearningPage = () => {
               </div>
 
               {!isSidebarCollapsed && (
-                <div className="hidden lg:block animate-in fade-in slide-in-from-right duration-300">
+                <div className="hidden animate-in fade-in slide-in-from-right duration-300 lg:flex lg:flex-col lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-hidden">
                   <SyllabusSidebar
                     lessons={context?.syllabus}
                     currentLessonId={effectiveLessonId}
