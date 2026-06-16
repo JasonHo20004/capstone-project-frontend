@@ -17,10 +17,24 @@ interface Props {
   ragBase: string;
   className?: string;
   audioProgress?: number | null;
+  /** Characters spoken in the same audio clip BEFORE `text` (e.g. the slide
+   *  title the teacher reads first). Used to offset the karaoke highlight so the
+   *  words don't light up while the lead-in is still being spoken. */
+  leadChars?: number;
+  /** Characters spoken AFTER `text` in the same clip (e.g. a closing sign-off). */
+  tailChars?: number;
 }
 
-// Split text into clickable English words vs. punctuation/whitespace.
-const TOKEN_RE = /([A-Za-z][A-Za-z'-]*)/g;
+// Split text into words vs. punctuation/whitespace. Unicode-aware (\p{L}) so
+// accented scripts like Vietnamese keep WHOLE words intact — the old ASCII-only
+// regex matched just the Latin letters of "trường" and treated every diacritic
+// (ư, ờ…) as separate punctuation, shredding each word into fragments. Each
+// fragment rendered as its own padded inline box, which looked unevenly spaced
+// and let words break mid-word at line ends. Only pure-Latin words become
+// click-to-translate buttons; other words render as plain (still highlightable)
+// text so the karaoke fill stays smooth.
+const TOKEN_RE = /\p{L}[\p{L}\p{M}'’-]*/gu;
+const LATIN_WORD_RE = /^[A-Za-z][A-Za-z'-]*$/;
 
 // In-memory translation cache shared across mounts (per page load).
 const translationCache = new Map<string, TranslationResult>();
@@ -44,7 +58,7 @@ function normalizeIpa(raw: string): string {
  * Renders plain text where each English word can be clicked to open a
  * translation popover. Caches results in-memory.
  */
-export function TranslatableText({ text, target = 'vi', ragBase, className, audioProgress }: Props) {
+export function TranslatableText({ text, target = 'vi', ragBase, className, audioProgress, leadChars = 0, tailChars = 0 }: Props) {
   const [popover, setPopover] = useState<{ word: string; rect: DOMRect; result?: TranslationResult; loading: boolean } | null>(null);
 
   const openWord = useCallback(async (word: string, target_lang: 'vi' | 'en', el: HTMLElement) => {
@@ -71,22 +85,41 @@ export function TranslatableText({ text, target = 'vi', ragBase, className, audi
 
   const close = () => setPopover(null);
 
-  // Tokenize
-  const parts: { kind: 'word' | 'punct'; value: string }[] = [];
+  // Tokenize. Pure-Latin words → 'word' (clickable); other whole words (e.g.
+  // Vietnamese) → 'text' (rendered as one span, highlightable but not clickable).
+  const parts: { kind: 'word' | 'text' | 'punct'; value: string }[] = [];
   let last = 0;
   for (const m of text.matchAll(TOKEN_RE)) {
     const idx = m.index ?? 0;
     if (idx > last) parts.push({ kind: 'punct', value: text.slice(last, idx) });
-    parts.push({ kind: 'word', value: m[0] });
+    parts.push({ kind: LATIN_WORD_RE.test(m[0]) ? 'word' : 'text', value: m[0] });
     last = idx + m[0].length;
   }
   if (last < text.length) parts.push({ kind: 'punct', value: text.slice(last) });
+
+  // Karaoke highlight, synced to the narration clip's playback progress.
+  // Two things kept the old `i / parts.length` mapping out of sync:
+  //   1. The clip speaks the slide title (and, on the last slide, a closing
+  //      sign-off) which isn't shown here — so `audioProgress` was already past 0
+  //      while the teacher was still on the title, lighting up words too early.
+  //      `leadChars`/`tailChars` account for that spoken-but-unshown text.
+  //   2. Every token (incl. punctuation) was treated as equal duration, so the
+  //      fill jumped unevenly. Weighting each token by its character count is a
+  //      far better proxy for how long it takes to speak.
+  const hasProgress = audioProgress !== null && audioProgress !== undefined;
+  const totalChars = leadChars + text.length + tailChars || 1;
+  let acc = leadChars;
+  const startFrac = parts.map(p => {
+    const f = acc / totalChars;
+    acc += p.value.length;
+    return f;
+  });
 
   return (
     <>
       <span className={className}>
         {parts.map((p, i) => {
-          const isHighlighted = audioProgress !== null && audioProgress !== undefined && (i / parts.length <= audioProgress);
+          const isHighlighted = hasProgress && (audioProgress as number) >= startFrac[i];
           return p.kind === 'word' ? (
             <button
               key={i}

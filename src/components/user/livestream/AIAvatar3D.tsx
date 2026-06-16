@@ -253,9 +253,11 @@ function PenguinCharacter({ isSpeaking, isThinking, accentColor, audioVolume }: 
         </group>
       </group>
 
-      {/* Thinking dots above the cap */}
+      {/* Thinking dots above the cap. Kept low enough that the dots' bob never
+          pokes past the top of the canvas (~y 1.82 at this camera) — at y=1.7
+          the peak of the bounce was clipped by the top edge / rounded corner. */}
       {isThinking && (
-        <group position={[0.7, 1.7, 0]}>
+        <group position={[0.55, 1.35, 0]}>
           <ThinkingDot offset={0} x={0} />
           <ThinkingDot offset={0.35} x={0.25} />
           <ThinkingDot offset={0.7} x={0.5} />

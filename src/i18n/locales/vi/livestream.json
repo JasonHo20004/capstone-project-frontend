@@ -7,11 +7,11 @@
     "dialog": {
       "title": "Tạo phòng livestream",
       "topicLabel": "Tiêu đề lớp học",
-      "topicPlaceholder": "Ví dụ: IELTS Speaking Part 2, Phrasal Verbs, Business Email…",
+      "topicPlaceholder": "Ví dụ: IELTS Speaking Part 2",
       "topicHint": "Hiển thị công khai — học viên sẽ thấy tiêu đề này trên danh sách phòng.",
       "lessonPromptLabel": "Nội dung muốn AI dạy",
       "lessonPromptOptional": "(tuỳ chọn)",
-      "lessonPromptPlaceholder": "Ví dụ: Làm thế nào để phát triển idea trong IELTS Speaking Part 2? Tập trung vào cấu trúc câu trả lời, cách dùng linking words và các mẫu câu thông dụng.",
+      "lessonPromptPlaceholder": "Ví dụ: Tập trung vào cấu trúc câu trả lời và linking words",
       "lessonPromptHint": "AI sẽ bám sát hướng dẫn này để sinh nội dung bài giảng. Nếu để trống, AI sẽ tự thiết kế bài dựa theo tiêu đề.",
       "levelLabel": "Trình độ học viên",
       "level": {
@@ -135,7 +135,7 @@
         "ended": "Buổi học đã kết thúc",
         "connecting": "Đang kết nối…",
         "noQuota": "Đã hết lượt — đợi 1 phút",
-        "default": "Đặt câu hỏi hoặc nhấn mic để nói…"
+        "default": "Nhập câu hỏi của bạn…"
       },
       "voiceFailed": "Không nhận diện được giọng nói — thử lại hoặc gõ câu hỏi.",
       "voiceError": "Lỗi kết nối khi xử lý giọng nói.",

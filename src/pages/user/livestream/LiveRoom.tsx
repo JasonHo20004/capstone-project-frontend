@@ -22,7 +22,7 @@ import apiClient from '@/lib/api/config';
 import {
   Users, Send, PlayCircle, StopCircle, ArrowLeft,
   MessageSquare, BookOpen, Volume2, VolumeX, WifiOff,
-  RotateCcw, PlaySquare, Mic, MicOff, RefreshCw, Hand,
+  RotateCcw, PlaySquare, Mic, RefreshCw, Hand,
   Mic2, Star, CheckCircle, Check, Sparkles,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -39,17 +39,6 @@ const QUESTIONS_PER_MIN = 6;
 // slower playback made narration lag further behind the slides/quizzes every
 // section. Faster rates only add a little silence, which is harmless.
 const PLAYBACK_RATES = [1, 1.25, 1.5] as const;
-
-// Quick-reply chips: `value` is always English (sent to AI), `key` resolves the
-// translated display label via i18n. Keeping them separate prevents Vietnamese
-// labels from being forwarded to an English-prompt AI and confusing it.
-const QUICK_CHIPS = [
-  { key: 'explainAgain', value: 'Explain this part again' },
-  { key: 'example',      value: 'Give me an example' },
-  { key: 'simpler',      value: 'Use simpler words' },
-  { key: 'ielts',        value: 'Does this appear in IELTS?' },
-  { key: 'memorize',     value: 'How do I memorize this word?' },
-] as const;
 
 // Minimal type shim for Web Speech API (Chrome) removed in favor of MediaRecorder + Whisper API
 
@@ -78,6 +67,10 @@ interface TranscriptChunk {
   keywords?: { term: string; meaning: string }[];
   example?: string;
   image_url?: string;
+  /** Spoken-but-unshown character counts around `content` (title lead-in /
+   *  closing sign-off) — used to keep the narration word-highlight in sync. */
+  lead_chars?: number;
+  tail_chars?: number;
 }
 
 interface ChatMessage {
@@ -429,15 +422,12 @@ export default function LiveRoom() {
   const [progress, setProgress]             = useState({ current: 0, total: 0 });
   const [muted, setMuted]                   = useState(false);
   const [questionsLeft, setQuestionsLeft]   = useState(QUESTIONS_PER_MIN);
-  const [isListening, setIsListening]       = useState(false);
-  // Voice input runs on MediaRecorder + the Whisper endpoint — NOT the Web
-  // Speech API — so feature-detect the APIs actually used (the old
-  // SpeechRecognition check wrongly hid the mic on Firefox).
+  // Gates the spotlight "speak aloud" mic only — the question box is type-only.
+  // Feature-detect the APIs actually used (MediaRecorder + getUserMedia); the
+  // old SpeechRecognition check wrongly hid it on Firefox.
   const [voiceSupported]                    = useState(
     () => !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder),
   );
-  // True while a recorded question is being transcribed by the server.
-  const [transcribing, setTranscribing]     = useState(false);
   const [qaDeadline, setQaDeadline]         = useState<number | null>(null);
   const [qaCountdown, setQaCountdown]       = useState(0);
   const [participants, setParticipants]     = useState<Participant[]>([]);
@@ -472,8 +462,6 @@ export default function LiveRoom() {
   const spotlightPanelRef                   = useRef<HTMLDivElement>(null);
   const reactionIdRef = useRef(0);
   const currentUserIdRef = useRef<string>('');
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const speakRecorderRef = useRef<MediaRecorder | null>(null);
   const speakChunksRef = useRef<Blob[]>([]);
   const speakTextRef = useRef('');
@@ -676,6 +664,8 @@ export default function LiveRoom() {
           keywords: (msg.keywords as { term: string; meaning: string }[]) || [],
           example: (msg.example as string) || '',
           image_url: (msg.image_url as string) || '',
+          lead_chars: msg.lead_chars as number | undefined,
+          tail_chars: msg.tail_chars as number | undefined,
         };
         const idx = msg.index as number;
         const total = msg.total as number;
@@ -764,22 +754,35 @@ export default function LiveRoom() {
       case 'quiz_start': {
         const duration = (msg.duration_seconds as number) ?? 15;
         quizAnswerRef.current = null;
-        setQuiz({
-          id: msg.quiz_id as number,
-          ordinal: (msg.ordinal as number) ?? 1,
-          total: (msg.total as number) ?? 1,
-          question: msg.question as string,
-          options: (msg.options as string[]) ?? [],
-          durationSeconds: duration,
-          deadline: Date.now() + duration * 1000,
-          myAnswer: null,
-          answered: 0,
-          result: null,
-        });
-        // The poll lives on the stage — pull mobile users away from the chat
-        // tab so nobody misses the answer window.
-        setMobileTab('stage');
-        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        // Anchor the countdown to message receipt (≈ server broadcast), so the
+        // answer window stays aligned with the server's (it only grants ~1.5s
+        // grace past the window) even though we defer the visual reveal below.
+        const quizDeadline = Date.now() + duration * 1000;
+        const showQuiz = () => {
+          setQuiz({
+            id: msg.quiz_id as number,
+            ordinal: (msg.ordinal as number) ?? 1,
+            total: (msg.total as number) ?? 1,
+            question: msg.question as string,
+            options: (msg.options as string[]) ?? [],
+            durationSeconds: duration,
+            deadline: quizDeadline,
+            myAnswer: null,
+            answered: 0,
+            result: null,
+          });
+          // The poll lives on the stage — pull mobile users away from the chat
+          // tab so nobody misses the answer window.
+          setMobileTab('stage');
+        };
+        // Queue the question audio (NOT priority) and reveal the quiz exactly
+        // when that audio starts — so a quiz_start that arrives before the slide
+        // narration has actually finished playing (clock drift between the
+        // server's sleep-based pacing and real client playback) can no longer
+        // interrupt the narration mid-sentence. Falls back to showing it right
+        // away when there's no audio.
+        if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string, showQuiz);
+        else showQuiz();
         break;
       }
       case 'quiz_progress':
@@ -811,21 +814,30 @@ export default function LiveRoom() {
       }
       case 'battle_start': {
         const duration = (msg.duration_seconds as number) ?? 16;
-        setBattle({
-          id: msg.battle_id as number,
-          ordinal: (msg.ordinal as number) ?? 1,
-          total: (msg.total as number) ?? 1,
-          phrase: msg.phrase as string,
-          durationSeconds: duration,
-          deadline: Date.now() + duration * 1000,
-          recordingCount: 0,
-          myScore: null,
-          liveBoard: [],
-          result: null,
-        });
-        // The battle owns the stage — pull mobile users off the chat tab.
-        setMobileTab('stage');
-        if (msg.audio_url) audioQueueRef.current.pushPriority(msg.audio_url as string);
+        // Anchor to message receipt (≈ server broadcast) so the shared countdown
+        // stays close to the server deadline even though the reveal is deferred.
+        const battleDeadline = Date.now() + duration * 1000;
+        const showBattle = () => {
+          setBattle({
+            id: msg.battle_id as number,
+            ordinal: (msg.ordinal as number) ?? 1,
+            total: (msg.total as number) ?? 1,
+            phrase: msg.phrase as string,
+            durationSeconds: duration,
+            deadline: battleDeadline,
+            recordingCount: 0,
+            myScore: null,
+            liveBoard: [],
+            result: null,
+          });
+          // The battle owns the stage — pull mobile users off the chat tab.
+          setMobileTab('stage');
+        };
+        // Same as quiz_start: queue the intro audio and reveal the battle when it
+        // starts, so it can't interrupt the slide narration mid-sentence if
+        // battle_start arrives slightly before playback catches up.
+        if (msg.audio_url) audioQueueRef.current.push(msg.audio_url as string, showBattle);
+        else showBattle();
         break;
       }
       case 'battle_recording_count':
@@ -959,62 +971,9 @@ export default function LiveRoom() {
     };
   }, [roomId, navigate, connect]);
 
-  const toggleVoice = useCallback(async () => {
-    audioQueueRef.current.unlock();
-    if (isListening) {
-      mediaRecorderRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
-    
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-
-        // Status/errors must never land in the question input — the user could
-        // accidentally send "connection error" to the AI as a question.
-        setTranscribing(true);
-        try {
-          const { ragService } = await import('@/lib/api/services/rag.service');
-          const data = await ragService.transcribeDictation(audioBlob, room?.language || 'vi');
-          const text = data?.success && data.sentences
-            ? data.sentences.map(s => s.text).join(' ').trim()
-            : '';
-          if (text) {
-            setQuestion(text.slice(0, MAX_QUESTION_LENGTH));
-          } else {
-            setChat(p => [...p, { type: 'error', text: t('room.chat.voiceFailed') }]);
-          }
-        } catch (e) {
-          console.error(e);
-          setChat(p => [...p, { type: 'error', text: t('room.chat.voiceError') }]);
-        } finally {
-          setTranscribing(false);
-        }
-      };
-
-      recorder.start();
-      mediaRecorderRef.current = recorder;
-      setIsListening(true);
-    } catch (err) {
-      console.error('Mic access denied', err);
-      setIsListening(false);
-    }
-  }, [isListening, room?.language, t]);
-
-  // Stop mics if user navigates away
+  // Stop the spotlight mic if the user navigates away
   useEffect(() => {
     return () => {
-      if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
       if (speakRecorderRef.current?.state === 'recording') speakRecorderRef.current.stop();
     };
   }, []);
@@ -1708,60 +1667,22 @@ export default function LiveRoom() {
 
           {/* Question input */}
           <div className="p-3 border-t border-border bg-white shrink-0 space-y-2">
-            {/* Quick chips */}
-            {!isEnded && connected && (
-              <div className="flex gap-1.5 flex-wrap">
-                {QUICK_CHIPS.map(({ key, value }) => (
-                  <button
-                    key={key}
-                    onClick={() => sendChip(value)}
-                    disabled={questionsLeft === 0 || rateLimitSecs > 0}
-                    className="text-[11px] px-2 py-0.5 rounded-full border border-primary/20 text-primary
-                               bg-primary/10 hover:bg-primary/15 disabled:opacity-40 disabled:cursor-not-allowed
-                               transition-colors whitespace-nowrap"
-                  >
-                    {t(`room.chat.quickChips.${key}`)}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Input row */}
+            {/* Input row — type-only (the question mic was removed; the
+                spotlight "speak aloud" feature lives on the stage panel). */}
             <div className="flex gap-2">
-              {/* Mic button */}
-              {voiceSupported && !isEnded && (
-                <button
-                  onClick={toggleVoice}
-                  disabled={!connected || questionsLeft === 0 || transcribing}
-                  className={cn(
-                    'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
-                    isListening
-                      ? 'bg-red-500 text-white animate-pulse'
-                      : 'border border-border text-muted-foreground hover:border-primary/30 hover:text-primary',
-                    (!connected || questionsLeft === 0 || transcribing) && 'opacity-40 cursor-not-allowed',
-                  )}
-                  title={isListening ? t('room.chat.stopMic') : (room?.language === 'en' ? t('room.chat.speakEn') : t('room.chat.speakVi'))}
-                  aria-label={isListening ? t('room.chat.stopMic') : t('room.chat.recordAria')}
-                >
-                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                </button>
-              )}
-
               <Input
                 placeholder={
-                  isListening            ? t('room.chat.placeholder.listening')
-                  : transcribing         ? t('room.chat.placeholder.transcribing')
-                  : isEnded              ? t('room.chat.placeholder.ended')
-                  : !connected           ? t('room.chat.placeholder.connecting')
-                  : rateLimitSecs > 0    ? t('room.chat.rateLimitWait', { secs: rateLimitSecs })
-                  : questionsLeft === 0  ? t('room.chat.placeholder.noQuota')
+                  isEnded               ? t('room.chat.placeholder.ended')
+                  : !connected          ? t('room.chat.placeholder.connecting')
+                  : rateLimitSecs > 0   ? t('room.chat.rateLimitWait', { secs: rateLimitSecs })
+                  : questionsLeft === 0 ? t('room.chat.placeholder.noQuota')
                   : t('room.chat.placeholder.default')
                 }
                 value={question}
                 onChange={e => setQuestion(e.target.value.slice(0, MAX_QUESTION_LENGTH))}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendQuestion()}
                 disabled={isEnded || !connected || questionsLeft === 0 || rateLimitSecs > 0}
-                className={cn('text-sm', isListening && 'border-red-300 ring-1 ring-red-200')}
+                className="text-sm"
               />
               <Button
                 size="icon"
@@ -1781,9 +1702,7 @@ export default function LiveRoom() {
                 </p>
               ) : (
                 <p className="text-[11px] text-muted-foreground">
-                  {voiceSupported
-                    ? t('room.chat.footer.withMic', { max: QUESTIONS_PER_MIN })
-                    : t('room.chat.footer.withoutMic', { max: QUESTIONS_PER_MIN })}
+                  {t('room.chat.footer.withoutMic', { max: QUESTIONS_PER_MIN })}
                 </p>
               )}
               <span className={cn('text-[11px]', charsLeft < 30 ? 'text-amber-500' : 'text-muted-foreground/50')}>
