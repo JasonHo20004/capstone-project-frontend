@@ -171,7 +171,9 @@ export function BattleOverlay({
     let details: WordMark[] = [];
     try {
       const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-      const data = await ragService.transcribeDictation(blob, 'en');
+      // fast=true → small low-latency Whisper model so the score is ready before
+      // the battle window closes (the accurate model was too slow on CPU).
+      const data = await ragService.transcribeDictation(blob, 'en', true);
       const transcript = data?.success && data.sentences
         ? data.sentences.map(s => s.text).join(' ')
         : '';

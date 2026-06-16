@@ -11,6 +11,11 @@ export interface SlideChunk {
   keywords?: { term: string; meaning: string }[];
   example?: string;
   image_url?: string;
+  /** Characters the narration speaks before/after `content` (the title read
+   *  first, and a closing sign-off on the last slide) — used to keep the
+   *  word-highlight in sync with the voice. */
+  lead_chars?: number;
+  tail_chars?: number;
 }
 
 interface Props {
@@ -192,12 +197,17 @@ export function LessonSlide({ chunk, index, total, active, ragBase, avatarSlot, 
         </div>
       )}
 
-      {/* Spoken narration — keep below the slide */}
+      {/* Spoken narration — keep below the slide. The clip reads the title first,
+          so offset the word-highlight by the spoken lead-in (and the closing tail
+          on the last slide). Falls back to the title length if the backend hasn't
+          sent the exact counts yet. */}
       <TranslatableText
         text={chunk.content}
         target={dictTarget}
         ragBase={ragBase}
         audioProgress={active ? audioProgress : null}
+        leadChars={chunk.lead_chars ?? (chunk.title ? chunk.title.length + 2 : 0)}
+        tailChars={chunk.tail_chars ?? 0}
         className={cn(
           'text-sm leading-relaxed block',
           active ? 'text-slate-700' : 'text-slate-500',

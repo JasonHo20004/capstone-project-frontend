@@ -274,10 +274,14 @@ class RagService {
     return resp.data;
   }
 
-  async transcribeDictation(audioBlob: Blob, language: string): Promise<{ success: boolean; sentences: { text: string }[] }> {
+  // `fast` selects the small low-latency Whisper model on the server — used by
+  // the live speaking battle, where the score must be ready before the short
+  // battle window closes. Leave it false for accuracy-first transcription.
+  async transcribeDictation(audioBlob: Blob, language: string, fast = false): Promise<{ success: boolean; sentences: { text: string }[] }> {
     const formData = new FormData();
     formData.append("audio", audioBlob, "dictation.webm");
     formData.append("language", language);
+    if (fast) formData.append("fast", "true");
 
     const response = await apiClient.post(
       "/rag/transcribe/dictation",

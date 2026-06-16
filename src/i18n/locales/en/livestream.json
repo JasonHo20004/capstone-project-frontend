@@ -7,11 +7,11 @@
     "dialog": {
       "title": "Create a livestream room",
       "topicLabel": "Class title",
-      "topicPlaceholder": "e.g. IELTS Speaking Part 2, Phrasal Verbs, Business Email…",
+      "topicPlaceholder": "e.g. IELTS Speaking Part 2",
       "topicHint": "Shown publicly — students will see this on the room list.",
       "lessonPromptLabel": "What you want the AI to teach",
       "lessonPromptOptional": "(optional)",
-      "lessonPromptPlaceholder": "e.g. How to develop ideas in IELTS Speaking Part 2? Focus on answer structure, linking words, and common patterns.",
+      "lessonPromptPlaceholder": "e.g. Focus on answer structure and linking words",
       "lessonPromptHint": "The AI will follow this guidance when generating the lesson. Leave blank to let the AI design it from the title.",
       "levelLabel": "Student level",
       "level": {
@@ -135,7 +135,7 @@
         "ended": "Session ended",
         "connecting": "Connecting…",
         "noQuota": "Out of quota — wait 1 minute",
-        "default": "Ask a question or tap the mic to speak…"
+        "default": "Type your question…"
       },
       "voiceFailed": "Couldn't recognize your speech — try again or type your question.",
       "voiceError": "Connection error while processing your voice.",
