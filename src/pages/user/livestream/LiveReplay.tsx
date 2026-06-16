@@ -392,8 +392,8 @@ export default function LiveReplay() {
                 </>
               ) : (
                 <div className="flex flex-col items-center gap-3 py-8">
-                  <Suspense fallback={<AIAvatarAnime isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />}>
-                    <AIAvatar3D isSpeaking={isSpeaking} className="w-40 h-48" name="AI Sensei" />
+                  <Suspense fallback={<AIAvatarAnime isSpeaking={isSpeaking} className="w-40 h-48" name="PenguinTeacher" />}>
+                    <AIAvatar3D isSpeaking={isSpeaking} className="w-40 h-48" name="PenguinTeacher" />
                   </Suspense>
                   <p className="text-sm text-muted-foreground">{t("replay.clickPlay")}</p>
                 </div>

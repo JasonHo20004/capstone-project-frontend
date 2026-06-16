@@ -1425,7 +1425,7 @@ export default function LiveRoom() {
                       isThinking={isThinking}
                       audioVolume={audioVolume}
                       className="w-44 h-52"
-                      name="AI Sensei"
+                      name="PenguinTeacher"
                     />
                   }
                 >
@@ -1434,7 +1434,7 @@ export default function LiveRoom() {
                     isThinking={isThinking}
                     audioVolume={audioVolume}
                     className="w-44 h-52"
-                    name="AI Sensei"
+                    name="PenguinTeacher"
                   />
                 </Suspense>
 
@@ -1446,7 +1446,7 @@ export default function LiveRoom() {
                       <div className="flex items-center gap-2 mb-1.5">
                         <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
                         <span className="text-xs font-bold uppercase tracking-wide opacity-90">
-                          {t('room.intro.badge', 'AI Sensei')}
+                          {t('room.intro.badge', 'PenguinTeacher')}
                         </span>
                       </div>
                       <p className="text-sm leading-relaxed">{intro}</p>
