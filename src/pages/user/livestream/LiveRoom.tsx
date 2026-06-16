@@ -401,6 +401,10 @@ export default function LiveRoom() {
   // renewed. Reset on every successful (re)connect.
   const authRetried     = useRef(false);
   const unmounted       = useRef(false);
+  // Set once the room ends (host end_room or lesson completed). Tells onclose
+  // the socket closed on purpose so it shouldn't try to reconnect or flash the
+  // "Connection lost — reconnecting…" banner.
+  const endedRef        = useRef(false);
   const rateLimitRef    = useRef<{ count: number; resetAt: number }>({ count: 0, resetAt: 0 });
   // Latest user kept in a ref so `connect` doesn't depend on the async profile
   // query — that dependency is what made the socket tear down (and never come
@@ -697,6 +701,7 @@ export default function LiveRoom() {
         break;
       }
       case 'lesson_complete':
+        endedRef.current = true;
         setStatus('completed');
         setQaDeadline(null);
         setCurrentChunkIndex(-1);
@@ -880,6 +885,7 @@ export default function LiveRoom() {
         setChat(p => [...p, { type: 'error', text: msg.message as string }]);
         break;
       case 'room_ended':
+        endedRef.current = true;
         setStatus('ended');
         setQuiz(null);
         setBattle(null);
@@ -921,6 +927,14 @@ export default function LiveRoom() {
     ws.onclose = ev => {
       setConnected(false);
       if (unmounted.current) return;
+
+      // Room ended on purpose (host ended it or the lesson completed) — the
+      // server closes the socket as part of teardown. Don't treat that as a
+      // dropped connection: no reconnect, no "reconnecting…" banner.
+      if (endedRef.current) {
+        setReconnecting(false);
+        return;
+      }
 
       // 4001 = invalid/expired token. The 15-min access token likely expired
       // mid-session — refresh it once and reconnect with the fresh token
@@ -1237,7 +1251,11 @@ export default function LiveRoom() {
             {playbackRate}×
           </button>
 
-          {reconnecting ? (
+          {isEnded ? (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CheckCircle className="w-3 h-3" /> {t('room.endedBadge')}
+            </span>
+          ) : reconnecting ? (
             <span className="flex items-center gap-1 text-xs text-amber-500">
               <WifiOff className="w-3 h-3" /> {t('room.reconnecting')}
             </span>
@@ -1281,7 +1299,7 @@ export default function LiveRoom() {
       </div>
 
       {/* ── Connection banner — shown while a dropped socket auto-reconnects ── */}
-      {reconnecting && (
+      {reconnecting && !isEnded && (
         <div className="flex items-center justify-center gap-2 shrink-0 px-4 py-1.5 bg-amber-50 border-b border-amber-200 text-xs font-medium text-amber-700">
           <WifiOff className="w-3.5 h-3.5 animate-pulse" />
           {t('room.connectionLost')}
