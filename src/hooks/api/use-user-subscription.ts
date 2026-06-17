@@ -4,7 +4,7 @@ import { userSubscriptionService } from "@/lib/api/services/user";
 import type { UserSubscriptionStatus } from "@/domain";
 
 const PLANS_KEY = ["user-plans"] as const;
-const MY_SUBSCRIPTION_KEY = ["my-subscription"] as const;
+export const MY_SUBSCRIPTION_KEY = ["my-subscription"] as const;
 const SUBSCRIPTION_HISTORY_KEY = ["subscription-history"] as const;
 
 export const SUBSCRIPTION_CACHE_KEY = "capstone_my_subscription";
