@@ -365,6 +365,10 @@
       "notPassed": "Not passed"
     },
     "certificate": {
+      "issued": "🎉 Congratulations! You've completed the course — your certificate has been issued.",
+      "claimButton": "Claim completion certificate",
+      "claiming": "Issuing certificate…",
+      "claimFailed": "Couldn't issue the certificate. Please try again.",
       "viewButton": "View completion certificate",
       "modalTitle": "Certificate of Completion",
       "print": "Print",

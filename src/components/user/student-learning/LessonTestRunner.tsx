@@ -48,6 +48,10 @@ interface LessonTestRunnerProps {
   testId: string;
   lessonTitle?: string;
   onContinue?: () => void;
+  /** Called once when the student submits a *passing* score. The parent uses
+   *  this to mark the test lesson complete and (if it was the last one) issue
+   *  the course certificate. */
+  onPassed?: () => void;
 }
 
 function decodeJwt(token: string): Record<string, unknown> | null {
@@ -125,6 +129,7 @@ export const LessonTestRunner = ({
   testId,
   lessonTitle,
   onContinue,
+  onPassed,
 }: LessonTestRunnerProps) => {
   const { t } = useTranslation("courses");
   const [state, setState] = useState<RunnerState>("intro");
@@ -199,6 +204,12 @@ export const LessonTestRunner = ({
       setResult(data);
       setState("result");
       setConfirmSubmitOpen(false);
+      // A passing submission completes this (test) lesson — let the parent
+      // mark it done and issue the course certificate if it was the last one.
+      const passingPct = totalScore > 0 ? Math.round((passingScore / totalScore) * 100) : 0;
+      if (data.score.percentage >= passingPct) {
+        onPassed?.();
+      }
     },
     onError: () => {
       toast.error(t("studentLearning.lessonTestRunner.submitFailed"));

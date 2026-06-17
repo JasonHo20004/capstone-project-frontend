@@ -16,12 +16,6 @@ export interface GenerateFlashcardsResponse {
   chunks_used: number;
 }
 
-export interface AskQuestionResponse {
-  success: boolean;
-  answer: string;
-  relevant_chunks: string[];
-}
-
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -53,12 +47,14 @@ class RagService {
     title: string,
     userId: string,
     saveToService: boolean = true,
+    deckId?: string,
   ): Promise<GenerateFlashcardsResponse> {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("title", title);
     formData.append("user_id", userId);
     formData.append("save_to_service", saveToService.toString());
+    if (deckId) formData.append("deck_id", deckId);
 
     const response = await apiClient.post<GenerateFlashcardsResponse>(
       "/rag/generate/flashcards",
@@ -73,6 +69,7 @@ class RagService {
     title: string,
     userId: string,
     saveToService: boolean = true,
+    deckId?: string,
   ): Promise<GenerateFlashcardsResponse> {
     const response = await apiClient.post<GenerateFlashcardsResponse>(
       "/rag/generate/flashcards/text",
@@ -81,17 +78,10 @@ class RagService {
         title,
         user_id: userId,
         save_to_service: saveToService,
+        deck_id: deckId,
       },
       { timeout: 300000 },
     );
-    return response.data;
-  }
-
-  async askQuestion(docId: string, question: string): Promise<AskQuestionResponse> {
-    const response = await apiClient.post<AskQuestionResponse>("/rag/ask", {
-      doc_id: docId,
-      question,
-    }, { timeout: 120000 });
     return response.data;
   }
 

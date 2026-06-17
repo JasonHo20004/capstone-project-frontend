@@ -365,6 +365,10 @@
       "notPassed": "Chưa đạt"
     },
     "certificate": {
+      "issued": "🎉 Chúc mừng! Bạn đã hoàn thành khóa học — chứng chỉ đã được cấp.",
+      "claimButton": "Nhận chứng chỉ hoàn thành",
+      "claiming": "Đang cấp chứng chỉ…",
+      "claimFailed": "Không cấp được chứng chỉ. Vui lòng thử lại.",
       "viewButton": "Xem chứng chỉ hoàn thành",
       "modalTitle": "Chứng chỉ hoàn thành",
       "print": "In",

@@ -189,7 +189,14 @@
       "ai_writing": "AI Writing grading",
       "dictation": "Dictation practice",
       "learning_path": "Personal learning path",
-      "skill_tree": "Skill tree"
+      "skill_tree": "Skill tree",
+      "flashcards_basic": "Basic flashcards",
+      "placement_test": "Placement test",
+      "community_discussion": "Community discussion",
+      "ai_writing_eval": "AI Writing grading",
+      "ai_speaking_eval": "AI Speaking grading",
+      "unlimited_practice": "Unlimited practice",
+      "ai_tutor": "AI tutor"
     }
   },
   "story": {

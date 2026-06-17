@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -34,24 +33,12 @@ import {
   X,
   Zap,
   Brain,
-  Send,
-  MessageCircle,
-  Bot,
-  User,
   RotateCcw,
   Type,
-  Scissors,
   Lightbulb,
-  Paperclip,
 } from "lucide-react";
 
 type InputMode = "file" | "text";
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  chunks?: string[];
-}
 
 interface RagGeneratorProps {
   embedded?: boolean;
@@ -62,7 +49,6 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
   const queryClient = useQueryClient();
   const { t } = useTranslation("flashcards");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch existing decks for dropdown
   const { data: decksData } = useGetDecks();
@@ -80,16 +66,10 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
   );
   const [result, setResult] = useState<{
     flashcards: FlashcardItem[];
-    docId: string;
     deckId?: string;
     sourcePages: number;
     chunksUsed: number;
   } | null>(null);
-
-  // Chat state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [showChunks, setShowChunks] = useState<number | null>(null);
 
   const getUserId = () => {
     try {
@@ -105,7 +85,6 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
   const handleSuccess = (data: any) => {
     setResult({
       flashcards: data.flashcards,
-      docId: data.doc_id,
       deckId: data.deck_id,
       sourcePages: data.source_pages,
       chunksUsed: data.chunks_used,
@@ -116,14 +95,6 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
       queryClient.invalidateQueries({ queryKey: flashcardKeys.cardsByDeck(data.deck_id) });
       queryClient.invalidateQueries({ queryKey: flashcardKeys.reviewQueue(data.deck_id) });
     }
-    setChatMessages([{
-      role: "assistant",
-      content: t("ragGenerator.result.stats", {
-        count: data.flashcards.length,
-        pages: data.source_pages,
-        chunks: data.chunks_used,
-      }),
-    }]);
     toast.success(t("ragGenerator.result.successBadge"));
   };
 
@@ -138,7 +109,7 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
       if (!file) throw new Error("No file selected");
       const userId = getUserId();
       if (!userId) throw new Error("Not authenticated");
-      return ragService.generateFlashcards(file, selectedDeckTitle, userId);
+      return ragService.generateFlashcards(file, selectedDeckTitle, userId, true, selectedDeckId);
     },
     onSuccess: handleSuccess,
     onError: handleError,
@@ -150,7 +121,7 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
       if (!textInput.trim() || textInput.trim().length < 50) throw new Error("Content too short (minimum 50 characters)");
       const userId = getUserId();
       if (!userId) throw new Error("Not authenticated");
-      return ragService.generateFlashcardsFromText(textInput.trim(), selectedDeckTitle, userId);
+      return ragService.generateFlashcardsFromText(textInput.trim(), selectedDeckTitle, userId, true, selectedDeckId);
     },
     onSuccess: handleSuccess,
     onError: handleError,
@@ -168,36 +139,6 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
 
   const hasInput = inputMode === "file" ? !!file : textInput.trim().length >= 50;
   const canGenerate = hasInput && !!selectedDeckId;
-
-  const askMutation = useMutation({
-    mutationFn: (question: string) => {
-      if (!result?.docId) throw new Error("No document loaded");
-      return ragService.askQuestion(result.docId, question);
-    },
-    onSuccess: (data) => {
-      setChatMessages(prev => [...prev, {
-        role: "assistant",
-        content: data.answer,
-        chunks: data.relevant_chunks,
-      }]);
-      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-    },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.detail || error.message || "Error";
-      setChatMessages(prev => [...prev, {
-        role: "assistant",
-        content: `[Error] ${msg}`,
-      }]);
-    },
-  });
-
-  const handleSendQuestion = () => {
-    const q = chatInput.trim();
-    if (!q || askMutation.isPending) return;
-    setChatMessages(prev => [...prev, { role: "user", content: q }]);
-    setChatInput("");
-    askMutation.mutate(q);
-  };
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -394,29 +335,6 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Pipeline Info */}
-            <Card className="border border-slate-100 bg-slate-50/50">
-              <CardContent className="pt-5 pb-4">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                  {t("ragGenerator.pipeline.title")}
-                </p>
-                <div className="space-y-2.5">
-                  {[
-                    { step: "1", text: inputMode === "file" ? t("ragGenerator.pipeline.steps.1file") : t("ragGenerator.pipeline.steps.1text"), icon: <FileText size={16} /> },
-                    { step: "2", text: t("ragGenerator.pipeline.steps.2"), icon: <Scissors size={16} /> },
-                    { step: "3", text: t("ragGenerator.pipeline.steps.3"), icon: <Sparkles size={16} /> },
-                    { step: "4", text: t("ragGenerator.pipeline.steps.4"), icon: <Sparkles size={16} /> },
-                    { step: "5", text: t("ragGenerator.pipeline.steps.5"), icon: <MessageCircle size={16} /> },
-                  ].map((item) => (
-                    <div key={item.step} className="flex items-center gap-3">
-                      <span className="text-slate-400 flex-shrink-0">{item.icon}</span>
-                      <span className="text-sm text-slate-500">{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       ) : (
@@ -449,132 +367,31 @@ export default function RagGenerator({ embedded = false }: RagGeneratorProps) {
             </div>
           </div>
 
-          {/* Main content: Flashcards + Chat side by side */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Left: Flashcard Grid */}
-            <div className="lg:col-span-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[650px] overflow-y-auto pr-1">
-                {result.flashcards.map((card, idx) => (
-                  <Card key={idx}
-                    className="border border-slate-200 hover:border-primary/30 hover:shadow-md transition-all duration-200 group">
-                    <CardContent className="pt-4 pb-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="text-primary border-primary/20 text-[10px] font-bold">
-                          #{idx + 1}
-                        </Badge>
-                      </div>
-                      <h3 className="text-base font-bold text-slate-900 mb-1.5 group-hover:text-primary transition-colors">
-                        {card.front_content}
-                      </h3>
-                      <p className="text-slate-600 text-sm leading-relaxed mb-2">
-                        {card.back_content}
-                      </p>
-                      {card.example_sentence && (
-                        <p className="text-slate-400 text-xs italic border-t border-slate-100 pt-2 mt-2 flex items-center gap-1">
-                          <Lightbulb size={16} /> {card.example_sentence}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: RAG Q&A Chat */}
-            <div className="lg:col-span-2">
-              <Card className="border border-slate-200 shadow-sm flex flex-col" style={{ height: "650px" }}>
-                <CardHeader className="pb-3 border-b border-slate-100 flex-shrink-0">
-                  <CardTitle className="flex items-center gap-2 text-base text-slate-900">
-                    <MessageCircle className="w-5 h-5 text-primary" />
-                    {t("ragGenerator.result.chatTitle")}
-                    <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold ml-auto">
-                      {t("ragGenerator.result.chatBadge")}
+          {/* Flashcard Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {result.flashcards.map((card, idx) => (
+              <Card key={idx}
+                className="border border-slate-200 hover:border-primary/30 hover:shadow-md transition-all duration-200 group">
+                <CardContent className="pt-4 pb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-primary border-primary/20 text-[10px] font-bold">
+                      #{idx + 1}
                     </Badge>
-                  </CardTitle>
-                </CardHeader>
-
-                {/* Chat messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {chatMessages.map((msg, idx) => (
-                    <div key={idx} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                      {msg.role === "assistant" && (
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
-                          <Bot className="w-4 h-4 text-primary" />
-                        </div>
-                      )}
-                      <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                        msg.role === "user"
-                          ? "bg-primary text-white rounded-br-md"
-                          : "bg-slate-100 text-slate-700 rounded-bl-md"
-                      }`}>
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
-                        {msg.chunks && msg.chunks.length > 0 && (
-                          <button
-                            className={`text-xs mt-2 underline transition-colors ${
-                              msg.role === "user" ? "text-white/70 hover:text-white" : "text-primary/70 hover:text-primary"
-                            }`}
-                            onClick={() => setShowChunks(showChunks === idx ? null : idx)}>
-                            {showChunks === idx
-                              ? t("ragGenerator.result.hideSource")
-                              : <><Paperclip size={12} className="inline mr-1" />{t("ragGenerator.result.viewSource", { count: msg.chunks.length })}</>}
-                          </button>
-                        )}
-                        {showChunks === idx && msg.chunks && (
-                          <div className="mt-2 space-y-1.5">
-                            {msg.chunks.map((chunk, ci) => (
-                              <div key={ci} className="text-xs text-slate-500 p-2 rounded-lg bg-white border border-slate-200">
-                                {chunk.length > 200 ? chunk.substring(0, 200) + "..." : chunk}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {msg.role === "user" && (
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/20">
-                          <User className="w-4 h-4 text-primary" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {askMutation.isPending && (
-                    <div className="flex gap-2.5">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
-                        <Bot className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="bg-slate-100 rounded-2xl rounded-bl-md px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                          <span className="text-xs text-slate-400">{t("ragGenerator.result.searching")}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-
-                {/* Chat Input */}
-                <div className="p-3 border-t border-slate-100 flex-shrink-0">
-                  <div className="flex gap-2">
-                    <Input
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendQuestion()}
-                      placeholder={t("ragGenerator.result.chatPlaceholder")}
-                      className="border-slate-200 focus:border-primary"
-                      disabled={askMutation.isPending}
-                    />
-                    <Button
-                      size="icon"
-                      disabled={!chatInput.trim() || askMutation.isPending}
-                      onClick={handleSendQuestion}
-                      className="bg-primary hover:bg-primary/90 flex-shrink-0"
-                      aria-label={t("ragGenerator.result.send")}>
-                      <Send className="w-4 h-4" />
-                    </Button>
                   </div>
-                </div>
+                  <h3 className="text-base font-bold text-slate-900 mb-1.5 group-hover:text-primary transition-colors">
+                    {card.front_content}
+                  </h3>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-2">
+                    {card.back_content}
+                  </p>
+                  {card.example_sentence && (
+                    <p className="text-slate-400 text-xs italic border-t border-slate-100 pt-2 mt-2 flex items-center gap-1">
+                      <Lightbulb size={16} /> {card.example_sentence}
+                    </p>
+                  )}
+                </CardContent>
               </Card>
-            </div>
+            ))}
           </div>
         </div>
       )}

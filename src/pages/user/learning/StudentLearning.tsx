@@ -29,11 +29,13 @@ import {
   useLessonPlayer,
   useMarkLessonComplete,
   useCertificate,
+  useIssueCertificate,
   isForbiddenError,
 } from "@/hooks/api/use-student-learning";
 import { CertificateModal } from "@/components/user/certificate/CertificateModal";
 import { Celebration } from "@/components/ui/celebration";
 import { studentLearningService } from "@/lib/api/services/user/learning/student-learning.service";
+import { toast } from "sonner";
 
 // Lazy so three.js stays out of the initial bundle.
 const PenguinHero3D = lazy(() => import("@/components/user/home/PenguinHero3D"));
@@ -114,6 +116,7 @@ const StudentLearningPage = () => {
   }, [context?.syllabus, effectiveLessonId]);
 
   const { data: certificate } = useCertificate(courseId);
+  const issueCertificateMutation = useIssueCertificate(courseId);
   const [showCertificate, setShowCertificate] = useState(false);
 
   // Celebrate the moment the course hits 100% — but only on the live transition
@@ -170,6 +173,38 @@ const StudentLearningPage = () => {
       onSuccess: () => goToNextLesson(),
     });
   }, [courseId, effectiveLessonId, isLessonCompleted, markCompleteMutation, goToNextLesson]);
+
+  // Passing a test lesson is how that lesson gets completed (there's no "watch
+  // to the end" trigger like videos have). Mark it done, then — if it was the
+  // last remaining lesson — issue the course certificate. Server-side auto-issue
+  // is skipped for courses with a final test, so we request it explicitly here.
+  const handleFinalTestPassed = useCallback(() => {
+    if (!courseId || !effectiveLessonId) return;
+    const issueIfCourseComplete = () => {
+      const allComplete = (context?.syllabus ?? []).every(
+        (l) => l.id === effectiveLessonId || l.isCompleted,
+      );
+      if (allComplete && !certificate && !issueCertificateMutation.isPending) {
+        issueCertificateMutation.mutate(undefined, {
+          onSuccess: () => toast.success(t("studentLearning.certificate.issued")),
+        });
+      }
+    };
+    if (isLessonCompleted) {
+      issueIfCourseComplete();
+    } else {
+      markCompleteMutation.mutate(undefined, { onSuccess: issueIfCourseComplete });
+    }
+  }, [
+    courseId,
+    effectiveLessonId,
+    isLessonCompleted,
+    context?.syllabus,
+    certificate,
+    markCompleteMutation,
+    issueCertificateMutation,
+    t,
+  ]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -286,6 +321,7 @@ const StudentLearningPage = () => {
                     testId={lesson.testId}
                     lessonTitle={lesson.title}
                     onContinue={goToNextLesson}
+                    onPassed={handleFinalTestPassed}
                   />
                 ) : (
                   <VideoSection
@@ -303,16 +339,39 @@ const StudentLearningPage = () => {
                 {activeTab === "overview" && (
                   <>
                     <CourseOverview context={context} />
-                    {context && context.progress.progressPercentage === 100 && certificate && (
+                    {context && context.progress.progressPercentage === 100 && (
                       <div className="mt-4 px-1">
-                        <button
-                          onClick={() => setShowCertificate(true)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 shadow-sm shadow-amber-200/60 hover:from-amber-100 hover:to-yellow-100 hover:shadow-md transition-all"
-                        >
-                          <span className="text-xl motion-safe:animate-bounce">🏅</span>
-                          <span className="text-sm font-semibold text-amber-800">{t("studentLearning.certificate.viewButton")}</span>
-                          <span className="ml-auto text-amber-400">›</span>
-                        </button>
+                        {certificate ? (
+                          <button
+                            onClick={() => setShowCertificate(true)}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 shadow-sm shadow-amber-200/60 hover:from-amber-100 hover:to-yellow-100 hover:shadow-md transition-all"
+                          >
+                            <span className="text-xl motion-safe:animate-bounce">🏅</span>
+                            <span className="text-sm font-semibold text-amber-800">{t("studentLearning.certificate.viewButton")}</span>
+                            <span className="ml-auto text-amber-400">›</span>
+                          </button>
+                        ) : (
+                          // 100% but no certificate yet — let the student claim it
+                          // (covers finalTest courses where issuance wasn't triggered).
+                          <button
+                            onClick={() =>
+                              issueCertificateMutation.mutate(undefined, {
+                                onSuccess: () => toast.success(t("studentLearning.certificate.issued")),
+                                onError: () => toast.error(t("studentLearning.certificate.claimFailed")),
+                              })
+                            }
+                            disabled={issueCertificateMutation.isPending}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-300/50 hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-60"
+                          >
+                            <span className="text-xl">🏅</span>
+                            <span className="text-sm font-semibold">
+                              {issueCertificateMutation.isPending
+                                ? t("studentLearning.certificate.claiming")
+                                : t("studentLearning.certificate.claimButton")}
+                            </span>
+                            <span className="ml-auto">›</span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </>

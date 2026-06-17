@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { motion, useReducedMotion } from "framer-motion";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { SyllabusItem } from "@/types/student-learning";
 
@@ -69,7 +68,7 @@ export const SyllabusSidebar = ({
         )}
       </div>
 
-      <ScrollArea className="min-h-0 flex-1 pr-2">
+      <div className="min-h-0 flex-1 overflow-y-auto pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="space-y-2.5">
           {isLoading &&
             Array.from({ length: 5 }).map((_, index) => (
@@ -176,7 +175,7 @@ export const SyllabusSidebar = ({
               );
             })}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
