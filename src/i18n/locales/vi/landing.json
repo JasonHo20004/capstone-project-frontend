@@ -189,7 +189,14 @@
       "ai_writing": "AI chấm Writing",
       "dictation": "Luyện Dictation",
       "learning_path": "Lộ trình học cá nhân",
-      "skill_tree": "Cây kỹ năng"
+      "skill_tree": "Cây kỹ năng",
+      "flashcards_basic": "Thẻ ghi nhớ cơ bản",
+      "placement_test": "Bài kiểm tra xếp trình độ",
+      "community_discussion": "Thảo luận cộng đồng",
+      "ai_writing_eval": "AI chấm bài Viết",
+      "ai_speaking_eval": "AI chấm bài Nói",
+      "unlimited_practice": "Luyện tập không giới hạn",
+      "ai_tutor": "Gia sư AI cá nhân"
     }
   },
   "story": {

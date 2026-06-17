@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   BookOpen,
@@ -135,9 +135,13 @@ export default function UserAppLayout() {
         )}
       >
         <div className="flex h-16 items-center gap-3 border-b border-border/60 px-5 flex-shrink-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-            <GraduationCap className="h-5 w-5 text-primary" />
-          </div>
+          <Link to="/" aria-label={t("app.name", { ns: "common" })} className="flex-shrink-0">
+            <img
+              src="/logo.png"
+              alt={t("app.name", { ns: "common" })}
+              className="h-9 w-9 rounded-lg bg-white object-contain p-1 shadow-sm transition-transform hover:scale-105"
+            />
+          </Link>
           <div className="overflow-hidden whitespace-nowrap opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 max-md:opacity-100 max-md:translate-x-0">
             <h2 className="font-semibold font-display tracking-tight leading-tight">{t("app.name", { ns: "common" })}</h2>
             <p className="text-[10px] text-muted-foreground leading-tight">{t("app.tagline", { ns: "common" })}</p>
